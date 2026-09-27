@@ -552,7 +552,7 @@
       if (!path || !mobileSheet) return;
       const [exists] = await Promise.all([fileExistsOnDisk(path), ensureFileIconTheme()]);
       if (!exists) {
-        setStatus(`file not found: ${displayAttachmentFilename(path) || path}`);
+        setStatus("File not found");
         return;
       }
       ensureSheetDom();

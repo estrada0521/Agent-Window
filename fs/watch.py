@@ -129,7 +129,7 @@ class _DebouncedWorkspaceRefresh:
             try:
                 self._on_head_changed()
             except Exception as exc:
-                self._report_failure(f"commit tracking failed: {exc}")
+                self._report_failure(f"Commit tracking failed: {exc}")
         if git_head_changed or full_rescan:
             clear_commit_list_cache()
         if file_rels or full_rescan:
@@ -201,11 +201,11 @@ def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on
         )
         CFRelease(cfarr)
         if not stream:
-            report_failure("workspace watch failed: FSEventStreamCreate returned null")
+            report_failure("Workspace watch failed: FSEventStreamCreate returned null")
             return
         FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode)
         if not FSEventStreamStart(stream):
-            report_failure("workspace watch failed: FSEventStreamStart returned false")
+            report_failure("Workspace watch failed: FSEventStreamStart returned false")
             return
         CFRunLoopRun()
 

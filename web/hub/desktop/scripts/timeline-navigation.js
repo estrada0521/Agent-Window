@@ -33,7 +33,7 @@
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok || !data.timeline_url) {
-          throw new Error(data.error || "Failed to open draft timeline.");
+          throw new Error(data.error || "Failed to open draft timeline");
         }
         openTimelineInDesk(data.timeline_url, data.timeline || "");
         setStatus(data.notice || "");
@@ -42,7 +42,7 @@
         }
         void refreshHubTimelines(true, { skipRestore: true });
       } catch (err) {
-        setStatus(err?.message || "Failed to open draft timeline.");
+        setStatus(err?.message || "Failed to open draft timeline");
       } finally {
         _deskNewTimelineStarting = false;
         _deskNewTimelineToggle?.classList.remove("archived");
@@ -132,7 +132,7 @@
         if (closeOnOpen) setDeskHubOpen(false);
       } catch (err) {
         if (openToken !== _deskOpenToken) return;
-        failDeskOpen(err?.message || "open timeline failed");
+        failDeskOpen(err?.message || "Open timeline failed");
       }
     }
 

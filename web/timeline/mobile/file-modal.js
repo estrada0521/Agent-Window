@@ -119,7 +119,7 @@
           const blob = await res.blob();
           await navigator.share({ files: [new File([blob], displayAttachmentFilename(path), { type: blob.type })] });
         } catch (err) {
-          if (err?.name !== "AbortError") setStatus(`share failed: ${err?.message || err}`);
+          if (err?.name !== "AbortError") setStatus(`Share failed: ${err?.message || err}`);
         }
       });
       resetRepoPreviewControls();

@@ -183,7 +183,7 @@
         return;
       }
       if (detail.action === "miniWindow") {
-        void compactDeskWindowState("mini_window_geometry", "mini window");
+        void compactDeskWindowState("mini_window_geometry", "Mini window");
         return;
       }
       if (detail.action === "moveWindowTop") {

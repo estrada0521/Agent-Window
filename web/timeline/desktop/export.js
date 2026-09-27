@@ -157,7 +157,7 @@ ${katex}<style>${css}</style>
         endExportRange();
         setStatus(document.documentElement.dataset.nativeApp === "1" ? "Exported to ~/Downloads" : "Exported");
       } catch (err) {
-        setStatus(`export failed: ${err?.message || err}`);
+        setStatus(`Export failed: ${err?.message || err}`);
       }
     };
     exportHudExportBtn.addEventListener("click", () => void runExport());

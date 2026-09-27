@@ -91,7 +91,7 @@
       if (scalesWindow) {
         _deskLastFitTarget *= clamped / previous;
         invoke("scale_window_from_top_center", { scale: clamped / previous, cornerRadius: clamped * 2 }).catch((err) => {
-          setStatus(`window zoom resize failed: ${err}`);
+          setStatus(`Window zoom resize failed: ${err}`);
         });
       }
     }

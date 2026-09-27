@@ -114,7 +114,7 @@ class NativeLogSync:
     def failed(self, agent: str, detail: str) -> None:
         self.remove_binding(agent)
         self.mark_idle(agent)
-        self.report_failure(f"native log failed: {agent}: {detail}")
+        self.report_failure(f"Native log failed: {agent}: {detail}")
 
     def rebind(self, agent: str) -> None:
         if self._agent_panes().get(agent):

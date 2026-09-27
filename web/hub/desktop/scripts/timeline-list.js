@@ -91,7 +91,7 @@
         );
         const data = await response.json();
         if (!response.ok || !data.ok) {
-          throw new Error(data.error || (isDelete ? "Failed to delete timeline." : "Failed to archive timeline."));
+          throw new Error(data.error || (isDelete ? "Failed to delete timeline" : "Failed to archive timeline"));
         }
         const activeHref = buildTimelineOpenHref(timelineName, false);
         const archivedHref = buildTimelineOpenHref(timelineName, true);
@@ -108,7 +108,7 @@
         clearDeskSelection();
         showDeskHubList({ open: true });
       } catch (err) {
-        setStatus(err?.message || (isDelete ? "Failed to delete timeline." : "Failed to archive timeline."));
+        setStatus(err?.message || (isDelete ? "Failed to delete timeline" : "Failed to archive timeline"));
       }
     }
 
@@ -126,7 +126,7 @@
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.ok) {
-          throw new Error(data.error || "Failed to rename timeline.");
+          throw new Error(data.error || "Failed to rename timeline");
         }
         const renamed = String(data.new_name || newName);
         hubTimelineUrls.forget(buildTimelineOpenHref(oldName, false));
@@ -139,7 +139,7 @@
         }
         return true;
       } catch (err) {
-        setStatus(err?.message || "Failed to rename timeline.");
+        setStatus(err?.message || "Failed to rename timeline");
         return false;
       }
     }
@@ -156,9 +156,9 @@
           cache: "no-store",
         });
         picked = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(picked.error || "Workspace picker failed.");
+        if (!res.ok) throw new Error(picked.error || "Workspace picker failed");
       } catch (err) {
-        setStatus(err?.message || "Workspace picker failed.");
+        setStatus(err?.message || "Workspace picker failed");
         return;
       }
       if (picked.canceled || !picked.path) return;
@@ -170,9 +170,9 @@
           cache: "no-store",
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok) throw new Error(data.error || "Failed to change workspace.");
+        if (!res.ok || !data.ok) throw new Error(data.error || "Failed to change workspace");
       } catch (err) {
-        setStatus(err?.message || "Failed to change workspace.");
+        setStatus(err?.message || "Failed to change workspace");
         return;
       }
       hubTimelineUrls.forget(buildTimelineOpenHref(timelineName, true));
@@ -191,7 +191,7 @@
         }
         await copyDeskText(workspace);
       } catch (err) {
-        setStatus(err?.message || "Failed to copy workspace path.");
+        setStatus(err?.message || "Failed to copy workspace path");
         return;
       }
       setStatus("Copied path");
@@ -208,9 +208,9 @@
           cache: "no-store",
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok) throw new Error(data.error || "Failed to reset agents.");
+        if (!res.ok || !data.ok) throw new Error(data.error || "Failed to reset agents");
       } catch (err) {
-        setStatus(err?.message || "Failed to reset agents.");
+        setStatus(err?.message || "Failed to reset agents");
         return;
       }
       if (_deskSelectedTimelineName === timelineName) {

@@ -6,7 +6,7 @@
       const invoke = getNativeInvoke();
       if (typeof invoke === "function") {
         invoke("set_always_on_top", { on: _deskAlwaysOnTop }).catch((err) => {
-          setStatus(`always on top failed: ${err}`);
+          setStatus(`Always on top failed: ${err}`);
         });
       }
     }
@@ -33,7 +33,7 @@
         if (typeof invoke === "function") {
           invoke("set_window_height", {
             height: Math.round(DESK_COLLAPSED_FIT_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT),
-          }).catch((err) => setStatus(`set_window_height failed: ${err}`));
+          }).catch((err) => setStatus(`Window height failed: ${err}`));
         }
         _deskTimelineFrame?.contentWindow?.focus();
       }
@@ -57,7 +57,7 @@
       const invoke = getNativeInvoke();
       if (typeof invoke === "function") {
         invoke("set_fit_height_min", { enabled: _deskAutoWindowHeight })
-          .catch((err) => setStatus(`set_fit_height_min failed: ${err}`));
+          .catch((err) => setStatus(`Fit Height minimum failed: ${err}`));
       }
     }
     function setDeskAutoWindowHeight(on) {
@@ -80,7 +80,7 @@
         const invoke = getNativeInvoke();
         if (typeof invoke === "function") {
           invoke("set_window_height", { height: DESK_DEFAULT_WINDOW_HEIGHT * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT }).catch((err) => {
-            setStatus(`fit height exit resize failed: ${err}`);
+            setStatus(`Fit Height exit resize failed: ${err}`);
           });
         }
         return;
@@ -111,7 +111,7 @@
         height: target,
         compactWidthScale: snapWidth ? currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT : null,
       }).catch((err) => {
-        setStatus(`fit height failed: ${err}`);
+        setStatus(`Fit Height failed: ${err}`);
       });
     }
 
@@ -125,13 +125,13 @@
         try {
           await invoke("reset_window_geometry", { scale: currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT });
         } catch (err) {
-          setStatus(`reset window failed: ${err}`);
+          setStatus(`Reset window failed: ${err}`);
         }
       }
       resetDeskTimelineView();
     }
 
-    async function compactDeskWindowState(command = "compact_window_geometry", label = "compact window") {
+    async function compactDeskWindowState(command = "compact_window_geometry", label = "Compact window") {
       setDeskHubOpen(false);
       setDeskAutoWindowHeight(false);
       applyDeskAlwaysOnTop(false);
@@ -152,7 +152,7 @@
       try {
         await invoke(command);
       } catch (err) {
-        setStatus(`${command} failed: ${err}`);
+        setStatus(`Move window failed: ${err}`);
       }
     }
 
@@ -195,7 +195,7 @@
         delta: opening ? width : -width,
         apply: () => setDeskHubOpen(opening),
         rollback: () => setDeskHubOpen(!opening),
-        label: "toggle Hub outward",
+        label: "Toggle Hub outward",
       });
     }
 
@@ -219,7 +219,7 @@
           updateDeskSideBarButtonState(opening ? "" : "open", width);
           sendDeskSideBarCommand("");
         },
-        label: "toggle side bar outward",
+        label: "Toggle side bar outward",
       });
     }
 
@@ -374,7 +374,7 @@
 
     function openDeskHubInBrowser() {
       getNativeInvoke()?.("open_external_url", { url: `${window.location.origin}/` })
-        .catch((err) => setStatus(`open in browser failed: ${err}`));
+        .catch((err) => setStatus(`Open in browser failed: ${err}`));
     }
 
     function openBrowserAppearanceMenu() {

@@ -263,7 +263,7 @@ __INCLUDE:../hud.js__
           throw new Error(data.error || `failed to ${adding ? "add" : "remove"} agent`);
         }
       } catch (err) {
-        setStatus(err?.message || `${adding ? "add" : "remove"} agent failed`);
+        setStatus(err?.message || `${adding ? "Add" : "Remove"} agent failed`);
       }
     };
     let nativeBridgeAgentActionMode = "";
@@ -442,7 +442,7 @@ __INCLUDE:../hud.js__
       if (error) {
         reloadInFlight = false;
         document.documentElement.removeAttribute("data-launch-shell");
-        setStatus(`reload failed: ${error}`);
+        setStatus(`Reload failed: ${error}`);
         return;
       }
       const params = new URLSearchParams(window.location.search);

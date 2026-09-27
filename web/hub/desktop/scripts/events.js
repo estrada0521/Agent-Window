@@ -41,7 +41,7 @@
             x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
             y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
           },
-        }).catch((err) => setStatus(`show_timeline_header_menu failed: ${err}`));
+        }).catch((err) => setStatus(`Timeline menu failed: ${err}`));
         return;
       }
       if (event.data && event.data.type === "show-file-context-menu" && event.source === _deskTimelineFrame?.contentWindow) {
@@ -428,7 +428,7 @@
             reviveEnabled: archived,
           },
         }).catch((err) => {
-          setStatus(String(err || "Failed to open timeline menu."));
+          setStatus(String(err || "Failed to open timeline menu"));
         });
       });
       _deskTimelineList.addEventListener("click", (event) => {

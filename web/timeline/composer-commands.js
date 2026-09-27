@@ -346,7 +346,7 @@
         const code = wrap.querySelector("code") || wrap.querySelector("pre");
         doCopyText(code.textContent).then(() => {
           markCopied(codeCopyBtn);
-        }).catch((err) => setStatus(`copy failed: ${err.message}`));
+        }).catch((err) => setStatus(`Copy failed: ${err.message}`));
         return;
       }
       const btn = e.target.closest(".copy-btn");
@@ -361,7 +361,7 @@
           } else {
             markCopied(btn, 3000);
           }
-        }).catch((err) => setStatus(`copy failed: ${err.message}`));
+        }).catch((err) => setStatus(`Copy failed: ${err.message}`));
         return;
       }
       if (!revealMobileCopy) return;

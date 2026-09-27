@@ -181,7 +181,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     try:
         state.commits.adopt_baseline()
     except Exception as exc:
-        state.report_failure(f"commit tracking failed: {exc}")
+        state.report_failure(f"Commit tracking failed: {exc}")
     threading.Thread(
         target=_log_watcher,
         daemon=True,

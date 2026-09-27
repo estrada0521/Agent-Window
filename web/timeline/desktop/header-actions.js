@@ -112,7 +112,7 @@
           }
         : null;
       closeHeaderMenus();
-      openNativeHeaderMenu(anchorRect).catch((err) => setStatus(`header menu failed: ${err}`));
+      openNativeHeaderMenu(anchorRect).catch((err) => setStatus(`Timeline menu failed: ${err}`));
     });
     window.addEventListener("native-menu-action", (event) => {
       void handleTimelineMenuAction(event.detail || {});
@@ -121,7 +121,7 @@
       event.preventDefault();
       event.stopPropagation();
       closeHeaderMenus();
-      openNativeHeaderMenu().catch((err) => setStatus(`header menu failed: ${err}`));
+      openNativeHeaderMenu().catch((err) => setStatus(`Timeline menu failed: ${err}`));
     });
     document.getElementById("timelineReloadBtn").addEventListener("click", () => void reloadTimeline());
     document.getElementById("sideBarToggle").addEventListener("click", () => toggleSideBar());
@@ -184,10 +184,10 @@
           const res = await fetch("/open-terminal", { method: "POST" });
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            setStatus(data.error || "terminal open failed");
+            setStatus(data.error || "Terminal open failed");
           }
         } catch (err) {
-          setStatus(`terminal: ${err.message}`);
+          setStatus(`Terminal: ${err.message}`);
         }
         return;
       }
@@ -196,10 +196,10 @@
           const res = await fetch("/open-shell", { method: "POST" });
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            setStatus(data.error || "terminal open failed");
+            setStatus(data.error || "Terminal open failed");
           }
         } catch (err) {
-          setStatus(`terminal: ${err.message}`);
+          setStatus(`Terminal: ${err.message}`);
         }
         return;
       }
