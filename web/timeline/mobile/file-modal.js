@@ -13,9 +13,12 @@
     const sheetPreviewFrameEl = () => mobileSheet?.querySelector(".sheet-preview-frame");
     const repoPreviewHtmlModeBtn = () => document.querySelector(".repo-preview-html-mode");
     const repoPreviewHtmlModeIcon = () => document.querySelector(".repo-preview-html-mode-icon");
+    const repoPreviewShareBtn = () => document.querySelector(".repo-preview-share");
     const sheetPreviewOpen = () => !!mobileSheet?.classList.contains("sheet-mode-preview");
     const repoPreviewExt = () => String(mobileSheet?._previewExt || "").toLowerCase();
-    const syncRepoPreviewHtmlModeToggle = () => {
+    const syncRepoPreviewControls = () => {
+      const shareBtn = repoPreviewShareBtn();
+      if (shareBtn) shareBtn.hidden = !sheetPreviewOpen();
       const btn = repoPreviewHtmlModeBtn();
       const icon = repoPreviewHtmlModeIcon();
       if (!btn || !icon) return;
@@ -31,12 +34,12 @@
     const resetRepoPreviewControls = () => {
       repoPreviewBaseTheme = currentFileModalBaseTheme();
       repoHtmlPreviewMode = "text";
-      syncRepoPreviewHtmlModeToggle();
+      syncRepoPreviewControls();
     };
     const initRepoPreviewControls = () => {
       repoPreviewBaseTheme = currentFileModalBaseTheme();
       repoHtmlPreviewMode = "text";
-      syncRepoPreviewHtmlModeToggle();
+      syncRepoPreviewControls();
     };
     const applyPreviewHtmlModeToFrame = (frame, ext, mode) => {
       if (!isHtmlPreviewExt(ext)) return false;
@@ -90,13 +93,34 @@
       htmlBtn.hidden = true;
       htmlBtn.innerHTML = '<svg class="repo-preview-html-mode-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>';
       sheetFooter.insertBefore(htmlBtn, closeBtn);
+      const shareBtn = document.createElement("button");
+      shareBtn.type = "button";
+      shareBtn.className = "repo-preview-share mobile-bottom-sheet-button";
+      shareBtn.hidden = true;
+      shareBtn.setAttribute("aria-label", "Share");
+      shareBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12v4.5a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3V12"></path><path d="M12 3.5v11"></path><path d="m8 7.5 4-4 4 4"></path></svg>';
+      sheetFooter.appendChild(shareBtn);
       htmlBtn.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         if (!isHtmlPreviewExt(repoPreviewExt())) return;
         repoHtmlPreviewMode = repoHtmlPreviewMode === "text" ? "web" : "text";
-        syncRepoPreviewHtmlModeToggle();
+        syncRepoPreviewControls();
         postRepoPreviewHtmlMode();
+      });
+      shareBtn.addEventListener("click", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const path = mobileSheet?._previewPath;
+        if (!path) return;
+        try {
+          const res = await fetch(`/file-raw?path=${encodeURIComponent(path)}`);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const blob = await res.blob();
+          await navigator.share({ files: [new File([blob], displayAttachmentFilename(path), { type: blob.type })] });
+        } catch (err) {
+          if (err?.name !== "AbortError") setStatus(`share failed: ${err?.message || err}`);
+        }
       });
       resetRepoPreviewControls();
     };
@@ -222,7 +246,6 @@
           () => popSheetPreview(),
           { ignore: ".table-scroll, .katex-display, pre, .code-scroll, .html-preview-text-scroll" },
         );
-        blockHistoryEdgeSwipe(frame.contentDocument);
         repoPreviewBaseTheme = currentFileModalBaseTheme();
         postPreviewThemeToFrame(frame, normalizedExt, repoPreviewBaseTheme);
         postPreviewHtmlModeToFrame(frame, normalizedExt, repoHtmlPreviewMode);

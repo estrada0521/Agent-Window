@@ -149,7 +149,11 @@ class WorkspaceFiles:
     @classmethod
     def content_type_for_rel(cls, rel: str) -> str:
         ext = os.path.splitext(rel)[1].lower()
-        return cls.MIME_TYPES.get(ext, "application/octet-stream")
+        if ext in cls.MIME_TYPES:
+            return cls.MIME_TYPES[ext]
+        if ext in cls.EDITABLE_TEXT_EXTS:
+            return "text/plain; charset=utf-8"
+        return "application/octet-stream"
 
     @staticmethod
     def _parse_single_range(range_header: str, size: int):

@@ -85,7 +85,21 @@
       left: calc(50% + 30px);
     }
 
-    .repo-preview-html-mode[hidden] {
+    .repo-preview-share {
+      position: absolute;
+      right: calc(14px + env(safe-area-inset-right, 0px));
+      top: 0;
+      bottom: 0;
+      margin-block: auto;
+    }
+
+    html[data-hand="right"] .repo-preview-share {
+      right: auto;
+      left: calc(14px + env(safe-area-inset-left, 0px));
+    }
+
+    .repo-preview-html-mode[hidden],
+    .repo-preview-share[hidden] {
       display: none;
     }
 
