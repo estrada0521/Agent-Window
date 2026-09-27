@@ -182,7 +182,7 @@ def render_file_view(
             for idx in range(1, line_count + 1)
         )
         code_rows = "".join(
-            f'<tr data-line="{idx}"><td class="lc"><pre>{line if line else " "}</pre></td></tr>'
+            f'<tr data-line="{idx}"><td class="lc"><pre>{line or "<br>"}</pre></td></tr>'
             for idx, line in enumerate(lines, start=1)
         )
         return gutter_rows, code_rows, gutter_width, title_offset

@@ -1,8 +1,4 @@
     const _fileExistenceCache = new Map();
-    const FILE_PREVIEW_MODE_ICONS = {
-      web: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"></rect><path d="M3.5 9.5h17"></path><circle cx="7.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><circle cx="10.5" cy="7" r="0.8" fill="currentColor" stroke="none"></circle><path d="M9.5 13.5h6"></path><path d="M9.5 16.5h4"></path>',
-      text: '<path d="M14 3.5H7.5A2.5 2.5 0 0 0 5 6v12a2.5 2.5 0 0 0 2.5 2.5h9A2.5 2.5 0 0 0 19 18V8.5z"></path><path d="M14 3.5V8.5H19"></path><path d="M9 12.5h6"></path><path d="M9 16h6"></path>',
-    };
     let repoPreviewBaseTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
     let repoPreviewMode = "text";
     let repoPreviewControlsWired = false;
@@ -12,24 +8,36 @@
     const hasPreviewModes = (ext) => ext === "html" || ext === "htm" || ext === "md";
     const defaultPreviewMode = (ext) => ext === "md" ? "web" : "text";
     const sheetPreviewFrameEl = () => mobileSheet?.querySelector(".sheet-preview-frame");
-    const repoPreviewModeBtn = () => document.querySelector(".repo-preview-mode");
-    const repoPreviewModeIcon = () => document.querySelector(".repo-preview-mode-icon");
+    const repoPreviewMenuBtn = () => document.querySelector(".repo-preview-menu");
     const repoPreviewShareBtn = () => document.querySelector(".repo-preview-share");
     const sheetPreviewOpen = () => !!mobileSheet?.classList.contains("sheet-mode-preview");
     const repoPreviewExt = () => String(mobileSheet?._previewExt || "").toLowerCase();
     const syncRepoPreviewControls = () => {
       const shareBtn = repoPreviewShareBtn();
       if (shareBtn) shareBtn.hidden = !sheetPreviewOpen();
-      const btn = repoPreviewModeBtn();
-      const icon = repoPreviewModeIcon();
-      if (!btn || !icon) return;
-      btn.hidden = !sheetPreviewOpen() || !hasPreviewModes(repoPreviewExt());
-      if (btn.hidden) return;
-      const nextMode = repoPreviewMode === "text" ? "web" : "text";
-      const title = nextMode === "text" ? "Show source" : "Show rendered";
-      btn.title = title;
-      btn.setAttribute("aria-label", title);
-      icon.innerHTML = FILE_PREVIEW_MODE_ICONS[nextMode] || FILE_PREVIEW_MODE_ICONS.text;
+      const menuBtn = repoPreviewMenuBtn();
+      if (menuBtn) menuBtn.hidden = !sheetPreviewOpen();
+    };
+    const repoPreviewMenuItems = () => {
+      const items = [];
+      if (hasPreviewModes(repoPreviewExt())) {
+        items.push(["mode", repoPreviewMode === "text" ? "Show Rendered" : "Show Source"]);
+      }
+      if (sheetPreviewFrameEl()?.contentDocument?.querySelector(".code-table, .preview-text-table")) {
+        items.push(["select", "Select All"]);
+      }
+      return items;
+    };
+    const selectRepoPreviewText = () => {
+      if (hasPreviewModes(repoPreviewExt()) && repoPreviewMode !== "text") {
+        repoPreviewMode = "text";
+        postRepoPreviewMode();
+      }
+      const frame = sheetPreviewFrameEl();
+      const body = frame?.contentDocument?.querySelector(".code-table tbody, .preview-text-table tbody");
+      if (!body) throw new Error("No text to select");
+      frame.contentWindow.focus();
+      frame.contentWindow.getSelection().selectAllChildren(body);
     };
     const resetRepoPreviewControls = () => {
       repoPreviewBaseTheme = currentFileModalBaseTheme();
@@ -87,12 +95,6 @@
       const closeBtn = sheetFooter.querySelector(".mobile-bottom-sheet-close");
       if (!closeBtn) return;
       repoPreviewControlsWired = true;
-      const modeBtn = document.createElement("button");
-      modeBtn.type = "button";
-      modeBtn.className = "repo-preview-mode mobile-bottom-sheet-button";
-      modeBtn.hidden = true;
-      modeBtn.innerHTML = '<svg class="repo-preview-mode-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>';
-      sheetFooter.insertBefore(modeBtn, closeBtn);
       const shareBtn = document.createElement("button");
       shareBtn.type = "button";
       shareBtn.className = "repo-preview-share mobile-bottom-sheet-button";
@@ -100,13 +102,45 @@
       shareBtn.setAttribute("aria-label", "Share");
       shareBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12v4.5a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3V12"></path><path d="M12 3.5v11"></path><path d="m8 7.5 4-4 4 4"></path></svg>';
       sheetFooter.appendChild(shareBtn);
-      modeBtn.addEventListener("click", (event) => {
+      const menuBtn = document.createElement("button");
+      menuBtn.type = "button";
+      menuBtn.className = "repo-preview-menu mobile-bottom-sheet-button";
+      menuBtn.hidden = true;
+      menuBtn.setAttribute("aria-label", "Menu");
+      menuBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5.5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="18.5" cy="12" r="1.6"></circle></svg>';
+      sheetFooter.insertBefore(menuBtn, shareBtn);
+      const menuSelect = document.createElement("select");
+      menuSelect.className = "hub-native-menu-select is-ios-active";
+      menuSelect.setAttribute("aria-label", "Menu");
+      document.body.appendChild(menuSelect);
+      menuBtn.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
-        if (!hasPreviewModes(repoPreviewExt())) return;
-        repoPreviewMode = repoPreviewMode === "text" ? "web" : "text";
-        syncRepoPreviewControls();
-        postRepoPreviewMode();
+        const items = repoPreviewMenuItems();
+        if (!items.length) return;
+        menuSelect.innerHTML = '<option value="">Menu</option>' + items.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+        const rect = menuBtn.getBoundingClientRect();
+        menuSelect.style.left = `${Math.round(rect.left)}px`;
+        menuSelect.style.top = `${Math.round(rect.top)}px`;
+        menuSelect.style.width = `${Math.round(rect.width)}px`;
+        menuSelect.style.height = `${Math.round(rect.height)}px`;
+        menuSelect.value = "";
+        openNativeSelect(menuSelect);
+      });
+      menuSelect.addEventListener("change", () => {
+        const action = menuSelect.value;
+        menuSelect.value = "";
+        if (action === "mode") {
+          repoPreviewMode = repoPreviewMode === "text" ? "web" : "text";
+          postRepoPreviewMode();
+          return;
+        }
+        if (action !== "select") return;
+        try {
+          selectRepoPreviewText();
+        } catch (err) {
+          setStatus(`Select failed: ${err?.message || err}`);
+        }
       });
       shareBtn.addEventListener("click", async (event) => {
         event.preventDefault();

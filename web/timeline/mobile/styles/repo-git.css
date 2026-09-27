@@ -72,17 +72,17 @@
       pointer-events: none;
     }
 
-    .repo-preview-mode {
+    .repo-preview-menu {
       position: absolute;
-      right: calc(50% + 30px);
+      right: calc(14px + var(--mobile-sheet-floating-height) + 8px + env(safe-area-inset-right, 0px));
       top: 0;
       bottom: 0;
       margin-block: auto;
     }
 
-    html[data-hand="right"] .repo-preview-mode {
+    html[data-hand="right"] .repo-preview-menu {
       right: auto;
-      left: calc(50% + 30px);
+      left: calc(14px + var(--mobile-sheet-floating-height) + 8px + env(safe-area-inset-left, 0px));
     }
 
     .repo-preview-share {
@@ -98,16 +98,11 @@
       left: calc(14px + env(safe-area-inset-left, 0px));
     }
 
-    .repo-preview-mode[hidden],
+    .repo-preview-menu[hidden],
     .repo-preview-share[hidden] {
       display: none;
     }
 
-    .repo-preview-mode svg {
-      width: 18px;
-      height: 18px;
-      stroke-width: 1.5;
-    }
 
     .mobile-sheet-list {
       --sheet-list-row-height: calc(var(--text-size, 13px) * 30 / 13);

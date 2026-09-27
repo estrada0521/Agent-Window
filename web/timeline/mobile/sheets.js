@@ -1004,10 +1004,8 @@ __INCLUDE:git-panel.js__
       const inRightMenu = rightMenuBtn?.contains(event.target);
       const inWorkspaceSheet = mobileSheet?.contains(event.target);
       const inPaneTraceMenu = paneTracePanel?.contains(event.target);
-      const inNativeHeaderMenu = nativeHeaderMenuSelect?.contains(event.target);
-      const agentActionNativeMenu = document.getElementById("agentActionNativeMenuSelect");
-      const inAgentActionMenu = agentActionNativeMenu?.contains(event.target);
-      if (!inRightMenu && !inWorkspaceSheet && !inPaneTraceMenu && !inNativeHeaderMenu && !inAgentActionMenu) {
+      const inNativeMenu = !!event.target.closest?.("select");
+      if (!inRightMenu && !inWorkspaceSheet && !inPaneTraceMenu && !inNativeMenu) {
         closeHeaderMenus();
       }
     });

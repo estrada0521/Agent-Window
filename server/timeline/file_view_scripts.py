@@ -73,7 +73,7 @@ def build_progressive_loader_js(
             "const setStatus=()=>{};"
             "const escapeHtml=(text)=>String(text||'').replace(/[&<>\"']/g,(char)=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[char]||char));"
             "const gutterRowHtml=(lineNumber)=>`<tr data-line=\"${lineNumber}\"><td class=\"ln\">${lineNumber}</td></tr>`;"
-            "const codeRowHtml=(lineNumber,lineHtml)=>`<tr data-line=\"${lineNumber}\"><td class=\"lc\"><pre>${lineHtml||' '}</pre></td></tr>`;"
+            "const codeRowHtml=(lineNumber,lineHtml)=>`<tr data-line=\"${lineNumber}\"><td class=\"lc\"><pre>${lineHtml||'<br>'}</pre></td></tr>`;"
             "const appendLines=(chunkText,isFinal)=>{"
             " const fullText=(pending||'')+String(chunkText||'');"
             " const lines=fullText.split('\\n');"
