@@ -509,6 +509,11 @@
       overflow: hidden;
     }
 
+    html[data-hand="right"] .mobile-bottom-sheet .git-worktree-button {
+      left: calc(50% + 30px);
+      right: calc(14px + env(safe-area-inset-right, 0px));
+    }
+
     .mobile-bottom-sheet .git-worktree-button:disabled {
       cursor: default;
     }
