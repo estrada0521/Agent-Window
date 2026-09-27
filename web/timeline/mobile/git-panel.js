@@ -171,6 +171,13 @@ __INCLUDE:../git-panel-controller.js__
       gitDiffToggle.setAttribute("aria-pressed", gitDiffsExpanded ? "true" : "false");
       mobileSheet?.classList.toggle("git-diffs-expanded", gitDiffsExpanded);
     };
+    const collapseWorktreeDiffs = () => {
+      const context = gitPanel.detailContext;
+      if (!gitDiffsExpanded || !context || context.kind === "commit") return;
+      context.wrapEl?.querySelectorAll(".git-file-diff").forEach((block) => block.remove());
+      gitDiffsExpanded = false;
+      syncGitDiffToggle();
+    };
     gitDiffToggle.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -278,6 +285,7 @@ __INCLUDE:../git-panel-controller.js__
       },
       onOverview: refreshGitDetailTitleFromOverview,
       onFingerprintChanged: (data) => {
+        collapseWorktreeDiffs();
         const previous = gitCountSnapshot(gitWorktreeButton());
         renderGitWorktreeButton(data || {});
         animateGitCountsFromSnapshot(gitWorktreeButton(), previous);
