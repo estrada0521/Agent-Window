@@ -2,7 +2,7 @@
     let exportRange = null;
     const exportHud = document.createElement("div");
     exportHud.className = "export-hud";
-    exportHud.innerHTML = '<button type="button" class="export-hud-cancel" title="Cancel" aria-label="Cancel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"></path></svg></button><span class="export-hud-guide">Click messages</span><button type="button" class="export-hud-export"></button>';
+    exportHud.innerHTML = '<button type="button" class="export-hud-cancel" title="Cancel" aria-label="Cancel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button><span class="export-hud-guide">Click messages</span><button type="button" class="export-hud-export"></button>';
     const exportHudExportBtn = exportHud.querySelector(".export-hud-export");
     const exportRows = () => [...messagesEl.querySelectorAll(EXPORT_ROW_SELECTOR)];
     const exportRangeRows = () => {
@@ -149,14 +149,13 @@ ${katex}<style>${css}</style>
       const rows = exportRangeRows();
       if (!rows.length) return;
       const name = document.title.split(" · ")[0] || "timeline";
-      const messages = rows.filter((row) => row.matches("article.message-row")).length;
       try {
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([await buildExportHtml(rows)], { type: "text/html" }));
         link.download = `${name}.html`;
         link.click();
         endExportRange();
-        setStatus(`Exported ${messages} message${messages === 1 ? "" : "s"}`);
+        setStatus(document.documentElement.dataset.nativeApp === "1" ? "Exported to ~/Downloads" : "Exported");
       } catch (err) {
         setStatus(`export failed: ${err?.message || err}`);
       }

@@ -39,12 +39,12 @@
       color: var(--fg);
     }
     .export-hud-cancel svg {
-      width: calc(var(--pill-row-height) * 0.5);
-      height: calc(var(--pill-row-height) * 0.5);
+      width: calc(var(--pill-row-height) * 0.6);
+      height: calc(var(--pill-row-height) * 0.6);
     }
     .export-hud-guide {
       max-width: 12em;
-      margin-inline: 0.3em;
+      margin-inline: 0 0.3em;
       overflow: hidden;
       transition: max-width 0.3s ease, margin 0.3s ease, opacity 0.3s ease;
     }
