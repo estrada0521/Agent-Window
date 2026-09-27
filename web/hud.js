@@ -1,5 +1,5 @@
     const HUD_VISIBLE_MS = 2500;
-    const createHud = (hud) => {
+    const createHud = (hud, onVisibilityChange = () => {}) => {
       let timer = 0;
       let transient = "";
       let overlay = null;
@@ -35,6 +35,7 @@
       const toggle = (visible) => {
         state = visible ? "showing" : "hiding";
         hud.classList.toggle("is-visible", visible);
+        onVisibilityChange(visible);
         window.setTimeout(settle, transitionMs);
       };
       const render = () => {

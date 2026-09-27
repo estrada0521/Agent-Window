@@ -9,6 +9,11 @@
         else delete document.documentElement.dataset.sideBarPosition;
         return;
       }
+      if (event.data && event.data.type === "timeline-hud-visible" && event.source === _deskTimelineFrame?.contentWindow) {
+        if (event.data.visible) document.documentElement.dataset.timelineHud = "1";
+        else delete document.documentElement.dataset.timelineHud;
+        return;
+      }
       if (event.data && event.data.type === "open-external-url" && event.source === _deskTimelineFrame?.contentWindow) {
         const invoke = getNativeInvoke();
         if (typeof invoke !== "function") {
@@ -222,6 +227,7 @@
     }, true);
 
     _deskTimelineFrame && _deskTimelineFrame.addEventListener("load", () => {
+      delete document.documentElement.dataset.timelineHud;
       setDeskTimelineLoading(false);
       if (_deskTimelineFrameLoadedUrl) {
         const frameDoc = _deskTimelineFrame.contentDocument;

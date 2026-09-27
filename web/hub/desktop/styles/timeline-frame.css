@@ -51,6 +51,9 @@
       position: absolute;
       --hud-weight: var(--hub-body-weight);
     }
+    html[data-timeline-hud] #hubHud {
+      top: calc(env(safe-area-inset-top, 0px) + var(--text-size, 13px) * 16 / 13 + var(--hud-height));
+    }
     .desk-timeline-shell.loading .desk-timeline-frame {
       visibility: hidden;
     }
