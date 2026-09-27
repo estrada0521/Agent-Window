@@ -195,6 +195,10 @@
       bottom: 0;
       margin-block: auto;
     }
+    html[data-hand="right"] .mobile-bottom-sheet .mobile-bottom-sheet-leading {
+      left: auto;
+      right: calc(14px + env(safe-area-inset-right, 0px));
+    }
 
     .mobile-bottom-sheet .mobile-bottom-sheet-button svg {
       width: var(--icon-size);

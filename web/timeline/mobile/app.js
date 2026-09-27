@@ -1,5 +1,6 @@
 __INCLUDE:../base.js__
     document.documentElement.dataset.mobile = "1";
+__INCLUDE:../../mobile-hand.js__
     const _safariSafeAreaDummy = document.createElement("div");
     _safariSafeAreaDummy.style.cssText = "position:absolute;bottom:0;width:100%;height:env(safe-area-inset-bottom);pointer-events:none;opacity:0;z-index:-1;";
     document.body.appendChild(_safariSafeAreaDummy);

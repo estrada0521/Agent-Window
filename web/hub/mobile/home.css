@@ -183,6 +183,19 @@
       margin-left: 0;
       min-height: var(--chrome-icon-btn-size);
     }
+    html[data-hand="right"] .page-header .page-header-actions {
+      left: auto;
+      right: calc(14px + env(safe-area-inset-right, 0px));
+    }
+    html[data-hand="right"]:has(#timelineOverlay:not([hidden])) .page-header .page-header-actions {
+      right: calc(var(--hub-timeline-peek-width) + 14px);
+    }
+    @media (min-width: 600px) {
+      html[data-hand="right"]:has(#timelineOverlay:not([hidden])) .page-header .page-header-actions {
+        right: auto;
+        left: calc(var(--hub-width) - 14px - var(--chrome-icon-btn-size));
+      }
+    }
 
     .page-header .page-header-actions .page-menu-btn {
       position: relative;

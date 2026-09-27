@@ -80,6 +80,11 @@
       margin-block: auto;
     }
 
+    html[data-hand="right"] .repo-preview-html-mode {
+      right: auto;
+      left: calc(50% + 30px);
+    }
+
     .repo-preview-html-mode[hidden] {
       display: none;
     }

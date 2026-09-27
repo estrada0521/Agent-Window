@@ -77,6 +77,11 @@
       }, "*");
       return theme;
     };
+    const applyMobileHand = (hand) => {
+      if (hand === "right") localStorage.setItem(MOBILE_HAND_KEY, "right");
+      else localStorage.removeItem(MOBILE_HAND_KEY);
+      applyStoredMobileHand();
+    };
     const applyMobileThemeSetting = (setting) => {
       if (!["system", "light", "dark"].includes(setting)) return;
       document.documentElement.dataset.themeMobile = setting;
@@ -400,21 +405,21 @@
       _timelineOverlay.style.height = "";
       applyHubTimelineSquircle();
     }
-    let skipThemeMenuBlur = false;
-    const resetThemeNativeMenu = () => {
-      const select = document.getElementById("themeNativeMenuSelect");
+    let skipSettingMenuBlur = false;
+    const resetSettingNativeMenu = () => {
+      const select = document.getElementById("settingNativeMenuSelect");
       if (!select) return;
       select.value = "";
       select.style.top = "-9999px";
       select.style.left = "-9999px";
     };
-    const themeNativeMenuIsArmed = () => {
-      const select = document.getElementById("themeNativeMenuSelect");
+    const settingNativeMenuIsArmed = () => {
+      const select = document.getElementById("settingNativeMenuSelect");
       return !!(select && select.options.length > 1 && select.style.top !== "-9999px");
     };
-    const showArmedThemeNativeMenu = () => {
-      const select = document.getElementById("themeNativeMenuSelect");
-      if (!select || !themeNativeMenuIsArmed()) return false;
+    const showArmedSettingNativeMenu = () => {
+      const select = document.getElementById("settingNativeMenuSelect");
+      if (!select || !settingNativeMenuIsArmed()) return false;
       if (typeof select.showPicker === "function") {
         try {
           select.showPicker();
@@ -425,30 +430,32 @@
       select.click();
       return true;
     };
-    const ensureThemeNativeMenu = () => {
-      let select = document.getElementById("themeNativeMenuSelect");
+    const ensureSettingNativeMenu = () => {
+      let select = document.getElementById("settingNativeMenuSelect");
       if (select) return select;
       select = document.createElement("select");
-      select.id = "themeNativeMenuSelect";
+      select.id = "settingNativeMenuSelect";
       select.setAttribute("aria-hidden", "true");
       select.tabIndex = -1;
       select.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0.001;pointer-events:auto;appearance:none;-webkit-appearance:none;border:0;outline:none;background:transparent;color:transparent;font-size:13px;z-index:1000";
-      select.innerHTML = '<option value="" disabled selected>Theme</option><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option>';
       select.addEventListener("change", () => {
-        const setting = String(select.value || "");
-        resetThemeNativeMenu();
-        applyMobileThemeSetting(setting);
+        const value = String(select.value || "");
+        resetSettingNativeMenu();
+        settingNativeMenuPick?.(value);
       });
       select.addEventListener("blur", () => {
         setTimeout(() => {
-          if (!skipThemeMenuBlur) resetThemeNativeMenu();
+          if (!skipSettingMenuBlur) resetSettingNativeMenu();
         }, 0);
       });
       document.body.appendChild(select);
       return select;
     };
-    const openThemeNativeMenu = () => {
-      const select = ensureThemeNativeMenu();
+    let settingNativeMenuPick = null;
+    const openSettingNativeMenu = (title, choices, pick) => {
+      const select = ensureSettingNativeMenu();
+      select.innerHTML = `<option value="" disabled selected>${title}</option>` + choices.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+      settingNativeMenuPick = pick;
       const menuButton = document.getElementById("pageMenuBtn");
       const rect = menuButton?.getBoundingClientRect() || { left: 0, top: 0, width: 1, height: 1 };
       select.value = "";
@@ -456,28 +463,9 @@
       select.style.top = `${Math.max(0, Math.round(rect.top))}px`;
       select.style.width = `${Math.max(1, Math.round(rect.width || 1))}px`;
       select.style.height = `${Math.max(1, Math.round(rect.height || 1))}px`;
-      skipThemeMenuBlur = true;
-      showArmedThemeNativeMenu();
+      skipSettingMenuBlur = true;
+      showArmedSettingNativeMenu();
     };
-    function updateMenuContext(isTimeline) {
-      const bridge = document.getElementById("pageNativeMenuBridge");
-      if (!bridge) return;
-      if (isTimeline) {
-        bridge.innerHTML = `
-          <option value="" disabled selected>Menu</option>
-          <option value="close-timeline">Close Timeline</option>
-          <option value="theme">Theme</option>
-          <option value="restart-hub">Reload</option>
-        `;
-      } else {
-        bridge.innerHTML = `
-          <option value="" disabled selected>Menu</option>
-          <option value="theme">Theme</option>
-          <option value="restart-hub">Reload</option>
-        `;
-      }
-    }
-    updateMenuContext(false);
     function openTimelineInFrame(url, name) {
       if (_timelineOverlayCloseTimer) {
         clearTimeout(_timelineOverlayCloseTimer);
@@ -520,7 +508,6 @@
       _timelineFrame.style.opacity = reuseLoadedFrame ? "1" : "0";
       _timelineFrame.onload = onTimelineReady;
       _attachHubViewportBridge();
-      updateMenuContext(true);
       document.documentElement.classList.add("hub-timeline-overlay-active");
       document.body.classList.add("hub-timeline-overlay-active");
       const _wasPeeking = _timelineOverlay.classList.contains("overlay-peeking");
@@ -567,7 +554,6 @@
       clearOverlaySettle();
       document.documentElement.classList.remove("hub-timeline-ui-active");
       resetTimelineOverlayMotionStyles();
-      updateMenuContext(false);
       _timelineOverlay.classList.add("overlay-closing");
       document.documentElement.classList.add("hub-timeline-peeking");
       if (_timelineOverlayCloseTimer) clearTimeout(_timelineOverlayCloseTimer);
@@ -603,7 +589,6 @@
       _timelineOverlay.hidden = true;
       document.documentElement.classList.remove("hub-timeline-ui-active", "hub-timeline-peeking", "hub-timeline-overlay-active");
       document.body.classList.remove("hub-timeline-overlay-active");
-      updateMenuContext(false);
       _currentTimelineUrl = "";
       _currentTimelineName = "";
       syncMobileSelectedTimelineRows();
@@ -985,37 +970,37 @@
       var menuButton = document.getElementById("pageMenuBtn");
       if (bridge) {
         bridge.addEventListener("pointerdown", function (e) {
-          if (!themeNativeMenuIsArmed()) return;
+          if (!settingNativeMenuIsArmed()) return;
           e.preventDefault();
           e.stopImmediatePropagation();
-          skipThemeMenuBlur = false;
-          showArmedThemeNativeMenu();
+          skipSettingMenuBlur = false;
+          showArmedSettingNativeMenu();
         });
         bridge.addEventListener("change", function (e) {
           var val = bridge.value;
           if (!val) return;
-          if (val === "close-timeline" || val === "hub") {
+          if (val === "theme") {
             e.stopImmediatePropagation();
             bridge.value = "";
-            closeTimelineFrame();
-          } else if (val === "theme") {
+            openSettingNativeMenu("Theme", [["system", "System"], ["light", "Light"], ["dark", "Dark"]], applyMobileThemeSetting);
+          } else if (val === "hand") {
             e.stopImmediatePropagation();
             bridge.value = "";
-            openThemeNativeMenu();
+            openSettingNativeMenu("Hand", [["right", "Right"], ["left", "Left"]], applyMobileHand);
           }
         });
       }
       if (menuButton) {
         menuButton.addEventListener("click", function (e) {
-          if (!themeNativeMenuIsArmed()) return;
+          if (!settingNativeMenuIsArmed()) return;
           e.preventDefault();
           e.stopImmediatePropagation();
-          skipThemeMenuBlur = false;
-          showArmedThemeNativeMenu();
+          skipSettingMenuBlur = false;
+          showArmedSettingNativeMenu();
         });
       }
       document.addEventListener("click", function () {
-        if (skipThemeMenuBlur) setTimeout(function () { skipThemeMenuBlur = false; }, 0);
+        if (skipSettingMenuBlur) setTimeout(function () { skipSettingMenuBlur = false; }, 0);
       });
     })();
 
