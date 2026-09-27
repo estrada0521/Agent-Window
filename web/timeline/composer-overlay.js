@@ -180,26 +180,53 @@
       event.preventDefault();
       (event.key === "ArrowDown" ? jumpConversationToBottom : jumpConversationToTop)();
     });
-    const stepConversationByMessage = (down, senders = null) => {
+    const STEP_ANCHOR_MS = 1200;
+    const OLDER_SEARCH_LIMIT = 2000;
+    const OLDER_SEARCH_BATCH = 500;
+    let _stepAnchor = null;
+    const stepRows = (senders) => [...messagesEl.querySelectorAll("article.message-row")]
+      .filter((row) => !senders || senders.includes(row.dataset.sender));
+    const findStepTarget = (rows, down, anchor) => {
+      if (anchor) {
+        if (down) return rows.find((row) => anchor.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_FOLLOWING) || null;
+        return rows.filter((row) => anchor.compareDocumentPosition(row) & Node.DOCUMENT_POSITION_PRECEDING).at(-1) || null;
+      }
+      const stepTop = messagesEl.getBoundingClientRect().top + messageStepTopGap();
+      if (down) return rows.find((row) => row.getBoundingClientRect().top - stepTop > 2) || null;
+      return rows.filter((row) => row.getBoundingClientRect().top - stepTop < -2).at(-1) || null;
+    };
+    const findOlderStepTarget = async (senders, anchor) => {
+      const loadedEntries = () => displayEntriesForData(latestPayloadData).length;
+      const start = loadedEntries();
+      let target = findStepTarget(stepRows(senders), false, anchor);
+      while (!target && olderHasMore && loadedEntries() - start < OLDER_SEARCH_LIMIT) {
+        if (olderLoading) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          continue;
+        }
+        const before = loadedEntries();
+        await loadOlderMessages({ limit: OLDER_SEARCH_BATCH });
+        if (loadedEntries() === before) break;
+        target = findStepTarget(stepRows(senders), false, anchor);
+      }
+      if (!target) setStatus(`No earlier ${senders.join(", ")} message in the last ${OLDER_SEARCH_LIMIT}`);
+      return target;
+    };
+    const stepConversationByMessage = async (down, senders = null) => {
       if (document.documentElement.dataset.autoWindowHeight === "1") {
-        if (typeof fitStepToMessage === "function") fitStepToMessage(down, senders);
+        if (typeof fitStepToMessage === "function") void fitStepToMessage(down, senders);
         return;
       }
-      const rows = [...messagesEl.querySelectorAll("article.message-row")].filter((row) => !senders || senders.includes(row.dataset.sender));
-      if (!rows.length) return;
-      const tTop = messagesEl.getBoundingClientRect().top;
-      const stepTop = tTop + messageStepTopGap();
-      let target = null;
-      if (down) {
-        for (const row of rows) {
-          if (row.getBoundingClientRect().top - stepTop > 2) { target = row; break; }
-        }
-      } else {
-        for (const row of rows) {
-          if (row.getBoundingClientRect().top - stepTop < -2) target = row; else break;
-        }
+      const anchor = _stepAnchor?.row.isConnected && performance.now() - _stepAnchor.at < STEP_ANCHOR_MS
+        ? _stepAnchor.row
+        : null;
+      let target = findStepTarget(stepRows(senders), down, anchor);
+      if (!target && senders) {
+        if (down) return;
+        target = await findOlderStepTarget(senders, anchor);
+        if (!target) return;
       }
-      if (!target && senders) return;
+      _stepAnchor = target ? { row: target, at: performance.now() } : null;
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;
       if (!down) _stickyToBottom = false;
@@ -215,7 +242,7 @@
       if (active && active.matches && active.matches("input, textarea, [contenteditable='true']")) return;
       event.preventDefault();
       const senders = event.ctrlKey ? (selectedTargets.length ? selectedTargets : ["user"]) : null;
-      stepConversationByMessage(event.key === "ArrowDown", senders);
+      void stepConversationByMessage(event.key === "ArrowDown", senders);
     });
     composerFabBtn?.addEventListener("click", () => {
       openComposerOverlay({ immediateFocus: canCompose() });

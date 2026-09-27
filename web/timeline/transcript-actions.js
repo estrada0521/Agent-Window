@@ -1,4 +1,4 @@
-    const loadOlderMessages = async () => {
+    const loadOlderMessages = async ({ limit = MESSAGE_BATCH } = {}) => {
       if (olderLoading || !latestPayloadData) return;
       const loadedCount = displayEntriesForData(latestPayloadData).length;
       if (!loadedCount) {
@@ -10,7 +10,7 @@
       const prevHeight = messagesEl.scrollHeight;
       const prevTop = messagesEl.scrollTop;
       try {
-        const res = await fetchWithTimeout(messagesFetchUrl({ offset: loadedCount }));
+        const res = await fetchWithTimeout(messagesFetchUrl({ offset: loadedCount, limit }));
         if (!res.ok) throw new Error("older messages unavailable");
         const data = await res.json();
         const olderBatch = Array.isArray(data?.entries) ? data.entries : [];
