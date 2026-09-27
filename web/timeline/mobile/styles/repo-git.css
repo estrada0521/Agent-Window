@@ -60,9 +60,12 @@
       left: calc(14px + env(safe-area-inset-left, 0px));
     }
 
-    .git-diff-toggle.is-active {
-      color: var(--fg);
-      background: color-mix(in srgb, var(--fg) 14%, transparent);
+    .mobile-bottom-sheet .git-diff-toggle.is-active {
+      background:
+        var(--liquid-glass-lg-active-tint),
+        rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
+      border-color: var(--liquid-glass-lg-active-border);
+      box-shadow: var(--liquid-glass-lg-active-shadow);
     }
 
     .git-file-diff {

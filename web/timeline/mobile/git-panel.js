@@ -115,7 +115,8 @@ __INCLUDE:../git-panel-controller.js__
       if (!wrapEl || wrapEl.querySelector(":scope > .git-commit-file-section-title")) return;
       const titleEl = document.createElement("div");
       titleEl.className = "git-commit-file-section-title";
-      titleEl.textContent = "Changed";
+      const count = wrapEl.querySelectorAll(".git-commit-file-row").length;
+      titleEl.textContent = `${count} file${count === 1 ? "" : "s"} changed`;
       wrapEl.prepend(titleEl);
     };
     let gitDiffsExpanded = false;
@@ -124,7 +125,7 @@ __INCLUDE:../git-panel-controller.js__
     gitDiffToggle.className = "git-diff-toggle mobile-bottom-sheet-button";
     gitDiffToggle.hidden = true;
     gitDiffToggle.setAttribute("aria-label", "Show diffs");
-    gitDiffToggle.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v8M8 8h8"></path><path d="M8 19h8"></path></svg>';
+    gitDiffToggle.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11M6 9h12"></path><path d="M6 19.5h12"></path></svg>';
     sharedSheetFooter.appendChild(gitDiffToggle);
     const gitDiffLinesHtml = (text) => {
       const out = [];
