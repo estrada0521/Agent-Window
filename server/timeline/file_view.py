@@ -61,7 +61,8 @@ def _timeline_markdown_preview_css() -> str:
     code_css = (_REPO_ROOT / "web/timeline/markdown-code.css").read_text(encoding="utf-8")
     shared_body_css = (_REPO_ROOT / "web/timeline/markdown-body.css").read_text(encoding="utf-8")
     variant_body_css = (_REPO_ROOT / "web/timeline/mobile/markdown-body.css").read_text(encoding="utf-8")
-    markdown_css = f"{shared_body_css}\n{variant_body_css}"
+    viewer_body_css = (_REPO_ROOT / "web/timeline/mobile/markdown-viewer.css").read_text(encoding="utf-8")
+    markdown_css = f"{shared_body_css}\n{variant_body_css}\n{viewer_body_css}"
     replacements = {
         "__AGENT_SEL_MD_BODY__": ".md-body",
         "__AGENT_SEL_MD_HEADING__": ".md-body h1, .md-body h2, .md-body h3, .md-body h4",
