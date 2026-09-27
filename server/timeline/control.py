@@ -21,7 +21,7 @@ from fs.log.paths import (
     log_jsonl_path,
     workspace_timeline_port,
 )
-from agents.executables import agent_launch_cmd, resolve_agent_executable
+from agents.executables import agent_executable_path, agent_launch_cmd
 from agents import agent_base_name
 from agents import next_instance_name
 from agents.registry import AGENTS
@@ -214,14 +214,20 @@ def _start_agent(
         raise SessionControlError(detail)
 
 
+def _require_on_path(agent: str) -> None:
+    try:
+        agent_executable_path(agent)
+    except FileNotFoundError as exc:
+        raise SessionControlError(str(exc)) from exc
+
+
 def _prepare_instances(requested: list[str]) -> list[str]:
     bases: list[str] = []
     for raw in requested:
         base = agent_base_name(raw)
         if base not in AGENTS:
             raise SessionControlError(f"Unknown agent: {raw}")
-        if not resolve_agent_executable(base):
-            raise SessionControlError(f"Required command not found for {base}")
+        _require_on_path(base)
         bases.append(base)
     return _instance_names(bases)
 
@@ -334,8 +340,7 @@ def add_agent(
     base = agent_base_name(agent)
     if not base or base not in AGENTS:
         raise SessionControlError(f"Unknown agent: {agent}")
-    if not resolve_agent_executable(base):
-        raise SessionControlError(f"Required command not found for {base}")
+    _require_on_path(base)
     tmux_name = _resolve_tmux_name(timeline_name)
     if not tmux_name:
         raise SessionControlError(f"Timeline does not exist: {timeline_name}")

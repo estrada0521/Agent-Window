@@ -8,17 +8,8 @@ from pathlib import Path
 class AgentDef:
     name: str
     display_name: str
-    executable: str = ""
-    launch_extra: str = ""
-    launch_flags: str = ""
-    launch_env: str = ""
-    fallback_paths: tuple[str, ...] = ()
-    prefer_fallback_paths: bool = False
-    fallback_nvm: bool = False
-
-    @property
-    def exe(self) -> str:
-        return self.executable or self.name
+    executable: str
+    launch_extra: str
 
 
 AGENTS: dict[str, AgentDef] = {}
@@ -37,37 +28,30 @@ _register(
         display_name="Claude",
         executable="claude",
         launch_extra=f"env -u CLAUDECODE {_AGENT_TMUX_COLOR_SUFFIX}",
-        fallback_paths=("~/.local/bin/claude",),
     ),
     AgentDef(
         name="codex",
         display_name="Codex",
         executable="codex",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        fallback_nvm=True,
     ),
     AgentDef(
         name="gemini",
         display_name="Antigravity",
         executable="agy",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        fallback_paths=("~/.local/bin/agy",),
-        fallback_nvm=True,
     ),
     AgentDef(
         name="cursor",
         display_name="Cursor",
         executable="cursor-agent",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        fallback_paths=("~/.local/bin/cursor-agent",),
     ),
     AgentDef(
         name="grok",
         display_name="Grok",
         executable="grok",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        fallback_paths=("~/.local/bin/grok",),
-        prefer_fallback_paths=True,
     ),
 )
 
