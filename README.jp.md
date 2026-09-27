@@ -113,6 +113,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | New Timeline | `⌘N` | |
 | active timelineの切り替え | `⌘1`–`⌘9` | |
 | ブラウザでHubを開く | `⇧⌥⌘O` |  |
+| workspaceのpathをコピー | | 右クリックmenu |
 
 </details>
 
@@ -140,6 +141,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | tmux windowを開く | `⌥⌘T` | |
 | FinderでLogを開く | `⌥⌘L` |  |
 | ブラウザでtimelineを開く | `⌥⌘O` |  |
+| timelineをHTMLとしてExport | | desktopのみ。 |
 
 </details>
 
@@ -188,12 +190,13 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 </details>
 
 <details>
-<summary>Appearance menu (<code>⌘,</code>)</summary>
+<summary>Appearance menu</summary>
 
 | 操作 | キー | 備考 |
 |---|---|---|
 | theme | | System/light/dark |
-| text size | `⌘0` / `⌘+` / `⌘-` | windowも相似にresize |
+| text size | `⌘0` / `⌘+` / `⌘-` | desktopのみ。windowも相似にresize |
+| hand | | mobileのみ。右手/左手に最適化 |
 
 </details>
 

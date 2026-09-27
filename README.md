@@ -113,6 +113,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | New Timeline | `⌘N` | |
 | Switch active timeline | `⌘1`–`⌘9` | |
 | Open Hub in browser | `⇧⌥⌘O` | |
+| Copy workspace path | | right-click menu |
 
 </details>
 
@@ -140,6 +141,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Open tmux window | `⌥⌘T` | |
 | Open log in Finder | `⌥⌘L` | |
 | Open timeline in browser | `⌥⌘O` | |
+| Export timeline as HTML | | Desktop only. |
 
 </details>
 
@@ -188,12 +190,13 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 </details>
 
 <details>
-<summary>Appearance menu (<code>⌘,</code>)</summary>
+<summary>Appearance menu</summary>
 
 | Action | Key | Note |
 |---|---|---|
 | theme | | System / light / dark |
-| text size | `⌘0` / `⌘+` / `⌘-` | Resizes the window to match |
+| text size | `⌘0` / `⌘+` / `⌘-` | Desktop only. Resizes the window to match |
+| hand | | Mobile only. Optimizes for the right / left hand |
 
 </details>
 
