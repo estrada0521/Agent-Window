@@ -20,7 +20,6 @@
       rows.forEach((row) => row.classList.add("export-in-range"));
       const messages = rows.filter((row) => row.matches("article.message-row")).length;
       exportHud.classList.toggle("is-picked", rows.length > 0);
-      exportHudExportBtn.disabled = !rows.length;
       exportHudExportBtn.textContent = rows.length ? String(messages) : "";
       exportHudExportBtn.title = rows.length ? `Export ${messages} message${messages === 1 ? "" : "s"}` : "";
     };

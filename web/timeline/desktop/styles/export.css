@@ -62,11 +62,10 @@
     html[data-theme="dark"] .export-hud-export {
       background: color-mix(in srgb, var(--fg) 60%, var(--muted));
     }
-    .export-hud-export:disabled {
-      opacity: 0.3;
-      cursor: default;
+    .export-hud:not(.is-picked) .export-hud-export {
+      display: none;
     }
-    .export-hud-export:active:not(:disabled) {
+    .export-hud-export:active {
       transform: scale(0.93);
       transition: transform 80ms ease-out;
     }
