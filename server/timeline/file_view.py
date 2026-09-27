@@ -294,7 +294,7 @@ def render_file_view(
             '.html-preview-panels{flex:1;min-height:0;position:relative}'
             '.html-preview-panel{display:none;width:100%;height:100%}'
             '.html-preview-panel.active{display:flex}'
-            '.html-preview-panel-web{min-height:0;flex-direction:column;padding-top:var(--tpad,0px)}'
+            '.html-preview-panel-web{min-height:0;flex-direction:column}'
             '.html-preview-panel-web iframe{flex:1;min-height:0;width:100%;border:0;background:white}'
             '.html-preview-panel-text{min-height:0;flex-direction:column}'
             f'.html-preview-text-wrap{{--preview-gutter-width:{scaled_px(gutter_width)};flex:1;min-height:0;display:flex;min-width:0;position:relative;overflow:hidden;background:transparent}}'
