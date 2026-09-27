@@ -284,6 +284,7 @@ def render_file_view(
             '<button class="html-preview-tab active" type="button" data-preview-mode="text" aria-selected="true">Text</button>'
             '</div>'
         )
+        web_glass_markup = '<div class="html-preview-web-glass"></div>' if embed else ""
         toggle_js = (
             'const root=document.documentElement;'
             'const buttons=Array.from(document.querySelectorAll("[data-preview-mode]"));'
@@ -319,14 +320,15 @@ def render_file_view(
             '.html-preview-panels{flex:1;min-height:0;position:relative}'
             '.html-preview-panel{display:none;width:100%;height:100%}'
             '.html-preview-panel.active{display:flex}'
-            '.html-preview-panel-web{min-height:0;flex-direction:column}'
+            '.html-preview-panel-web{min-height:0;flex-direction:column;position:relative}'
+            f'.html-preview-web-glass{{--preview-glass-rgb:{theme_palette["dark_bg_channels"]};--preview-glass-line:{pane_line};position:absolute;top:0;left:0;right:0;z-index:1;height:calc(var(--tpad,0px) + 12px);background:rgba(var(--preview-glass-rgb),0.92);border-bottom:1px solid var(--preview-glass-line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);pointer-events:none}}'
             '.html-preview-panel-web iframe{flex:1;min-height:0;width:100%;border:0;background:white}'
             '.html-preview-panel-text{min-height:0;flex-direction:column}'
             f'{text_panel_css(gutter_width)}'
             '</style></head>'
             f'<body><div class="html-preview-shell">{tabs_markup}'
             '<div class="html-preview-panels">'
-            f'<div class="html-preview-panel html-preview-panel-web" data-preview-panel="web"><iframe src="{raw_url}" title="{html_escape(filename)}"></iframe></div>'
+            f'<div class="html-preview-panel html-preview-panel-web" data-preview-panel="web">{web_glass_markup}<iframe src="{raw_url}" title="{html_escape(filename)}"></iframe></div>'
             f'<div class="html-preview-panel html-preview-panel-text active" data-preview-panel="text">{text_panel_markup(gutter_rows, code_rows)}</div>'
             f'</div><script>{toggle_js}</script></div></body></html>'
         )

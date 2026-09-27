@@ -72,6 +72,10 @@
       pointer-events: none;
     }
 
+    #mobileSheet.sheet-preview-glass .mobile-bottom-sheet-panel::before {
+      content: none;
+    }
+
     .repo-preview-menu {
       position: absolute;
       right: calc(14px + var(--mobile-sheet-floating-height) + 8px + env(safe-area-inset-right, 0px));

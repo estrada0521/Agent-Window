@@ -17,6 +17,8 @@
       if (shareBtn) shareBtn.hidden = !sheetPreviewOpen();
       const menuBtn = repoPreviewMenuBtn();
       if (menuBtn) menuBtn.hidden = !sheetPreviewOpen();
+      const ext = repoPreviewExt();
+      mobileSheet?.classList.toggle("sheet-preview-glass", sheetPreviewOpen() && (ext === "html" || ext === "htm") && repoPreviewMode === "web");
     };
     const repoPreviewMenuItems = () => {
       const items = [];
@@ -31,6 +33,7 @@
     const selectRepoPreviewText = () => {
       if (hasPreviewModes(repoPreviewExt()) && repoPreviewMode !== "text") {
         repoPreviewMode = "text";
+        syncRepoPreviewControls();
         postRepoPreviewMode();
       }
       const frame = sheetPreviewFrameEl();
@@ -132,6 +135,7 @@
         menuSelect.value = "";
         if (action === "mode") {
           repoPreviewMode = repoPreviewMode === "text" ? "web" : "text";
+          syncRepoPreviewControls();
           postRepoPreviewMode();
           return;
         }
@@ -206,7 +210,7 @@
           style.id = "base-theme-style";
           frameDoc.head?.appendChild(style);
         }
-        style.textContent = `:root{--body-weight:${bodyWeight};--file-preview-code-weight:${codeWeight};--preview-gutter-bg:rgba(${fgRgb},0.06);--preview-gutter-divider:rgba(${fgRgb},0.16)}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.preview-text-gutter-table .ln{color:${lnFg}}.code-table,.preview-text-table,pre{color:${fg}}`;
+        style.textContent = `:root{--body-weight:${bodyWeight};--file-preview-code-weight:${codeWeight};--preview-gutter-bg:rgba(${fgRgb},0.06);--preview-gutter-divider:rgba(${fgRgb},0.16)}.html-preview-web-glass{--preview-glass-rgb:${bgRgb};--preview-glass-line:rgba(${fgRgb},0.08)}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.preview-text-gutter-table .ln{color:${lnFg}}.code-table,.preview-text-table,pre{color:${fg}}`;
         return true;
       } catch (_) { }
       return false;
