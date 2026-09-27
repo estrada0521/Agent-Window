@@ -141,7 +141,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Open tmux window | `⌥⌘T` | |
 | Open log in Finder | `⌥⌘L` | |
 | Open timeline in browser | `⌥⌘O` | |
-| Export timeline as HTML / JSONL | | Desktop only. |
+| Export timeline as HTML / JSONL | | |
 
 </details>
 

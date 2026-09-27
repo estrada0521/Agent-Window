@@ -141,7 +141,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | tmux windowを開く | `⌥⌘T` | |
 | FinderでLogを開く | `⌥⌘L` |  |
 | ブラウザでtimelineを開く | `⌥⌘O` |  |
-| timelineをHTML / JSONLとしてExport | | desktopのみ。 |
+| timelineをHTML / JSONLとしてExport | | |
 
 </details>
 
