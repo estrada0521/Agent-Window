@@ -150,6 +150,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 |---|---|---|
 | Jump to top / bottom | `⌘↑` / `⌘↓` | |
 | Previous / next message | `⌥↑` / `⌥↓` | |
+| Previous / next message from the selected targets | `⌃⌥↑` / `⌃⌥↓` | `user` when none is selected |
 
 </details>
 

@@ -180,12 +180,12 @@
       event.preventDefault();
       (event.key === "ArrowDown" ? jumpConversationToBottom : jumpConversationToTop)();
     });
-    const stepConversationByMessage = (down) => {
+    const stepConversationByMessage = (down, senders = null) => {
       if (document.documentElement.dataset.autoWindowHeight === "1") {
-        if (typeof fitStepToMessage === "function") fitStepToMessage(down);
+        if (typeof fitStepToMessage === "function") fitStepToMessage(down, senders);
         return;
       }
-      const rows = messagesEl.querySelectorAll("article.message-row");
+      const rows = [...messagesEl.querySelectorAll("article.message-row")].filter((row) => !senders || senders.includes(row.dataset.sender));
       if (!rows.length) return;
       const tTop = messagesEl.getBoundingClientRect().top;
       const stepTop = tTop + messageStepTopGap();
@@ -199,6 +199,7 @@
           if (row.getBoundingClientRect().top - stepTop < -2) target = row; else break;
         }
       }
+      if (!target && senders) return;
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;
       if (!down) _stickyToBottom = false;
@@ -208,12 +209,13 @@
       requestAnimationFrame(() => { _programmaticScroll = false; });
     };
     document.addEventListener("keydown", (event) => {
-      if (!event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) return;
+      if (!event.altKey || event.metaKey || event.shiftKey) return;
       if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
       const active = document.activeElement;
       if (active && active.matches && active.matches("input, textarea, [contenteditable='true']")) return;
       event.preventDefault();
-      stepConversationByMessage(event.key === "ArrowDown");
+      const senders = event.ctrlKey ? (selectedTargets.length ? selectedTargets : ["user"]) : null;
+      stepConversationByMessage(event.key === "ArrowDown", senders);
     });
     composerFabBtn?.addEventListener("click", () => {
       openComposerOverlay({ immediateFocus: canCompose() });

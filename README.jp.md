@@ -150,6 +150,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 |---|---|---|
 | 先頭 / 末尾へ移動 | `⌘↑` / `⌘↓` | |
 | 前 / 次のmessage | `⌥↑` / `⌥↓` | |
+| 選択中の宛先の前 / 次のmessage | `⌃⌥↑` / `⌃⌥↓` | 無選択ならuser |
 
 </details>
 

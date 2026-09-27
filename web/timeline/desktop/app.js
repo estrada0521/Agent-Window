@@ -209,8 +209,9 @@ __INCLUDE:../conversation-state.js__
       _stickyToBottom = false;
       reportFitHeight();
     };
-    const fitStepToMessage = (down) => {
-      const rows = fitMessageRows();
+    const fitStepToMessage = (down, senders = null) => {
+      const allRows = fitMessageRows();
+      const rows = allRows.filter((row) => !senders || senders.includes(row.dataset.sender));
       if (!rows.length) return;
       const stepTop = messagesEl.getBoundingClientRect().top + messageStepTopGap();
       let next = null;
@@ -218,7 +219,8 @@ __INCLUDE:../conversation-state.js__
         for (const row of rows) {
           if (row.getBoundingClientRect().top - stepTop > 2) { next = row; break; }
         }
-        if (!next || next === rows[rows.length - 1]) { fitStepToLatest(); return; }
+        if (!next && senders) return;
+        if (!next || next === allRows[allRows.length - 1]) { fitStepToLatest(); return; }
       } else {
         for (const row of rows) {
           if (row.getBoundingClientRect().top - stepTop < -2) next = row; else break;
