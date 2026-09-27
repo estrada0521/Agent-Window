@@ -435,8 +435,12 @@
 
     .git-commit-info-message {
       color: var(--fg);
-      white-space: pre-wrap;
+      white-space: normal;
       overflow-wrap: anywhere;
+    }
+
+    .git-commit-info-message > div + div {
+      margin-top: 1em;
     }
 
     .git-commit-subject {

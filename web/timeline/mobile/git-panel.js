@@ -91,7 +91,11 @@ __INCLUDE:../git-panel-controller.js__
       if (body) {
         const messageEl = document.createElement("div");
         messageEl.className = "git-commit-info-message";
-        messageEl.textContent = body;
+        for (const paragraph of body.split(/\n{2,}/)) {
+          const paragraphEl = document.createElement("div");
+          paragraphEl.textContent = paragraph;
+          messageEl.append(paragraphEl);
+        }
         blockEl.append(messageEl);
       }
       const metaEl = document.createElement("div");
