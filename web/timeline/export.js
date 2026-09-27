@@ -87,6 +87,37 @@
       if (/^data:/i.test(url)) return false;
       return new URL(url, location.href).origin === location.origin;
     };
+    const splitSelectorList = (text) => {
+      const parts = [];
+      let depth = 0;
+      let start = 0;
+      for (let i = 0; i < text.length; i++) {
+        if (text[i] === "(") depth++;
+        else if (text[i] === ")") depth--;
+        else if (text[i] === "," && depth === 0) {
+          parts.push(text.slice(start, i).trim());
+          start = i + 1;
+        }
+      }
+      parts.push(text.slice(start).trim());
+      return parts;
+    };
+    const exportThemeCss = (rules) => [...rules].map((rule) => {
+      if (rule instanceof CSSFontFaceRule) return "";
+      if (rule instanceof CSSMediaRule) return `@media ${rule.conditionText}{${exportThemeCss(rule.cssRules)}}`;
+      if (!(rule instanceof CSSStyleRule)) return rule.cssText;
+      const byTheme = { "": [], light: [], dark: [] };
+      for (const selector of splitSelectorList(rule.selectorText)) {
+        const theme = selector.match(/\[data-theme="(light|dark)"\]/)?.[1] || "";
+        byTheme[theme].push(theme ? selector.replaceAll(`[data-theme="${theme}"]`, ":not([data-theme-none])") : selector);
+      }
+      const body = `{${rule.style.cssText}}`;
+      return [
+        byTheme[""].length ? `${byTheme[""].join(",")}${body}` : "",
+        ...["light", "dark"].filter((theme) => byTheme[theme].length)
+          .map((theme) => `@media (prefers-color-scheme: ${theme}){${byTheme[theme].join(",")}${body}}`),
+      ].join("");
+    }).join("\n");
     const exportRootAttrs = () => ["desktopTimeline", "mobile", "mobileTimeline"]
       .filter((key) => document.documentElement.dataset[key])
       .map((key) => ` data-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}="${document.documentElement.dataset[key]}"`)
@@ -127,10 +158,7 @@
         }
         node.setAttribute("style", style);
       }));
-      const css = [...document.querySelectorAll("style")]
-        .map((node) => node.textContent)
-        .join("\n")
-        .replace(/@font-face\s*{[^}]*}/g, "");
+      const css = [...document.querySelectorAll("style")].map((node) => exportThemeCss(node.sheet.cssRules)).join("\n");
       const katex = host.querySelector(".katex") ? `<link rel="stylesheet" href="${KATEX_CSS_HREF}">` : "";
       const title = escapeHtml(document.title);
       return `<!DOCTYPE html>
@@ -139,7 +167,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
-<script>const m=matchMedia("(prefers-color-scheme: dark)");const t=()=>{document.documentElement.dataset.theme=m.matches?"dark":"light"};t();m.addEventListener("change",t);<\/script>
 ${katex}<style>${css}</style>
 <style>.shell{height:auto;overflow:visible}main#messages{position:static;overflow:visible;padding-block:3em}main#messages::before,main#messages::after{display:none}</style>
 </head>
