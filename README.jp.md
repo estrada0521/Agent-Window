@@ -239,4 +239,4 @@ Agent Window自身がfilesystemへ保存するdataは `~/.agent-window/` と、w
 
 ## License
 
-[0BSD](LICENSE)。画像内のfile iconはMaterial Icon Themeのもの。
+[0BSD](LICENSE)。画像内のfile iconはMaterial Icon ThemeとVS Code Modern Iconsのもの。
