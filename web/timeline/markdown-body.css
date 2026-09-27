@@ -217,11 +217,6 @@
       margin: 0.5em 0;
     }
 
-    .table-scroll>table {
-      width: 100%;
-      margin: 0;
-    }
-
     .md-body .katex-display {
       display: block;
       margin-top: 1em;
@@ -406,7 +401,6 @@
       border-collapse: separate;
       border-spacing: 0;
       width: 100%;
-      margin: 0.5em 0;
       font: inherit;
       border-bottom: var(--table-line-width) solid var(--table-line);
     }
