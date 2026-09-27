@@ -159,6 +159,10 @@
         }
         return;
       }
+      if (action === "exportMessages") {
+        beginExportRange();
+        return;
+      }
       if (action === "openInBrowser") {
         await openExternalLink(`${window.location.protocol}//${window.location.hostname}:__TIMELINE_PORT__/`).catch(reportExternalLinkFailure);
         return;

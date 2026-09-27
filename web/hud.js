@@ -2,26 +2,35 @@
     const createHud = (hud) => {
       let timer = 0;
       let transient = "";
+      let overlay = null;
       const residents = new Map();
-      let shownText = "";
+      let shown = "";
       let state = "hidden";
+      let morphTimer = 0;
       const transitionMs = parseFloat(getComputedStyle(hud).transitionDuration) * 1000;
-      const currentText = () => transient || [...residents.values()].at(-1) || "";
-      const setText = (text) => {
-        shownText = text;
+      const currentContent = () => transient || overlay || [...residents.values()].at(-1) || "";
+      const setContent = (content) => {
+        shown = content;
+        hud.classList.toggle("has-controls", typeof content !== "string");
+        if (typeof content !== "string") {
+          hud.replaceChildren(content);
+          return;
+        }
         const span = document.createElement("span");
         span.className = "hud-text";
-        span.textContent = text;
+        span.textContent = content;
         hud.replaceChildren(span);
       };
-      const morph = (text) => {
+      const morph = (content) => {
+        window.clearTimeout(morphTimer);
         const from = hud.getBoundingClientRect().width;
         hud.style.width = "";
-        setText(text);
+        setContent(content);
         const to = hud.getBoundingClientRect().width;
         hud.style.width = `${from}px`;
         void hud.offsetWidth;
         hud.style.width = `${to}px`;
+        morphTimer = window.setTimeout(() => { hud.style.width = ""; }, transitionMs);
       };
       const toggle = (visible) => {
         state = visible ? "showing" : "hiding";
@@ -30,10 +39,10 @@
       };
       const render = () => {
         if (state === "showing" || state === "hiding") return;
-        const target = currentText();
+        const target = currentContent();
         if (state === "hidden") {
           if (!target) return;
-          setText(target);
+          setContent(target);
           toggle(true);
           return;
         }
@@ -41,12 +50,12 @@
           toggle(false);
           return;
         }
-        if (target !== shownText) morph(target);
+        if (target !== shown) morph(target);
       };
       const settle = () => {
         if (state === "showing") {
           state = "visible";
-          if (currentText() !== shownText) {
+          if (currentContent() !== shown) {
             toggle(false);
             return;
           }
@@ -70,7 +79,15 @@
       const setResidentStatus = (key, text) => {
         residents.delete(key);
         if (text) residents.set(key, text);
+        if (overlay && text) {
+          setStatus(text);
+          return;
+        }
         render();
       };
-      return { setStatus, setResidentStatus };
+      const setOverlay = (node) => {
+        overlay = node;
+        render();
+      };
+      return { setStatus, setResidentStatus, setOverlay };
     };

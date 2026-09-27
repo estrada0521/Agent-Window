@@ -18,7 +18,7 @@ static const CGFloat kMenuIconSize = 18;
 - (BOOL)hasKeyAppearance { return YES; }
 @end
 
-@interface AWApp : NSObject <NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandlerWithReply, WKUIDelegate>
+@interface AWApp : NSObject <NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandlerWithReply, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate>
 @property (strong) AWWindow *window;
 @property (strong) WKWebView *webView;
 @property (strong) NSGlassEffectView *glass;
@@ -137,6 +137,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         [self action:@"openTerminal" title:@"tmux window" key:@"t" mods:cmd | opt],
         [self action:@"revealLog" title:@"Reveal Log" key:@"l" mods:cmd | opt],
         [self action:@"openInBrowser" title:@"Open in Browser" key:@"o" mods:cmd | opt],
+        NSMenuItem.separatorItem,
+        [self action:@"exportMessages" title:@"Export…" key:nil mods:0],
     ] at:p];
 }
 
@@ -422,6 +424,31 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 
 #pragma mark Web view
 
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)action
+    decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
+    decisionHandler(action.shouldPerformDownload ? WKNavigationActionPolicyDownload : WKNavigationActionPolicyAllow);
+}
+
+- (void)webView:(WKWebView *)webView navigationAction:(WKNavigationAction *)action didBecomeDownload:(WKDownload *)download {
+    download.delegate = self;
+}
+
+- (void)download:(WKDownload *)download decideDestinationUsingResponse:(NSURLResponse *)response
+    suggestedFilename:(NSString *)name completionHandler:(void (^)(NSURL *))completionHandler {
+    NSURL *folder = [NSFileManager.defaultManager URLsForDirectory:NSDownloadsDirectory inDomains:NSUserDomainMask].firstObject;
+    NSURL *url = [folder URLByAppendingPathComponent:name];
+    for (NSInteger n = 2; [NSFileManager.defaultManager fileExistsAtPath:url.path]; n++) {
+        NSString *numbered = [NSString stringWithFormat:@"%@ %ld", name.stringByDeletingPathExtension, (long)n];
+        if (name.pathExtension.length) numbered = [numbered stringByAppendingPathExtension:name.pathExtension];
+        url = [folder URLByAppendingPathComponent:numbered];
+    }
+    completionHandler(url);
+}
+
+- (void)download:(WKDownload *)download didFailWithError:(NSError *)error resumeData:(NSData *)resumeData {
+    [[NSAlert alertWithError:error] beginSheetModalForWindow:self.window completionHandler:nil];
+}
+
 - (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
     initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(NSArray<NSURL *> *))completionHandler {
     NSOpenPanel *panel = NSOpenPanel.openPanel;
@@ -682,6 +709,7 @@ static BOOL HubReady(NSInteger port) {
     self.webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     self.webView.inspectable = YES;
     self.webView.UIDelegate = self;
+    self.webView.navigationDelegate = self;
     [self.webView setValue:@NO forKey:@"drawsBackground"];
     self.webView.underPageBackgroundColor = NSColor.clearColor;
     [content addSubview:self.webView];

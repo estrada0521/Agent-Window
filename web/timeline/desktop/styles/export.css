@@ -1,0 +1,72 @@
+    html[data-export-range] #messages :is(article.message-row, .sysmsg-row) {
+      cursor: pointer;
+    }
+    html[data-export-range] #messages .export-in-range {
+      background: color-mix(in srgb, var(--fg) 6%, transparent);
+    }
+    .hud.has-controls {
+      padding: 0 var(--pill-row-margin);
+    }
+    .hud.has-controls.is-visible {
+      pointer-events: auto;
+    }
+    .export-hud {
+      display: flex;
+      align-items: center;
+      gap: 0.2em;
+      height: 100%;
+      color: var(--fg);
+    }
+    .export-hud button {
+      appearance: none;
+      flex: none;
+      height: var(--pill-row-height);
+      min-width: var(--pill-row-height);
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      font: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .export-hud-cancel {
+      background: transparent;
+      color: var(--muted);
+    }
+    .has-hover .export-hud-cancel:hover {
+      color: var(--fg);
+    }
+    .export-hud-cancel svg {
+      width: calc(var(--pill-row-height) * 0.5);
+      height: calc(var(--pill-row-height) * 0.5);
+    }
+    .export-hud-guide {
+      max-width: 12em;
+      margin-inline: 0.3em;
+      overflow: hidden;
+      transition: max-width 0.3s ease, margin 0.3s ease, opacity 0.3s ease;
+    }
+    .export-hud.is-picked .export-hud-guide {
+      max-width: 0;
+      margin-inline: -0.1em;
+      opacity: 0;
+    }
+    .export-hud .export-hud-export {
+      padding-inline: 0.6em;
+      background: var(--fg);
+      color: var(--surface);
+      font-variant-numeric: tabular-nums;
+    }
+    html[data-theme="dark"] .export-hud-export {
+      background: color-mix(in srgb, var(--fg) 60%, var(--muted));
+    }
+    .export-hud-export:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+    .export-hud-export:active:not(:disabled) {
+      transform: scale(0.93);
+      transition: transform 80ms ease-out;
+    }

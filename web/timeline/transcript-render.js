@@ -233,7 +233,7 @@
       }
     };
 __INCLUDE:../hud.js__
-    const { setStatus, setResidentStatus } = createHud(document.getElementById("timelineHud"));
+    const { setStatus, setResidentStatus, setOverlay: setHudOverlay } = createHud(document.getElementById("timelineHud"));
     const agentActionCandidates = (mode) => {
       if (mode === "add") return ALL_BASE_AGENTS.filter(Boolean);
       return availableTargets;
