@@ -138,7 +138,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         [self action:@"revealLog" title:@"Reveal Log" key:@"l" mods:cmd | opt],
         [self action:@"openInBrowser" title:@"Open in Browser" key:@"o" mods:cmd | opt],
         NSMenuItem.separatorItem,
-        [self action:@"exportMessages" title:@"Export…" key:nil mods:0],
+        [self action:@"exportHtml" title:@"Export as HTML…" key:nil mods:0],
+        [self action:@"exportJsonl" title:@"Export as JSONL…" key:nil mods:0],
     ] at:p];
 }
 

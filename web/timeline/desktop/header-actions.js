@@ -159,8 +159,8 @@
         }
         return;
       }
-      if (action === "exportMessages") {
-        beginExportRange();
+      if (action === "exportHtml" || action === "exportJsonl") {
+        beginExportRange(action === "exportJsonl" ? "jsonl" : "html");
         return;
       }
       if (action === "openInBrowser") {

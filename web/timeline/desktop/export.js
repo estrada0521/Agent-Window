@@ -23,13 +23,13 @@
       exportHudExportBtn.textContent = rows.length ? String(messages) : "";
       exportHudExportBtn.title = rows.length ? `Export ${messages} message${messages === 1 ? "" : "s"}` : "";
     };
-    const beginExportRange = () => {
+    const beginExportRange = (format) => {
       const rows = exportRows();
       if (!rows.length) {
         setStatus("No messages to export");
         return;
       }
-      exportRange = { start: null, end: rows[rows.length - 1] };
+      exportRange = { format, start: null, end: rows[rows.length - 1] };
       document.documentElement.dataset.exportRange = "1";
       exportHud.classList.remove("is-picked");
       syncExportRange();
@@ -151,8 +151,16 @@ ${katex}<style>${css}</style>
       const name = document.title.split(" · ")[0] || "timeline";
       try {
         const link = document.createElement("a");
-        link.href = URL.createObjectURL(new Blob([await buildExportHtml(rows)], { type: "text/html" }));
-        link.download = `${name}.html`;
+        if (exportRange.format === "jsonl") {
+          const params = new URLSearchParams({ from: rows[0].dataset.contextHash || "", to: rows[rows.length - 1].dataset.contextHash || "" });
+          const res = await fetch(`/log-slice?${params.toString()}`);
+          if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
+          link.href = URL.createObjectURL(new Blob([await res.blob()], { type: "application/x-ndjson" }));
+          link.download = `${name}.jsonl`;
+        } else {
+          link.href = URL.createObjectURL(new Blob([await buildExportHtml(rows)], { type: "text/html" }));
+          link.download = `${name}.html`;
+        }
         link.click();
         endExportRange();
         setStatus(document.documentElement.dataset.nativeApp === "1" ? "Exported to ~/Downloads" : "Exported");

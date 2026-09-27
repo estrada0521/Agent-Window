@@ -4,6 +4,7 @@ import json
 from urllib.parse import parse_qs
 
 from server.appearance.typography import MOBILE_TEXT_SIZE
+from fs.log.jsonl import log_slice
 from git import repo as workspace_git
 from server.request import request_base_path
 from server.timeline.file_view import render_file_view
@@ -214,6 +215,21 @@ def _get_git_overview(handler, parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
+def _get_log_slice(handler, parsed, ctx) -> None:
+    qs = parse_qs(parsed.query)
+    try:
+        body = log_slice(
+            ctx["state"].log_path,
+            start_hash=(qs.get("from", [""])[0] or "").strip(),
+            end_hash=(qs.get("to", [""])[0] or "").strip(),
+        )
+    except LookupError as exc:
+        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
+        _send_bytes(handler, 404, body, content_type="application/json; charset=utf-8")
+        return
+    _send_bytes(handler, 200, body, content_type="application/x-ndjson; charset=utf-8")
+
+
 def _get_git_diff_files(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     commit_hash = (qs.get("hash", [""])[0] or "").strip()
@@ -282,6 +298,7 @@ def _get_shortcut_commands(handler, _parsed, ctx) -> None:
 
 _GET_ROUTES = {
     "/messages": _get_messages,
+    "/log-slice": _get_log_slice,
     "/trace": _get_trace,
     "/file-raw": _get_file_raw,
     "/file-view": _get_file_view,

@@ -36,7 +36,7 @@ def append_jsonl_entry(path: Path | str, entry: dict) -> dict:
 _REVERSE_READ_BLOCK = 64 * 1024
 
 
-def iter_log_entries_reversed(path: Path):
+def iter_log_lines_reversed(path: Path):
     with path.open("rb") as handle:
         handle.seek(0, os.SEEK_END)
         pos = handle.tell()
@@ -67,7 +67,25 @@ def iter_log_entries_reversed(path: Path):
                 raw = body[start:end]
                 end = start
                 if raw:
-                    yield json.loads(raw)
+                    yield raw
+
+
+def iter_log_entries_reversed(path: Path):
+    for raw in iter_log_lines_reversed(path):
+        yield json.loads(raw)
+
+
+def log_slice(path: Path, *, start_hash: str, end_hash: str) -> bytes:
+    picked: list[bytes] = []
+    for raw in iter_log_lines_reversed(path):
+        context_hash = json.loads(raw).get("context_hash")
+        if not picked and context_hash != end_hash:
+            continue
+        picked.append(raw)
+        if context_hash == start_hash:
+            picked.reverse()
+            return b"".join(picked)
+    raise LookupError(f"context_hash {start_hash if picked else end_hash} not found in the log")
 
 
 def newest_entries(path: Path, *, offset: int, limit: int) -> list[dict]:

@@ -35,7 +35,8 @@
         { value: "openFinder", label: "Finder" },
         { value: "openTerminal", label: "tmux window" },
         { value: "revealLog", label: "Reveal Log" },
-        { value: "exportMessages", label: "Export…" },
+        { value: "exportHtml", label: "Export as HTML…" },
+        { value: "exportJsonl", label: "Export as JSONL…" },
       ], (action) => {
         if (!agents[action]) {
           onAction({ action });
