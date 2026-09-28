@@ -34,17 +34,17 @@
       }
     };
 __INCLUDE:transcript-refresh.js__
-    let _shortcutCommandsCache = null;
-    const loadShortcutCommandsOnce = async () => {
-      if (_shortcutCommandsCache) return _shortcutCommandsCache;
-      const r = await fetch("/shortcut-commands", { cache: "no-store" });
-      if (!r.ok) throw new Error("shortcut-commands failed");
+    let _slashCommandsCache = null;
+    const loadSlashCommandsOnce = async () => {
+      if (_slashCommandsCache) return _slashCommandsCache;
+      const r = await fetch("/slash-commands", { cache: "no-store" });
+      if (!r.ok) throw new Error("Slash commands failed");
       const j = await r.json();
       const commands = Array.isArray(j.commands) ? j.commands : [];
       const isMobile = document.documentElement.dataset.mobile === "1";
       const list = commands.filter((command) => isMobile ? !command.desktop_only : !command.mobile_only);
-      if (!list.length) throw new Error("empty shortcut commands");
-      _shortcutCommandsCache = list;
+      if (!list.length) throw new Error("No slash commands");
+      _slashCommandsCache = list;
       return list;
     };
     const parseSlashCommandInput = (rawInput, list) => {
@@ -77,10 +77,10 @@ __INCLUDE:transcript-refresh.js__
       }
       syncAgentMenuOptions();
     };
-    const postShortcutCommand = async ({
+    const postAgentCommand = async ({
       command_id,
       arg = "",
-      path = "/shortcut-command",
+      path = "/key-macro",
       target = selectedTargets.join(","),
     }) => {
       if (sendLocked) {
@@ -105,7 +105,7 @@ __INCLUDE:transcript-refresh.js__
         });
         const data = await res.json();
         if (!res.ok || !data.ok) {
-          throw new Error(data.error || "shortcut failed");
+          throw new Error(data.error || "Command failed");
         }
         applyTimelineActivation(data);
         void refresh();
@@ -141,7 +141,7 @@ __INCLUDE:transcript-refresh.js__
       if (commandInput.startsWith("/")) {
         let list;
         try {
-          list = await loadShortcutCommandsOnce();
+          list = await loadSlashCommandsOnce();
         } catch (err) {
           setStatus(err?.message || "Commands unavailable");
           sendLocked = false;
@@ -165,7 +165,7 @@ __INCLUDE:transcript-refresh.js__
           }
           setStatus("");
           try {
-            const res = await fetch(parsed.path || "/shortcut-command", {
+            const res = await fetch(parsed.path, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -176,7 +176,7 @@ __INCLUDE:transcript-refresh.js__
             });
             const data = await res.json();
             if (!res.ok || !data.ok) {
-              throw new Error(data.error || "shortcut failed");
+              throw new Error(data.error || "Command failed");
             }
             applyTimelineActivation(data);
             clearComposerDraft();

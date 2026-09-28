@@ -143,7 +143,7 @@
       const action = String(target || "");
       if (!action) return;
       if (action === "esc" || action === "restart" || action === "ctrlc" || action === "enter") {
-        await postShortcutCommand({ command_id: action, arg: "" });
+        await postAgentCommand({ command_id: action, path: action === "restart" ? "/restart-agent" : "/key-macro" });
         return;
       }
       if (action === "reloadTimeline") {

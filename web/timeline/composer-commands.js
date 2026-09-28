@@ -79,7 +79,7 @@
       void (async () => {
         let list;
         try {
-          list = await loadShortcutCommandsOnce();
+          list = await loadSlashCommandsOnce();
         } catch (err) {
           cancelCmdAutocompleteLoading();
           closeCmdDrop();

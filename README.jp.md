@@ -204,7 +204,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 Tailscale等でHubに接続し、PWAとして使う。gitやfile treeへ繋がるmenuは左スワイプで開く。
 
-`Pane Trace` でCLI本体を確認できる。最低限のキーマクロはボタンにしてある。`tmux/shortcut_command/catalog.py` の `PANE_TEXT_MACROS` でよく使うCLIコマンドを登録できる。
+`Pane Trace` でCLI本体を確認できる。最低限のキーマクロはボタンにしてある。`tmux/key_macro.py` の `PANE_TEXT_MACROS` でよく使うCLIコマンドを登録できる。
 
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">

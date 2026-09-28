@@ -6,7 +6,7 @@
       --liquid-glass-button-size: 44px;
     }
     .mobile-bottom-sheet-button,
-    .pane-viewer-shortcut-btn,
+    .pane-viewer-key-btn,
     .page-header .page-header-actions .page-menu-btn,
     .shell > .page-header .page-title,
     #composerFabBtn,
@@ -19,7 +19,7 @@
       -webkit-touch-callout: none;
     }
     .mobile-bottom-sheet-button:active:not(:disabled),
-    .pane-viewer-shortcut-btn:active,
+    .pane-viewer-key-btn:active,
     .page-header .page-header-actions .page-menu-btn:active,
     .page-header .page-header-actions .page-menu-btn:has(+ #pageNativeMenuBridge:active),
     .shell > .page-header .page-title:active,
@@ -28,7 +28,7 @@
       transform: scale(var(--liquid-glass-press-scale));
     }
     .mobile-bottom-sheet-button:active:not(:disabled),
-    .pane-viewer-shortcut-btn:active,
+    .pane-viewer-key-btn:active,
     .page-header .page-header-actions .page-menu-btn:active,
     .page-header .page-header-actions .page-menu-btn:has(+ #pageNativeMenuBridge:active),
     .shell > .page-header .page-title:active,

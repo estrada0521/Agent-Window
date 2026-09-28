@@ -9,7 +9,7 @@ from git import repo as workspace_git
 from server.request import request_base_path
 from server.timeline.file_view import render_file_view
 from server.timeline.state import ENTRY_WINDOW_LIMIT
-from tmux.shortcut_command.catalog import public_slash_command_dicts
+from server.timeline.slash_commands import public_slash_command_dicts
 
 
 def _send_bytes(
@@ -290,7 +290,7 @@ def _get_git_worktree_stat(handler, _parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
-def _get_shortcut_commands(handler, _parsed, ctx) -> None:
+def _get_slash_commands(handler, _parsed, ctx) -> None:
     del ctx
     body = json.dumps({"commands": public_slash_command_dicts()}, ensure_ascii=True).encode("utf-8")
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
@@ -311,7 +311,7 @@ _GET_ROUTES = {
     "/git-file-diff": _get_git_file_diff,
     "/git-commit-info": _get_git_commit_info,
     "/git-worktree-stat": _get_git_worktree_stat,
-    "/shortcut-commands": _get_shortcut_commands,
+    "/slash-commands": _get_slash_commands,
 }
 
 

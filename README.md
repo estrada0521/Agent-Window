@@ -204,7 +204,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 
 Connect to the Hub via Tailscale or similar, and use it as a PWA. Swipe left to open the menu that leads to git and the file tree.
 
-`Pane Trace` shows the CLI itself. A minimal set of key macros is provided as buttons. Register frequently used CLI commands in `PANE_TEXT_MACROS` in `tmux/shortcut_command/catalog.py`.
+`Pane Trace` shows the CLI itself. A minimal set of key macros is provided as buttons. Register frequently used CLI commands in `PANE_TEXT_MACROS` in `tmux/key_macro.py`.
 
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">

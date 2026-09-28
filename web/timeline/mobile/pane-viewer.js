@@ -21,16 +21,16 @@
       paneViewerMacroSelect.value = "";
       const agent = paneViewerAgents[lastPaneViewerTabIdx];
       if (!commandId || !agent) return;
-      void postShortcutCommand({ command_id: commandId, arg: "", target: agent });
+      void postAgentCommand({ command_id: commandId, arg: "", target: agent });
     });
     paneViewerMacroSelect?.addEventListener("blur", () => {
       setTimeout(() => { paneViewerMacroSelect.value = ""; }, 0);
     });
-    document.getElementById("paneViewerShortcuts")?.querySelectorAll(".pane-viewer-shortcut-btn[data-shortcut]").forEach((btn) => {
+    document.getElementById("paneViewerKeys")?.querySelectorAll(".pane-viewer-key-btn[data-key-macro]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const agent = paneViewerAgents[lastPaneViewerTabIdx];
         if (!agent) return;
-        void postShortcutCommand({ command_id: btn.dataset.shortcut, arg: "", target: agent });
+        void postAgentCommand({ command_id: btn.dataset.keyMacro, arg: "", target: agent });
       });
     });
     const scrollPaneSlideToBottom = (slide) => {

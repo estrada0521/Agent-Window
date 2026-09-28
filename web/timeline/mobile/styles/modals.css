@@ -83,17 +83,17 @@
     }
 
     #paneTracePanel {
-      --pane-viewer-shortcuts-bottom: calc(var(--mobile-sheet-footer-bottom) + var(--mobile-sheet-floating-height) + 14px);
-      --pane-viewer-shortcuts-height: 38px;
+      --pane-viewer-keys-bottom: calc(var(--mobile-sheet-footer-bottom) + var(--mobile-sheet-floating-height) + 14px);
+      --pane-viewer-keys-height: 38px;
     }
 
-    .pane-viewer-shortcuts {
+    .pane-viewer-keys {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
       position: absolute;
-      bottom: var(--pane-viewer-shortcuts-bottom);
+      bottom: var(--pane-viewer-keys-bottom);
       left: 50%;
       transform: translateX(-50%);
       z-index: 6;
@@ -101,11 +101,11 @@
       pointer-events: none;
     }
 
-    .pane-viewer-shortcut-btn {
+    .pane-viewer-key-btn {
       appearance: none;
       -webkit-appearance: none;
-      width: var(--pane-viewer-shortcuts-height);
-      height: var(--pane-viewer-shortcuts-height);
+      width: var(--pane-viewer-keys-height);
+      height: var(--pane-viewer-keys-height);
       flex: 0 0 auto;
       border-radius: 999px;
       border: 0.5px solid var(--liquid-glass-lg-border);
@@ -126,14 +126,14 @@
       transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform var(--liquid-glass-press-out);
     }
 
-    .pane-viewer-shortcut-native-select {
+    .pane-viewer-key-native-select {
       position: absolute;
       left: 50%;
       bottom: calc(100% + 16px);
       transform: translateX(-50%);
       z-index: 1;
-      width: var(--pane-viewer-shortcuts-height);
-      height: var(--pane-viewer-shortcuts-height);
+      width: var(--pane-viewer-keys-height);
+      height: var(--pane-viewer-keys-height);
       opacity: 0.01;
       pointer-events: none;
       appearance: none;
@@ -143,11 +143,11 @@
       cursor: pointer;
     }
 
-    .pane-viewer-shortcut-native-select:focus {
+    .pane-viewer-key-native-select:focus {
       outline: none;
     }
 
-    .pane-viewer-shortcut-btn:active {
+    .pane-viewer-key-btn:active {
       background:
         var(--liquid-glass-lg-active-tint),
         rgba(var(--bg-rgb), var(--liquid-glass-lg-active-fill-opacity));
@@ -155,13 +155,13 @@
       box-shadow: var(--liquid-glass-lg-active-shadow);
     }
 
-    .pane-viewer-shortcut-btn svg {
+    .pane-viewer-key-btn svg {
       width: 17px;
       height: 17px;
       display: block;
     }
 
-    .pane-viewer-shortcut-btn-text {
+    .pane-viewer-key-btn-text {
       font-family: var(--font-code);
       font-size: 12px;
       font-weight: 600;
@@ -273,7 +273,7 @@
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 100px 12px calc(var(--pane-viewer-shortcuts-bottom) + var(--pane-viewer-shortcuts-height) + 14px);
+      padding: 100px 12px calc(var(--pane-viewer-keys-bottom) + var(--pane-viewer-keys-height) + 14px);
       font-family: var(--font-code);
       font-weight: var(--body-weight);
       font-style: normal;

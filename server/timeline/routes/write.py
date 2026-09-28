@@ -10,7 +10,7 @@ from fs.log.paths import workspace_upload_dir
 from server.timeline.control import add_agent, remove_agent
 from tmux import TMUX, TMUX_SOCKET_NAME
 from tmux.lifecycle import respawn_pane
-from tmux.shortcut_command.execute import run_shortcut_command
+from tmux.key_macro import run_key_macro
 from agents.executables import agent_launch_cmd
 from git import repo as workspace_git
 
@@ -537,26 +537,37 @@ def _post_native_log(handler, _parsed, ctx) -> None:
     handler._send_json(status, body)
 
 
-def _post_shortcut_command(handler, _parsed, ctx) -> None:
+def _post_key_macro(handler, _parsed, ctx) -> None:
     data, err = _read_json_body(handler)
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
     state = ctx["state"]
-    command_id = str(data.get("command_id") or "").strip().lower()
-    target = str(data.get("target") or "")
-    if command_id == "idle":
-        status, body = _run_idle_command(state, target)
-    elif command_id == "restart":
-        status, body = _run_restart_command(state, target)
-    else:
-        status, body = run_shortcut_command(
-            agent_panes=state.agent_panes(),
-            terminal_pane=state.pane_id_for_terminal(),
-            command_id=command_id,
-            arg=str(data.get("arg") or ""),
-            target=target,
-        )
+    status, body = run_key_macro(
+        agent_panes=state.agent_panes(),
+        terminal_pane=state.pane_id_for_terminal(),
+        macro_id=str(data.get("command_id") or ""),
+        arg=str(data.get("arg") or ""),
+        target=str(data.get("target") or ""),
+    )
+    handler._send_json(status, body)
+
+
+def _post_restart_agent(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    status, body = _run_restart_command(ctx["state"], str(data.get("target") or ""))
+    handler._send_json(status, body)
+
+
+def _post_mark_idle(handler, _parsed, ctx) -> None:
+    data, err = _read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    status, body = _run_idle_command(ctx["state"], str(data.get("target") or ""))
     handler._send_json(status, body)
 
 
@@ -636,7 +647,9 @@ _POST_ROUTES = {
     "/reveal-log": _post_reveal_log,
     "/quick-look": _post_quick_look,
     "/open-diff": _post_open_diff,
-    "/shortcut-command": _post_shortcut_command,
+    "/key-macro": _post_key_macro,
+    "/restart-agent": _post_restart_agent,
+    "/mark-idle": _post_mark_idle,
     "/native-log": _post_native_log,
     "/agent-running": _post_agent_running,
     "/send": _post_send,
