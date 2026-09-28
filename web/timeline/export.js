@@ -176,11 +176,22 @@ ${katex}<style>${css}</style>
 </html>
 `;
     };
+    const exportFileStem = (rows) => {
+      const [start, end] = [rows[0], rows[rows.length - 1]].map((row) => {
+        const timestamp = (latestPayloadData?.entries || []).find((entry) => entry.context_hash === row.dataset.contextHash)?.timestamp;
+        if (!timestamp) throw new Error("No timestamp for the range");
+        return { day: timestamp.slice(0, 10), time: timestamp.slice(11, 16).replace(":", "") };
+      });
+      const name = document.title.split(" · ")[0] || "timeline";
+      return start.day === end.day
+        ? `${name} ${start.day} ${start.time}-${end.time}`
+        : `${name} ${start.day} ${start.time} - ${end.day} ${end.time}`;
+    };
     const runExport = async () => {
       const rows = exportRangeRows();
       if (!rows.length) return;
-      const name = document.title.split(" · ")[0] || "timeline";
       try {
+        const name = exportFileStem(rows);
         let file;
         if (exportRange.format === "jsonl") {
           const params = new URLSearchParams({ from: rows[0].dataset.contextHash || "", to: rows[rows.length - 1].dataset.contextHash || "" });
