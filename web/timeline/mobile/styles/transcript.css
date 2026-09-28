@@ -700,9 +700,6 @@
       min-width: 0;
     }
 
-    .katex-display::-webkit-scrollbar { display: none; }
-    .katex-display { scrollbar-width: none; -ms-overflow-style: none; }
-
     html[data-theme="light"] .message-row:not(.user) .message::before {
       width: 1.5px;
     }
