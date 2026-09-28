@@ -75,7 +75,7 @@ __INCLUDE:transcript-refresh.js__
         saveTargetSelection(currentTimelineName, selectedTargets);
         renderTargetPicker(availableTargets);
       }
-      syncAgentMenuOptions();
+      syncSessionMenuOptions();
     };
     const postAgentCommand = async ({
       command_id,

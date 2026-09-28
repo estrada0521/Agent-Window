@@ -240,8 +240,8 @@ __INCLUDE:../hud.js__
       if (mode === "add") return ALL_BASE_AGENTS.filter(Boolean);
       return availableTargets;
     };
-    const syncAgentMenuOptions = () => {
-      document.querySelectorAll('option[value="addAgent"]').forEach((option) => {
+    const syncSessionMenuOptions = () => {
+      document.querySelectorAll('option:is([value="addAgent"], [value="openPaneTraceWindow"])').forEach((option) => {
         option.disabled = !sessionActive;
       });
       document.querySelectorAll('option[value="removeAgent"]').forEach((option) => {

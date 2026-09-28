@@ -72,7 +72,7 @@
       });
       syncThinkingRunningItems(data.statuses, { suppressRender: true });
       renderAgentStatus(data.statuses);
-      syncAgentMenuOptions();
+      syncSessionMenuOptions();
       setResidentStatus("thread-stopped", data.stopped_threads.join(" · "));
       if (document.documentElement.dataset.mobile !== "1" && typeof data.timeline === "string" && data.timeline) {
         onTimelineSummaryPinReload();
