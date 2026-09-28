@@ -12,6 +12,7 @@
       const setContent = (content) => {
         shown = content;
         hud.classList.toggle("has-controls", typeof content !== "string");
+        hud.classList.toggle("is-transient", !!transient && content === transient);
         if (typeof content !== "string") {
           hud.replaceChildren(content);
           return;

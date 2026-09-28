@@ -34,7 +34,8 @@
       transform: translate(-50%, -100%) scale(0.8);
       transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s;
     }
-    html:not(:has(.mobile-sheet-overlay:is(.open, .sheet-closing))) .hud.is-visible {
+    html:not(:has(.mobile-sheet-overlay:is(.open, .sheet-closing))) .hud.is-visible,
+    .hud.is-visible.is-transient {
       opacity: 1;
       visibility: visible;
       transform: translate(-50%, 0) scale(1);
