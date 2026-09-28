@@ -148,6 +148,11 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       if (["system", "light", "dark"].includes(stored)) {{
         document.documentElement.dataset.themeDesktop = stored;
       }}
+      const storedSize = localStorage.getItem("agent_window_text_size");
+      const size = storedSize === null
+        ? __TEXT_SIZE_DEFAULT__
+        : Math.max(__TEXT_SIZE_MIN__, Math.min(__TEXT_SIZE_MAX__, Math.round(Number(storedSize))));
+      document.documentElement.style.setProperty("--text-size", `${{size}}px`);
     }})();
   </script>
   <meta name="theme-color" content="__DARK_BG__">
@@ -181,18 +186,13 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
     @media (prefers-color-scheme: dark) {{
       html[data-theme-desktop="system"] {{ --launch-shell-title-fg: rgb(255,255,255); }}
     }}
-    body {{
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      font-family: var(--font-main);
-    }}
+    body {{ font-family: var(--font-main); }}
     .launch-shell {{
       display: flex;
       align-items: center;
       justify-content: center;
       width: 100%;
-      min-height: calc(100dvh - 48px);
+      min-height: 100dvh;
     }}
     .launch-shell-card {{
       display: inline-flex;
@@ -214,10 +214,9 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
     .launch-shell-title {{
       color: var(--launch-shell-title-fg, var(--fg));
       font-family: "Snell Roundhand", "Apple Chancery", cursive;
-      font-size: 30px;
+      font-size: calc(var(--text-size, 13px) * 1.69);
       font-weight: 200;
       letter-spacing: -0.04em;
-      line-height: 1;
       white-space: nowrap;
       opacity: 0;
       animation: titleFadeIn 800ms ease-out forwards;
@@ -235,6 +234,7 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
     .launch-shell-card.is-error {{
       width: auto;
       height: auto;
+      padding: 24px;
       font-size: 13px;
       line-height: 1.5;
       color: var(--fg);
@@ -466,6 +466,9 @@ class Handler(BaseHTTPRequestHandler):
             .replace("__THEME_DESKTOP__", DESKTOP_THEME_DEFAULT)
             .replace("__THEME_MOBILE__", MOBILE_THEME_DEFAULT)
             .replace("__VIEW_VARIANT__", variant)
+            .replace("__TEXT_SIZE_DEFAULT__", str(DESKTOP_TEXT_SIZE))
+            .replace("__TEXT_SIZE_MIN__", str(TEXT_SIZE_MIN))
+            .replace("__TEXT_SIZE_MAX__", str(TEXT_SIZE_MAX))
         )
         page = page.replace(
             "__SYSTEM_LIGHT_FG__",
