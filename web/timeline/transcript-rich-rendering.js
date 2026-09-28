@@ -148,21 +148,17 @@
       return s !== "" && s !== "user" && s !== "system";
     };
     const STREAM_REVEAL_SKIP_SEL = ".katex, .katex-display, table, .table-scroll, script, style";
-    const STREAM_REVEAL_ANIM_MS = 21;
-    const STREAM_REVEAL_STEP_MS = 8;
-    const STREAM_REVEAL_MAX_MS = 750;
-    const streamGraphemeSegmenter = typeof Intl !== "undefined" && Intl.Segmenter
-      ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
-      : null;
+    const STREAM_REVEAL_ANIM_MS = 200;
+    const STREAM_REVEAL_STEP_MS = 10;
+    const STREAM_REVEAL_MAX_MS = 500;
+    const streamWordSegmenter = new Intl.Segmenter(undefined, { granularity: "word" });
     const streamTextUnits = (text) => {
-      const raw = String(text || "");
-      if (!raw) return [];
-      if (streamGraphemeSegmenter) {
-        try {
-          return Array.from(streamGraphemeSegmenter.segment(raw), (part) => part.segment);
-        } catch (_) {}
+      const units = [];
+      for (const { segment } of streamWordSegmenter.segment(text)) {
+        if (units.length && !/\S/.test(segment)) units[units.length - 1] += segment;
+        else units.push(segment);
       }
-      return Array.from(raw);
+      return units;
     };
     const unwrapStreamRevealSpans = (row) => {
       if (!row) return;
@@ -172,6 +168,7 @@
         });
         try { md.normalize(); } catch (_) {}
         md.style.removeProperty("--stream-reveal-delay");
+        md.style.removeProperty("--stream-reveal-anim");
         delete md.dataset.streamRevealApplied;
       });
     };
@@ -233,6 +230,7 @@
       }
       const stepDelay = totalDuration / revealSteps;
       mdBody.style.setProperty("--stream-reveal-delay", stepDelay + "ms");
+      mdBody.style.setProperty("--stream-reveal-anim", STREAM_REVEAL_ANIM_MS + "ms");
       row._streamRevealTotalMs = totalDuration + STREAM_REVEAL_ANIM_MS + 80;
     };
     const metaAgentLabel = (name, textClass, iconSide = "right", { iconOnly = false } = {}) => {

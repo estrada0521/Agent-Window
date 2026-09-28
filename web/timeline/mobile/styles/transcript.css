@@ -152,8 +152,8 @@
 
     .streaming-body-reveal .md-body .stream-reveal-chunk {
       opacity: 0;
-      animation: streamReveal 0.021s ease forwards;
-      animation-delay: calc(var(--stream-reveal-step) * var(--stream-reveal-delay, 8ms));
+      animation: streamReveal var(--stream-reveal-anim) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation-delay: calc(var(--stream-reveal-step) * var(--stream-reveal-delay));
     }
 
     @media (prefers-reduced-motion: reduce) {
