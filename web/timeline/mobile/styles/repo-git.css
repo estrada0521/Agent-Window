@@ -70,7 +70,7 @@
 
     .git-file-diff {
       display: none;
-      margin: 2px 0 10px;
+      margin: calc(-1 * var(--sheet-list-item-gap)) calc(-1 * var(--sheet-list-padding-inline)) 10px;
     }
 
     #mobileSheet.git-diffs-expanded .git-file-diff {
@@ -97,7 +97,6 @@
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
-      border-radius: 8px;
       background: color-mix(in srgb, var(--fg) 3%, transparent);
     }
 
@@ -107,7 +106,7 @@
 
     .git-diff-line {
       min-width: max-content;
-      padding: 0 10px;
+      padding: 0 calc(var(--sheet-list-padding-inline) + var(--sheet-list-row-padding-inline));
       white-space: pre;
       font-family: var(--font-code);
       font-size: calc(var(--text-size, 13px) * 11 / 13);
@@ -125,6 +124,7 @@
 
     .git-diff-line.is-hunk {
       color: var(--muted);
+      background: color-mix(in srgb, var(--fg) 6%, transparent);
       padding-top: 6px;
       padding-bottom: 2px;
     }
