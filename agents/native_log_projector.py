@@ -7,12 +7,12 @@ from pathlib import Path
 from typing import Callable
 
 from agents import agent_base_name, resolve_binding
-from agents.binding_models import NativeLogBinding, PaneBindingRequest
-from agents.claude.read_updates import sync_claude_native_log
-from agents.codex.read_updates import sync_codex_native_log
-from agents.cursor.read_updates import sync_cursor_native_log
-from agents.antigravity.read_updates import sync_antigravity_native_log
-from agents.grok.read_updates import sync_grok_native_log
+from agents.binding import NativeLogBinding, PaneBindingRequest
+from agents.claude.read_updates import project_claude_native_log
+from agents.codex.read_updates import project_codex_native_log
+from agents.cursor.read_updates import project_cursor_native_log
+from agents.antigravity.read_updates import project_antigravity_native_log
+from agents.grok.read_updates import project_grok_native_log
 from agents.native_log_watcher import NativeLogWatcher
 from tmux.session import pane_field
 
@@ -21,16 +21,16 @@ BIND_TIMEOUT_SECONDS = 3.0
 MIN_RUNNING_DISPLAY_SECONDS = 0.5
 MAX_RUNNING_DISPLAY_QUEUE = 20
 
-_SYNC_BY_BASE = {
-    "claude": sync_claude_native_log,
-    "codex": sync_codex_native_log,
-    "cursor": sync_cursor_native_log,
-    "antigravity": sync_antigravity_native_log,
-    "grok": sync_grok_native_log,
+_PROJECT_BY_BASE = {
+    "claude": project_claude_native_log,
+    "codex": project_codex_native_log,
+    "cursor": project_cursor_native_log,
+    "antigravity": project_antigravity_native_log,
+    "grok": project_grok_native_log,
 }
 
 
-class NativeLogSync:
+class NativeLogProjector:
     def __init__(
         self,
         *,
@@ -52,7 +52,7 @@ class NativeLogSync:
         self.offsets: dict[str, int] = {}
         self._bindings: dict[str, NativeLogBinding] = {}
         self._bindings_lock = threading.Lock()
-        self._sync_lock = threading.Lock()
+        self._project_lock = threading.Lock()
         self._watcher: NativeLogWatcher | None = None
         self._bind_workers: set[str] = set()
         self._bind_workers_lock = threading.Lock()
@@ -98,9 +98,9 @@ class NativeLogSync:
         self._wake_watcher()
         for binding in resolved:
             try:
-                self.sync(binding.agent, binding.path, start_at_end=start_at_end)
+                self.project(binding.agent, binding.path, start_at_end=start_at_end)
             except Exception as exc:
-                self.failed(binding.agent, f"sync failed: {exc}")
+                self.failed(binding.agent, f"projection failed: {exc}")
 
     def remove_binding(self, agent: str) -> None:
         with self._bindings_lock:
@@ -122,12 +122,12 @@ class NativeLogSync:
         else:
             self.remove_binding(agent)
 
-    def sync(self, agent: str, path: str, *, start_at_end: bool = False) -> None:
-        sync_fn = _SYNC_BY_BASE.get(agent_base_name(agent))
-        if sync_fn is None:
+    def project(self, agent: str, path: str, *, start_at_end: bool = False) -> None:
+        project_fn = _PROJECT_BY_BASE.get(agent_base_name(agent))
+        if project_fn is None:
             raise ValueError(f"unknown agent type: {agent}")
-        with self._sync_lock:
-            sync_fn(self, agent, path, start_at_end=start_at_end)
+        with self._project_lock:
+            project_fn(self, agent, path, start_at_end=start_at_end)
 
     def bind_after_send(self, agent: str) -> None:
         with self._bind_workers_lock:

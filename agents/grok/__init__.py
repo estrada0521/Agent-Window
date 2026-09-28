@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from agents.binding_models import binding_for_path
+from agents.binding import binding_for_path
 
 from agents.grok.resolve_path import resolve_grok_updates_path
 

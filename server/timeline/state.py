@@ -12,7 +12,7 @@ from fs.log.meta import log_meta_agents
 from tmux import TMUX
 from tmux.send_keys import deliver_text_to_pane
 from fs.log.jsonl import newest_entries
-from agents.native_log_sync import NativeLogSync
+from agents.native_log_projector import NativeLogProjector
 from git.commit import CommitAnnouncer
 from tmux.session import (
     agent_topology,
@@ -50,7 +50,7 @@ class TimelineState:
         self._event_counts = dict.fromkeys(EVENT_KINDS, 0)
         self._latest_failure = ""
         self._stopped_threads: dict[str, str] = {}
-        self.native_log = NativeLogSync(
+        self.native_log = NativeLogProjector(
             workspace=self.workspace,
             log_path=lambda: self.log_path,
             agent_panes=self.agent_panes,
@@ -76,7 +76,7 @@ class TimelineState:
     def timeline_binding_snapshot(self) -> tuple[str, Path]:
         return self._timeline_binding.snapshot()
 
-    def start_native_log_sync(self) -> None:
+    def start_native_log_projection(self) -> None:
         if self.session_is_active:
             self.native_log.start()
 

@@ -6,8 +6,8 @@ import threading
 
 
 class NativeLogWatcher:
-    def __init__(self, sync) -> None:
-        self._sync = sync
+    def __init__(self, projector) -> None:
+        self._projector = projector
         self._lock = threading.Lock()
         self._kq = select.kqueue()
         self._fd_by_agent: dict[str, int] = {}
@@ -45,7 +45,7 @@ class NativeLogWatcher:
                 return
 
     def _sync_bindings(self) -> None:
-        bindings = self._sync.bindings()
+        bindings = self._projector.bindings()
         failed_opens: list[tuple[str, OSError]] = []
         with self._lock:
             for agent in list(self._fd_by_agent):
@@ -60,7 +60,7 @@ class NativeLogWatcher:
                     except OSError as exc:
                         failed_opens.append((agent, exc))
         for agent, exc in failed_opens:
-            self._sync.failed(agent, f"watch failed: {exc}")
+            self._projector.failed(agent, f"watch failed: {exc}")
 
     def _close_locked(self, agent: str) -> None:
         fd = self._fd_by_agent.pop(agent, None)
@@ -117,9 +117,9 @@ class NativeLogWatcher:
                         path = self._path_by_agent.get(agent) if agent else None
                     if agent and path:
                         try:
-                            self._sync.sync(agent, path)
+                            self._projector.project(agent, path)
                         except Exception as exc:
-                            self._sync.failed(agent, f"sync failed: {exc}")
+                            self._projector.failed(agent, f"projection failed: {exc}")
             if rebind_agents:
                 seen: set[str] = set()
                 for agent in rebind_agents:
@@ -127,8 +127,8 @@ class NativeLogWatcher:
                         continue
                     seen.add(agent)
                     try:
-                        self._sync.rebind(agent)
+                        self._projector.rebind(agent)
                     except Exception as exc:
-                        self._sync.failed(agent, f"rebind failed: {exc}")
+                        self._projector.failed(agent, f"rebind failed: {exc}")
                 self._sync_bindings()
 

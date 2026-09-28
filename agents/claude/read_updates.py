@@ -41,8 +41,8 @@ def _claude_entry_marks_turn_done(entry: dict) -> bool:
     return bool(entry.get("isApiErrorMessage"))
 
 
-def sync_claude_native_log(
-    sync,
+def project_claude_native_log(
+    projector,
     agent: str,
     native_log_path: str | None = None,
     *,
@@ -54,9 +54,9 @@ def sync_claude_native_log(
 
     file_size = os.path.getsize(session_path_str)
     if start_at_end:
-        advance_read_offset(sync.offsets, session_path_str, file_size)
+        advance_read_offset(projector.offsets, session_path_str, file_size)
         return
-    start = read_offset_start(sync.offsets, session_path_str, file_size)
+    start = read_offset_start(projector.offsets, session_path_str, file_size)
     if start >= file_size:
         return
 
@@ -87,7 +87,7 @@ def sync_claude_native_log(
             "native_log_path": session_path_str,
             "native_log_offset": line_start,
         }
-        append_jsonl_entry(sync.log_path, jsonl_entry)
+        append_jsonl_entry(projector.log_path, jsonl_entry)
 
     turn_done_seen = False
     scan = CompleteJsonlScan(session_path_str, start)
@@ -97,11 +97,11 @@ def sync_claude_native_log(
         _append_claude_entry(entry, line_start)
         tool_evs = []
         for name, inp in iter_tool_calls(entry):
-            tool_evs.extend(running_tool_events(name, inp, workspace=sync.workspace))
+            tool_evs.extend(running_tool_events(name, inp, workspace=projector.workspace))
         if tool_evs:
-            sync.push_running_display(agent, tool_evs)
+            projector.push_running_display(agent, tool_evs)
 
-    advance_read_offset(sync.offsets, session_path_str, scan.consumed)
-    report_skipped_lines(sync, agent, scan)
+    advance_read_offset(projector.offsets, session_path_str, scan.consumed)
+    report_skipped_lines(projector, agent, scan)
     if turn_done_seen:
-        sync.mark_idle(agent)
+        projector.mark_idle(agent)

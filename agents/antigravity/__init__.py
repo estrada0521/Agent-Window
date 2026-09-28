@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from agents.binding_models import binding_for_path
+from agents.binding import binding_for_path
 from agents.antigravity.resolve_path import resolve_antigravity_native_log
 
 

@@ -16,8 +16,8 @@ from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
 from fs.log.jsonl import append_jsonl_entry
 
 
-def sync_antigravity_native_log(
-    sync,
+def project_antigravity_native_log(
+    projector,
     agent: str,
     native_log_path: str | None = None,
     *,
@@ -31,9 +31,9 @@ def sync_antigravity_native_log(
 
     file_size = os.path.getsize(session_path_str)
     if start_at_end:
-        advance_read_offset(sync.offsets, session_path_str, file_size)
+        advance_read_offset(projector.offsets, session_path_str, file_size)
         return
-    start = read_offset_start(sync.offsets, session_path_str, file_size)
+    start = read_offset_start(projector.offsets, session_path_str, file_size)
     if start >= file_size:
         return
 
@@ -45,14 +45,14 @@ def sync_antigravity_native_log(
             running_events: list[dict] = []
             for tool_name, arguments in tool_calls:
                 running_events.extend(
-                    running_tool_events(tool_name, arguments, workspace=sync.workspace)
+                    running_tool_events(tool_name, arguments, workspace=projector.workspace)
                 )
             if running_events:
-                sync.push_running_display(agent, running_events)
+                projector.push_running_display(agent, running_events)
         if not text:
             continue
         append_jsonl_entry(
-            sync.log_path,
+            projector.log_path,
             {
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "sender": agent,
@@ -65,7 +65,7 @@ def sync_antigravity_native_log(
         )
         appended = True
 
-    advance_read_offset(sync.offsets, session_path_str, scan.consumed)
-    report_skipped_lines(sync, agent, scan)
+    advance_read_offset(projector.offsets, session_path_str, scan.consumed)
+    report_skipped_lines(projector, agent, scan)
     if appended:
-        sync.mark_idle(agent)
+        projector.mark_idle(agent)

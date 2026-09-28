@@ -70,8 +70,8 @@ def _codex_task_error_message(payload: dict) -> str:
     return message
 
 
-def sync_codex_native_log(
-    sync,
+def project_codex_native_log(
+    projector,
     agent: str,
     native_log_path: str | None = None,
     *,
@@ -83,9 +83,9 @@ def sync_codex_native_log(
 
     file_size = os.path.getsize(resolved_path)
     if start_at_end:
-        advance_read_offset(sync.offsets, resolved_path, file_size)
+        advance_read_offset(projector.offsets, resolved_path, file_size)
         return
-    start = read_offset_start(sync.offsets, resolved_path, file_size)
+    start = read_offset_start(projector.offsets, resolved_path, file_size)
     if start >= file_size:
         return
 
@@ -142,9 +142,9 @@ def sync_codex_native_log(
             "native_log_path": resolved_path,
             "native_log_offset": line_start,
         }
-        append_jsonl_entry(sync.log_path, jsonl_entry)
+        append_jsonl_entry(projector.log_path, jsonl_entry)
         if idle_after:
-            sync.mark_idle(agent)
+            projector.mark_idle(agent)
         return True
 
     last_runtime_state_event = ""
@@ -156,13 +156,13 @@ def sync_codex_native_log(
             last_runtime_state_event = runtime_state_event
         tool_evs = []
         for name, inp in iter_tool_calls(entry):
-            tool_evs.extend(running_tool_events(name, inp, workspace=sync.workspace))
+            tool_evs.extend(running_tool_events(name, inp, workspace=projector.workspace))
         if tool_evs:
-            sync.push_running_display(agent, tool_evs)
+            projector.push_running_display(agent, tool_evs)
 
-    advance_read_offset(sync.offsets, resolved_path, scan.consumed)
-    report_skipped_lines(sync, agent, scan)
+    advance_read_offset(projector.offsets, resolved_path, scan.consumed)
+    report_skipped_lines(projector, agent, scan)
     if last_runtime_state_event == "completed":
-        sync.mark_idle(agent)
+        projector.mark_idle(agent)
     elif last_runtime_state_event == "active":
-        sync.mark_running(agent)
+        projector.mark_running(agent)

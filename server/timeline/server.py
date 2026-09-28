@@ -177,7 +177,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         on_head_changed=state.commits.observe,
     )
     assets = TimelineAssets()
-    state.start_native_log_sync()
+    state.start_native_log_projection()
     try:
         state.commits.adopt_baseline()
     except Exception as exc:

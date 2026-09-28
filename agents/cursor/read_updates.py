@@ -80,7 +80,7 @@ def _extract_cursor_sync_display_text(entry: dict) -> str:
     return ""
 
 
-def _cursor_display_for_sync(entry: dict) -> str:
+def _cursor_display_for_projection(entry: dict) -> str:
     display = (_extract_cursor_sync_display_text(entry) or "").strip()
     if not display or display == "[REDACTED]":
         return ""
@@ -89,8 +89,8 @@ def _cursor_display_for_sync(entry: dict) -> str:
     return display
 
 
-def sync_cursor_native_log(
-    sync,
+def project_cursor_native_log(
+    projector,
     agent: str,
     native_log_path: str | None = None,
     *,
@@ -102,10 +102,10 @@ def sync_cursor_native_log(
 
     file_size = os.path.getsize(transcript_path)
     if start_at_end:
-        advance_read_offset(sync.offsets, transcript_path, file_size)
+        advance_read_offset(projector.offsets, transcript_path, file_size)
         return
     start = read_offset_start(
-        sync.offsets,
+        projector.offsets,
         transcript_path,
         file_size,
         on_shrink="wait",
@@ -118,7 +118,7 @@ def sync_cursor_native_log(
     turn_done_seen = _cursor_turn_done_from_batch(batch)
 
     for line_start, entry in batch:
-        display = _cursor_display_for_sync(entry)
+        display = _cursor_display_for_projection(entry)
         if not display:
             continue
 
@@ -130,16 +130,16 @@ def sync_cursor_native_log(
             "native_log_path": transcript_path,
             "native_log_offset": line_start,
         }
-        append_jsonl_entry(sync.log_path, jsonl_entry)
+        append_jsonl_entry(projector.log_path, jsonl_entry)
 
     for _ls, entry in batch:
         tool_evs = []
         for name, inp in iter_tool_calls(entry):
-            tool_evs.extend(running_tool_events(name, inp, workspace=sync.workspace))
+            tool_evs.extend(running_tool_events(name, inp, workspace=projector.workspace))
         if tool_evs:
-            sync.push_running_display(agent, tool_evs)
+            projector.push_running_display(agent, tool_evs)
 
-    advance_read_offset(sync.offsets, transcript_path, scan.consumed)
-    report_skipped_lines(sync, agent, scan)
+    advance_read_offset(projector.offsets, transcript_path, scan.consumed)
+    report_skipped_lines(projector, agent, scan)
     if turn_done_seen:
-        sync.mark_idle(agent)
+        projector.mark_idle(agent)
