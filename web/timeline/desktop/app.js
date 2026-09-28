@@ -700,7 +700,7 @@ __INCLUDE:git-panel/events.js__
         const path = normalizeWorkspaceFilePath(p);
         if (absolute) return path.startsWith("/") ? path : `${workspaceRoot}/${path}`;
         return path.startsWith(`${workspaceRoot}/`) ? path.slice(workspaceRoot.length + 1) : path;
-      }).join("\n");
+      }).map((path) => `\`${path}\``).join("\n");
       await doCopyText(text);
       setStatus("Copied path");
     };

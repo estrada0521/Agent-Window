@@ -189,7 +189,7 @@
         if (!res.ok || !data.ok || !workspace) {
           throw new Error(data.error || "Workspace path is unavailable.");
         }
-        await copyDeskText(workspace);
+        await copyDeskText(`\`${workspace}\``);
       } catch (err) {
         setStatus(err?.message || "Failed to copy workspace path");
         return;
