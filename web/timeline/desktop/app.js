@@ -265,6 +265,7 @@ __INCLUDE:../conversation-state.js__
 __INCLUDE:../scroll-focus.js__
 __INCLUDE:file-open.js__
 __INCLUDE:../composer-overlay.js__
+__INCLUDE:../message-step.js__
 __INCLUDE:../rich-rendering-setup.js__
 __INCLUDE:../transcript-rich-rendering.js__
 __INCLUDE:../message-collapse.js__

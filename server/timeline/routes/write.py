@@ -9,7 +9,7 @@ from urllib.parse import unquote as url_unquote
 from fs.log.paths import workspace_upload_dir
 from server.timeline.control import add_agent, remove_agent
 from tmux import TMUX, TMUX_SOCKET_NAME
-from tmux.lifecycle import respawn_pane
+from tmux.session import respawn_pane
 from tmux.key_macro import run_key_macro
 from agents.executables import agent_launch_cmd
 from git import repo as workspace_git
