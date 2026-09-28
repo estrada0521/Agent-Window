@@ -341,10 +341,10 @@
       }
       const codeCopyBtn = e.target.closest(".code-copy-btn");
       if (codeCopyBtn) {
-        const wrap = codeCopyBtn.closest(".code-block-wrap");
+        const wrap = codeCopyBtn.closest(".code-block-wrap, blockquote");
         if (!wrap) return;
-        const code = wrap.querySelector("code") || wrap.querySelector("pre");
-        doCopyText(code.textContent).then(() => {
+        const text = wrap.matches("blockquote") ? wrap.innerText.trimEnd() : (wrap.querySelector("code") || wrap.querySelector("pre")).textContent;
+        doCopyText(text).then(() => {
           markCopied(codeCopyBtn);
         }).catch((err) => setStatus(`Copy failed: ${err.message}`));
         return;

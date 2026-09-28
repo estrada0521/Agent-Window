@@ -307,10 +307,13 @@
       line-height: 1.5;
     }
 
-    .md-body .code-block-wrap {
+    .md-body :is(.code-block-wrap, blockquote) {
       --code-copy-button-size: round(nearest, calc(var(--text-size, 13px) * 28 / 13), 1px);
       --code-copy-icon-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
       --code-copy-radius: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
+    }
+
+    .md-body .code-block-wrap {
       position: relative;
       display: block;
       margin: 0.75em 0;
@@ -327,7 +330,7 @@
       margin: 0;
     }
 
-    .md-body .code-block-wrap .code-copy-btn {
+    .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn {
       position: absolute;
       top: 0;
       right: 0;
@@ -348,18 +351,18 @@
       opacity: 1;
     }
 
-    .has-hover .md-body .code-block-wrap .code-copy-btn:hover,
-    .md-body .code-block-wrap .code-copy-btn:active,
-    .md-body .code-block-wrap .code-copy-btn.copied {
+    .has-hover .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn:hover,
+    .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn:active,
+    .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn.copied {
       color: var(--fg);
     }
 
-    .md-body .code-block-wrap .code-copy-btn svg {
+    .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn svg {
       width: var(--code-copy-icon-size);
       height: var(--code-copy-icon-size);
     }
 
-    .md-body .code-block-wrap .code-copy-btn svg * {
+    .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn svg * {
       stroke: currentColor;
       stroke-width: 1.45;
     }
@@ -387,6 +390,11 @@
 
     .md-body blockquote p {
       margin-bottom: 0;
+    }
+
+    .md-body blockquote:has(> .code-copy-btn) {
+      position: relative;
+      padding-right: var(--code-copy-button-size);
     }
 
     .md-body hr {

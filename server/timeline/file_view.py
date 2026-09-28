@@ -750,11 +750,11 @@ const codeCheckSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 document.addEventListener("click", async (event) => {{
   const btn = event.target.closest(".code-copy-btn");
   if (!btn) return;
-  const wrap = btn.closest(".code-block-wrap");
+  const wrap = btn.closest(".code-block-wrap, blockquote");
   if (!wrap) return;
-  const code = wrap.querySelector("code") || wrap.querySelector("pre") || wrap;
+  const text = wrap.matches("blockquote") ? wrap.innerText.trimEnd() : (wrap.querySelector("code") || wrap.querySelector("pre")).textContent;
   try {{
-await copyText(code.textContent || "");
+await copyText(text || "");
 btn.innerHTML = codeCheckSvg;
 btn.title = "Copied";
 setTimeout(() => {{
