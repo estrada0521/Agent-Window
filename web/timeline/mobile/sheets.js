@@ -201,6 +201,7 @@
       const lockScroll = () => {
         if (scrollLocked) return;
         scrollLocked = true;
+        setHudCovered(true);
         scrollY = window.scrollY || document.documentElement.scrollTop || 0;
         document.documentElement.classList.add(activeClass);
         document.body.classList.add(activeClass);
@@ -209,6 +210,7 @@
       const unlockScroll = () => {
         if (!scrollLocked) return;
         scrollLocked = false;
+        setHudCovered(false);
         document.documentElement.classList.remove(activeClass);
         document.body.classList.remove(activeClass);
         document.body.style.top = "";

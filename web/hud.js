@@ -4,16 +4,16 @@
       let transient = "";
       let overlay = null;
       let background = null;
+      let covered = false;
       const residents = new Map();
       let shown = "";
       let state = "hidden";
       let morphTimer = 0;
       const transitionMs = parseFloat(getComputedStyle(hud).transitionDuration) * 1000;
-      const currentContent = () => transient || overlay || [...residents.values()].at(-1) || background || "";
+      const currentContent = () => transient || (covered ? "" : overlay || [...residents.values()].at(-1) || background || "");
       const setContent = (content) => {
         shown = content;
         hud.classList.toggle("has-controls", typeof content !== "string");
-        hud.classList.toggle("is-transient", !!transient && content === transient);
         if (typeof content !== "string") {
           hud.replaceChildren(content);
           return;
@@ -96,5 +96,9 @@
         background = node;
         render();
       };
-      return { setStatus, setResidentStatus, setOverlay, setBackgroundStatus };
+      const setCovered = (value) => {
+        covered = value;
+        render();
+      };
+      return { setStatus, setResidentStatus, setOverlay, setBackgroundStatus, setCovered };
     };
