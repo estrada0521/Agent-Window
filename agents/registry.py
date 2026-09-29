@@ -10,6 +10,7 @@ class AgentDef:
     display_name: str
     executable: str
     launch_extra: str
+    launch_args: str
 
 
 AGENTS: dict[str, AgentDef] = {}
@@ -28,30 +29,35 @@ _register(
         display_name="Claude",
         executable="claude",
         launch_extra=f"env -u CLAUDECODE {_AGENT_TMUX_COLOR_SUFFIX}",
+        launch_args="",
     ),
     AgentDef(
         name="codex",
         display_name="Codex",
         executable="codex",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
+        launch_args="--no-daemon",
     ),
     AgentDef(
         name="antigravity",
         display_name="Antigravity",
         executable="agy",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
+        launch_args="",
     ),
     AgentDef(
         name="cursor",
         display_name="Cursor",
         executable="cursor-agent",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
+        launch_args="",
     ),
     AgentDef(
         name="grok",
         display_name="Grok",
         executable="grok",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
+        launch_args="",
     ),
 )
 

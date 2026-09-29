@@ -16,5 +16,5 @@ def agent_executable_path(agent_name: str) -> str:
 
 
 def agent_launch_cmd(agent_name: str) -> str:
-    launch_extra = AGENTS[agent_base_name(agent_name)].launch_extra
-    return f"exec {launch_extra} {shlex.quote(agent_executable_path(agent_name))}"
+    agent = AGENTS[agent_base_name(agent_name)]
+    return f"exec {agent.launch_extra} {shlex.quote(agent_executable_path(agent_name))} {agent.launch_args}".rstrip()

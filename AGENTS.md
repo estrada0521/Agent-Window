@@ -1,6 +1,7 @@
 # Agent Window Agent Handbook
 
 - For Agent Window basics, see [README.md](README.md); for its design philosophy, see [DESIGN.md](DESIGN.md).
+- The Agent Window website is managed in `/Users/okadaharuto/workspace/okadaharuto-web`.
 
 ## 1. Prefer the intended path
 
