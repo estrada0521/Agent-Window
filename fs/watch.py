@@ -13,7 +13,7 @@ from fs.fsevents import (
     cf_path_array,
     load_cf_cs,
 )
-from git.repo import clear_commit_list_cache, git_ignored_rel_paths, git_worktrees
+from git.repo import NotGitRepository, clear_commit_list_cache, git_ignored_rel_paths, git_worktrees
 
 _DEBOUNCE_SEC = 0.25
 
@@ -80,6 +80,8 @@ class _DebouncedWorkspaceRefresh:
         workspace = self._files.workspace
         try:
             return _read_git_trees(workspace)
+        except NotGitRepository:
+            return []
         except RuntimeError as exc:
             self._report_failure(f"git worktree list failed: {exc}")
             return [("", workspace, os.path.realpath(os.path.join(workspace, ".git")))]
@@ -118,6 +120,8 @@ class _DebouncedWorkspaceRefresh:
             self._schedule_flush_locked()
 
     def _classify_git_metadata_locked(self, path: str) -> bool | None:
+        if not self._trees:
+            return None
         common = self._trees[0][2]
         if not _is_under(path, common):
             return None

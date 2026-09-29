@@ -664,13 +664,18 @@
 __INCLUDE:git-panel.js__
     const openGitSheet = async () => {
       if (!mobileSheet) return;
+      try {
+        await loadGitWorktreeList();
+      } catch (err) {
+        setStatus(err?.message || "Failed to load worktrees");
+        return;
+      }
       ensureSheetDom();
       closePaneTraceSheet({ immediate: true });
       closeSheetPreview();
       setSheetKind("git");
       restoreGitChromeAfterPreview();
       if (!sheetIsOpen()) workspaceSheet.open();
-      void loadGitWorktreeList().catch((err) => setStatus(err?.message || "Failed to load worktrees"));
       await updateGitPanel();
     };
     const openRepoSheet = () => {

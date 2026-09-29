@@ -34,8 +34,14 @@ def clear_commit_list_cache() -> None:
         _commit_list_cache.clear()
 
 
+class NotGitRepository(RuntimeError):
+    pass
+
+
 def git_worktrees(workspace: str) -> list[dict]:
     res = _run_git(_git_root(workspace), "worktree", "list", "--porcelain")
+    if res.returncode != 0 and "not a git repository" in (res.stderr or ""):
+        raise NotGitRepository("Not a git repository")
     if res.returncode != 0:
         raise RuntimeError((res.stderr or res.stdout or "git worktree list failed").strip())
     trees = []

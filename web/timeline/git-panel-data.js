@@ -54,7 +54,7 @@
     };
     const fetchGitWorktrees = async () => {
       const res = await fetchWithTimeout("/git-worktrees", {}, GIT_PANEL_FETCH_MS);
-      if (!res.ok) throw new Error("Failed to load worktrees");
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load worktrees");
       return (await res.json()).worktrees;
     };
     const fetchGitOverview = async ({ offset = 0, limit = GIT_PANEL_BATCH, summary = false } = {}) => {
