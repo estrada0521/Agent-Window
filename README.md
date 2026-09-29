@@ -114,6 +114,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Switch active timeline | `⌘1`–`⌘9` | |
 | Open Hub in browser | `⇧⌥⌘O` | |
 | Copy workspace path | | right-click menu |
+| Show timeline stats | hover | |
 
 </details>
 

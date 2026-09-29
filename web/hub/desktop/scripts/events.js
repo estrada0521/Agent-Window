@@ -431,6 +431,7 @@
           setStatus(String(err || "Failed to open timeline menu"));
         });
       });
+      attachDeskTimelineStatsHover(_deskTimelineList);
       _deskTimelineList.addEventListener("click", (event) => {
         const hoverAction = event.target.closest("[data-desk-hover-action]");
         if (hoverAction) {

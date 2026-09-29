@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import json
 import time
+from pathlib import Path
 from urllib.parse import parse_qs
+
+from agents import agent_base_name
+from agents.registry import AGENTS
 
 from fs.log.meta import (
     LogMetaError,
@@ -161,6 +165,49 @@ def get_timeline_workspace(handler, parsed, _ctx) -> None:
         handler._send_json(404, {"ok": False, "error": "Timeline not found"})
         return
     handler._send_json(200, {"ok": True, "timeline": timeline_name, "workspace": workspace})
+
+
+def _stats_sender_name(sender: str) -> str:
+    base = agent_base_name(sender)
+    if base == "user":
+        return "User"
+    if base in AGENTS:
+        return AGENTS[base].display_name
+    return "Others"
+
+
+def _timeline_stats(log_path: Path) -> dict:
+    created = ""
+    updated = ""
+    counts: dict[str, int] = {}
+    with log_path.open(encoding="utf-8") as f:
+        for line in f:
+            entry = json.loads(line)
+            updated = entry["timestamp"][:10]
+            created = created or updated
+            if entry["sender"] == "system":
+                continue
+            name = _stats_sender_name(entry["sender"])
+            counts[name] = counts.get(name, 0) + 1
+    others = counts.pop("Others", 0)
+    user = counts.pop("User", 0)
+    senders = [["User", user]] if user else []
+    senders += sorted(counts.items(), key=lambda item: -item[1])
+    senders += [["Others", others]] if others else []
+    return {"created": created, "updated": updated, "senders": senders}
+
+
+def get_timeline_stats(handler, parsed, _ctx) -> None:
+    qs = parse_qs(parsed.query)
+    timeline_name = (qs.get("timeline", [""])[0] or "").strip()
+    if not timeline_name:
+        handler._send_json(404, {"ok": False, "error": "Timeline not found"})
+        return
+    log_path = log_jsonl_path(timeline_name)
+    if not log_path.is_file():
+        handler._send_json(404, {"ok": False, "error": "Timeline not found"})
+        return
+    handler._send_json(200, {"ok": True, **_timeline_stats(log_path)})
 
 
 def post_restart_hub(handler, _parsed, ctx) -> None:

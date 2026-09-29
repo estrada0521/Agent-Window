@@ -114,6 +114,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | active timelineの切り替え | `⌘1`–`⌘9` | |
 | ブラウザでHubを開く | `⇧⌥⌘O` |  |
 | workspaceのpathをコピー | | 右クリックmenu |
+| timelineの統計表示 | hover |  |
 
 </details>
 

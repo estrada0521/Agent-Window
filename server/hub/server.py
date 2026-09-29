@@ -38,6 +38,7 @@ from server.hub.actions import (
     get_open_timeline as _get_open_timeline_action,
     get_revive_timeline as _get_revive_timeline_action,
     get_timeline_workspace as _get_timeline_workspace_action,
+    get_timeline_stats as _get_timeline_stats_action,
     post_change_timeline_workspace as _post_change_timeline_workspace_action,
     post_rename_timeline as _post_rename_timeline_action,
     post_reset_timeline_agents as _post_reset_timeline_agents_action,
@@ -370,6 +371,7 @@ _GET_ROUTE_HANDLERS = {
     "/archive-timeline": _get_archive_timeline_action,
     "/delete-archived-timeline": _get_delete_archived_timeline_action,
     "/timeline-workspace": _get_timeline_workspace_action,
+    "/timeline-stats": _get_timeline_stats_action,
     "/": "_get_home",
     "/index.html": "_get_home",
 }

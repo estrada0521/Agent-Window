@@ -448,6 +448,7 @@
           if (href) { dismiss(); openTimelineFrame(href, name); }
         });
         popover.appendChild(listEl);
+        attachDeskTimelineStatsHover(popover);
         hoverPopover.appendChild(popover);
         document.body.appendChild(hoverPopover);
 

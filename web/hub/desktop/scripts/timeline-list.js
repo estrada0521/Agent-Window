@@ -31,7 +31,7 @@
           `</button>` +
         `</div>` +
         `<div class="desk-swipe-track">` +
-          `<div class="desk-timeline-row desk-action-timeline-row${archivedClass}${selectedClass}${unreadClass}" data-timeline-name="${esc(timelineName)}" data-open-href="${buildTimelineOpenHref(timelineName, archived)}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
+          `<div class="desk-timeline-row desk-action-timeline-row${archivedClass}${selectedClass}${unreadClass}" data-timeline-name="${esc(timelineName)}" data-open-href="${buildTimelineOpenHref(timelineName, archived)}" data-revision="${esc(timeline.latest_message_revision || "")}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
             `<div class="desk-row-head">` +
                 `<div class="desk-row-main">` +
                   `<span class="desk-row-bullet" aria-hidden="true"><i></i></span>` +
@@ -47,6 +47,29 @@
             `</div>` +
           `</div>` +
         `</div>`;
+    }
+
+    const _deskTimelineStatsCache = new Map();
+    function attachDeskTimelineStatsHover(container) {
+      container.addEventListener("mouseover", async (event) => {
+        const row = event.target.closest(".desk-timeline-row");
+        if (!row || row.contains(event.relatedTarget)) return;
+        const name = row.dataset.timelineName;
+        const key = `${name}\n${row.dataset.revision}`;
+        if (!_deskTimelineStatsCache.has(key)) {
+          _deskTimelineStatsCache.set(key, fetch(`/timeline-stats?timeline=${encodeURIComponent(name)}`).then(async (res) => {
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+            const total = data.senders.reduce((sum, [, count]) => sum + count, 0);
+            return [
+              name,
+              `Created: ${data.created}\nLast updated: ${data.updated}`,
+              [`${total} message${total === 1 ? "" : "s"}`, ...data.senders.map(([sender, count]) => `${sender} : ${count}`)].join("\n"),
+            ].join("\n\n");
+          }));
+        }
+        row.title = await _deskTimelineStatsCache.get(key);
+      });
     }
 
     function applyDeskTimelineSelection() {
