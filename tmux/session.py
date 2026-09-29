@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from tmux import TMUX
@@ -115,8 +116,10 @@ def parse_agent_topology(output: str) -> list[AgentPane]:
 
 def terminal_window_pane_id(
     session_name: str,
+    *,
+    run_tmux: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run,
 ) -> str:
-    result = _run(
+    result = run_tmux(
         ["list-windows", "-t", session_name, "-F", "#{window_name}\t#{pane_id}"],
     )
     if result.returncode != 0:

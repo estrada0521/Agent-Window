@@ -12,7 +12,7 @@ from agents import agent_base_name
 from agents.registry import ALL_AGENT_NAMES
 from fs.log.jsonl import append_jsonl_entry
 from fs.log.meta import find_timeline_name_for_workspace
-from tmux.session import AgentPane, parse_agent_topology
+from tmux.session import AgentPane, parse_agent_topology, terminal_window_pane_id
 from tmux import TMUX_SOCKET_NAME
 from tmux.send_keys import deliver_text_to_pane
 from fs.log.paths import log_jsonl_path, workspace_timeline_port
@@ -258,6 +258,19 @@ class AgentSender:
         target_spec: str,
         payload: str,
     ) -> bool:
+        if any(target.strip().lower() == "terminal" for target in target_spec.split(",")):
+            if target_spec.strip().lower() != "terminal":
+                raise AgentSendError("terminal must be the only target")
+            pane_id = terminal_window_pane_id(
+                self.resolve_tmux_session_name(), run_tmux=self.tmux.run
+            )
+            if not pane_id:
+                raise AgentSendError("Terminal pane not found.")
+            if not self.send_to_pane(pane_id, payload):
+                raise AgentSendError("Failed to deliver to terminal.")
+            print("Sent to terminal.")
+            return True
+
         workspace = self.tmux_session_workspace()
         timeline_name = self.resolve_timeline_name(workspace)
         topology = self.agent_topology()

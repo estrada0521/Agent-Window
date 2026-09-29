@@ -1,12 +1,12 @@
 ---
 name: agent-send
 description: >-
-  Use when the user wants to contact, notify, relay to, ask help from, or broadcast to other agents in an Agent Window timeline. Use normal assistant output for replies to the user; never use agent-send for user-facing responses.
+  Use when the user wants to contact other agents in an Agent Window timeline or run a command in that timeline's terminal pane. Use normal assistant output for replies to the user; never use agent-send for user-facing responses.
 ---
 
-# Send Messages to Other Agents
+# Send to Other Agents or the Terminal
 
-Use this skill only for agent-to-agent communication in an Agent Window timeline. Replies to the user must use normal assistant output because native event logs are synchronized automatically.
+Use this skill for agent-to-agent communication or terminal input in an Agent Window timeline. Replies to the user must use normal assistant output because native event logs are synchronized automatically.
 
 ## Syntax
 
@@ -21,11 +21,11 @@ printf '%s' '<message body>' | agent-send <target>
 1. For message sends, always pass the message body through stdin using `printf`.
 2. For message sends, never use `echo` or a heredoc.
 3. The message target is a positional argument; do not pass the message body as an inline argument.
-4. Do not add a `[From: ...]` prefix. `agent-send` adds it automatically.
+4. Do not add a `[From: ...]` prefix to agent messages. `agent-send` adds it automatically.
 5. Do not use `agent-send` to reply to the user.
 6. Distinguish carefully between a base target and a specific instance target.
 7. Do not send messages to yourself. `agent-send` rejects self-targeted sends.
-8. On success, `agent-send` prints a summary to stdout showing what was sent and to whom, including the auto-added `[From: ...]` prefix.
+8. For agent messages, `agent-send` prints a summary to stdout showing what was sent and to whom, including the auto-added `[From: ...]` prefix.
 
 ## Base Targets and Instance Targets
 
@@ -69,3 +69,13 @@ printf '%s' 'Please check this change.' | agent-send claude,codex-2,antigravity
 ```
 
 Duplicate resolved targets are delivered only once.
+
+## Additional: Terminal
+
+To run a command in the current session's terminal pane:
+
+```bash
+printf '%s' 'date' | agent-send terminal
+```
+
+`terminal` must be the only target. The input is sent unchanged and followed by Enter; it receives no `[From: ...]` prefix and is not appended to the timeline log or sent as a running-agent notification.
