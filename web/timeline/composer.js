@@ -236,6 +236,13 @@ __INCLUDE:upload-attached-files.js__
         await uploadAttachedFiles(e.dataTransfer.files);
       }, true);
       messageInput.addEventListener("paste", async (e) => {
+        if (isTerminalMode()) {
+          if (dtHasFiles(e.clipboardData)) {
+            e.preventDefault();
+            setStatus("Exit Terminal mode before attaching files");
+          }
+          return;
+        }
         if (dtHasFiles(e.clipboardData)) {
           e.preventDefault();
           maybeOpenComposerForAttachDrag();

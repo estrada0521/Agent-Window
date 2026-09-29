@@ -324,6 +324,10 @@ __INCLUDE:file-autocomplete.js__
       window.addEventListener("resize", autoResizeTextarea);
     }
     const updateFileAutocomplete = async () => {
+      if (isTerminalMode()) {
+        closeDrop();
+        return;
+      }
       if (!isComposerOverlayOpen()) {
         closeDrop();
         return;

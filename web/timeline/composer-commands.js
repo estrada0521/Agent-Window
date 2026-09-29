@@ -52,6 +52,20 @@
         return;
       }
       if (item.has_arg) {
+        if (item.id === "terminal" && isMobileComposer) {
+          if (pendingAttachments.length || attachUploadsInFlight > 0) {
+            closeCmdDrop();
+            setStatus("Remove attachments before using Terminal");
+            return;
+          }
+          messageInput.value = "";
+          setTerminalMode(true);
+          autoResizeTextarea();
+          saveComposerDraft();
+          closeCmdDrop();
+          focusMessageInputWithoutScroll(0);
+          return;
+        }
         messageInput.value = item.slash + " ";
         autoResizeTextarea();
         closeCmdDrop();
@@ -65,6 +79,10 @@
     };
     let _lastCmdQuery = "";
     const updateCmdAutocomplete = () => {
+      if (isTerminalMode()) {
+        closeCmdDrop();
+        return;
+      }
       const pos = messageInput.selectionEnd;
       const val = messageInput.value;
       const before = val.slice(0, pos);

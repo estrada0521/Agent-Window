@@ -2,6 +2,10 @@
 
       const uploadAttachedFiles = async (fileList) => {
         if (!canCompose()) return false;
+        if (isTerminalMode()) {
+          setStatus("Exit Terminal mode before attaching files");
+          return false;
+        }
         const files = Array.from(fileList || []).filter((f) => f && typeof f.name === "string");
         if (!files.length) return false;
         try {

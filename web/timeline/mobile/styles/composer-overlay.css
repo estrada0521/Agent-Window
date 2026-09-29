@@ -124,7 +124,7 @@
       width: 100%;
       max-width: 100%;
       margin: 0 auto;
-      padding: 8px 7px 10px 7px;
+      padding: 8px 3px 10px;
       border: none;
       background: transparent;
       box-shadow: none;
@@ -171,6 +171,37 @@
       min-width: 0;
     }
 
+    .terminal-mode-btn {
+      display: none;
+      grid-column: 1 / -1;
+      grid-row: 2;
+      justify-self: center;
+      align-self: center;
+      align-items: center;
+      gap: 12px;
+      min-height: 36px;
+      padding: 0 13px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel-row-selected-bg);
+      color: var(--fg);
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .composer.terminal-mode .terminal-mode-btn {
+      display: flex;
+    }
+
+    .composer.terminal-mode .composer-attach,
+    .composer.terminal-mode .target-picker-anchor,
+    .composer.terminal-mode .target-picker {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
     body > .target-picker {
       position: fixed;
       z-index: 390;
@@ -185,6 +216,11 @@
       opacity: 1;
       transform: none;
       pointer-events: auto;
+    }
+
+    body.composer-terminal-mode > .target-picker {
+      visibility: hidden;
+      pointer-events: none;
     }
 
     body:not(.composer-overlay-open) > .target-picker {

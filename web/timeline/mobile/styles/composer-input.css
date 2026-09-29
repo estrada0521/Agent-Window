@@ -43,6 +43,12 @@
       --composer-btn-bottom: 8px;
       --composer-send-text-gap: 14px;
       --composer-pad-top: calc(var(--composer-row-h) - var(--composer-btn-bottom) - var(--composer-btn-d) / 2 - var(--composer-line-h) / 2);
+      border-radius: 22px;
+      background: var(--panel-row-selected-bg);
+    }
+
+    html[data-theme="light"] .composer-field {
+      background: rgba(0, 0, 0, 0.05);
     }
 
     .send-btn {

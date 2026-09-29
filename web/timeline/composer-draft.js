@@ -1,10 +1,11 @@
+    const terminalCommandSlash = "/terminal";
     const composerDraftStorageKey = (label) => `agent_window_composer_draft:${label}`;
     let composerDraftRestoredFor = "";
     const saveComposerDraft = () => {
       const label = currentTimelineName;
       const input = document.getElementById("message");
       if (!label || !input) return;
-      const text = input.value;
+      const text = isTerminalMode() && input.value ? `${terminalCommandSlash} ${input.value}` : input.value;
       if (!text) {
         localStorage.removeItem(composerDraftStorageKey(label));
         return;
@@ -32,7 +33,9 @@
       const saved = localStorage.getItem(composerDraftStorageKey(label));
       composerDraftRestoredFor = label;
       if (!saved) return;
-      input.value = saved;
+      const terminalDraft = document.documentElement.dataset.mobile === "1" && saved.startsWith(terminalCommandSlash + " ");
+      input.value = terminalDraft ? saved.slice(terminalCommandSlash.length + 1) : saved;
+      if (terminalDraft) setTerminalMode(true);
       if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();
-      if (typeof autoResizeTextarea === "function") autoResizeTextarea();
+      queueMicrotask(() => autoResizeTextarea());
     };

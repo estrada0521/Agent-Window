@@ -120,6 +120,20 @@ __INCLUDE:transcript-refresh.js__
         sendLocked = false;
       }
     };
+    const isTerminalMode = () => composerForm.classList.contains("terminal-mode");
+    const setTerminalMode = (on) => {
+      composerForm.classList.toggle("terminal-mode", on);
+      document.body.classList.toggle("composer-terminal-mode", on);
+      document.getElementById("terminalModeBtn").hidden = !on;
+      messageInput.placeholder = on ? "Type into Terminal" : "Write a message";
+      document.querySelector(".send-btn").setAttribute("aria-label", on ? "Type into Terminal" : "Send");
+    };
+    document.getElementById("terminalModeBtn").addEventListener("click", () => {
+      setTerminalMode(false);
+      saveComposerDraft();
+      autoResizeTextarea();
+      focusMessageInputWithoutScroll(messageInput.value.length);
+    });
     const submitMessage = async ({ closeOverlayOnStart = false, forcedText = null } = {}) => {
       if (sendLocked) {
         return false;
@@ -131,7 +145,18 @@ __INCLUDE:transcript-refresh.js__
       sendLocked = true;
       const message = document.getElementById("message");
       const rawInput = forcedText != null ? forcedText : message.value;
-      const commandInput = rawInput.trim();
+      const terminalMode = forcedText == null && isTerminalMode();
+      if (terminalMode && pendingAttachments.length) {
+        setStatus("Remove attachments before using Terminal");
+        sendLocked = false;
+        return false;
+      }
+      if (terminalMode && !rawInput.trim()) {
+        setStatus("Empty Terminal input");
+        sendLocked = false;
+        return false;
+      }
+      const commandInput = terminalMode ? `${terminalCommandSlash} ${rawInput.trim()}` : rawInput.trim();
       const clearComposerDraft = () => {
         message.value = "";
         clearStoredComposerDraft();
@@ -180,6 +205,10 @@ __INCLUDE:transcript-refresh.js__
             }
             applyTimelineActivation(data);
             clearComposerDraft();
+            if (terminalMode) {
+              setTerminalMode(false);
+              autoResizeTextarea();
+            }
             blurComposerOnMobile(message);
             if (pendingAttachments.length) {
               pendingAttachments = [];

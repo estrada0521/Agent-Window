@@ -116,10 +116,6 @@ __INCLUDE:../markdown-code.css__
       display: none;
     }
 
-    .composer-main-shell {
-      padding-right: 0;
-    }
-
     .hub-native-menu-select {
       position: fixed;
       left: -9999px;
