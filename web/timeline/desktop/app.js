@@ -1354,7 +1354,15 @@ __INCLUDE:git-panel/events.js__
         void refreshGitOverview();
       }
     };
+    const postGitTreeLabel = async () => {
+      if (window.parent === window) return;
+      const worktrees = await fetchGitWorktrees().catch(() => []);
+      const label = worktrees.find((item) => item.path === gitTree())?.branch || "";
+      window.parent.postMessage({ type: "git-tree-label", label }, "*");
+    };
+    void postGitTreeLabel();
     document.addEventListener("git-tree-changed", () => {
+      void postGitTreeLabel();
       gitPanel.invalidateFingerprint();
       if (sideBarOpen) void loadGitPage({ reset: true });
       else if (pinnedStripActive()) void bootstrapPinnedGitSummary();

@@ -13,6 +13,20 @@
     html[data-theme="light"] {
       --desk-chrome-hover-rgb: 255, 255, 255;
     }
+    .timeline-tree-label {
+      display: inline-flex;
+      align-items: center;
+      height: var(--desk-chrome-size);
+      padding: 0 0.3em;
+      color: var(--fg);
+      font-size: var(--text-size, 13px);
+      white-space: nowrap;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .timeline-tree-label[hidden] {
+      display: none;
+    }
     .timeline-control-btn {
       display: inline-flex;
       align-items: center;

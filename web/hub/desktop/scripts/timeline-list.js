@@ -440,15 +440,40 @@
       return "both";
     }
 
-    const DESK_CHROME_GROUP_GAP_AT_DEFAULT_TEXT_SIZE = 16;
+    const DESK_CHROME_GROUP_GAP_AT_DEFAULT_TEXT_SIZE = 8;
+    const deskChromeGroupGap = () => DESK_CHROME_GROUP_GAP_AT_DEFAULT_TEXT_SIZE * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT;
+    function fitDeskTreeLabel() {
+      const text = _deskTreeLabelText;
+      _deskTreeLabel.hidden = !text;
+      _deskTreeLabel.title = text;
+      _deskTreeLabel.textContent = text;
+      const trafficRight = _deskWindowTraffic.getBoundingClientRect().right;
+      if (!text || trafficRight <= 0) return;
+      const maxWidth = _deskTreeLabel.getBoundingClientRect().right - trafficRight - deskChromeGroupGap();
+      const fits = (count) => {
+        _deskTreeLabel.textContent = count >= text.length
+          ? text
+          : `${text.slice(0, Math.ceil(count / 2))}…${text.slice(text.length - Math.floor(count / 2))}`;
+        return _deskTreeLabel.getBoundingClientRect().width <= maxWidth;
+      };
+      if (fits(text.length)) return;
+      let low = 0;
+      let high = text.length - 1;
+      while (low < high) {
+        const mid = Math.ceil((low + high) / 2);
+        if (fits(mid)) low = mid;
+        else high = mid - 1;
+      }
+      if (!fits(low)) _deskTreeLabel.hidden = true;
+    }
     function updateDeskChromeOverflow() {
+      fitDeskTreeLabel();
       if (!_deskFloatingControls || !_deskTopRightControls || !_deskWindowTraffic) return;
       _deskFloatingControls.classList.remove("is-title-hidden", "is-buttons-hidden");
       _deskTopRightControls.classList.remove("is-buttons-hidden");
       const trafficLeft = _deskWindowTraffic.getBoundingClientRect().left;
       if (trafficLeft <= 0) return;
-      const chromeGroupGap = DESK_CHROME_GROUP_GAP_AT_DEFAULT_TEXT_SIZE
-        * currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT;
+      const chromeGroupGap = deskChromeGroupGap();
       const collides = () => _deskFloatingControls.getBoundingClientRect().right + chromeGroupGap > trafficLeft;
       if (!collides()) return;
       _deskFloatingControls.classList.add("is-title-hidden");

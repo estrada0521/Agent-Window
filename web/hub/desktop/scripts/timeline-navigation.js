@@ -116,6 +116,8 @@
       const archived = !!findTimelineRecord(name)?.archived;
       const closeOnOpen = isPhoneViewport();
       _deskSelectedTimelineName = name;
+      _deskTreeLabelText = "";
+      fitDeskTreeLabel();
       updateDeskWindowTitle(name);
       persistDeskSelection(name);
       applyDeskTimelineSelection();

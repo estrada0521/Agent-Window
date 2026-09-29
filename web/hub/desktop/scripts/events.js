@@ -9,6 +9,11 @@
         else delete document.documentElement.dataset.sideBarPosition;
         return;
       }
+      if (event.data && event.data.type === "git-tree-label" && event.source === _deskTimelineFrame?.contentWindow) {
+        _deskTreeLabelText = String(event.data.label || "");
+        fitDeskTreeLabel();
+        return;
+      }
       if (event.data && event.data.type === "timeline-hud-visible" && event.source === _deskTimelineFrame?.contentWindow) {
         if (event.data.visible) document.documentElement.dataset.timelineHud = "1";
         else delete document.documentElement.dataset.timelineHud;
