@@ -187,7 +187,9 @@ def _get_events(handler, _parsed, ctx) -> None:
         while True:
             events = state.wait_for_events(seen, timeout=15.0)
             body = "".join(
-                f"event: {kind}\ndata: {json.dumps(data)}\n\n" for kind, data in events
+                f"event: git\ndata: {json.dumps(kind.removeprefix('git:'))}\n\n" if kind.startswith("git:")
+                else f"event: {kind}\ndata: {json.dumps(data)}\n\n"
+                for kind, data in events
             ) or ": keepalive\n\n"
             handler.wfile.write(body.encode("utf-8"))
             handler.wfile.flush()
@@ -195,24 +197,36 @@ def _get_events(handler, _parsed, ctx) -> None:
         return
 
 
-def _get_git_overview(handler, parsed, ctx) -> None:
+def _send_git_json(handler, parsed, ctx, read) -> None:
     qs = parse_qs(parsed.query)
-    raw_offset = (qs.get("offset", ["0"])[0] or "0").strip()
-    raw_limit = (qs.get("limit", ["50"])[0] or "50").strip()
-    summary_only = (qs.get("summary", [""])[0] or "").lower() in ("1", "true", "yes")
+    arg = lambda name: (qs.get(name, [""])[0] or "").strip()
     try:
-        offset = int(raw_offset)
-        limit = int(raw_limit)
-        data = workspace_git.git_overview(
-            ctx["workspace"],
-            offset=offset, limit=limit, include_commits=not summary_only
-        )
-        body = json.dumps(data, ensure_ascii=True).encode("utf-8")
+        body = json.dumps(read(workspace_git.git_tree_root(ctx["workspace"], arg("tree")), arg), ensure_ascii=True).encode("utf-8")
+    except LookupError as exc:
+        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
+        _send_bytes(handler, 404, body, content_type="application/json; charset=utf-8")
+        return
     except Exception as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
         _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
         return
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
+
+
+def _get_git_overview(handler, parsed, ctx) -> None:
+    _send_git_json(handler, parsed, ctx, lambda root, arg: workspace_git.git_overview(
+        root,
+        offset=int(arg("offset") or "0"),
+        limit=int(arg("limit") or "50"),
+        include_commits=arg("summary").lower() not in ("1", "true", "yes"),
+    ))
+
+
+def _get_git_worktrees(handler, parsed, ctx) -> None:
+    def read(_root, _arg):
+        trees = workspace_git.git_worktrees(ctx["workspace"])
+        return {"worktrees": [{"path": "", "branch": trees[0]["branch"]}, *trees[1:]]}
+    _send_git_json(handler, parsed, ctx, read)
 
 
 def _get_log_slice(handler, parsed, ctx) -> None:
@@ -231,63 +245,27 @@ def _get_log_slice(handler, parsed, ctx) -> None:
 
 
 def _get_git_diff_files(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    commit_hash = (qs.get("hash", [""])[0] or "").strip()
-    scope = (qs.get("scope", [""])[0] or "").strip()
-    try:
-        body = json.dumps(
-            workspace_git.git_diff_files(ctx["workspace"], commit_hash=commit_hash, scope=scope),
-            ensure_ascii=True,
-        ).encode("utf-8")
-    except Exception as exc:
-        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
-        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
-        return
-    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
+    _send_git_json(handler, parsed, ctx, lambda root, arg: workspace_git.git_diff_files(
+        root, commit_hash=arg("hash"), scope=arg("scope"),
+    ))
 
 
 def _get_git_file_diff(handler, parsed, ctx) -> None:
-    qs = parse_qs(parsed.query)
-    try:
-        body = json.dumps(
-            workspace_git.git_file_diff(
-                ctx["workspace"],
-                path=(qs.get("path", [""])[0] or "").strip(),
-                old_path=(qs.get("old_path", [""])[0] or "").strip(),
-                commit_hash=(qs.get("hash", [""])[0] or "").strip(),
-                untracked=(qs.get("untracked", [""])[0] or "") == "1",
-            ),
-            ensure_ascii=True,
-        ).encode("utf-8")
-    except Exception as exc:
-        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
-        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
-        return
-    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
+    _send_git_json(handler, parsed, ctx, lambda root, arg: workspace_git.git_file_diff(
+        root,
+        path=arg("path"),
+        old_path=arg("old_path"),
+        commit_hash=arg("hash"),
+        untracked=arg("untracked") == "1",
+    ))
 
 
 def _get_git_commit_info(handler, parsed, ctx) -> None:
-    commit_hash = (parse_qs(parsed.query).get("hash", [""])[0] or "").strip()
-    try:
-        body = json.dumps(
-            workspace_git.git_commit_info(ctx["workspace"], commit_hash=commit_hash),
-            ensure_ascii=True,
-        ).encode("utf-8")
-    except Exception as exc:
-        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
-        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
-        return
-    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
+    _send_git_json(handler, parsed, ctx, lambda root, arg: workspace_git.git_commit_info(root, commit_hash=arg("hash")))
 
 
-def _get_git_worktree_stat(handler, _parsed, ctx) -> None:
-    try:
-        body = json.dumps({"stat": workspace_git.git_worktree_stat(ctx["workspace"])}, ensure_ascii=True).encode("utf-8")
-    except Exception as exc:
-        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
-        _send_bytes(handler, 500, body, content_type="application/json; charset=utf-8")
-        return
-    _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
+def _get_git_worktree_stat(handler, parsed, ctx) -> None:
+    _send_git_json(handler, parsed, ctx, lambda root, _arg: {"stat": workspace_git.git_worktree_stat(root)})
 
 
 def _get_slash_commands(handler, _parsed, ctx) -> None:
@@ -311,6 +289,7 @@ _GET_ROUTES = {
     "/git-file-diff": _get_git_file_diff,
     "/git-commit-info": _get_git_commit_info,
     "/git-worktree-stat": _get_git_worktree_stat,
+    "/git-worktrees": _get_git_worktrees,
     "/slash-commands": _get_slash_commands,
 }
 

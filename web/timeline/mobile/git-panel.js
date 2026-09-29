@@ -3,18 +3,41 @@ __INCLUDE:../git-panel-html.js__
 __INCLUDE:../git-panel-data.js__
 __INCLUDE:../git-panel-controller.js__
     const gitSheetTitleEl = () => sharedSheetTitleEl;
+    let gitSheetBranch = "";
     const setGitSheetTitle = () => {
       const titleEl = gitSheetTitleEl();
       if (!titleEl) return;
       titleEl.classList.remove("git-sheet-detail-title", "git-sheet-title");
-      titleEl.textContent = "Git";
-      titleEl.title = "Git";
+      titleEl.textContent = gitSheetBranch || "Git";
+      titleEl.title = titleEl.textContent;
+    };
+    const syncGitSheetBranch = (data) => {
+      gitSheetBranch = data?.branch || "";
+      if (sheetKind() === "git" && !gitPanel.detailContext && !mobileSheet.classList.contains("sheet-mode-preview")) setGitSheetTitle();
     };
     const gitWorktreeButton = () => mobileSheet?.querySelector(".git-worktree-button");
     const gitPinButton = document.createElement("button");
     gitPinButton.type = "button";
     gitPinButton.className = "git-summary-pin mobile-bottom-sheet-button";
     gitPinButton.innerHTML = GIT_SUMMARY_PIN_SVG;
+    let gitWorktreeList = [];
+    const gitTreeButton = document.createElement("button");
+    gitTreeButton.type = "button";
+    gitTreeButton.className = "git-tree-switch mobile-bottom-sheet-button";
+    gitTreeButton.setAttribute("aria-label", "Switch worktree");
+    gitTreeButton.disabled = true;
+    gitTreeButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v12"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>';
+    const loadGitWorktreeList = async () => {
+      gitWorktreeList = await fetchGitWorktrees();
+      gitTreeButton.disabled = gitWorktreeList.length < 2;
+    };
+    gitTreeButton.addEventListener("click", () => {
+      openSubMenu(
+        "Worktree",
+        gitWorktreeList.map((tree, index) => [String(index), `${tree.path === gitTree() ? "✓ " : ""}${tree.branch}`]),
+        (index) => setGitTree(gitWorktreeList[Number(index)].path),
+      );
+    });
     const gitPinHud = document.createElement("button");
     gitPinHud.type = "button";
     gitPinHud.className = "git-worktree-button";
@@ -29,11 +52,11 @@ __INCLUDE:../git-panel-controller.js__
     };
     const showGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
-      if (btn) btn.hidden = gitPinButton.hidden = !!gitPanel.detailContext;
+      if (btn) btn.hidden = gitPinButton.hidden = gitTreeButton.hidden = !!gitPanel.detailContext;
     };
     const hideGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
-      if (btn) btn.hidden = gitPinButton.hidden = true;
+      if (btn) btn.hidden = gitPinButton.hidden = gitTreeButton.hidden = true;
     };
     const gitWorktreeSummaryHtml = (data) => {
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
@@ -91,7 +114,7 @@ __INCLUDE:../git-panel-controller.js__
         btn = document.createElement("button");
         btn.type = "button";
         btn.className = "git-worktree-button mobile-bottom-sheet-button";
-        sheetPanel.append(btn, gitPinButton);
+        sheetPanel.append(btn, gitTreeButton, gitPinButton);
       }
       syncGitPinButton();
       const hasDiff = !!data?.worktree_has_diff;
@@ -306,6 +329,7 @@ __INCLUDE:../git-panel-controller.js__
       canLoad: () => !!mobileSheet,
       canRefresh: () => !!mobileSheet,
       renderShell: (data) => {
+        syncGitSheetBranch(data);
         renderGitWorktreeButton(data);
         setGitPanelBodyHtml(`
         <div class="git-stack mobile-sheet-stack">
@@ -336,7 +360,10 @@ __INCLUDE:../git-panel-controller.js__
         revealFilesFromTop(wrapEl);
         renderGitFileDiffs();
       },
-      onOverview: refreshGitDetailTitleFromOverview,
+      onOverview: (data) => {
+        syncGitSheetBranch(data);
+        refreshGitDetailTitleFromOverview(data);
+      },
       onFingerprintChanged: (data) => {
         collapseWorktreeDiffs();
         const previous = gitCountSnapshot(gitWorktreeButton());
@@ -344,6 +371,10 @@ __INCLUDE:../git-panel-controller.js__
         animateGitCountsFromSnapshot(gitWorktreeButton(), previous);
         if (gitPinned()) renderGitPinHud(data || {}, { animate: false });
       },
+    });
+    document.addEventListener("git-tree-changed", () => {
+      if (gitPanel.hasShell()) void gitPanel.loadPage({ reset: true });
+      void refreshGitPinHud();
     });
     const updateGitPanel = async () => {
       if (!mobileSheet) return;
@@ -360,7 +391,7 @@ __INCLUDE:../git-panel-controller.js__
         onFileRow: async (fileRow) => {
           const path = String(fileRow.dataset.path || "").trim();
           if (!path) return;
-          await openSheetPreview(path, extFromPath(path), { kind: "git" });
+          await openSheetPreview(gitTreePath(path), extFromPath(path), { kind: "git" });
         },
       });
     });

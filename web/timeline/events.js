@@ -3,7 +3,9 @@
     timelineEvents.addEventListener("messages", () => { void refresh(); });
     timelineEvents.addEventListener("state", () => { void refreshTimelineState(); });
     timelineEvents.addEventListener("files", handleWorkspaceFilesChanged);
-    timelineEvents.addEventListener("git", handleWorkspaceGitChanged);
+    timelineEvents.addEventListener("git", (event) => {
+      if (JSON.parse(event.data) === gitTree()) handleWorkspaceGitChanged();
+    });
     timelineEvents.addEventListener("failure", (event) => { setStatus(JSON.parse(event.data)); });
     timelineEvents.onopen = () => {
       setResidentStatus("disconnected", "");

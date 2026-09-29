@@ -41,11 +41,14 @@
         height: Number(rectSource.height || 24),
       };
 
+      const worktrees = await fetchGitWorktrees().catch(() => []);
       if (window.parent === window) {
         openTimelineMenu(rightMenuBtn, {
           sessionActive: !!sessionActive,
           addAgents: ALL_BASE_AGENTS.filter(Boolean),
           removeAgents: agentActionCandidates("remove"),
+          worktrees,
+          gitTree: gitTree(),
         }, (action) => void handleTimelineMenuAction(action));
         return true;
       }
@@ -71,6 +74,8 @@
         addAgents: ALL_BASE_AGENTS.filter(Boolean),
         removeAgents: agentActionCandidates("remove"),
         agentIcons,
+        worktrees,
+        gitTree: gitTree(),
       };
       window.parent.postMessage({
         type: "show-timeline-header-menu",
@@ -88,6 +93,10 @@
           closeHeaderMenus();
           await performAgentAction(mode, agent);
         }
+        return;
+      }
+      if (data.action === "gitTree") {
+        setGitTree(String(data.tree || ""));
         return;
       }
       const action = String(data.action || "");

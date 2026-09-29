@@ -1354,6 +1354,11 @@ __INCLUDE:git-panel/events.js__
         void refreshGitOverview();
       }
     };
+    document.addEventListener("git-tree-changed", () => {
+      gitPanel.invalidateFingerprint();
+      if (sideBarOpen) void loadGitPage({ reset: true });
+      else if (pinnedStripActive()) void bootstrapPinnedGitSummary();
+    });
     __INCLUDE:../events.js__
     onTimelineSummaryPinReload({ force: true });
     applySideBarWidth();

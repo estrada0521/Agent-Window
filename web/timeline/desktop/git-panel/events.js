@@ -8,14 +8,14 @@
           const resolved = resolveRowClick(gitSel, p, event);
           if (!resolved) return;
           if (resolved.quickLook) {
-            await quickLookPaths(resolved.targets);
+            await quickLookPaths(resolved.targets.map(gitTreePath));
             return;
           }
           const hash = gitPanel.detailContext?.hash || "";
           for (const path of resolved.targets) {
             const row = gitContent?.querySelector(`.git-commit-file-row[data-path="${gitCssEscape(path)}"]`);
             if (hash || row?.dataset.untracked !== "1") await openDiff(path, hash, row?.dataset.oldPath || "");
-            else await openFile(path);
+            else await openFile(gitTreePath(path));
           }
         },
         closeWorktreeSummaryClick: true,
@@ -48,7 +48,7 @@
       const fileRow = event.target.closest(".git-commit-file-row");
       const path = String(fileRow?.dataset.path || "").trim();
       if (!path) return;
-      void openFileContextMenu(resolveContextMenuTargets(gitSel, path), event, { openFile: fileRow.dataset.untracked !== "1", triggerPath: path });
+      void openFileContextMenu(resolveContextMenuTargets(gitSel, path).map(gitTreePath), event, { openFile: fileRow.dataset.untracked !== "1", triggerPath: gitTreePath(path) });
     });
     document.getElementById("gitPinnedSummaryAside")?.addEventListener("click", async (event) => {
       if (event.target.closest(".git-summary-pin")) {
@@ -225,13 +225,13 @@
           void openDiff(path, "", file.dataset.oldPath || "");
           return;
         }
-        void openFile(path);
+        void openFile(gitTreePath(path));
       });
 
       expand.addEventListener("contextmenu", (event) => {
         const file = event.target.closest(".git-commit-file-row");
         const path = String(file?.dataset.path || "").trim();
-        if (path) void openFileContextMenu(path, event, { openFile: file.dataset.untracked !== "1" });
+        if (path) void openFileContextMenu(gitTreePath(path), event, { openFile: file.dataset.untracked !== "1" });
       });
 
       summary.addEventListener("mouseover", (event) => {

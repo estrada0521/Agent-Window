@@ -36,8 +36,8 @@
       display: none;
     }
 
-    #mobileSheet[data-kind="repo"] :is(.git-worktree-button, .git-summary-pin),
-    #mobileSheet.sheet-mode-preview :is(.git-worktree-button, .git-summary-pin) {
+    #mobileSheet[data-kind="repo"] :is(.git-worktree-button, .git-summary-pin, .git-tree-switch),
+    #mobileSheet.sheet-mode-preview :is(.git-worktree-button, .git-summary-pin, .git-tree-switch) {
       display: none;
     }
 
@@ -631,7 +631,19 @@
       left: calc(14px + env(safe-area-inset-left, 0px));
     }
 
-    .mobile-bottom-sheet .git-summary-pin[hidden] {
+    .mobile-bottom-sheet .git-tree-switch {
+      position: absolute;
+      right: calc(14px + env(safe-area-inset-right, 0px) + var(--mobile-sheet-floating-height) + 8px);
+      bottom: var(--mobile-sheet-footer-bottom);
+      z-index: 6;
+    }
+
+    html[data-hand="right"] .mobile-bottom-sheet .git-tree-switch {
+      right: auto;
+      left: calc(14px + env(safe-area-inset-left, 0px) + var(--mobile-sheet-floating-height) + 8px);
+    }
+
+    .mobile-bottom-sheet :is(.git-summary-pin, .git-tree-switch)[hidden] {
       display: none;
     }
 

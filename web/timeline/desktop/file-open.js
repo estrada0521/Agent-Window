@@ -31,7 +31,7 @@
       const res = await fetch("/open-diff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path, hash, old_path: oldPath }),
+        body: JSON.stringify({ path, hash, old_path: oldPath, tree: gitTree() }),
       });
       if (!res.ok) {
         let detail = "Diff failed";

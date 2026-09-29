@@ -34,6 +34,28 @@ def clear_commit_list_cache() -> None:
         _commit_list_cache.clear()
 
 
+def git_worktrees(workspace: str) -> list[dict]:
+    res = _run_git(_git_root(workspace), "worktree", "list", "--porcelain")
+    if res.returncode != 0:
+        raise RuntimeError((res.stderr or res.stdout or "git worktree list failed").strip())
+    trees = []
+    for block in (res.stdout or "").strip().split("\n\n"):
+        fields = dict((line.split(" ", 1) + [""])[:2] for line in block.splitlines())
+        if "bare" in fields or "prunable" in fields:
+            continue
+        branch = fields.get("branch", "").removeprefix("refs/heads/")
+        trees.append({"path": fields["worktree"], "branch": branch or fields["HEAD"][:7]})
+    return trees
+
+
+def git_tree_root(workspace: str, tree: str) -> str:
+    if not tree:
+        return workspace
+    if tree not in {item["path"] for item in git_worktrees(workspace)[1:]}:
+        raise LookupError(f"Worktree not found: {tree}")
+    return tree
+
+
 def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
     paths = [str(rel or "").replace("\\", "/").strip("/") for rel in rel_paths if str(rel or "").strip()]
     if not paths:
@@ -123,6 +145,14 @@ def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
     }
 
 
+def _status_branch(header: str, head: str) -> str:
+    if header.startswith("HEAD (no branch)"):
+        return head[:7]
+    if header.startswith("No commits yet on "):
+        return header.removeprefix("No commits yet on ")
+    return header.split("...", 1)[0].split(" ", 1)[0]
+
+
 def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = True):
     root = _git_root(workspace)
     offset = int(offset)
@@ -189,11 +219,14 @@ def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = 
     if status_res.returncode != 0:
         raise RuntimeError((status_res.stderr or status_res.stdout or "git status failed").strip())
     status_lines = []
+    branch = ""
     for line in (status_res.stdout or "").splitlines():
         line = line.rstrip()
-        if not line or line.startswith("## "):
+        if line.startswith("## "):
+            branch = _status_branch(line[3:], head)
             continue
-        status_lines.append(line)
+        if line:
+            status_lines.append(line)
     staged_paths, unstaged_paths, untracked_paths = _status_bucket_paths(status_lines)
     staged_diff_res = _run("diff", "--numstat", "--cached", "--")
     unstaged_diff_res = _run("diff-files", "--numstat")
@@ -225,6 +258,7 @@ def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = 
     next_offset = offset + len(recent_commits)
     has_more = next_offset < total_commits if total_commits else len(recent_commits) >= limit
     return {
+        "branch": branch,
         "offset": offset,
         "limit": limit,
         "next_offset": next_offset,

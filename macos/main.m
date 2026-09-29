@@ -128,6 +128,15 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSMenuItem *removeMenu = [self submenu:@"Remove Agent" items:remove];
     removeMenu.enabled = active && remove.count > 0;
     [self setImage:MenuImage([NSImage imageNamed:NSImageNameRemoveTemplate]) on:removeMenu];
+    NSMutableArray *trees = [NSMutableArray array];
+    for (NSDictionary *tree in p[@"worktrees"]) {
+        NSMenuItem *item = [self item:tree[@"branch"] payload:@{ @"action": @"gitTree", @"tree": tree[@"path"] } key:nil mods:0];
+        item.state = [tree[@"path"] isEqualToString:p[@"gitTree"]] ? NSControlStateValueOn : NSControlStateValueOff;
+        [trees addObject:item];
+    }
+    NSMenuItem *treeMenu = [self submenu:@"Worktree" items:trees];
+    treeMenu.enabled = trees.count > 1;
+    [self setImage:MenuImage([NSImage imageWithSystemSymbolName:@"arrow.triangle.branch" accessibilityDescription:nil]) on:treeMenu];
 
     NSEventModifierFlags cmd = NSEventModifierFlagCommand, opt = NSEventModifierFlagOption;
     NSMenuItem *shell = [self action:@"openShell" title:@"Terminal" key:@"t" mods:cmd];
@@ -137,6 +146,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 
     [self popUp:@[
         addMenu, removeMenu, NSMenuItem.separatorItem,
+        treeMenu, NSMenuItem.separatorItem,
         shell, finder, NSMenuItem.separatorItem,
         [self action:@"openTerminal" title:@"tmux window" key:@"t" mods:cmd | opt],
         [self action:@"revealLog" title:@"Reveal Log" key:@"l" mods:cmd | opt],

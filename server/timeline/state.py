@@ -24,7 +24,7 @@ from server.timeline.binding import WorkspaceTimelineBinding
 
 
 ENTRY_WINDOW_LIMIT = 2000
-EVENT_KINDS = ("messages", "state", "files", "git", "failure")
+EVENT_KINDS = ("messages", "state", "files", "failure")
 
 
 class TimelineState:
@@ -107,7 +107,7 @@ class TimelineState:
 
     def publish_event(self, kind: str) -> None:
         with self._events:
-            self._event_counts[kind] += 1
+            self._event_counts[kind] = self._event_counts.get(kind, 0) + 1
             self._events.notify_all()
 
     def event_counts(self) -> dict[str, int]:
@@ -131,8 +131,8 @@ class TimelineState:
             self._events.wait_for(lambda: self._event_counts != seen, timeout=timeout)
             changed = [
                 (kind, self._latest_failure if kind == "failure" else "")
-                for kind in EVENT_KINDS
-                if self._event_counts[kind] != seen[kind]
+                for kind in self._event_counts
+                if self._event_counts[kind] != seen.get(kind, 0)
             ]
             seen.update(self._event_counts)
             return changed

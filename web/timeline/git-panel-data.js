@@ -35,13 +35,36 @@
       if (summary) params.set("summary", "1");
       return params;
     };
+    const gitTreeStorageKey = `agent_window_git_tree:${TIMELINE_BASE_PATH}`;
+    const gitTree = () => sessionStorage.getItem(gitTreeStorageKey) || "";
+    const setGitTree = (tree) => {
+      if (tree) sessionStorage.setItem(gitTreeStorageKey, tree);
+      else sessionStorage.removeItem(gitTreeStorageKey);
+      document.dispatchEvent(new CustomEvent("git-tree-changed"));
+    };
+    const gitTreePath = (rel) => (gitTree() ? `${gitTree()}/${rel}` : rel);
+    const withGitTree = (url) => {
+      const tree = gitTree();
+      return tree ? `${url}${url.includes("?") ? "&" : "?"}tree=${encodeURIComponent(tree)}` : url;
+    };
+    const failIfGitTreeRemoved = (res) => {
+      if (res.status !== 404 || !gitTree()) return;
+      setGitTree("");
+      throw new Error("Worktree was removed; showing main");
+    };
+    const fetchGitWorktrees = async () => {
+      const res = await fetchWithTimeout("/git-worktrees", {}, GIT_PANEL_FETCH_MS);
+      if (!res.ok) throw new Error("Failed to load worktrees");
+      return (await res.json()).worktrees;
+    };
     const fetchGitOverview = async ({ offset = 0, limit = GIT_PANEL_BATCH, summary = false } = {}) => {
       const res = await fetchWithTimeout(
-        `/git-overview?${gitOverviewQuery({ offset, limit, summary })}`,
+        withGitTree(`/git-overview?${gitOverviewQuery({ offset, limit, summary })}`),
         {},
         GIT_PANEL_FETCH_MS,
       );
       if (!res.ok) {
+        failIfGitTreeRemoved(res);
         throw new Error(offset > 0 ? "Failed to load more commits" : "Failed to load git overview");
       }
       return res.json();
@@ -77,8 +100,11 @@
         ].join("\u001f"))
       ).join("\n");
     const fetchGitJson = async (url) => {
-      const res = await fetchWithTimeout(url, {}, GIT_PANEL_FETCH_MS);
-      if (!res.ok) throw new Error("Failed to load git files");
+      const res = await fetchWithTimeout(withGitTree(url), {}, GIT_PANEL_FETCH_MS);
+      if (!res.ok) {
+        failIfGitTreeRemoved(res);
+        throw new Error("Failed to load git files");
+      }
       return res.json();
     };
     const gitCommitInfos = new Map();

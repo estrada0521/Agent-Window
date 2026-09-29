@@ -58,6 +58,9 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
         git_patcher = mock.patch("fs.watch.clear_commit_list_cache", side_effect=clear)
         git_patcher.start()
         self.addCleanup(git_patcher.stop)
+        worktrees_patcher = mock.patch("fs.watch.git_worktrees", side_effect=lambda workspace: [{"path": workspace, "branch": "main"}])
+        worktrees_patcher.start()
+        self.addCleanup(worktrees_patcher.stop)
 
     def test_git_head_metadata_filter_excludes_large_git_payloads(self) -> None:
         for rel in (
@@ -95,7 +98,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
 
             self.assertEqual(api.state.commit_refreshes, 1)
             self.assertEqual(self.commit_cache_clears, 1)
-            self.assertEqual(api.state.events, ["git"])
+            self.assertEqual(api.state.events, ["git:"])
 
     def test_regular_file_event_publishes_files_and_git(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -113,7 +116,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
 
             self.assertEqual(api.state.commit_refreshes, 0)
             self.assertEqual(self.commit_cache_clears, 0)
-            self.assertEqual(api.state.events, ["files", "git"])
+            self.assertEqual(api.state.events, ["files", "git:"])
 
     def test_git_object_event_is_ignored_entirely(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -154,7 +157,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
                 refresh.add_path(str(tracked))
             refresh._flush_locked()
 
-            self.assertEqual(api.state.events, ["files", "files", "git"])
+            self.assertEqual(api.state.events, ["files", "files", "git:"])
 
 
 if __name__ == "__main__":

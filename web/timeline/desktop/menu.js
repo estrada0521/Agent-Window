@@ -31,6 +31,7 @@
       openMenuSelect(anchor, "Menu", [
         { value: "add", label: "Add Agent", disabled: !payload.sessionActive || !agents.add.length },
         { value: "remove", label: "Remove Agent", disabled: !payload.sessionActive || !agents.remove.length },
+        { value: "worktree", label: "Worktree", disabled: payload.worktrees.length < 2 },
         { value: "openShell", label: "Terminal" },
         { value: "openFinder", label: "Finder" },
         { value: "openTerminal", label: "tmux window" },
@@ -38,6 +39,13 @@
         { value: "exportHtml", label: "Export as HTML…" },
         { value: "exportJsonl", label: "Export as JSONL…" },
       ], (action) => {
+        if (action === "worktree") {
+          openMenuSelect(anchor, "Worktree", payload.worktrees.map((tree) => ({
+            value: tree.path,
+            label: `${tree.path === payload.gitTree ? "✓ " : ""}${tree.branch}`,
+          })), (tree) => onAction({ action: "gitTree", tree }));
+          return;
+        }
         if (!agents[action]) {
           onAction({ action });
           return;
