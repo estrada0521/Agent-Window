@@ -586,6 +586,11 @@
       transition: background 120ms ease;
     }
 
+    .mobile-bottom-sheet .git-worktree-button,
+    #timelineHud:has(.git-worktree-button) {
+      --liquid-glass-press-scale: 1.08;
+    }
+
     .mobile-bottom-sheet .git-worktree-button {
       position: absolute;
       left: calc(14px + env(safe-area-inset-left, 0px));
@@ -630,7 +635,7 @@
       display: none;
     }
 
-    .git-summary-pin.is-pinned svg circle {
+    .git-summary-pin.is-pinned svg .pin-head {
       fill: currentColor;
     }
 

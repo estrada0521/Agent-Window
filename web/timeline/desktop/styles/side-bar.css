@@ -581,7 +581,7 @@
       border: none;
       border-radius: 0.29em;
       background: transparent;
-      color: var(--icon-muted);
+      color: var(--fg);
       font: inherit;
       line-height: 0;
       cursor: pointer;
@@ -591,7 +591,7 @@
       height: var(--side-bar-small-icon-size);
       display: block;
     }
-    .git-summary-pin.is-pinned svg circle {
+    .git-summary-pin.is-pinned svg .pin-head {
       fill: currentColor;
     }
     html[data-desktop-timeline="1"] .git-pinned-summary-aside {
