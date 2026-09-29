@@ -224,7 +224,8 @@
     html[data-always-on-top="1"] #deskSettingsBtn {
       position: relative;
     }
-    html[data-always-on-top="1"]:not([data-auto-window-height="1"]) #deskSettingsBtn::after {
+    html[data-always-on-top="1"]:not([data-auto-window-height="1"]) #deskSettingsBtn::after,
+    html:not([data-auto-window-height="1"]) #deskAppSidebarToggle.is-unread::after {
       content: "";
       position: absolute;
       top: 0.23em;
@@ -238,7 +239,8 @@
     html[data-always-on-top="1"][data-auto-window-height="1"] #deskSettingsBtn {
       overflow: visible;
     }
-    html[data-always-on-top="1"][data-auto-window-height="1"] #deskSettingsBtn::before {
+    html[data-always-on-top="1"][data-auto-window-height="1"] #deskSettingsBtn::before,
+    html[data-auto-window-height="1"] #deskAppSidebarToggle.is-unread::before {
       content: "";
       position: absolute;
       top: 50%;
@@ -286,7 +288,7 @@
     }
     .desk-floating-controls .desk-app-sidebar-toggle,
     html[data-native-app="1"][data-native-root-window="1"] .desk-floating-controls .desk-app-sidebar-toggle {
-      position: static;
+      position: relative;
       left: auto;
       top: auto;
       z-index: auto;

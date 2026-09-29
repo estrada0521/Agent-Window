@@ -73,6 +73,7 @@
     }
 
     function applyDeskTimelineSelection() {
+      _deskAppSidebarToggle?.classList.toggle("is-unread", _deskUnreadTimelines.size > 0);
       if (!_deskTimelineList) return;
       for (const wrap of _deskTimelineList.querySelectorAll(".desk-swipe-row")) {
         const row = wrap.querySelector(".desk-timeline-row");
@@ -485,6 +486,7 @@
         if (!activeNames.has(name)) _deskUnreadTimelines.delete(name);
       });
       _deskPreviewRevisions = nextRevisions;
+      _deskAppSidebarToggle?.classList.toggle("is-unread", _deskUnreadTimelines.size > 0);
     }
 
     async function refreshHubTimelines(force = false, options = {}) {
