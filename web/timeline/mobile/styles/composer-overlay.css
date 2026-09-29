@@ -133,6 +133,9 @@
       position: relative;
       isolation: isolate;
     }
+    .composer-dock-btn {
+      display: none;
+    }
 
     .composer-main-shell>* {
       position: relative;

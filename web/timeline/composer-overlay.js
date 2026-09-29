@@ -1,7 +1,16 @@
     const composerFabBtn = document.getElementById("composerFabBtn");
     const composerOverlay = document.getElementById("composerOverlay");
     const composerForm = document.getElementById("composer");
+    const composerDockBtn = document.getElementById("composerDockBtn");
     const isComposerOverlayOpen = () => !!composerOverlay && !composerOverlay.hidden && composerOverlay.classList.contains("visible");
+    const setComposerDocked = (on) => {
+      composerOverlay.classList.toggle("docked", on);
+      const label = on ? "Center composer" : "Move composer to bottom";
+      composerDockBtn.setAttribute("aria-label", label);
+      composerDockBtn.title = `${label} [⌃⌘↓]`;
+      composerDockBtn.setAttribute("aria-pressed", on ? "true" : "false");
+      if (typeof autoResizeTextarea === "function") autoResizeTextarea();
+    };
     if (document.documentElement.dataset.mobile === "1" && document.documentElement.dataset.hubIframeTimeline === "1") {
       const mobileComposerInput = document.getElementById("message");
       composerOverlay?.addEventListener("touchstart", (event) => {
@@ -127,6 +136,7 @@
       document.dispatchEvent(new CustomEvent("composer-overlay-close-start"));
       composerForm?.classList.remove("composer-opening-ready");
       composerOverlay.classList.remove("visible", "fit-arming");
+      if (composerOverlay.classList.contains("docked")) setComposerDocked(false);
       document.body.classList.remove("composer-overlay-open");
       composerOverlay.hidden = true;
       updateScrollBtn();
@@ -141,6 +151,20 @@
     composerFabBtn?.addEventListener("click", () => {
       openComposerOverlay({ immediateFocus: canCompose() });
     });
+    if (document.documentElement.dataset.mobile !== "1") {
+      composerDockBtn?.addEventListener("click", () => {
+        if (!isComposerOverlayOpen() || document.documentElement.dataset.autoWindowHeight === "1") return;
+        setComposerDocked(!composerOverlay.classList.contains("docked"));
+        messageInput.focus({ preventScroll: true });
+      });
+      document.addEventListener("keydown", (event) => {
+        if (!event.metaKey || !event.ctrlKey || event.altKey || event.shiftKey || event.code !== "ArrowDown") return;
+        if (event.repeat || event.isComposing || !isComposerOverlayOpen() || document.documentElement.dataset.autoWindowHeight === "1") return;
+        event.preventDefault();
+        event.stopPropagation();
+        setComposerDocked(!composerOverlay.classList.contains("docked"));
+      }, true);
+    }
     composerOverlay?.addEventListener("click", (event) => {
       if (event.target === composerOverlay) {
         closeComposerOverlay({ restoreFocus: true });

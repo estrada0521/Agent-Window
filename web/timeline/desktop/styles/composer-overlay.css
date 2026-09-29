@@ -27,6 +27,10 @@
       align-items: flex-end;
       padding-bottom: calc(var(--text-size, 13px) * 12 / 13);
     }
+    .composer-overlay.docked {
+      align-items: flex-end;
+      padding-bottom: calc(var(--text-size, 13px) * 12 / 13);
+    }
     html[data-auto-window-height="1"] .composer-overlay {
       transition: none;
     }
@@ -146,6 +150,42 @@
       box-sizing: border-box;
       justify-self: center;
     }
+    html:not([data-auto-window-height="1"]) .composer-main-shell {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "input input input"
+        "plus targets dock";
+    }
+    .composer-dock-btn {
+      grid-area: dock;
+      align-self: center;
+      width: calc(var(--text-size, 13px) * 30 / 13);
+      height: calc(var(--text-size, 13px) * 30 / 13);
+      padding: calc(var(--text-size, 13px) * 4 / 13);
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--icon-fg);
+      cursor: pointer;
+    }
+    .composer-dock-btn svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .composer-overlay.docked .composer-dock-btn svg {
+      transform: rotate(180deg);
+    }
+    .has-hover .composer-dock-btn:hover {
+      color: var(--icon-hover);
+      background: var(--panel-row-hover-bg);
+    }
+    .composer-dock-btn:active {
+      background: var(--panel-row-active-bg);
+    }
+    html[data-auto-window-height="1"] .composer-dock-btn {
+      display: none;
+    }
     .target-picker {
       grid-area: targets;
       display: block;
@@ -251,6 +291,7 @@
       transition: none;
     }
     .composer-attach-btn,
+    .composer-dock-btn,
     .target-chip,
     .copy-btn,
     .send-btn,
@@ -260,6 +301,8 @@
     }
     .composer-attach-btn:focus,
     .composer-attach-btn:focus-visible,
+    .composer-dock-btn:focus,
+    .composer-dock-btn:focus-visible,
     .target-chip:focus,
     .target-chip:focus-visible,
     .copy-btn:focus,
