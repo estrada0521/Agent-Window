@@ -11,8 +11,9 @@ __INCLUDE:file-resolve.js__
       fileDrop.classList.remove("visible", "is-scrollable");
       fileDrop.style.display = "none";
       _dropActiveIdx = -1;
-      if (wasVisible && !isMobileComposer && event?.type !== "composer-overlay-close-start") {
-        positionComposerDropdown(fileDrop);
+      if (wasVisible && event?.type !== "composer-overlay-close-start") {
+        if (isMobileComposer) autoResizeTextarea();
+        else positionComposerDropdown(fileDrop);
       }
     };
     document.addEventListener("composer-overlay-close-start", closeDrop);
@@ -212,7 +213,24 @@ __INCLUDE:file-autocomplete.js__
       messageInput.style.maxHeight = "";
       const inputStyle = getComputedStyle(messageInput);
       const baseHeight = parseFloat(inputStyle.minHeight);
-      let maxHeight = parseFloat(inputStyle.maxHeight);
+      let maxHeight;
+      if (isMobileComposer) {
+        const overlay = composerOverlay.getBoundingClientRect();
+        const topInset = parseFloat(getComputedStyle(composerOverlay).paddingTop);
+        const visibleTop = window.visualViewport?.offsetTop || 0;
+        const hudTop = parseFloat(getComputedStyle(document.getElementById("timelineHud")).top);
+        const topLimit = Math.max(overlay.top + topInset, visibleTop + topInset, hudTop);
+        const menu = document.querySelector("#fileDropdown.visible, #cmdDropdown.visible");
+        if (menu) menu.style.maxHeight = "";
+        const menuHeight = menu ? menu.offsetHeight + 8 : 0;
+        const attachHeight = attachPreviewRow?.children.length
+          ? attachPreviewRow.getBoundingClientRect().height + 8
+          : 0;
+        maxHeight = Math.max(baseHeight, messageInput.getBoundingClientRect().bottom - topLimit - menuHeight - attachHeight);
+        messageInput.style.maxHeight = maxHeight + "px";
+      } else {
+        maxHeight = parseFloat(inputStyle.maxHeight);
+      }
       if (!isMobileComposer && !fitComposer
         && (attachPreviewRow?.offsetHeight || document.querySelector("#fileDropdown.visible, #cmdDropdown.visible"))) {
         const aboveInput = composerShellEl.querySelector(".composer-above-input");
@@ -234,22 +252,16 @@ __INCLUDE:file-autocomplete.js__
       if (scrollable && messageInput.value.length - messageInput.selectionEnd <= 1) {
         messageInput.scrollTop = messageInput.scrollHeight;
       }
-      if (isMobileComposer && isComposerOverlayOpen() && attachPreviewRow?.children.length) {
-        positionComposerDropdown(attachPreviewRow);
+      if (isMobileComposer && isComposerOverlayOpen()) {
+        if (attachPreviewRow?.children.length) positionMobileComposerDropdown(attachPreviewRow);
+        const menu = document.querySelector("#fileDropdown.visible, #cmdDropdown.visible");
+        if (menu) positionMobileComposerDropdown(menu);
       }
       if (fitComposer && isComposerOverlayOpen() && messageInput.offsetHeight !== previousHeight) {
         reportFitHeight({ fromComposer: true });
       }
     };
-    const positionComposerDropdown = (dropdown) => {
-      if (!dropdown) return;
-      if (!isMobileComposer) {
-        autoResizeTextarea();
-        if (document.documentElement.dataset.autoWindowHeight === "1" && isComposerOverlayOpen()) {
-          reportFitHeight({ fromComposer: true });
-        }
-        return;
-      }
+    const positionMobileComposerDropdown = (dropdown) => {
       const taRect = messageInput.getBoundingClientRect();
       if (!taRect.width && !taRect.height) return;
       const composerTransform = getComputedStyle(composerForm).transform;
@@ -276,6 +288,17 @@ __INCLUDE:file-autocomplete.js__
           );
         });
       }
+    };
+    const positionComposerDropdown = (dropdown) => {
+      if (!dropdown) return;
+      autoResizeTextarea();
+      if (!isMobileComposer) {
+        if (document.documentElement.dataset.autoWindowHeight === "1" && isComposerOverlayOpen()) {
+          reportFitHeight({ fromComposer: true });
+        }
+        return;
+      }
+      positionMobileComposerDropdown(dropdown);
     };
     document.addEventListener("composer-overlay-open", () => {
       if (!isMobileComposer || !attachPreviewRow?.children.length) return;

@@ -201,7 +201,7 @@
       color: var(--fg);
       min-height: var(--composer-row-h);
       height: var(--composer-row-h);
-      max-height: 200px;
+      max-height: none;
       resize: none;
       padding-top: var(--composer-pad-top);
       padding-right: 10px;

@@ -24,8 +24,9 @@
       cmdDrop.classList.remove("visible", "is-scrollable");
       cmdDrop.style.display = "none";
       _cmdActiveIdx = -1;
-      if (wasVisible && !isMobileComposer && event?.type !== "composer-overlay-close-start") {
-        positionComposerDropdown(cmdDrop);
+      if (wasVisible && event?.type !== "composer-overlay-close-start") {
+        if (isMobileComposer) autoResizeTextarea();
+        else positionComposerDropdown(cmdDrop);
       }
     };
     document.addEventListener("composer-overlay-close-start", closeCmdDrop);

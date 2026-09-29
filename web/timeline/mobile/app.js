@@ -94,6 +94,9 @@ __INCLUDE:../conversation-state.js__
       const onVVResize = () => {
         syncMainAfterHeight();
         updateScrollBtnPos();
+        if (typeof autoResizeTextarea === "function" && document.body.classList.contains("composer-overlay-open")) {
+          autoResizeTextarea();
+        }
         if (_stickyToBottom && messagesEl) {
           _pollScrollLockTop = null;
           _pollScrollAnchor = null;
