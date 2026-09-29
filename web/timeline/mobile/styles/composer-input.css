@@ -71,6 +71,11 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    html[data-hand="right"] .send-btn {
+      left: auto;
+      right: calc(var(--composer-btn-center-x) - var(--composer-btn-d) / 2);
+    }
+
     .send-btn svg {
       width: 18px;
       height: 18px;
@@ -224,6 +229,12 @@
       touch-action: none;
       box-sizing: border-box;
     }
+
+    html[data-hand="right"] .composer textarea {
+      padding-right: calc(var(--composer-btn-center-x) + var(--composer-btn-d) / 2 + var(--composer-send-text-gap));
+      padding-left: var(--composer-btn-center-x);
+    }
+
     .composer textarea.is-scrollable {
       overscroll-behavior-y: contain;
       touch-action: pan-y;
