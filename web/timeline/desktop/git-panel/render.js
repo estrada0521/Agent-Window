@@ -1,4 +1,3 @@
-    const GIT_SUMMARY_PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M12 14v8"/></svg>';
     const buildSummaryHtml = (data) => {
       const pinBtn = `<button type="button" class="git-summary-pin" aria-pressed="false" aria-label="Pin Git Summary" title="Pin to Timeline [⇧⌘P]">${GIT_SUMMARY_PIN_SVG}</button>`;
       return gitSummaryRowHtml(data, { leadingHtml: pinBtn });

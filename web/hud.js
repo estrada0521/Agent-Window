@@ -3,12 +3,13 @@
       let timer = 0;
       let transient = "";
       let overlay = null;
+      let background = null;
       const residents = new Map();
       let shown = "";
       let state = "hidden";
       let morphTimer = 0;
       const transitionMs = parseFloat(getComputedStyle(hud).transitionDuration) * 1000;
-      const currentContent = () => transient || overlay || [...residents.values()].at(-1) || "";
+      const currentContent = () => transient || overlay || [...residents.values()].at(-1) || background || "";
       const setContent = (content) => {
         shown = content;
         hud.classList.toggle("has-controls", typeof content !== "string");
@@ -91,5 +92,9 @@
         overlay = node;
         render();
       };
-      return { setStatus, setResidentStatus, setOverlay };
+      const setBackgroundStatus = (node) => {
+        background = node;
+        render();
+      };
+      return { setStatus, setResidentStatus, setOverlay, setBackgroundStatus };
     };

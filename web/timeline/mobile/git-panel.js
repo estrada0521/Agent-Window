@@ -11,14 +11,65 @@ __INCLUDE:../git-panel-controller.js__
       titleEl.title = "Git";
     };
     const gitWorktreeButton = () => mobileSheet?.querySelector(".git-worktree-button");
+    const gitPinButton = document.createElement("button");
+    gitPinButton.type = "button";
+    gitPinButton.className = "git-summary-pin mobile-bottom-sheet-button";
+    gitPinButton.innerHTML = GIT_SUMMARY_PIN_SVG;
+    const gitPinHud = document.createElement("button");
+    gitPinHud.type = "button";
+    gitPinHud.className = "git-worktree-button";
+    gitPinHud.setAttribute("aria-label", "Open uncommitted changes");
+    const gitPinStorageKey = () => `agent_window_mobile_git_summary_pinned:${currentTimelineName}`;
+    const gitPinned = () => localStorage.getItem(gitPinStorageKey()) === "1";
+    const syncGitPinButton = () => {
+      const pinned = gitPinned();
+      gitPinButton.classList.toggle("is-pinned", pinned);
+      gitPinButton.setAttribute("aria-pressed", pinned ? "true" : "false");
+      gitPinButton.setAttribute("aria-label", pinned ? "Unpin Git summary" : "Pin Git summary");
+    };
     const showGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
-      if (btn) btn.hidden = !!gitPanel.detailContext;
+      if (btn) btn.hidden = gitPinButton.hidden = !!gitPanel.detailContext;
     };
     const hideGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
-      if (btn) btn.hidden = true;
+      if (btn) btn.hidden = gitPinButton.hidden = true;
     };
+    const gitWorktreeSummaryHtml = (data) => {
+      const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
+      const added = Math.max(0, parseInt(data?.worktree_added) || 0);
+      const deleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
+      return `<span class="git-worktree-button-label">${gitPathCountText(changedPaths)}</span>${gitCountsHtml(added, deleted)}`;
+    };
+    const renderGitPinHud = (data, { animate = true } = {}) => {
+      const previous = gitCountSnapshot(gitPinHud);
+      gitPinHud.innerHTML = gitWorktreeSummaryHtml(data);
+      if (animate) animateGitCountsFromSnapshot(gitPinHud, previous);
+    };
+    const refreshGitPinHud = async () => {
+      if (!gitPinned()) {
+        setBackgroundStatus(null);
+        return;
+      }
+      try {
+        const data = await fetchGitOverview({ summary: true });
+        renderGitPinHud(data);
+        if (gitWorktreeButton()) renderGitWorktreeButton(data);
+        setBackgroundStatus(gitPinHud);
+      } catch (err) {
+        setStatus(err?.message || "Failed to load Git summary");
+      }
+    };
+    gitPinButton.addEventListener("click", () => {
+      localStorage.setItem(gitPinStorageKey(), gitPinned() ? "0" : "1");
+      syncGitPinButton();
+      void refreshGitPinHud();
+    });
+    gitPinHud.addEventListener("click", async () => {
+      _ignoreGlobalClick = true;
+      await openGitSheet();
+      gitWorktreeButton()?.click();
+    });
     const animateGitSheetList = (selector, transition) => {
       const list = gitHostEl()?.querySelector(selector);
       if (!list) return;
@@ -40,18 +91,16 @@ __INCLUDE:../git-panel-controller.js__
         btn = document.createElement("button");
         btn.type = "button";
         btn.className = "git-worktree-button mobile-bottom-sheet-button";
-        sheetPanel.appendChild(btn);
+        sheetPanel.append(btn, gitPinButton);
       }
-      const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
-      const added = Math.max(0, parseInt(data?.worktree_added) || 0);
-      const deleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
+      syncGitPinButton();
       const hasDiff = !!data?.worktree_has_diff;
       btn.disabled = !hasDiff;
       btn.classList.toggle("clickable", hasDiff);
       if (hasDiff) btn.dataset.diffKind = "worktree";
       else delete btn.dataset.diffKind;
       btn.setAttribute("aria-label", hasDiff ? "Open uncommitted changes" : "Working tree clean");
-      btn.innerHTML = `<span class="git-worktree-button-label">${gitPathCountText(changedPaths)}</span>${gitCountsHtml(added, deleted)}`;
+      btn.innerHTML = gitWorktreeSummaryHtml(data);
       showGitWorktreeButton();
     };
     let _gitDetailChrome = null;
@@ -66,7 +115,10 @@ __INCLUDE:../git-panel-controller.js__
         const countsEl = template.content.querySelector(".git-summary-counts");
         titleEl.classList.add("git-sheet-detail-title", "git-sheet-title");
         titleEl.replaceChildren(subjectEl);
-        if (countsEl) titleEl.appendChild(countsEl.cloneNode(true));
+        if (countsEl) {
+          const [ins, dels] = [...countsEl.querySelectorAll(".git-summary-count")].map((el) => el.dataset.countValue);
+          titleEl.insertAdjacentHTML("beforeend", gitCountsHtml(ins, dels));
+        }
         titleEl.title = subject;
       }
       hideGitWorktreeButton();
@@ -290,6 +342,7 @@ __INCLUDE:../git-panel-controller.js__
         const previous = gitCountSnapshot(gitWorktreeButton());
         renderGitWorktreeButton(data || {});
         animateGitCountsFromSnapshot(gitWorktreeButton(), previous);
+        if (gitPinned()) renderGitPinHud(data || {}, { animate: false });
       },
     });
     const updateGitPanel = async () => {

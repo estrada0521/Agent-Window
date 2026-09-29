@@ -318,6 +318,8 @@ __INCLUDE:message-row-press.js__
     const handleWorkspaceGitChanged = () => {
       if (openMobileSheetKind() === "git") {
         void updateGitPanel().catch(() => {});
+      } else {
+        void refreshGitPinHud();
       }
     };
     __INCLUDE:../events.js__

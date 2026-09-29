@@ -233,7 +233,7 @@
       }
     };
 __INCLUDE:../hud.js__
-    const { setStatus, setResidentStatus, setOverlay: setHudOverlay } = createHud(document.getElementById("timelineHud"), (visible) => {
+    const { setStatus, setResidentStatus, setOverlay: setHudOverlay, setBackgroundStatus } = createHud(document.getElementById("timelineHud"), (visible) => {
       window.parent?.postMessage({ type: "timeline-hud-visible", visible }, "*");
     });
     const agentActionCandidates = (mode) => {

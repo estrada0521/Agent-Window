@@ -36,8 +36,8 @@
       display: none;
     }
 
-    #mobileSheet[data-kind="repo"] .git-worktree-button,
-    #mobileSheet.sheet-mode-preview .git-worktree-button {
+    #mobileSheet[data-kind="repo"] :is(.git-worktree-button, .git-summary-pin),
+    #mobileSheet.sheet-mode-preview :is(.git-worktree-button, .git-summary-pin) {
       display: none;
     }
 
@@ -612,6 +612,50 @@
 
     .mobile-bottom-sheet .git-worktree-button[hidden] {
       display: none;
+    }
+
+    .mobile-bottom-sheet .git-summary-pin {
+      position: absolute;
+      right: calc(14px + env(safe-area-inset-right, 0px));
+      bottom: var(--mobile-sheet-footer-bottom);
+      z-index: 6;
+    }
+
+    html[data-hand="right"] .mobile-bottom-sheet .git-summary-pin {
+      right: auto;
+      left: calc(14px + env(safe-area-inset-left, 0px));
+    }
+
+    .mobile-bottom-sheet .git-summary-pin[hidden] {
+      display: none;
+    }
+
+    .git-summary-pin.is-pinned svg circle {
+      fill: currentColor;
+    }
+
+    .hud .git-worktree-button {
+      appearance: none;
+      -webkit-appearance: none;
+      height: 100%;
+      padding: 0 12px;
+      border: 0;
+      background: transparent;
+      font: inherit;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #timelineHud.is-visible:has(.git-worktree-button) {
+      transition: opacity 0.3s ease, transform var(--liquid-glass-press-out), width 0.3s ease;
+    }
+
+    #timelineHud.is-visible:has(.git-worktree-button:active) {
+      transform: translate(-50%, 0) scale(var(--liquid-glass-press-scale));
+      transition: transform var(--liquid-glass-press-in);
     }
 
     .mobile-bottom-sheet-title.git-sheet-detail-title {

@@ -37,8 +37,10 @@
       if (typeof data.timeline === "string" && data.timeline) {
         currentTimelineName = data.timeline;
         if (document.documentElement.dataset.mobile === "1") {
+          const timelineChanged = repoTimeline !== currentTimelineName;
           repoTimeline = currentTimelineName;
           if (latestPayloadData) updateRepoPanel(displayEntriesForData(latestPayloadData));
+          if (timelineChanged) void refreshGitPinHud();
         }
       }
       if (typeof data.active === "boolean") {

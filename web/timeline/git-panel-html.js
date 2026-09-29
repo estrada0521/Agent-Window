@@ -1,3 +1,4 @@
+    const GIT_SUMMARY_PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M12 14v8"/></svg>';
     const gitCountsHtml = (ins, dels) => {
       const safeIns = Math.max(0, parseInt(ins) || 0);
       const safeDels = Math.max(0, parseInt(dels) || 0);
