@@ -92,6 +92,12 @@
       }
       const action = String(data.action || "");
       if (!action) return;
+      if (action === "dockComposer" || action === "centerComposer") {
+        if (isComposerOverlayOpen() && document.documentElement.dataset.autoWindowHeight !== "1") {
+          setComposerDocked(action === "dockComposer");
+        }
+        return;
+      }
       void runForwardAction(action);
     };
     window.addEventListener("message", (event) => {

@@ -98,11 +98,15 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     [menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(x, view.frame.size.height - y) inView:view];
 }
 
-- (void)menuAction:(NSMenuItem *)sender {
-    NSData *json = [NSJSONSerialization dataWithJSONObject:sender.representedObject options:0 error:nil];
+- (void)dispatchMenuAction:(NSDictionary *)payload {
+    NSData *json = [NSJSONSerialization dataWithJSONObject:payload options:0 error:nil];
     NSString *detail = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
     NSString *script = [NSString stringWithFormat:@"window.dispatchEvent(new CustomEvent('native-menu-action', { detail: %@ }));", detail];
     [self.webView evaluateJavaScript:script completionHandler:nil];
+}
+
+- (void)menuAction:(NSMenuItem *)sender {
+    [self dispatchMenuAction:sender.representedObject];
 }
 
 - (void)showTimelineHeaderMenu:(NSDictionary *)p {
@@ -669,6 +673,21 @@ static BOOL HubReady(NSInteger port) {
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     [self buildMainMenu];
+
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown handler:^NSEvent *(NSEvent *event) {
+        if (NSApp.keyWindow != self.window) return event;
+        NSEventModifierFlags modifiers = event.modifierFlags &
+            (NSEventModifierFlagCommand | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagShift);
+        if (modifiers != (NSEventModifierFlagCommand | NSEventModifierFlagControl)) return event;
+        NSString *characters = event.charactersIgnoringModifiers;
+        if (characters.length != 1) return event;
+        unichar key = [characters characterAtIndex:0];
+        if (key != NSDownArrowFunctionKey && key != NSUpArrowFunctionKey) return event;
+        if (!event.isARepeat) {
+            [self dispatchMenuAction:@{ @"action": key == NSDownArrowFunctionKey ? @"dockComposer" : @"centerComposer" }];
+        }
+        return nil;
+    }];
 
     NSRect screen = NSScreen.mainScreen.frame;
     NSRect frame = NSMakeRect(screen.origin.x + (screen.size.width - kDefaultWindowSize) / 2,

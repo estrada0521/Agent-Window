@@ -160,15 +160,14 @@
       document.addEventListener("keydown", (event) => {
         if (!event.metaKey || !event.ctrlKey || event.altKey || event.shiftKey) return;
         if (event.code !== "ArrowDown" && event.code !== "ArrowUp") return;
-        if (event.repeat || event.isComposing || !isComposerOverlayOpen() || document.documentElement.dataset.autoWindowHeight === "1") return;
+        if (event.isComposing || !isComposerOverlayOpen() || document.documentElement.dataset.autoWindowHeight === "1") return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.repeat) return;
         const isDocked = composerOverlay.classList.contains("docked");
         if (event.code === "ArrowDown" && !isDocked) {
-          event.preventDefault();
-          event.stopPropagation();
           setComposerDocked(true);
         } else if (event.code === "ArrowUp" && isDocked) {
-          event.preventDefault();
-          event.stopPropagation();
           setComposerDocked(false);
         }
       }, true);
