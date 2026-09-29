@@ -20,7 +20,7 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
-      height: calc(var(--text-size, 13px) * 178 / 13);
+      height: calc(var(--text-size, 13px) * 162 / 13);
       display: none;
       box-shadow: none;
       padding: 0;
@@ -32,8 +32,8 @@
 
     #fileDropdown,
     #cmdDropdown {
-      mask-image: linear-gradient(to bottom, transparent 0, black calc(var(--text-size, 13px) * 16 / 13), black calc(100% - calc(var(--text-size, 13px) * 16 / 13)), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black calc(var(--text-size, 13px) * 16 / 13), black calc(100% - calc(var(--text-size, 13px) * 16 / 13)), transparent 100%);
+      mask-image: linear-gradient(to bottom, black 0, black calc(100% - calc(var(--text-size, 13px) * 16 / 13)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black 0, black calc(100% - calc(var(--text-size, 13px) * 16 / 13)), transparent 100%);
     }
 
     #fileDropdown {
@@ -144,7 +144,6 @@
       align-content: end;
       min-height: 100%;
       box-sizing: border-box;
-      padding-top: calc(var(--text-size, 13px) * 16 / 13);
       padding-bottom: calc(var(--text-size, 13px) * 6 / 13);
     }
     .file-dropdown-list {

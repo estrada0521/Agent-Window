@@ -210,7 +210,7 @@ __INCLUDE:file-autocomplete.js__
       const baseHeight = parseFloat(inputStyle.minHeight);
       let maxHeight = parseFloat(inputStyle.maxHeight);
       if (!isMobileComposer && document.documentElement.dataset.autoWindowHeight !== "1"
-        && document.querySelector("#fileDropdown.visible, #cmdDropdown.visible")) {
+        && (attachPreviewRow?.offsetHeight || document.querySelector("#fileDropdown.visible, #cmdDropdown.visible"))) {
         const aboveInput = composerShellEl.querySelector(".composer-above-input");
         maxHeight = Math.max(baseHeight, maxHeight + aboveInput.offsetTop);
         messageInput.style.maxHeight = maxHeight + "px";
