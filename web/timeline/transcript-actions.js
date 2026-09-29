@@ -188,6 +188,9 @@ __INCLUDE:transcript-refresh.js__
             }
             updateSendBtnVisibility();
             closeComposerOverlay();
+            if (parsed.id === "terminal" && document.documentElement.dataset.mobile === "1") {
+              showPaneTraceViewer("terminal");
+            }
             void refresh();
             if (data.activated) {
               void refreshTimelineState();

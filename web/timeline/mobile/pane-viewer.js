@@ -198,7 +198,10 @@
         if (firstTab) firstTab.scrollIntoView({ inline: "center", block: "nearest" });
       });
     };
-    const resolvePaneFocusAgent = (raw) => (raw && availableTargets.includes(raw) ? raw : null);
+    const resolvePaneFocusAgent = (raw) => {
+      if (raw === "terminal") return sessionActive ? raw : null;
+      return raw && availableTargets.includes(raw) ? raw : null;
+    };
     const showPaneTraceViewer = (focusAgent) => {
       if (!paneViewerEl || !paneTracePanel) return;
       const resolved = resolvePaneFocusAgent(focusAgent);
