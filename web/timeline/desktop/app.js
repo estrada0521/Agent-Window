@@ -148,15 +148,11 @@ __INCLUDE:../conversation-state.js__
         contentHeight = Math.ceil(scroller.scrollHeight - lastTopWithin);
       }
       if (isComposerOverlayOpen()) {
-        const box = document.getElementById("composer");
-        if (box) {
-          const inputStyle = getComputedStyle(messageInput);
-          const fieldOverflow = parseFloat(inputStyle.maxHeight) - parseFloat(inputStyle.minHeight);
-          const fitSlack = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size")) * 20 / 13;
-          contentHeight = Math.ceil(box.offsetHeight + fieldOverflow + fitSlack);
-        }
+        const textSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
+        contentHeight = Math.ceil(textSize * 275 / 13);
+      } else {
+        contentHeight += edgeGap;
       }
-      contentHeight += edgeGap;
       if (contentHeight > 0) {
         if (!fromComposer && fitTarget) {
           _stickyToBottom = false;
