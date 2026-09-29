@@ -7,7 +7,7 @@
       composerOverlay.classList.toggle("docked", on);
       const label = on ? "Center composer" : "Move composer to bottom";
       composerDockBtn.setAttribute("aria-label", label);
-      composerDockBtn.title = `${label} [⌃⌘↓]`;
+      composerDockBtn.title = `${label} [${on ? "⌃⌘↑" : "⌃⌘↓"}]`;
       composerDockBtn.setAttribute("aria-pressed", on ? "true" : "false");
       if (typeof autoResizeTextarea === "function") autoResizeTextarea();
     };
@@ -158,11 +158,19 @@
         messageInput.focus({ preventScroll: true });
       });
       document.addEventListener("keydown", (event) => {
-        if (!event.metaKey || !event.ctrlKey || event.altKey || event.shiftKey || event.code !== "ArrowDown") return;
+        if (!event.metaKey || !event.ctrlKey || event.altKey || event.shiftKey) return;
+        if (event.code !== "ArrowDown" && event.code !== "ArrowUp") return;
         if (event.repeat || event.isComposing || !isComposerOverlayOpen() || document.documentElement.dataset.autoWindowHeight === "1") return;
-        event.preventDefault();
-        event.stopPropagation();
-        setComposerDocked(!composerOverlay.classList.contains("docked"));
+        const isDocked = composerOverlay.classList.contains("docked");
+        if (event.code === "ArrowDown" && !isDocked) {
+          event.preventDefault();
+          event.stopPropagation();
+          setComposerDocked(true);
+        } else if (event.code === "ArrowUp" && isDocked) {
+          event.preventDefault();
+          event.stopPropagation();
+          setComposerDocked(false);
+        }
       }, true);
     }
     composerOverlay?.addEventListener("click", (event) => {

@@ -124,7 +124,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 |---|---|---|
 | Open the input field | `Enter` / wheel click | |
 | Close the input field | `Esc` | |
-| Move the input field to bottom / center | `⌃⌘↓` | while open |
+| Move the input field to bottom / center | `⌃⌘↓` / `⌃⌘↑` | while open |
 | Switch send target | `Ctrl+1`–`Ctrl+9` | |
 | Restart timeline server / Hub server | `⌘R` / `⇧⌘R` | Re-reads changed source |
 | Pin Git summary | `⇧⌘P` | |

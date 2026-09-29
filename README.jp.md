@@ -124,6 +124,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 |---|---|---|
 | 入力欄を開く | `Enter` / ホイール押し込み | |
 | 入力欄を閉じる | `Esc` | |
+| 入力欄を下部／中央へ移動 | `⌃⌘↓` / `⌃⌘↑` | 入力欄を開いている時 |
 | 送信先の切り替え | `Ctrl+1`–`Ctrl+9` | |
 | timeline server / Hub serverの再起動 | `⌘R` / `⇧⌘R` | 変更後のsourceを読み直す |
 | Git summaryのpin | `⇧⌘P` | |

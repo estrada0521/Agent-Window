@@ -158,20 +158,20 @@
     }
     .composer-dock-btn {
       grid-area: dock;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      justify-self: end;
       align-self: center;
-      width: calc(var(--text-size, 13px) * 30 / 13);
-      height: calc(var(--text-size, 13px) * 30 / 13);
-      padding: calc(var(--text-size, 13px) * 4 / 13);
+      width: var(--composer-bar-btn-size);
+      height: var(--composer-bar-btn-size);
+      padding: 0;
+      margin: 0 var(--composer-bar-btn-outer-inset) calc(var(--text-size, 13px) / 13) calc(var(--text-size, 13px) * 2 / 13);
       border: none;
       border-radius: 50%;
       background: transparent;
       color: var(--icon-fg);
       cursor: pointer;
-    }
-    .composer-dock-btn svg {
-      display: block;
-      width: 100%;
-      height: 100%;
     }
     .composer-overlay.docked .composer-dock-btn svg {
       transform: rotate(180deg);
@@ -216,17 +216,17 @@
       grid-area: plus;
       justify-self: start;
       align-self: center;
-      padding: calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 2 / 13) calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 6 / 13);
+      padding: 0;
       z-index: 100;
-      margin: 0 calc(var(--text-size, 13px) * 2 / 13) calc(var(--text-size, 13px) / 13);
+      margin: 0 calc(var(--text-size, 13px) * 2 / 13) calc(var(--text-size, 13px) / 13) var(--composer-bar-btn-outer-inset);
       transition: opacity 180ms ease, transform 240ms ease;
     }
     .composer-attach-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: calc(var(--text-size, 13px) * 30 / 13);
-      height: calc(var(--text-size, 13px) * 30 / 13);
+      width: var(--composer-bar-btn-size);
+      height: var(--composer-bar-btn-size);
       padding: 0;
       border-radius: 50%;
       border: none;
@@ -252,7 +252,8 @@
       background: var(--panel-row-active-bg);
       transition: background 0ms;
     }
-    .composer-attach-btn svg {
+    .composer-attach-btn svg,
+    .composer-dock-btn svg {
       width: calc(var(--text-size, 13px) * 22 / 13);
       height: calc(var(--text-size, 13px) * 22 / 13);
       display: block;
