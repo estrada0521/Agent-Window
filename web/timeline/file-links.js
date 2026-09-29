@@ -4,14 +4,16 @@ __INCLUDE:file-resolve.js__
     let _dropActiveIdx = -1;
     let _ignoreGlobalClick = false;
     const _dropItems = () => fileDrop.querySelectorAll(".file-item");
-    const closeDrop = () => {
+    const closeDrop = (event) => {
       const wasVisible = fileDrop.classList.contains("visible");
       cancelFileAutocompleteLoading();
       _fileAutocompleteRequestSeq += 1;
       fileDrop.classList.remove("visible", "is-scrollable");
       fileDrop.style.display = "none";
       _dropActiveIdx = -1;
-      if (wasVisible && !isMobileComposer) autoResizeTextarea();
+      if (wasVisible && !isMobileComposer && event?.type !== "composer-overlay-close-start") {
+        positionComposerDropdown(fileDrop);
+      }
     };
     document.addEventListener("composer-overlay-close-start", closeDrop);
 __INCLUDE:file-autocomplete.js__
@@ -205,11 +207,13 @@ __INCLUDE:file-autocomplete.js__
       if (e.target.closest(".file-item")) e.preventDefault();
     });
     const autoResizeTextarea = () => {
+      const fitComposer = !isMobileComposer && document.documentElement.dataset.autoWindowHeight === "1";
+      const previousHeight = fitComposer ? messageInput.offsetHeight : 0;
       messageInput.style.maxHeight = "";
       const inputStyle = getComputedStyle(messageInput);
       const baseHeight = parseFloat(inputStyle.minHeight);
       let maxHeight = parseFloat(inputStyle.maxHeight);
-      if (!isMobileComposer && document.documentElement.dataset.autoWindowHeight !== "1"
+      if (!isMobileComposer && !fitComposer
         && (attachPreviewRow?.offsetHeight || document.querySelector("#fileDropdown.visible, #cmdDropdown.visible"))) {
         const aboveInput = composerShellEl.querySelector(".composer-above-input");
         maxHeight = Math.max(baseHeight, maxHeight + aboveInput.offsetTop);
@@ -233,11 +237,17 @@ __INCLUDE:file-autocomplete.js__
       if (isMobileComposer && isComposerOverlayOpen() && attachPreviewRow?.children.length) {
         positionComposerDropdown(attachPreviewRow);
       }
+      if (fitComposer && isComposerOverlayOpen() && messageInput.offsetHeight !== previousHeight) {
+        reportFitHeight({ fromComposer: true });
+      }
     };
     const positionComposerDropdown = (dropdown) => {
       if (!dropdown) return;
       if (!isMobileComposer) {
         autoResizeTextarea();
+        if (document.documentElement.dataset.autoWindowHeight === "1" && isComposerOverlayOpen()) {
+          reportFitHeight({ fromComposer: true });
+        }
         return;
       }
       const taRect = messageInput.getBoundingClientRect();

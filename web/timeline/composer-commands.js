@@ -18,13 +18,15 @@
         () => _lastCmdQuery !== contextKey,
       );
     };
-    const closeCmdDrop = () => {
+    const closeCmdDrop = (event) => {
       const wasVisible = cmdDrop.classList.contains("visible");
       cancelCmdAutocompleteLoading();
       cmdDrop.classList.remove("visible", "is-scrollable");
       cmdDrop.style.display = "none";
       _cmdActiveIdx = -1;
-      if (wasVisible && !isMobileComposer) autoResizeTextarea();
+      if (wasVisible && !isMobileComposer && event?.type !== "composer-overlay-close-start") {
+        positionComposerDropdown(cmdDrop);
+      }
     };
     document.addEventListener("composer-overlay-close-start", closeCmdDrop);
     const selectCmd = (idx) => {

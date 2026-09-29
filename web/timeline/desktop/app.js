@@ -131,27 +131,28 @@ __INCLUDE:../conversation-state.js__
       const rows = scroller
         ? scroller.querySelectorAll(":scope > article.message-row, :scope > .sysmsg-row")
         : null;
-      if (!rows || !rows.length) return;
+      const composerOpen = isComposerOverlayOpen();
+      if ((!rows || !rows.length) && !composerOpen) return;
       const fitTarget = _fitTargetRow?.isConnected && _fitTargetRow.parentElement === scroller
         ? _fitTargetRow
         : null;
       if (_fitTargetRow && !fitTarget) _fitTargetRow = null;
-      const lastRow = rows[rows.length - 1];
-      const edgeGap = messageStepTopGap();
       let contentHeight;
-      if (fitTarget) {
+      if (composerOpen) {
+        const textSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
+        const input = document.getElementById("message");
+        const inputSpareHeight = parseFloat(getComputedStyle(input).maxHeight) - input.offsetHeight;
+        const aboveInput = document.querySelector(".composer-above-input");
+        const aboveInputHeight = aboveInput.offsetHeight ? -aboveInput.offsetTop : 0;
+        contentHeight = Math.ceil(textSize * 275 / 13 + Math.max(0, aboveInputHeight - inputSpareHeight));
+      } else if (fitTarget) {
         const r = fitTarget.getBoundingClientRect();
-        contentHeight = Math.ceil(r.bottom - r.top + edgeGap);
+        contentHeight = Math.ceil(r.bottom - r.top + messageStepTopGap()) + messageStepTopGap();
       } else {
+        const lastRow = rows[rows.length - 1];
         const lastTopWithin = lastRow.getBoundingClientRect().top
           - scroller.getBoundingClientRect().top + scroller.scrollTop;
-        contentHeight = Math.ceil(scroller.scrollHeight - lastTopWithin);
-      }
-      if (isComposerOverlayOpen()) {
-        const textSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
-        contentHeight = Math.ceil(textSize * 275 / 13);
-      } else {
-        contentHeight += edgeGap;
+        contentHeight = Math.ceil(scroller.scrollHeight - lastTopWithin) + messageStepTopGap();
       }
       if (contentHeight > 0) {
         if (!fromComposer && fitTarget) {
@@ -1033,6 +1034,7 @@ __INCLUDE:git-panel/events.js__
       if (event.data.type === "hub-auto-window-height") {
         _fitTargetRow = null;
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
+        if (isComposerOverlayOpen()) autoResizeTextarea();
         syncMainAfterHeight();
         syncPinnedSummaryStrip();
         if (event.data.on) {
