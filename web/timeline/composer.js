@@ -197,6 +197,13 @@ __INCLUDE:upload-attached-files.js__
         });
       } else {
         attachBtn.addEventListener("click", () => {
+          if (isTerminalMode()) {
+            setTerminalMode(false);
+            saveComposerDraft();
+            autoResizeTextarea();
+            focusMessageInputWithoutScroll(messageInput.value.length);
+            return;
+          }
           closeComposerOverlay();
           attachInput.click();
         });

@@ -124,16 +124,12 @@ __INCLUDE:transcript-refresh.js__
     const setTerminalMode = (on) => {
       composerForm.classList.toggle("terminal-mode", on);
       document.body.classList.toggle("composer-terminal-mode", on);
-      document.getElementById("terminalModeBtn").hidden = !on;
+      const attachButton = document.getElementById("attachBtn");
+      attachButton.setAttribute("aria-label", on ? "Exit Terminal mode" : "Import");
+      attachButton.title = on ? "Exit Terminal mode" : "Import";
       messageInput.placeholder = on ? "Type into Terminal" : "Write a message";
       document.querySelector(".send-btn").setAttribute("aria-label", on ? "Type into Terminal" : "Send");
     };
-    document.getElementById("terminalModeBtn").addEventListener("click", () => {
-      setTerminalMode(false);
-      saveComposerDraft();
-      autoResizeTextarea();
-      focusMessageInputWithoutScroll(messageInput.value.length);
-    });
     const submitMessage = async ({ closeOverlayOnStart = false, forcedText = null } = {}) => {
       if (sendLocked) {
         return false;

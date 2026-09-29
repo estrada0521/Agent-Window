@@ -95,14 +95,16 @@ def body_typography_css() -> str:
       --md-strong-weight: {MD_STRONG_LIGHT_WEIGHT};
       --md-heading-weight: {MD_HEADING_LIGHT_WEIGHT};
     }}
-    html[data-mobile="1"][data-theme="light"] {{
+    html[data-mobile="1"][data-theme="light"],
+    html[data-mobile="1"][data-theme="dark"] .composer.terminal-mode .composer-field {{
       --body-weight: {MOBILE_LIGHT_BODY_WEIGHT};
       --code-weight: {MOBILE_LIGHT_CODE_WEIGHT};
       --inline-code-weight: var(--code-weight);
     }}
     html[data-mobile="1"][data-theme="dark"],
     html[data-mobile="1"] #paneTracePanel,
-    html[data-mobile="1"] .pane-viewer {{
+    html[data-mobile="1"] .pane-viewer,
+    html[data-mobile="1"][data-theme="light"] .composer.terminal-mode .composer-field {{
       --body-weight: {MOBILE_DARK_BODY_WEIGHT};
       --code-weight: {MOBILE_DARK_CODE_WEIGHT};
       --inline-code-weight: {MOBILE_DARK_INLINE_CODE_WEIGHT};

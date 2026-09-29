@@ -171,31 +171,6 @@
       min-width: 0;
     }
 
-    .terminal-mode-btn {
-      display: none;
-      grid-column: 1 / -1;
-      grid-row: 2;
-      justify-self: center;
-      align-self: center;
-      align-items: center;
-      gap: 12px;
-      min-height: 36px;
-      padding: 0 13px;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: var(--panel-row-selected-bg);
-      color: var(--fg);
-      font: inherit;
-      font-size: 13px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .composer.terminal-mode .terminal-mode-btn {
-      display: flex;
-    }
-
-    .composer.terminal-mode .composer-attach,
     .composer.terminal-mode .target-picker-anchor,
     .composer.terminal-mode .target-picker {
       visibility: hidden;
@@ -254,6 +229,7 @@
     }
 
     .composer-attach-btn {
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -269,6 +245,15 @@
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       transition: transform 120ms ease, border-color 120ms ease, background 250ms ease;
+    }
+
+    .composer-attach-btn::before {
+      content: "";
+      position: absolute;
+      top: -2px;
+      right: -3px;
+      bottom: -4px;
+      left: -3px;
     }
 
     .has-hover .composer-attach-btn:hover {
@@ -293,6 +278,11 @@
       height: var(--icon-size);
       display: block;
       stroke-width: var(--icon-stroke);
+      transition: transform 160ms ease;
+    }
+
+    .composer.terminal-mode .composer-attach-btn svg {
+      transform: rotate(45deg);
     }
 
     .target-chip {
