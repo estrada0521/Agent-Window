@@ -51,11 +51,6 @@
       background: rgba(0, 0, 0, 0.05);
     }
 
-    .composer.terminal-mode .composer-field {
-      background: rgba(var(--bg-rgb), 0.8);
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 18%, transparent);
-    }
-
     .send-btn {
       position: absolute;
       left: calc(var(--composer-btn-center-x) - var(--composer-btn-d) / 2);

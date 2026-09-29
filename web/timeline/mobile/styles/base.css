@@ -69,8 +69,7 @@ __INCLUDE:../../markdown-theme-vars.css__
       --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
       --git-del-red: rgb(var(--git-del-red-channels));
     }
-    html[data-theme="light"],
-    html[data-theme="dark"] .composer.terminal-mode .composer-field {
+    html[data-theme="light"] {
       color-scheme: light;
       --bg-rgb: __MOBILE_TIMELINE_LIGHT_BG_CHANNELS__;
       --fg: rgb(var(--light-fg-rgb));
@@ -113,8 +112,7 @@ __INCLUDE:../../markdown-theme-vars.css__
     }
     html[data-theme="dark"],
     #paneTracePanel,
-    .pane-viewer,
-    html[data-theme="light"] .composer.terminal-mode .composer-field {
+    .pane-viewer {
       color-scheme: dark;
       --bg-rgb: __MOBILE_TIMELINE_DARK_BG_CHANNELS__;
       --bg: rgb(var(--bg-rgb));
