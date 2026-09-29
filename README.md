@@ -172,6 +172,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Copy commit hash |  | |
 | Copy commit message |  | |
 | Show commit info | hover | |
+| Switch worktree |  | timeline menu |
 
 </details>
 

@@ -172,6 +172,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | commit hashをcopy |  | |
 | commit messageをcopy |  | |
 | commitのinfo表示 | hover |  |
+| worktreeの切り替え |  | timeline menuから |
 
 </details>
 
