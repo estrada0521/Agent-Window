@@ -35,7 +35,7 @@
     }
     .desk-hub {
       position: relative;
-      width: var(--desk-hub-width);
+      width: 0;
       max-width: none;
       min-width: 0;
       overflow: hidden;
@@ -76,6 +76,10 @@
       z-index: 10;
       cursor: col-resize;
       touch-action: none;
+      pointer-events: none;
+    }
+    .desk-workbench.hub-open .desk-hub-resizer {
+      pointer-events: auto;
     }
     .desk-hub-resizer::before {
       content: "";
