@@ -158,30 +158,12 @@
     }
     .composer-dock-btn {
       grid-area: dock;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
       justify-self: end;
       align-self: center;
-      width: var(--composer-bar-btn-size);
-      height: var(--composer-bar-btn-size);
-      padding: 0;
       margin: 0 var(--composer-bar-btn-outer-inset) calc(var(--text-size, 13px) / 13) calc(var(--text-size, 13px) * 2 / 13);
-      border: none;
-      border-radius: 50%;
-      background: transparent;
-      color: var(--icon-fg);
-      cursor: pointer;
     }
     .composer-overlay.docked .composer-dock-btn svg {
       transform: rotate(180deg);
-    }
-    .has-hover .composer-dock-btn:hover {
-      color: var(--icon-hover);
-      background: var(--panel-row-hover-bg);
-    }
-    .composer-dock-btn:active {
-      background: var(--panel-row-active-bg);
     }
     html[data-auto-window-height="1"] .composer-dock-btn {
       display: none;
@@ -221,7 +203,8 @@
       margin: 0 calc(var(--text-size, 13px) * 2 / 13) calc(var(--text-size, 13px) / 13) var(--composer-bar-btn-outer-inset);
       transition: opacity 180ms ease, transform 240ms ease;
     }
-    .composer-attach-btn {
+    .composer-attach-btn,
+    .composer-dock-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -238,7 +221,8 @@
       -webkit-backdrop-filter: none;
       transition: border-color 120ms ease, background 250ms ease;
     }
-    .has-hover .composer-attach-btn:hover {
+    .has-hover .composer-attach-btn:hover,
+    .has-hover .composer-dock-btn:hover {
       color: var(--icon-hover);
       background: var(--panel-row-hover-bg);
     }
@@ -248,7 +232,8 @@
       cursor: default;
       pointer-events: none;
     }
-    .composer-attach-btn:active {
+    .composer-attach-btn:active,
+    .composer-dock-btn:active {
       background: var(--panel-row-active-bg);
       transition: background 0ms;
     }

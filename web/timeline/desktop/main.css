@@ -41,7 +41,8 @@ __INCLUDE:../export.css__
       color: var(--fg);
     }
 __INCLUDE:../markdown-code.css__
-    .composer-attach-btn:active {
+    .composer-attach-btn:active,
+    .composer-dock-btn:active {
       background: transparent;
     }
     html, body { font-family: var(--font-main); }
