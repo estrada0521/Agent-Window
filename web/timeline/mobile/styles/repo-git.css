@@ -115,11 +115,11 @@
     }
 
     .git-diff-line.is-add {
-      background: rgba(var(--git-ins-green-channels), 0.16);
+      background: rgba(var(--git-ins-green-channels), 0.2);
     }
 
     .git-diff-line.is-del {
-      background: rgba(var(--git-del-red-channels), 0.16);
+      background: rgba(var(--git-del-red-channels), 0.2);
     }
 
     .git-diff-line.is-hunk {
