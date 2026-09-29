@@ -5,11 +5,13 @@ __INCLUDE:file-resolve.js__
     let _ignoreGlobalClick = false;
     const _dropItems = () => fileDrop.querySelectorAll(".file-item");
     const closeDrop = () => {
+      const wasVisible = fileDrop.classList.contains("visible");
       cancelFileAutocompleteLoading();
       _fileAutocompleteRequestSeq += 1;
       fileDrop.classList.remove("visible", "is-scrollable");
       fileDrop.style.display = "none";
       _dropActiveIdx = -1;
+      if (wasVisible && !isMobileComposer) autoResizeTextarea();
     };
     document.addEventListener("composer-overlay-close-start", closeDrop);
 __INCLUDE:file-autocomplete.js__
@@ -203,9 +205,16 @@ __INCLUDE:file-autocomplete.js__
       if (e.target.closest(".file-item")) e.preventDefault();
     });
     const autoResizeTextarea = () => {
+      messageInput.style.maxHeight = "";
       const inputStyle = getComputedStyle(messageInput);
       const baseHeight = parseFloat(inputStyle.minHeight);
-      const maxHeight = parseFloat(inputStyle.maxHeight);
+      let maxHeight = parseFloat(inputStyle.maxHeight);
+      if (!isMobileComposer && document.documentElement.dataset.autoWindowHeight !== "1"
+        && document.querySelector("#fileDropdown.visible, #cmdDropdown.visible")) {
+        const aboveInput = composerShellEl.querySelector(".composer-above-input");
+        maxHeight = Math.max(baseHeight, maxHeight + aboveInput.offsetTop);
+        messageInput.style.maxHeight = maxHeight + "px";
+      }
       messageInput.style.height = "auto";
       const nextHeight = Math.min(maxHeight, Math.max(baseHeight, messageInput.scrollHeight));
       messageInput.style.height = nextHeight + "px";
@@ -226,7 +235,11 @@ __INCLUDE:file-autocomplete.js__
       }
     };
     const positionComposerDropdown = (dropdown) => {
-      if (!dropdown || !isMobileComposer) return;
+      if (!dropdown) return;
+      if (!isMobileComposer) {
+        autoResizeTextarea();
+        return;
+      }
       const taRect = messageInput.getBoundingClientRect();
       if (!taRect.width && !taRect.height) return;
       const composerTransform = getComputedStyle(composerForm).transform;
@@ -314,11 +327,11 @@ __INCLUDE:file-autocomplete.js__
       fileDrop.appendChild(list);
 
       _dropActiveIdx = -1;
-      positionComposerDropdown(fileDrop);
       if (!fileDrop.classList.contains("visible")) {
         fileDrop.style.display = "block";
         fileDrop.classList.add("visible");
       }
+      positionComposerDropdown(fileDrop);
     };
 
     messageInput.addEventListener("input", updateFileAutocomplete);

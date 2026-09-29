@@ -5,11 +5,11 @@
     const showCmdAutocompleteLoading = () => {
       cmdDrop.innerHTML = `<div class="file-dropdown-loading">${loadingIndicatorHtml()}</div>`;
       _cmdActiveIdx = -1;
-      positionComposerDropdown(cmdDrop);
       if (!cmdDrop.classList.contains("visible")) {
         cmdDrop.style.display = "block";
         cmdDrop.classList.add("visible");
       }
+      positionComposerDropdown(cmdDrop);
     };
     const scheduleCmdAutocompleteLoading = (contextKey) => {
       cancelCmdAutocompleteLoading();
@@ -19,10 +19,12 @@
       );
     };
     const closeCmdDrop = () => {
+      const wasVisible = cmdDrop.classList.contains("visible");
       cancelCmdAutocompleteLoading();
       cmdDrop.classList.remove("visible", "is-scrollable");
       cmdDrop.style.display = "none";
       _cmdActiveIdx = -1;
+      if (wasVisible && !isMobileComposer) autoResizeTextarea();
     };
     document.addEventListener("composer-overlay-close-start", closeCmdDrop);
     const selectCmd = (idx) => {
@@ -119,11 +121,11 @@
           ).join("") +
           `</div>`;
         _cmdActiveIdx = -1;
-        positionComposerDropdown(cmdDrop);
         if (!cmdDrop.classList.contains("visible")) {
           cmdDrop.style.display = "block";
           cmdDrop.classList.add("visible");
         }
+        positionComposerDropdown(cmdDrop);
       })();
     };
     messageInput.addEventListener("input", updateCmdAutocomplete);

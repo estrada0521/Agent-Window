@@ -20,7 +20,7 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
-      max-height: calc(var(--text-size, 13px) * 178 / 13);
+      height: calc(var(--text-size, 13px) * 178 / 13);
       display: none;
       box-shadow: none;
       padding: 0;
@@ -140,11 +140,14 @@
     }
     .file-dropdown-list,
     .cmd-dropdown-list {
+      display: grid;
+      align-content: end;
+      min-height: 100%;
+      box-sizing: border-box;
       padding-top: calc(var(--text-size, 13px) * 16 / 13);
       padding-bottom: calc(var(--text-size, 13px) * 6 / 13);
     }
     .file-dropdown-list {
-      display: block;
       min-width: 0;
     }
     .cmd-dropdown-list {

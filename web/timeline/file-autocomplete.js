@@ -2,11 +2,11 @@
     const showFileAutocompleteLoading = () => {
       fileDrop.innerHTML = `<div class="file-dropdown-loading">${loadingIndicatorHtml()}</div>`;
       _dropActiveIdx = -1;
-      positionComposerDropdown(fileDrop);
       if (!fileDrop.classList.contains("visible")) {
         fileDrop.style.display = "block";
         fileDrop.classList.add("visible");
       }
+      positionComposerDropdown(fileDrop);
     };
     const scheduleFileAutocompleteLoading = (requestSeq) => {
       cancelFileAutocompleteLoading();
