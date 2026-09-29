@@ -177,8 +177,9 @@ ${katex}<style>${css}</style>
 `;
     };
     const exportFileStem = (rows) => {
+      const entries = displayEntriesForData(latestPayloadData);
       const [start, end] = [rows[0], rows[rows.length - 1]].map((row) => {
-        const timestamp = (latestPayloadData?.entries || []).find((entry) => entry.context_hash === row.dataset.contextHash)?.timestamp;
+        const timestamp = entries.find((entry) => entry.context_hash === row.dataset.contextHash)?.timestamp;
         if (!timestamp) throw new Error("No timestamp for the range");
         return { day: timestamp.slice(0, 10), time: timestamp.slice(11, 16).replace(":", "") };
       });
