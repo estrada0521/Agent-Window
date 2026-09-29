@@ -19,6 +19,7 @@ __INCLUDE:../git-panel-controller.js__
     const gitPinButton = document.createElement("button");
     gitPinButton.type = "button";
     gitPinButton.className = "git-summary-pin mobile-bottom-sheet-button";
+    gitPinButton.hidden = true;
     gitPinButton.innerHTML = GIT_SUMMARY_PIN_SVG;
     let gitWorktreeList = [];
     const gitTreeButton = document.createElement("button");
@@ -54,7 +55,8 @@ __INCLUDE:../git-panel-controller.js__
     };
     const showGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
-      if (btn) btn.hidden = gitPinButton.hidden = gitTreeButton.hidden = !!gitPanel.detailContext;
+      if (btn) btn.hidden = gitTreeButton.hidden = !!gitPanel.detailContext;
+      gitPinButton.hidden = true;
     };
     const hideGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
@@ -147,6 +149,7 @@ __INCLUDE:../git-panel-controller.js__
         titleEl.title = subject;
       }
       hideGitWorktreeButton();
+      gitPinButton.hidden = gitPanel.detailContext?.kind !== "worktree";
       setSharedSheetLeading(
         () => gitPanel.closeDetail({ refreshList: gitPanel.detailNeedsRefresh }),
         "Back to commits",
