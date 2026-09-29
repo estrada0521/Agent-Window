@@ -80,7 +80,7 @@
         return;
       }
       requestHubParentLayout();
-      bumpHubIframeLayoutLock();
+      if (document.documentElement.dataset.mobile === "1") bumpHubIframeLayoutLock();
       composerOverlay.hidden = false;
       document.body.classList.add("composer-overlay-open");
       updateScrollBtn();

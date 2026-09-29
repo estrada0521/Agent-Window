@@ -18,5 +18,5 @@
         }
         _hubChildOriW = w;
         _hubChildOriH = h;
-        bumpHubIframeLayoutLock();
+        if (document.documentElement.dataset.mobile === "1") bumpHubIframeLayoutLock();
       };

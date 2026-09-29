@@ -197,6 +197,9 @@
       overflow-y: hidden;
       box-sizing: border-box;
     }
+    html:not([data-auto-window-height="1"]) .composer textarea {
+      max-height: calc(50dvh - var(--text-size, 13px) * 18 / 13);
+    }
     .composer-field:has(.send-btn.visible) textarea {
       padding-right: var(--composer-field-base-height);
     }

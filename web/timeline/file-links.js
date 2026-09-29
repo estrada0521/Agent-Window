@@ -271,6 +271,9 @@ __INCLUDE:file-autocomplete.js__
         _composerWidthForResize = width;
         autoResizeTextarea();
       }).observe(messageInput);
+      if (!isMobileComposer) window.addEventListener("resize", () => {
+        if (document.documentElement.dataset.autoWindowHeight !== "1" && isComposerOverlayOpen()) autoResizeTextarea();
+      });
     } else {
       window.addEventListener("resize", autoResizeTextarea);
     }

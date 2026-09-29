@@ -81,14 +81,6 @@
         rgba(var(--bg-rgb), 0.28) 100%
       );
     }
-    html[data-hub-iframe-timeline="1"]:not([data-native-app="1"]) .composer-overlay.visible {
-      inset: auto;
-      top: 0;
-      left: var(--side-reserve-left);
-      right: var(--side-reserve-right);
-      height: var(--hub-iframe-lock-height, 100dvh);
-      min-height: var(--hub-iframe-lock-height, 100dvh);
-    }
     html[data-hub-iframe-timeline="1"],
     html[data-hub-iframe-timeline="1"] body {
       overscroll-behavior-y: auto;

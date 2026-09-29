@@ -64,8 +64,6 @@ __INCLUDE:../conversation-state.js__
     const messagesEl = document.getElementById("messages");
     let _pollScrollLockTop = null;
     let _pollScrollAnchor = null;
-    let _hubIframeLayoutMaxH = 0;
-    let _hubIframeLayoutFromParent = 0;
     let _hubChromeGapClientMin = Infinity;
     let _hubChildOriW = 0;
     let _hubChildOriH = 0;
@@ -73,19 +71,6 @@ __INCLUDE:../conversation-state.js__
       document.documentElement.dataset.hubIframeTimeline === "1" ||
       document.documentElement.dataset.hubShell === "1" ||
       window.parent !== window;
-    const applyHubIframeLockHeight = () => {
-      if (!isHubIframeTimeline()) return;
-      const local = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
-      _hubIframeLayoutMaxH = Math.max(_hubIframeLayoutMaxH, local);
-      const h = Math.max(_hubIframeLayoutMaxH, _hubIframeLayoutFromParent);
-      if (h > 0) {
-        document.documentElement.style.setProperty("--hub-iframe-lock-height", h + "px");
-      }
-    };
-    const bumpHubIframeLayoutLock = () => {
-      if (!isHubIframeTimeline()) return;
-      applyHubIframeLockHeight();
-    };
     const requestHubParentLayout = () => {
       if (!isHubIframeTimeline()) return;
       window.parent.postMessage({ type: "timeline-request-hub-layout" }, "*");
@@ -109,11 +94,6 @@ __INCLUDE:../conversation-state.js__
       window.addEventListener("message", (e) => {
         if (!e.data || e.data.type !== "hub-layout") return;
         if (e.source !== window.parent) return;
-        const lh = Number(e.data.layoutHeight) || 0;
-        if (lh > 0) {
-          _hubIframeLayoutFromParent = lh;
-          applyHubIframeLockHeight();
-        }
         const pih = Number(e.data.parentInnerHeight);
         const pvh = Number(e.data.parentVvHeight);
         const pvTop = Number(e.data.parentVvOffsetTop);
@@ -134,12 +114,10 @@ __INCLUDE:../conversation-state.js__
         }
       });
       __INCLUDE:../hub-safari-chrome.js__
-      bumpHubIframeLayoutLock();
       window.addEventListener("resize", hubChildResizeChrome, { passive: true });
       if (window.visualViewport) {
         window.visualViewport.addEventListener("resize", hubChildResizeChrome);
         window.visualViewport.addEventListener("scroll", () => {
-          bumpHubIframeLayoutLock();
           hubPingParentForSafariChrome();
         });
       }
