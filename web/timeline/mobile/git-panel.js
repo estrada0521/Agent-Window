@@ -45,8 +45,8 @@ __INCLUDE:../git-panel-controller.js__
         return;
       }
       const trees = gitWorktreeList;
-      const items = trees.map((tree, index) => [String(index), `${tree.path === gitTree() ? "✓ " : ""}${tree.branch}`]);
-      items.unshift(["follow", `${gitFollow() ? "✓ " : ""}Follow Mode`]);
+      const items = trees.map((tree, index) => [String(index), tree.branch]);
+      items.unshift(["follow", `Follow Mode: ${gitFollow() ? "On" : "Off"}`]);
       openSubMenu(
         "Worktree",
         items,
