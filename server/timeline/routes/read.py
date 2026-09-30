@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from urllib.parse import parse_qs
 
 from server.appearance.typography import MOBILE_TEXT_SIZE
@@ -225,7 +226,8 @@ def _get_git_overview(handler, parsed, ctx) -> None:
 def _get_git_worktrees(handler, parsed, ctx) -> None:
     def read(_root, _arg):
         trees = workspace_git.git_worktrees(ctx["workspace"])
-        return {"worktrees": [{"path": "", "branch": trees[0]["branch"]}, *trees[1:]]}
+        linked = sorted(trees[1:], key=lambda tree: (Path(tree["path"]) / ".git").stat().st_birthtime, reverse=True)
+        return {"worktrees": [{"path": "", "branch": trees[0]["branch"]}, *linked]}
     _send_git_json(handler, parsed, ctx, read)
 
 

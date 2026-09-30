@@ -72,8 +72,8 @@ def project_claude_native_log(
             return
         texts = []
         for c in content:
-            if isinstance(c, dict) and c.get("type") == "text":
-                text = str(c.get("text") or "").strip()
+            if isinstance(c, dict) and c.get("type") in ("text", "thinking"):
+                text = str(c.get(c["type"]) or "").strip()
                 if text:
                     texts.append(text)
         if not texts:
