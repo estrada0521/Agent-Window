@@ -32,10 +32,7 @@
       } catch (_) {}
       if (isExternalHref(rawHref)) return "";
       if (rawHref.startsWith("/")) {
-        if (/^\/(Users|private|var|tmp)\//.test(rawHref)) {
-          return localFilePathWithoutLocation(decodeLocalPathHref(rawHref.split(/[?#]/, 1)[0]));
-        }
-        return "";
+        return localFilePathWithoutLocation(decodeLocalPathHref(rawHref.split(/[?#]/, 1)[0]));
       }
       const cleanHref = decodeLocalPathHref(rawHref.split(/[?#]/, 1)[0]);
       if (!cleanHref) return "";
