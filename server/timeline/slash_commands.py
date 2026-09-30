@@ -16,22 +16,26 @@ class SlashCommandSpec:
 
 
 SLASH_COMMANDS = (
-    SlashCommandSpec(id="restart", slash="/restart", desc="Restart the agent", has_arg=False, path="/restart-agent"),
-    SlashCommandSpec(id="idle", slash="/idle", desc="Mark the agent idle", has_arg=False, path="/mark-idle"),
+    SlashCommandSpec(id="restart", slash="/restart", desc="Restart agent pane", has_arg=False, path="/restart-agent"),
+    SlashCommandSpec(id="idle", slash="/idle", desc="Show as idle (display only)", has_arg=False, path="/mark-idle"),
     SlashCommandSpec(
-        id="nativelog", slash="/nativelog", desc="Reveal the agent's native log in Finder",
+        id="nativelog", slash="/nativelog", desc="Reveal native log in Finder",
         has_arg=False, path="/native-log", desktop_only=True,
     ),
     SlashCommandSpec(
-        id="openpane", slash="/open-pane", desc="Open the agent's tmux pane",
+        id="openpane", slash="/openpane", desc="Open agent pane",
         has_arg=False, path="/open-pane", desktop_only=True,
     ),
     SlashCommandSpec(
-        id="log", slash="/log", desc="Insert `.agent-window/.log.jsonl`",
+        id="log", slash="/log", desc="Insert timeline log path",
         has_arg=False, path="", insert="`.agent-window/.log.jsonl`",
     ),
     SlashCommandSpec(
-        id="terminal", slash="/terminal", desc="Type into the terminal pane",
+        id="skill", slash="/skill", desc="Insert agent-send skill reference",
+        has_arg=False, path="", insert="`agent-send` SKILL",
+    ),
+    SlashCommandSpec(
+        id="terminal", slash="/terminal", desc="Enter terminal mode",
         has_arg=True, path="/key-macro", mobile_only=True,
     ),
 )

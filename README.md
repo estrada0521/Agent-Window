@@ -75,7 +75,8 @@ The `O` button opens the input field.
 | `/restart` |  | Restarts the Agent's pane | |
 | `/idle` |  | Clears the Agent's running indicator | |
 | `/log` |  | Inserts the log's path into the message | |
-| `/open-pane` | desktop | Opens the Agent's pane | Opens the terminal pane if none is selected |
+| `/skill` |  | Inserts the `agent-send` SKILL reference into the message | |
+| `/openpane` | desktop | Opens the Agent's pane | Opens the terminal pane if none is selected |
 | `/nativelog` | desktop | Reveals the Agent's native log in Finder | |
 | `/terminal <text>` | mobile | Sends text to the terminal pane | |
 

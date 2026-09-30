@@ -75,7 +75,8 @@ CLI本体は `tmux window` から開ける。
 | `/restart` |  | Agentのpaneを再起動する | |
 | `/idle` |  | Agentのrunning表示を解除する | |
 | `/log` |  | logのpathをmessageに挿入する | |
-| `/open-pane` | desktop | Agentのpaneを開く | 未選択ならterminal paneを開く |
+| `/skill` |  | `agent-send` SKILLへの参照をmessageに挿入する | |
+| `/openpane` | desktop | Agentのpaneを開く | 未選択ならterminal paneを開く |
 | `/nativelog` | desktop | Agentのnative logをFinderで表示する | |
 | `/terminal <text>` | mobile | terminal paneに文字列を送る | |
 
