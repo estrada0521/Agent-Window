@@ -24,6 +24,21 @@
       user-select: none;
       -webkit-user-select: none;
     }
+    .timeline-tree-label.is-following {
+      position: relative;
+      padding-right: 0.7em;
+    }
+    .timeline-tree-label.is-following::after {
+      content: "";
+      position: absolute;
+      top: 0.23em;
+      right: 0.23em;
+      width: 0.38em;
+      height: 0.38em;
+      border-radius: 50%;
+      background: var(--fg);
+      pointer-events: none;
+    }
     .timeline-tree-label[hidden] {
       display: none;
     }

@@ -44,6 +44,7 @@
       const revision = ++gitFollowRevision;
       if (on) sessionStorage.setItem(gitFollowStorageKey, "1");
       else sessionStorage.removeItem(gitFollowStorageKey);
+      document.dispatchEvent(new CustomEvent("git-follow-changed"));
       if (!on) return;
       try {
         const { worktrees, followTree } = await fetchGitWorktreeState();

@@ -11,6 +11,7 @@
       }
       if (event.data && event.data.type === "git-tree-label" && event.source === _deskTimelineFrame?.contentWindow) {
         _deskTreeLabelText = String(event.data.label || "");
+        _deskTreeFollow = !!event.data.follow;
         fitDeskTreeLabel();
         return;
       }

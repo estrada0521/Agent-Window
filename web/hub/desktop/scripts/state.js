@@ -26,6 +26,7 @@
     const _deskWindowTraffic = document.querySelector(".desk-window-traffic");
     const _deskTreeLabel = document.getElementById("timelineTreeLabel");
     let _deskTreeLabelText = "";
+    let _deskTreeFollow = false;
     const _deskTimelineTitleTextEl = document.getElementById("deskTimelineTitleText");
     const DESK_SELECTED_KEY = "agent_window_hub_selected_timeline";
     const DESK_HUB_WIDTH_KEY = "agent_window_hub_width_at_default_text_size";

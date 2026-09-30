@@ -117,6 +117,7 @@
       const closeOnOpen = isPhoneViewport();
       _deskSelectedTimelineName = name;
       _deskTreeLabelText = "";
+      _deskTreeFollow = false;
       fitDeskTreeLabel();
       updateDeskWindowTitle(name);
       persistDeskSelection(name);

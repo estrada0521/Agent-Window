@@ -446,6 +446,7 @@
       const text = _deskTreeLabelText;
       _deskTreeLabel.hidden = !text;
       _deskTreeLabel.title = text;
+      _deskTreeLabel.classList.toggle("is-following", _deskTreeFollow);
       _deskTreeLabel.textContent = text;
       const trafficRight = _deskWindowTraffic.getBoundingClientRect().right;
       if (!text || trafficRight <= 0) return;

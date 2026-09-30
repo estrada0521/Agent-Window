@@ -1358,9 +1358,10 @@ __INCLUDE:git-panel/events.js__
       if (window.parent === window) return;
       const worktrees = await fetchGitWorktrees().catch(() => []);
       const label = worktrees.find((item) => item.path === gitTree())?.branch || "";
-      window.parent.postMessage({ type: "git-tree-label", label }, "*");
+      window.parent.postMessage({ type: "git-tree-label", label, follow: gitFollow() }, "*");
     };
     void postGitTreeLabel();
+    document.addEventListener("git-follow-changed", () => void postGitTreeLabel());
     document.addEventListener("git-tree-changed", () => {
       void postGitTreeLabel();
       gitPanel.invalidateFingerprint();

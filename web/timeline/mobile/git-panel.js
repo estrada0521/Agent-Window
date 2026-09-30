@@ -10,11 +10,20 @@ __INCLUDE:../git-panel-controller.js__
       titleEl.classList.remove("git-sheet-detail-title", "git-sheet-title");
       titleEl.textContent = gitSheetBranch || "Git";
       titleEl.title = titleEl.textContent;
+      if (gitFollow()) {
+        const dot = document.createElement("span");
+        dot.className = "sheet-title-follow-dot";
+        titleEl.append(dot);
+      }
+    };
+    const refreshGitSheetTitle = () => {
+      if (sheetKind() === "git" && !gitPanel.detailContext && !mobileSheet.classList.contains("sheet-mode-preview")) setGitSheetTitle();
     };
     const syncGitSheetBranch = (data) => {
       gitSheetBranch = data?.branch || "";
-      if (sheetKind() === "git" && !gitPanel.detailContext && !mobileSheet.classList.contains("sheet-mode-preview")) setGitSheetTitle();
+      refreshGitSheetTitle();
     };
+    document.addEventListener("git-follow-changed", refreshGitSheetTitle);
     const gitWorktreeButton = () => mobileSheet?.querySelector(".git-worktree-button");
     const gitPinButton = document.createElement("button");
     gitPinButton.type = "button";
