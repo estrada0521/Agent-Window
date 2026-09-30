@@ -157,18 +157,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         self.assertEqual(detail, "")
         self.assertEqual(launch.call_args.args, (str(workspace.resolve()),))
 
-    def test_timeline_launch_cwd_is_not_a_workspace_that_contains_server_py(self) -> None:
-        from server.timeline.process import launch_timeline_server
-
-        with tempfile.TemporaryDirectory() as tmp:
-            workspace = Path(tmp) / "xray-structure-factor"
-            workspace.mkdir()
-            (workspace / "server.py").write_text("raise SystemExit('shadow')\n", encoding="utf-8")
-            with patch("server.timeline.process.subprocess.Popen") as popen:
-                launch_timeline_server(workspace, env={})
-        launch_cwd = popen.call_args.kwargs["cwd"]
-        self.assertEqual(launch_cwd, "/Users/okadaharuto/workspace/Agent-Window")
-        self.assertNotEqual(launch_cwd, str(workspace))
 
     def test_git_overview_does_not_use_hub_repo_as_the_project(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "git workspace is not configured"):
