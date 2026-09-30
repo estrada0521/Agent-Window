@@ -1,7 +1,7 @@
     let _cmdActiveIdx = -1;
     let _lastCmdItemsData = [];
     let cancelCmdAutocompleteLoading = () => {};
-    const _cmdItems = () => cmdDrop.querySelectorAll(".cmd-item");
+    const _cmdItems = () => cmdDrop.querySelectorAll(".file-item");
     const showCmdAutocompleteLoading = () => {
       cmdDrop.innerHTML = `<div class="file-dropdown-loading">${loadingIndicatorHtml()}</div>`;
       _cmdActiveIdx = -1;
@@ -133,11 +133,11 @@
           label: c.slash,
         }));
         cmdDrop.innerHTML =
-          `<div class="cmd-dropdown-list">` +
+          `<div class="file-dropdown-list">` +
           _lastCmdItemsData.map((c, i) =>
-            `<div class="cmd-item" data-idx="${i}">` +
-            `<span class="cmd-item-name">${escapeHtml(c.label)}</span>` +
-            `<span class="cmd-item-desc">${escapeHtml(c.desc)}</span>` +
+            `<div class="file-item" data-idx="${i}">` +
+            `<span class="file-item-path"><span class="file-item-name">${escapeHtml(c.label)}</span></span>` +
+            `<span class="file-item-size">${escapeHtml(c.desc)}</span>` +
             `</div>`
           ).join("") +
           `</div>`;
@@ -152,7 +152,7 @@
     messageInput.addEventListener("input", updateCmdAutocomplete);
     cmdDrop.addEventListener("click", (e) => {
       e.stopPropagation();
-      const item = e.target.closest(".cmd-item");
+      const item = e.target.closest(".file-item");
       if (!item) return;
       const idx = parseInt(item.dataset.idx, 10);
       _cmdItems().forEach((node) => node.classList.remove("active"));
@@ -168,13 +168,13 @@
       };
       cmdDrop.addEventListener("pointerdown", (e) => {
         if (e.button !== 0) return;
-        const item = e.target.closest(".cmd-item");
+        const item = e.target.closest(".file-item");
         if (!item) return;
         clearCmdPressed();
         item.classList.add("is-pressed");
       });
       cmdDrop.addEventListener("pointerout", (e) => {
-        const item = e.target.closest(".cmd-item");
+        const item = e.target.closest(".file-item");
         if (!item) return;
         const next = e.relatedTarget;
         if (!next || item.contains(next)) return;
@@ -183,7 +183,7 @@
       document.addEventListener("pointercancel", clearCmdPressed, true);
     }
     cmdDrop.addEventListener("mousedown", (e) => {
-      if (e.target.closest(".cmd-item")) e.preventDefault();
+      if (e.target.closest(".file-item")) e.preventDefault();
     });
     messageInput.addEventListener("keydown", (e) => {
       if (cmdDrop.style.display === "none" || !cmdDrop.classList.contains("visible")) return;

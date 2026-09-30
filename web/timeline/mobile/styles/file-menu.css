@@ -24,13 +24,9 @@
       will-change: transform, opacity;
     }
 
-    #fileDropdown {
-      flex-direction: column;
-      mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
-    }
-
+    #fileDropdown,
     #cmdDropdown {
+      flex-direction: column;
       mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
     }
@@ -41,7 +37,8 @@
       touch-action: pan-y;
     }
 
-    #fileDropdown.visible {
+    #fileDropdown.visible,
+    #cmdDropdown.visible {
       display: flex;
       animation: dropdownIn 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
@@ -148,8 +145,3 @@
       font-size: 12px;
     }
 
-    .cmd-dropdown-list {
-      padding-bottom: 10px;
-      transition: opacity 160ms ease-out, transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
-      will-change: transform, opacity;
-    }
