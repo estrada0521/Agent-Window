@@ -150,6 +150,8 @@
       })();
     };
     messageInput.addEventListener("input", updateCmdAutocomplete);
+    messageInput.addEventListener("click", () => setTimeout(updateCmdAutocomplete, 10));
+    messageInput.addEventListener("focus", updateCmdAutocomplete);
     cmdDrop.addEventListener("click", (e) => {
       e.stopPropagation();
       const item = e.target.closest(".file-item");
