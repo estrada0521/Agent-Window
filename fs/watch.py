@@ -148,7 +148,8 @@ class _DebouncedWorkspaceRefresh:
         git_rel = ".git" if rel == "." else f".git/{rel}"
         if _is_git_head_metadata_path(git_rel):
             self._git_head_pending = True
-            self._mark_tree_changed_locked("")
+            if rel in ("HEAD", "logs/HEAD"):
+                self._mark_tree_changed_locked("")
             self._git_pending.add("")
             return True
         if git_rel == ".git/index":
@@ -201,6 +202,7 @@ class _DebouncedWorkspaceRefresh:
             with self._lock:
                 self._trees = trees
             self._on_trees_changed(trees)
+            self._publish_event("worktrees")
         roots = {tree[0]: tree[1] for tree in self._trees}
         for key, tree_paths in tree_files.items():
             if key in git_keys or key not in roots:

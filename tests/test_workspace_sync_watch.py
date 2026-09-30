@@ -98,7 +98,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
 
             self.assertEqual(api.state.commit_refreshes, 1)
             self.assertEqual(self.commit_cache_clears, 1)
-            self.assertEqual(api.state.events, [("git-follow", ""), "git:"])
+            self.assertEqual(api.state.events, ["git:"])
 
     def test_regular_file_event_publishes_files_and_git(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

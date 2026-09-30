@@ -30,19 +30,29 @@ __INCLUDE:../git-panel-controller.js__
     const loadGitWorktreeList = async () => {
       gitWorktreeList = await fetchGitWorktrees();
     };
+    document.addEventListener("git-worktrees-changed", async () => {
+      if (openMobileSheetKind() !== "git") return;
+      try {
+        await loadGitWorktreeList();
+      } catch (err) {
+        gitWorktreeList = [];
+        setStatus(err?.message || "Failed to load worktrees");
+      }
+    });
     gitTreeButton.addEventListener("click", () => {
       if (!gitWorktreeList.length) {
         setStatus("No other worktrees");
         return;
       }
-      const items = gitWorktreeList.map((tree, index) => [String(index), `${tree.path === gitTree() ? "✓ " : ""}${tree.branch}`]);
+      const trees = gitWorktreeList;
+      const items = trees.map((tree, index) => [String(index), `${tree.path === gitTree() ? "✓ " : ""}${tree.branch}`]);
       items.unshift(["follow", `${gitFollow() ? "✓ " : ""}Follow Mode`]);
       openSubMenu(
         "Worktree",
         items,
         (index) => {
           if (index === "follow") setGitFollow(!gitFollow());
-          else setGitTree(gitWorktreeList[Number(index)].path);
+          else setGitTree(trees[Number(index)].path);
         },
         gitTreeButton,
       );
