@@ -175,7 +175,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     sideBarOutward.enabled = sideBarAvailable;
     NSMenuItem *swapSideBarPosition = [self action:@"swapSideBarPosition" title:@"Swap Side Bar Side" key:@"e" mods:cmd | shift];
     swapSideBarPosition.enabled = sideBarAvailable;
-    NSMenuItem *swapGitRepoPosition = [self action:@"swapGitRepoPosition" title:@"Swap Git and Repo" key:@"e" mods:cmd | opt | shift];
+    NSMenuItem *swapGitRepoPosition = [self action:@"swapGitRepoPosition" title:@"Swap Git and Workspace" key:@"e" mods:cmd | opt | shift];
     swapGitRepoPosition.enabled = sideBarAvailable;
     NSMenuItem *alwaysOnTop = [self action:@"toggleAlwaysOnTop" title:@"Always on Top" key:@"p" mods:cmd | opt];
     alwaysOnTop.state = [p[@"alwaysOnTop"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
@@ -185,6 +185,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSMenuItem *fitCollapsed = [self action:@"toggleFitCollapsed" title:@"Collapse Fit Window" key:@"m" mods:cmd | opt];
     fitCollapsed.state = [p[@"fitCollapsed"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     fitCollapsed.enabled = fit;
+    NSMenuItem *selectedTargetLabel = [[NSMenuItem alloc] initWithTitle:@"For the selected target" action:nil keyEquivalent:@""];
+    selectedTargetLabel.enabled = NO;
 
     [self popUp:@[
         [self submenu:@"Theme" items:themes],
@@ -212,11 +214,15 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
             swapSideBarPosition,
             swapGitRepoPosition,
         ]],
-        [self submenu:@"Messages" items:@[
+        [self submenu:@"Timeline" items:@[
             [self action:@"messagePrevious" title:@"Previous Message" key:ArrowKey(NSUpArrowFunctionKey) mods:opt],
             [self action:@"messageNext" title:@"Next Message" key:ArrowKey(NSDownArrowFunctionKey) mods:opt],
             [self action:@"messageJumpTop" title:@"Jump to Top" key:ArrowKey(NSUpArrowFunctionKey) mods:cmd],
             [self action:@"messageJumpBottom" title:@"Jump to Bottom" key:ArrowKey(NSDownArrowFunctionKey) mods:cmd],
+            NSMenuItem.separatorItem,
+            selectedTargetLabel,
+            [self action:@"targetMessagePrevious" title:@"Previous Message" key:ArrowKey(NSUpArrowFunctionKey) mods:opt | NSEventModifierFlagControl],
+            [self action:@"targetMessageNext" title:@"Next Message" key:ArrowKey(NSDownArrowFunctionKey) mods:opt | NSEventModifierFlagControl],
         ]],
         alwaysOnTop, fitHeight, fitCollapsed,
         NSMenuItem.separatorItem,

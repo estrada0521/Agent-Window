@@ -159,7 +159,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 </details>
 
 <details>
-<summary>git / repo</summary>
+<summary>git / workspace</summary>
 
 | Action | Key | Note |
 |---|---|---|
@@ -184,7 +184,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Default / compact / mini size | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | |
 | Toggle Hub / side bar | `⌘B` / `⌘E` | Add `⌥` to grow the window outward |
 | Swap the side bar to the other side | `⇧⌘E` | |
-| Swap Git and Repo vertically | `⇧⌥⌘E` | |
+| Swap Git and Workspace vertically | `⇧⌥⌘E` | |
 | Move to screen edge | `⌥⌘↑` `←` `→` `↓` | `↓` centers |
 | Keep above other windows | `⌥⌘P` | |
 | Fit Height | `⌥⌘H` | |

@@ -93,12 +93,13 @@
       else messagesEl.scrollTo({ top: down ? messagesEl.scrollHeight : 0, behavior: "smooth" });
       requestAnimationFrame(() => { _programmaticScroll = false; });
     };
+    const stepConversationByTarget = (down) =>
+      stepConversationByMessage(down, selectedTargets.length ? selectedTargets : ["user"]);
     document.addEventListener("keydown", (event) => {
       if (!event.altKey || event.metaKey || event.shiftKey) return;
       if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
       const active = document.activeElement;
       if (active && active.matches && active.matches("input, textarea, [contenteditable='true']")) return;
       event.preventDefault();
-      const senders = event.ctrlKey ? (selectedTargets.length ? selectedTargets : ["user"]) : null;
-      void stepConversationByMessage(event.key === "ArrowDown", senders);
+      void (event.ctrlKey ? stepConversationByTarget : stepConversationByMessage)(event.key === "ArrowDown");
     });

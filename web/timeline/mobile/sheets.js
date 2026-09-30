@@ -305,7 +305,7 @@
       if (!mobileSheet) return;
       mobileSheet.dataset.kind = kind;
       sharedSheetOnClose = () => closeSheet();
-      sharedSheetCloseBtn.setAttribute("aria-label", kind === "git" ? "Close git" : "Close repository");
+      sharedSheetCloseBtn.setAttribute("aria-label", kind === "git" ? "Close git" : "Close workspace");
     };
     const updateHeaderMenuViewportMetrics = () => {
       if (!headerRoot) return;
@@ -383,7 +383,7 @@
     const repoBrowserMountEl = () => mobileSheet?.querySelector(".repo-browser-mount");
     const repoBrowserTitleForPath = (rawPath) => {
       const path = normalizeRepoPath(rawPath);
-      return path ? (path.split("/").filter(Boolean).pop() || "Repository") : "Repository";
+      return path ? (path.split("/").filter(Boolean).pop() || "Workspace") : "Workspace";
     };
     const setRepoSheetTitle = (text) => {
       const titleEl = repoSheetTitleEl();

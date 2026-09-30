@@ -181,6 +181,10 @@
         await openExternalLink(`${window.location.protocol}//${window.location.hostname}:__TIMELINE_PORT__/`).catch(reportExternalLinkFailure);
         return;
       }
+      if (action === "targetMessagePrevious" || action === "targetMessageNext") {
+        void stepConversationByTarget(action === "targetMessageNext");
+        return;
+      }
       if (action === "messagePrevious" || action === "messageNext") {
         stepConversationByMessage(action === "messageNext");
         return;

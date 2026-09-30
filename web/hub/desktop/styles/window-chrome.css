@@ -164,7 +164,8 @@
       justify-content: center;
       border-radius: 0;
     }
-    html[data-native-app="1"][data-auto-window-height="1"] .desk-timeline-title-text {
+    html[data-native-app="1"][data-auto-window-height="1"] .desk-timeline-title-text,
+    html[data-native-app="1"][data-auto-window-height="1"] .timeline-tree-label {
       display: none;
     }
     html[data-native-app="1"][data-auto-window-height="1"] .page-menu-btn svg,

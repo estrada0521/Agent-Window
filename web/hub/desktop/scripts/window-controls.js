@@ -390,23 +390,26 @@
           { value: "toggleHub", label: "Toggle Hub" },
           { value: "toggleSideBar", label: "Toggle Side Bar", disabled: !deskSideBarAvailable() },
           { value: "swapSideBarPosition", label: "Swap Side Bar Side", disabled: !deskSideBarAvailable() },
-          { value: "swapGitRepoPosition", label: "Swap Git and Repo", disabled: !deskSideBarAvailable() },
+          { value: "swapGitRepoPosition", label: "Swap Git and Workspace", disabled: !deskSideBarAvailable() },
         ],
-        messages: [
+        timeline: [
           { value: "messagePrevious", label: "Previous Message" },
           { value: "messageNext", label: "Next Message" },
           { value: "messageJumpTop", label: "Jump to Top" },
           { value: "messageJumpBottom", label: "Jump to Bottom" },
+          { value: "", label: "For the selected target", disabled: true },
+          { value: "targetMessagePrevious", label: "Previous Message" },
+          { value: "targetMessageNext", label: "Next Message" },
         ],
       };
-      const titles = { theme: "Theme", sidePanels: "Side Panels", messages: "Messages" };
+      const titles = { theme: "Theme", sidePanels: "Side Panels", timeline: "Timeline" };
       openMenuSelect(_deskSettingsBtn, "Settings", [
         { value: "theme", label: "Theme" },
         { value: "actual", label: "Actual Size", disabled: currentDeskTextSizePx() === DESK_TEXT_SIZE_DEFAULT },
         { value: "increase", label: "Zoom In" },
         { value: "decrease", label: "Zoom Out" },
         { value: "sidePanels", label: "Side Panels" },
-        { value: "messages", label: "Messages" },
+        { value: "timeline", label: "Timeline" },
       ], (value) => {
         if (!submenus[value]) {
           run({ action: "textSize", mode: value });
