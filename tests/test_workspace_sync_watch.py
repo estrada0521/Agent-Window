@@ -12,10 +12,10 @@ from fs.watch import _DebouncedWorkspaceRefresh, _is_git_head_metadata_path
 class _FakeRuntime:
     def __init__(self) -> None:
         self.commit_refreshes = 0
-        self.events: list[str] = []
+        self.events: list[str | tuple[str, str]] = []
 
-    def publish_event(self, kind: str) -> None:
-        self.events.append(kind)
+    def publish_event(self, kind: str, data: str | None = None) -> None:
+        self.events.append(kind if data is None else (kind, data))
 
     def report_failure(self, text: str) -> None:
         raise AssertionError(text)
@@ -98,7 +98,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
 
             self.assertEqual(api.state.commit_refreshes, 1)
             self.assertEqual(self.commit_cache_clears, 1)
-            self.assertEqual(api.state.events, ["git:"])
+            self.assertEqual(api.state.events, [("git-follow", ""), "git:"])
 
     def test_regular_file_event_publishes_files_and_git(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -116,7 +116,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
 
             self.assertEqual(api.state.commit_refreshes, 0)
             self.assertEqual(self.commit_cache_clears, 0)
-            self.assertEqual(api.state.events, ["files", "git:"])
+            self.assertEqual(api.state.events, ["files", ("git-follow", ""), "git:"])
 
     def test_git_object_event_is_ignored_entirely(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -157,7 +157,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
                 refresh.add_path(str(tracked))
             refresh._flush_locked()
 
-            self.assertEqual(api.state.events, ["files", "files", "git:"])
+            self.assertEqual(api.state.events, ["files", "files", ("git-follow", ""), "git:"])
 
 
 if __name__ == "__main__":

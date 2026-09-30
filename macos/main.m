@@ -138,6 +138,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     treeMenu.enabled = trees.count > 1;
     [self setImage:MenuImage([NSImage imageWithSystemSymbolName:@"arrow.triangle.branch" accessibilityDescription:nil]) on:treeMenu];
 
+    NSMenuItem *follow = [self action:@"gitFollow" title:([p[@"gitFollow"] boolValue] ? @"Follow Mode: On" : @"Follow Mode: Off") key:nil mods:0];
+
     NSEventModifierFlags cmd = NSEventModifierFlagCommand, opt = NSEventModifierFlagOption;
     NSMenuItem *shell = [self action:@"openShell" title:@"Terminal" key:@"t" mods:cmd];
     [self setImage:MenuImage([NSWorkspace.sharedWorkspace iconForFile:@"/System/Applications/Utilities/Terminal.app"]) on:shell];
@@ -146,7 +148,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 
     [self popUp:@[
         addMenu, removeMenu, NSMenuItem.separatorItem,
-        treeMenu, NSMenuItem.separatorItem,
+        treeMenu, follow, NSMenuItem.separatorItem,
         shell, finder, NSMenuItem.separatorItem,
         [self action:@"openTerminal" title:@"tmux window" key:@"t" mods:cmd | opt],
         [self action:@"revealLog" title:@"Reveal Log" key:@"l" mods:cmd | opt],

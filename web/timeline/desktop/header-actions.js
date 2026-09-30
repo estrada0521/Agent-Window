@@ -49,6 +49,7 @@
           removeAgents: agentActionCandidates("remove"),
           worktrees,
           gitTree: gitTree(),
+          gitFollow: gitFollow(),
         }, (action) => void handleTimelineMenuAction(action));
         return true;
       }
@@ -76,6 +77,7 @@
         agentIcons,
         worktrees,
         gitTree: gitTree(),
+        gitFollow: gitFollow(),
       };
       window.parent.postMessage({
         type: "show-timeline-header-menu",
@@ -93,6 +95,10 @@
           closeHeaderMenus();
           await performAgentAction(mode, agent);
         }
+        return;
+      }
+      if (data.action === "gitFollow") {
+        setGitFollow(!gitFollow());
         return;
       }
       if (data.action === "gitTree") {

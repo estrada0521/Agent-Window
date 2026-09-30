@@ -282,7 +282,7 @@
       };
       const loadPage = async ({ reset = false } = {}) => {
         if (host.canLoad && !host.canLoad()) return;
-        if (state.pageLoading) return;
+        if (state.pageLoading && !reset) return;
         if (!reset && !state.hasMore && !state.loadError) return;
         const loadSeq = ++state.loadSeq;
         state.pageLoading = true;

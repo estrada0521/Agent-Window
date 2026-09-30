@@ -37,7 +37,24 @@
     };
     const gitTreeStorageKey = `agent_window_git_tree:${TIMELINE_BASE_PATH}`;
     const gitTree = () => sessionStorage.getItem(gitTreeStorageKey) || "";
-    const setGitTree = (tree) => {
+    const gitFollowStorageKey = `agent_window_git_follow:${TIMELINE_BASE_PATH}`;
+    const gitFollow = () => sessionStorage.getItem(gitFollowStorageKey) === "1";
+    let gitFollowRevision = 0;
+    const setGitFollow = async (on) => {
+      const revision = ++gitFollowRevision;
+      if (on) sessionStorage.setItem(gitFollowStorageKey, "1");
+      else sessionStorage.removeItem(gitFollowStorageKey);
+      if (!on) return;
+      try {
+        const { followTree } = await fetchGitWorktreeState();
+        if (revision !== gitFollowRevision || !gitFollow()) return;
+        if (followTree !== null && followTree !== gitTree()) setGitTree(followTree, { follow: true });
+      } catch (err) {
+        if (revision === gitFollowRevision) setStatus(err?.message || "Failed to load Follow Mode target");
+      }
+    };
+    const setGitTree = (tree, { follow = false } = {}) => {
+      if (!follow) setGitFollow(false);
       if (tree) sessionStorage.setItem(gitTreeStorageKey, tree);
       else sessionStorage.removeItem(gitTreeStorageKey);
       document.dispatchEvent(new CustomEvent("git-tree-changed"));
@@ -52,11 +69,12 @@
       setGitTree("");
       throw new Error("Worktree was removed; showing main");
     };
-    const fetchGitWorktrees = async () => {
+    const fetchGitWorktreeState = async () => {
       const res = await fetchWithTimeout("/git-worktrees", {}, GIT_PANEL_FETCH_MS);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load worktrees");
-      return (await res.json()).worktrees;
+      return res.json();
     };
+    const fetchGitWorktrees = async () => (await fetchGitWorktreeState()).worktrees;
     const fetchGitOverview = async ({ offset = 0, limit = GIT_PANEL_BATCH, summary = false } = {}) => {
       const res = await fetchWithTimeout(
         withGitTree(`/git-overview?${gitOverviewQuery({ offset, limit, summary })}`),

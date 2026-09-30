@@ -175,6 +175,8 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Show commit info | hover | |
 | Switch worktree |  | timeline menu |
 
+Follow Mode switches Git to the worktree whose change was detected last, including when enabled. Until a change is observed after monitoring starts, it keeps the current worktree. Full rescans do not switch it; selecting a worktree manually turns Follow Mode off.
+
 </details>
 
 <details>

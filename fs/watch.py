@@ -71,6 +71,7 @@ class _DebouncedWorkspaceRefresh:
         self._pending: set[str] = set()
         self._tree_files: dict[str, set[str]] = {}
         self._git_pending: set[str] = set()
+        self._tree_change_order: dict[str, None] = {}
         self._git_head_pending = False
         self._trees_pending = False
         self._full_rescan_pending = False
@@ -114,10 +115,15 @@ class _DebouncedWorkspaceRefresh:
             if tree is None and not in_workspace:
                 return
             if tree is not None:
+                self._mark_tree_changed_locked(tree[0])
                 self._tree_files.setdefault(tree[0], set()).add(normalized)
             if in_workspace:
                 self._pending.add(normalized)
             self._schedule_flush_locked()
+
+    def _mark_tree_changed_locked(self, key: str) -> None:
+        self._tree_change_order.pop(key, None)
+        self._tree_change_order[key] = None
 
     def _classify_git_metadata_locked(self, path: str) -> bool | None:
         if not self._trees:
@@ -135,15 +141,18 @@ class _DebouncedWorkspaceRefresh:
                 self._trees_pending = True
                 return True
             if sub in ("HEAD", "index") or sub.startswith("logs/"):
+                self._mark_tree_changed_locked(key)
                 self._git_pending.add(key)
                 return True
             return False
         git_rel = ".git" if rel == "." else f".git/{rel}"
         if _is_git_head_metadata_path(git_rel):
             self._git_head_pending = True
+            self._mark_tree_changed_locked("")
             self._git_pending.add("")
             return True
         if git_rel == ".git/index":
+            self._mark_tree_changed_locked("")
             self._git_pending.add("")
             return True
         return False
@@ -173,6 +182,8 @@ class _DebouncedWorkspaceRefresh:
             paths = set(self._pending)
             tree_files = {key: set(values) for key, values in self._tree_files.items()}
             git_keys = set(self._git_pending)
+            change_order = list(self._tree_change_order)
+            self._tree_change_order.clear()
             git_head_changed = self._git_head_pending
             trees_changed = self._trees_pending
             full_rescan = self._full_rescan_pending
@@ -191,8 +202,6 @@ class _DebouncedWorkspaceRefresh:
                 self._trees = trees
             self._on_trees_changed(trees)
         roots = {tree[0]: tree[1] for tree in self._trees}
-        if full_rescan:
-            git_keys.update(roots)
         for key, tree_paths in tree_files.items():
             if key in git_keys or key not in roots:
                 continue
@@ -204,6 +213,9 @@ class _DebouncedWorkspaceRefresh:
                 ignored = set()
             if any(rel not in ignored for rel in rels):
                 git_keys.add(key)
+        follow_tree = next((key for key in reversed(change_order) if key in git_keys and key in roots), None)
+        if full_rescan:
+            git_keys.update(roots)
         workspace = self._files.workspace
         file_rels = [
             rel for rel in (os.path.relpath(path, workspace) for path in paths)
@@ -218,6 +230,8 @@ class _DebouncedWorkspaceRefresh:
             clear_commit_list_cache()
         if file_rels or full_rescan:
             self._publish_event("files")
+        if follow_tree is not None:
+            self._publish_event("git-follow", follow_tree)
         for key in sorted(git_keys):
             self._publish_event(f"git:{key}")
         with self._lock:

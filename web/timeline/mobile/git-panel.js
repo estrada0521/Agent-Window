@@ -31,14 +31,19 @@ __INCLUDE:../git-panel-controller.js__
       gitWorktreeList = await fetchGitWorktrees();
     };
     gitTreeButton.addEventListener("click", () => {
-      if (gitWorktreeList.length < 2) {
+      if (!gitWorktreeList.length) {
         setStatus("No other worktrees");
         return;
       }
+      const items = gitWorktreeList.map((tree, index) => [String(index), `${tree.path === gitTree() ? "✓ " : ""}${tree.branch}`]);
+      items.unshift(["follow", `${gitFollow() ? "✓ " : ""}Follow Mode`]);
       openSubMenu(
         "Worktree",
-        gitWorktreeList.map((tree, index) => [String(index), `${tree.path === gitTree() ? "✓ " : ""}${tree.branch}`]),
-        (index) => setGitTree(gitWorktreeList[Number(index)].path),
+        items,
+        (index) => {
+          if (index === "follow") setGitFollow(!gitFollow());
+          else setGitTree(gitWorktreeList[Number(index)].path);
+        },
         gitTreeButton,
       );
     });
@@ -80,7 +85,9 @@ __INCLUDE:../git-panel-controller.js__
         return;
       }
       try {
+        const tree = gitTree();
         const data = await fetchGitOverview({ summary: true });
+        if (tree !== gitTree() || !gitPinned()) return;
         renderGitPinHud(data);
         if (gitWorktreeButton()) renderGitWorktreeButton(data);
         setBackgroundStatus(gitPinHud);

@@ -175,6 +175,8 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | commitのinfo表示 | hover |  |
 | worktreeの切り替え |  | timeline menuから |
 
+Follow Modeは、有効にした時点から最後に変更を検知したworktreeへGit表示を切り替える。監視開始後にまだ変更を検知していなければ現在の表示を維持する。全体再走査では切り替えず、worktreeを手動選択すると解除する。
+
 </details>
 
 <details>

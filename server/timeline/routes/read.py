@@ -227,7 +227,12 @@ def _get_git_worktrees(handler, parsed, ctx) -> None:
     def read(_root, _arg):
         trees = workspace_git.git_worktrees(ctx["workspace"])
         linked = sorted(trees[1:], key=lambda tree: (Path(tree["path"]) / ".git").stat().st_birthtime, reverse=True)
-        return {"worktrees": [{"path": "", "branch": trees[0]["branch"]}, *linked]}
+        worktrees = [{"path": "", "branch": trees[0]["branch"]}, *linked]
+        follow_tree = ctx["state"].last_changed_git_tree()
+        return {
+            "worktrees": worktrees,
+            "followTree": follow_tree if any(tree["path"] == follow_tree for tree in worktrees) else None,
+        }
     _send_git_json(handler, parsed, ctx, read)
 
 

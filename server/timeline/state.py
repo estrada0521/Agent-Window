@@ -48,6 +48,7 @@ class TimelineState:
         self._agent_running = set(initial_running_agents or [])
         self._events = threading.Condition()
         self._event_counts = dict.fromkeys(EVENT_KINDS, 0)
+        self._event_data: dict[str, str] = {}
         self._latest_failure = ""
         self._stopped_threads: dict[str, str] = {}
         self.native_log = NativeLogProjector(
@@ -105,10 +106,15 @@ class TimelineState:
             commit_short=commit["short"],
         )
 
-    def publish_event(self, kind: str) -> None:
+    def publish_event(self, kind: str, data: str = "") -> None:
         with self._events:
+            self._event_data[kind] = data
             self._event_counts[kind] = self._event_counts.get(kind, 0) + 1
             self._events.notify_all()
+
+    def last_changed_git_tree(self) -> str | None:
+        with self._events:
+            return self._event_data.get("git-follow")
 
     def event_counts(self) -> dict[str, int]:
         with self._events:
@@ -130,7 +136,7 @@ class TimelineState:
         with self._events:
             self._events.wait_for(lambda: self._event_counts != seen, timeout=timeout)
             changed = [
-                (kind, self._latest_failure if kind == "failure" else "")
+                (kind, self._latest_failure if kind == "failure" else self._event_data.get(kind, ""))
                 for kind in self._event_counts
                 if self._event_counts[kind] != seen.get(kind, 0)
             ]

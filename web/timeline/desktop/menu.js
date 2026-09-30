@@ -32,6 +32,7 @@
         { value: "add", label: "Add Agent", disabled: !payload.sessionActive || !agents.add.length },
         { value: "remove", label: "Remove Agent", disabled: !payload.sessionActive || !agents.remove.length },
         { value: "worktree", label: "Worktree", disabled: payload.worktrees.length < 2 },
+        { value: "gitFollow", label: `Follow Mode: ${payload.gitFollow ? "On" : "Off"}` },
         { value: "openShell", label: "Terminal" },
         { value: "openFinder", label: "Finder" },
         { value: "openTerminal", label: "tmux window" },

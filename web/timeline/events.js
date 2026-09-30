@@ -3,6 +3,11 @@
     timelineEvents.addEventListener("messages", () => { void refresh(); });
     timelineEvents.addEventListener("state", () => { void refreshTimelineState(); });
     timelineEvents.addEventListener("files", handleWorkspaceFilesChanged);
+    timelineEvents.addEventListener("git-follow", (event) => {
+      gitFollowRevision += 1;
+      const tree = JSON.parse(event.data);
+      if (gitFollow() && tree !== gitTree()) setGitTree(tree, { follow: true });
+    });
     timelineEvents.addEventListener("git", (event) => {
       if (JSON.parse(event.data) === gitTree()) handleWorkspaceGitChanged();
     });
