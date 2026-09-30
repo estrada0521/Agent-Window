@@ -162,7 +162,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     [self popUp:@[
         addMenu, removeMenu, paneMenu, NSMenuItem.separatorItem,
         treeMenu, follow, NSMenuItem.separatorItem,
-        shell, finder, NSMenuItem.separatorItem,
+        shell, finder,
         [self action:@"revealLog" title:@"Reveal Log" key:@"l" mods:cmd | opt],
         [self action:@"openInBrowser" title:@"Open in Browser" key:@"o" mods:cmd | opt],
         NSMenuItem.separatorItem,
