@@ -161,6 +161,7 @@ class NativeLogProjector:
         return self._watcher.watched_paths() if self._watcher else {}
 
     def push_running_display(self, agent: str, events: list[dict]) -> None:
+        self.mark_running(agent)
         normalized: list[tuple[str, str, str]] = []
         for ev in events:
             item = (ev["keyword"], ev["detail"], ev["source_id"])
