@@ -38,6 +38,7 @@
     const endExportRange = () => {
       exportRange = null;
       delete document.documentElement.dataset.exportRange;
+      exportHudExportBtn.classList.remove("is-pressed");
       syncExportRange();
       setHudOverlay(null);
     };
@@ -218,3 +219,13 @@ ${katex}<style>${css}</style>
       }
     };
     exportHudExportBtn.addEventListener("click", () => void runExport());
+    if (document.documentElement.dataset.mobile === "1") {
+      const clearExportPressed = () => exportHudExportBtn.classList.remove("is-pressed");
+      exportHudExportBtn.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0 || exportHudExportBtn.disabled) return;
+        exportHudExportBtn.classList.add("is-pressed");
+      });
+      exportHudExportBtn.addEventListener("pointerleave", clearExportPressed);
+      document.addEventListener("pointerup", clearExportPressed, true);
+      document.addEventListener("pointercancel", clearExportPressed, true);
+    }

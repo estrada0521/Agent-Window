@@ -6,6 +6,7 @@
     }
     .hud.has-controls {
       padding: 0 var(--pill-row-margin);
+      overflow: visible;
     }
     .hud.has-controls.is-visible {
       pointer-events: auto;
@@ -30,6 +31,7 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
     .export-hud-cancel {
       background: transparent;
@@ -65,7 +67,7 @@
     .export-hud:not(.is-picked) .export-hud-export {
       display: none;
     }
-    .export-hud-export:active {
+    html:not([data-mobile="1"]) .export-hud-export:active {
       transform: scale(0.93);
       transition: transform 80ms ease-out;
     }

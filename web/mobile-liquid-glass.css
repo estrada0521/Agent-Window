@@ -12,7 +12,8 @@
     #composerFabBtn,
     #scrollToBottomBtn,
     .send-btn,
-    .target-chip {
+    .target-chip,
+    .export-hud-export {
       transition: transform var(--liquid-glass-press-out);
       user-select: none;
       -webkit-user-select: none;
@@ -36,11 +37,14 @@
       transition: transform var(--liquid-glass-press-in);
     }
     .send-btn,
-    .target-chip {
+    .target-chip,
+    .export-hud-export {
       --liquid-glass-press-scale: 1.4;
     }
     .send-btn.is-pressed:not(:disabled),
-    .target-chip.is-pressed {
+    .target-chip.is-pressed,
+    .export-hud-export.is-pressed:not(:disabled),
+    .export-hud-export:active:not(:disabled) {
       transform: scale(var(--liquid-glass-press-scale));
       transition: transform var(--liquid-glass-press-in);
     }

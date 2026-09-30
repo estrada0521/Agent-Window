@@ -8,6 +8,7 @@
       ".repo-sheet-close",
       ".repo-browser-item",
       ".send-btn",
+      ".export-hud-export",
       "#scrollToBottomBtn"
     ].join(", ");
     const syncHoverCapabilityClass = () => {
