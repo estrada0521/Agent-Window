@@ -46,12 +46,23 @@
       else sessionStorage.removeItem(gitFollowStorageKey);
       if (!on) return;
       try {
-        const { followTree } = await fetchGitWorktreeState();
+        const { worktrees, followTree } = await fetchGitWorktreeState();
         if (revision !== gitFollowRevision || !gitFollow()) return;
-        if (followTree !== null && followTree !== gitTree()) setGitTree(followTree, { follow: true });
+        if (followTree !== null && followTree !== gitTree()) applyFollowTree(followTree, worktrees);
       } catch (err) {
         if (revision === gitFollowRevision) setStatus(err?.message || "Failed to load Follow Mode target");
       }
+    };
+    const applyFollowTree = (tree, worktrees) => {
+      const branch = worktrees.find((item) => item.path === tree)?.branch;
+      if (branch) {
+        const notice = document.createElement("span");
+        notice.className = "hud-worktree";
+        notice.innerHTML = GIT_WORKTREE_SVG;
+        notice.append(branch);
+        setStatus(notice);
+      }
+      setGitTree(tree, { follow: true });
     };
     const setGitTree = (tree, { follow = false } = {}) => {
       if (!follow) setGitFollow(false);
