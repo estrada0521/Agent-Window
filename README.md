@@ -218,6 +218,8 @@ Connect to the Hub via Tailscale or similar, and use it as a PWA. Swipe left to 
   <img src="media/agent-window-mobile-dark-3.png" width="48%" alt="Mobile UI, dark 3">
   <img src="media/agent-window-mobile-light-4.png" width="48%" alt="Mobile UI, light 4">
   <img src="media/agent-window-mobile-dark-4.png" width="48%" alt="Mobile UI, dark 4">
+  <img src="media/agent-window-mobile-light-5.png" width="48%" alt="Mobile UI, light 5">
+  <img src="media/agent-window-mobile-dark-5.png" width="48%" alt="Mobile UI, dark 5">
 </p>
 
 ## Supported CLIs
