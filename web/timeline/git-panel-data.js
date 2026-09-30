@@ -78,7 +78,8 @@
     const failIfGitTreeRemoved = (res) => {
       if (res.status !== 404 || !gitTree()) return;
       setGitTree("");
-      throw new Error("Worktree was removed; showing main");
+      setStatus("Worktree removed");
+      throw new Error("Worktree removed");
     };
     const fetchGitWorktreeState = async () => {
       const res = await fetchWithTimeout("/git-worktrees", {}, GIT_PANEL_FETCH_MS);
