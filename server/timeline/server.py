@@ -9,6 +9,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
+from server.same_origin import reject_cross_origin
 from server.timeline.page import render_timeline_html
 from server.timeline.state import TimelineState
 from server.timeline.process import launch_timeline_server, wait_for_timeline_server
@@ -287,6 +288,8 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
+        if reject_cross_origin(self):
+            return
         parsed = urlparse(self.path)
         if self._dispatch_routes(parsed, self._POST_ROUTE_DISPATCHERS, _route_context()):
             return

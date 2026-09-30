@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+from server.same_origin import reject_cross_origin
 from server.hub.state import HubState
 from server.appearance.colors import apply_color_tokens, resolve_theme_palette
 from server.appearance.colors import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
@@ -569,6 +570,8 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
+        if reject_cross_origin(self):
+            return
         parsed = urlparse(self.path)
         if split_timeline_proxy_path(parsed.path) is not None:
             proxy_timeline(self, "POST")
