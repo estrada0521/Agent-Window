@@ -1037,8 +1037,8 @@ __INCLUDE:git-panel.js__
         openRepoSheet();
         return;
       }
-      if (action === "shareTimeline") {
-        openSubMenu("Share", [["html", "As HTML"], ["jsonl", "As JSONL"]], (format) => beginExportRange(format));
+      if (action === "exportTimeline") {
+        openSubMenu("Export", [["html", "As HTML"], ["jsonl", "As JSONL"]], (format) => beginExportRange(format));
         return;
       }
       if (action === "openPaneTraceWindow") {

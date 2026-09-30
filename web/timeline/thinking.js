@@ -61,11 +61,15 @@
         renderThinkingIndicator();
       }
     };
+    const thinkingKeywordHtml = (text) => {
+      const title = document.documentElement.dataset.mobile === "1" ? "" : ' title="Open Pane"';
+      return `<span class="message-thinking-running-keyword"${title}>${escapeHtml(text)}</span>`;
+    };
     const buildThinkingRunningHtml = (keyword, detail = "") => {
       const detailHtml = detail
         ? `<span class="message-thinking-running-detail"> ${escapeHtml(detail)}</span>`
         : "";
-      return `<span class="message-thinking-running-keyword">${escapeHtml(keyword)}</span>${detailHtml}`;
+      return `${thinkingKeywordHtml(keyword)}${detailHtml}`;
     };
     const buildThinkingRunningLineInnerHtml = (contentHtml) => {
       return `<span class="message-thinking-running-body">${contentHtml}</span>`;
@@ -305,7 +309,7 @@
             <span class="message-thinking-label message-thinking-label-agent"></span>
           `;
           if (document.documentElement.dataset.mobile !== "1") {
-            row.querySelector(".message-thinking-icon-wrap").title = "Open Pane";
+            row.querySelector(".message-thinking-icons").title = "Open Pane";
           }
         }
         const pulseDelay = `${pulse}s`;
@@ -317,7 +321,7 @@
 
         const nextText = runningItem
           ? buildThinkingRunningHtml(runningItem.keyword, runningItem.detail)
-          : '<span class="message-thinking-running-keyword">Running...</span>';
+          : thinkingKeywordHtml("Running...");
         const nextId = runningItem ? (String(runningItem.id || "")) : "generic";
         if (label) {
           syncThinkingRunningSlot(label, {
@@ -355,9 +359,8 @@
     window.addEventListener("resize", scheduleThinkingFloatingIcons, { passive: true });
     if (document.documentElement.dataset.mobile !== "1") {
       messagesEl?.addEventListener("click", async (event) => {
-        const wrap = event.target.closest(".message-thinking-icon-wrap");
-        if (!wrap) return;
-        const row = wrap.closest(".message-thinking-row[data-agent]");
+        if (!event.target.closest(".message-thinking-icons, .message-thinking-running-keyword")) return;
+        const row = event.target.closest(".message-thinking-row[data-agent]");
         if (!row) return;
         const agent = row.dataset.agent || "";
         if (!agent) return;
