@@ -326,17 +326,21 @@ __INCLUDE:../hud.js__
       document.body.appendChild(select);
       return select;
     };
-    const anchorSubMenu = (select) => {
-      const anchor = rightMenuBtn || document.activeElement || document.body;
+    const anchorSubMenu = (select, anchor = null) => {
+      const baseAnchor = rightMenuBtn || document.activeElement || document.body;
       if (document.documentElement.dataset.mobile === "1") {
-        const rect = anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : { left: 0, top: 0, width: 1, height: 1 };
-        select.style.left = `${Math.max(0, Math.round(rect.left))}px`;
-        select.style.top = `${Math.max(0, Math.round(rect.top))}px`;
-        select.style.width = `${Math.max(1, Math.round(rect.width || 1))}px`;
-        select.style.height = `${Math.max(1, Math.round(rect.height || 1))}px`;
+        const baseRect = baseAnchor.getBoundingClientRect ? baseAnchor.getBoundingClientRect() : { left: 0, top: 0, width: 1, height: 1 };
+        const anchorRect = anchor?.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
+        const left = anchorRect ? anchorRect.left : baseRect.left;
+        const width = anchorRect ? anchorRect.width : baseRect.width;
+        select.style.left = `${Math.max(0, Math.round(left))}px`;
+        select.style.top = `${Math.max(0, Math.round(baseRect.top))}px`;
+        select.style.width = `${Math.max(1, Math.round(width || 1))}px`;
+        select.style.height = `${Math.max(1, Math.round(baseRect.height || 1))}px`;
         return;
       }
-      const rect = anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : { left: 0, top: 0, right: 0, width: 1, height: 1 };
+      const anchorEl = anchor || baseAnchor;
+      const rect = anchorEl.getBoundingClientRect ? anchorEl.getBoundingClientRect() : { left: 0, top: 0, right: 0, width: 1, height: 1 };
       const gap = 8;
       const vw = window.innerWidth || document.documentElement.clientWidth || 0;
       const width = 220;
@@ -351,14 +355,14 @@ __INCLUDE:../hud.js__
       select.style.width = `${width}px`;
       select.style.height = `${height}px`;
     };
-    const openSubMenu = (title, choices, onPick) => {
+    const openSubMenu = (title, choices, onPick, anchor = null) => {
       const select = ensureSubMenu();
       resetSubMenu({ clearOptions: true });
       subMenuPick = onPick;
       select.innerHTML = `<option value="" disabled selected>${escapeHtml(title)}</option>` + choices
         .map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`)
         .join("");
-      anchorSubMenu(select);
+      anchorSubMenu(select, anchor);
       skipSubMenuBlur = document.documentElement.dataset.mobile === "1";
       openNativeSelect(select);
     };

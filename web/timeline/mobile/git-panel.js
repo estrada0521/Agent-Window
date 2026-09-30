@@ -39,6 +39,7 @@ __INCLUDE:../git-panel-controller.js__
         "Worktree",
         gitWorktreeList.map((tree, index) => [String(index), `${tree.path === gitTree() ? "✓ " : ""}${tree.branch}`]),
         (index) => setGitTree(gitWorktreeList[Number(index)].path),
+        gitTreeButton,
       );
     });
     const gitPinHud = document.createElement("button");
