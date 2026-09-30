@@ -200,7 +200,10 @@ class _DebouncedWorkspaceRefresh:
         if trees_changed:
             trees = self._load_trees()
             with self._lock:
+                added = sorted({tree[0] for tree in trees} - {tree[0] for tree in self._trees})
                 self._trees = trees
+            change_order.extend(added)
+            git_keys.update(added)
             self._on_trees_changed(trees)
             self._publish_event("worktrees")
         roots = {tree[0]: tree[1] for tree in self._trees}
