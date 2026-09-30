@@ -12,6 +12,7 @@ def _usage_text() -> str:
     return "\n".join(
         [
             "Usage: agent-send <target>",
+            "       agent-send terminal --key C-c",
             "       agent-send --context",
             "",
             "Message body is read from stdin.",
@@ -37,7 +38,8 @@ def run(argv: list[str] | None = None) -> int:
     if args in (["-h"], ["--help"]):
         print(_usage_text())
         return 0
-    if len(args) != 1:
+    interrupt_terminal = args == ["terminal", "--key", "C-c"]
+    if len(args) != 1 and not interrupt_terminal:
         print(_usage_text(), file=sys.stderr)
         return 1
 
@@ -46,6 +48,14 @@ def run(argv: list[str] | None = None) -> int:
     except AgentSendError as exc:
         print(str(exc), file=sys.stderr)
         return 1
+
+    if interrupt_terminal:
+        try:
+            sender.interrupt_terminal()
+        except AgentSendError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        return 0
 
     if args[0] == "--context":
         try:

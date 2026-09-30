@@ -79,3 +79,9 @@ printf '%s' 'date' | agent-send terminal
 ```
 
 `terminal` must be the only target. The input is sent unchanged and followed by Enter; it receives no `[From: ...]` prefix and is not appended to the timeline log or sent as a running-agent notification.
+
+To send Ctrl-C to the terminal pane, without Enter:
+
+```bash
+agent-send terminal --key C-c
+```

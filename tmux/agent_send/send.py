@@ -252,6 +252,26 @@ class AgentSender:
         }
         append_jsonl_entry(log_path, entry)
 
+    def terminal_pane_id(self) -> str:
+        pane_id = terminal_window_pane_id(
+            self.resolve_tmux_session_name(), run_tmux=self.tmux.run
+        )
+        if not pane_id:
+            raise AgentSendError("Terminal pane not found.")
+        return pane_id
+
+    def interrupt_terminal(self) -> None:
+        pane_id = self.terminal_pane_id()
+        state = self.tmux.run(["display-message", "-p", "-t", pane_id, "#{pane_dead}"])
+        if state.returncode != 0:
+            raise AgentSendError(state.stderr.strip() or "Cannot read terminal pane state.")
+        if state.stdout.strip() == "1":
+            raise AgentSendError("Terminal pane is dead.")
+        result = self.tmux.run(["send-keys", "-t", pane_id, "C-c"])
+        if result.returncode != 0:
+            raise AgentSendError(result.stderr.strip() or "Failed to deliver C-c to terminal.")
+        print("Sent C-c to terminal.")
+
     def send_message(
         self,
         *,
@@ -261,11 +281,7 @@ class AgentSender:
         if any(target.strip().lower() == "terminal" for target in target_spec.split(",")):
             if target_spec.strip().lower() != "terminal":
                 raise AgentSendError("terminal must be the only target")
-            pane_id = terminal_window_pane_id(
-                self.resolve_tmux_session_name(), run_tmux=self.tmux.run
-            )
-            if not pane_id:
-                raise AgentSendError("Terminal pane not found.")
+            pane_id = self.terminal_pane_id()
             if not self.send_to_pane(pane_id, payload):
                 raise AgentSendError("Failed to deliver to terminal.")
             print("Sent to terminal.")
