@@ -47,13 +47,9 @@
       display: none;
     }
 
-    #mobileSheet:has(.git-summary-pin:not([hidden])) {
-      --git-diff-inset: calc(var(--mobile-sheet-floating-height) + 8px);
-    }
-
     .git-diff-toggle {
       position: absolute;
-      right: calc(14px + env(safe-area-inset-right, 0px) + var(--git-diff-inset, 0px));
+      right: calc(14px + env(safe-area-inset-right, 0px));
       top: 0;
       bottom: 0;
       margin-block: auto;
@@ -61,7 +57,7 @@
 
     html[data-hand="right"] .git-diff-toggle {
       right: auto;
-      left: calc(14px + env(safe-area-inset-left, 0px) + var(--git-diff-inset, 0px));
+      left: calc(14px + env(safe-area-inset-left, 0px));
     }
 
     .mobile-bottom-sheet .git-diff-toggle.is-active {
@@ -625,14 +621,14 @@
 
     .mobile-bottom-sheet .git-summary-pin {
       position: absolute;
-      right: calc(14px + env(safe-area-inset-right, 0px));
+      right: calc(14px + env(safe-area-inset-right, 0px) + var(--mobile-sheet-floating-height) + 8px);
       bottom: var(--mobile-sheet-footer-bottom);
       z-index: 6;
     }
 
     html[data-hand="right"] .mobile-bottom-sheet .git-summary-pin {
       right: auto;
-      left: calc(14px + env(safe-area-inset-left, 0px));
+      left: calc(14px + env(safe-area-inset-left, 0px) + var(--mobile-sheet-floating-height) + 8px);
     }
 
     .mobile-bottom-sheet .git-tree-switch {
