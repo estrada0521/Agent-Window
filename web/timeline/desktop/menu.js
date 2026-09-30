@@ -31,11 +31,11 @@
       openMenuSelect(anchor, "Menu", [
         { value: "add", label: "Add Agent", disabled: !payload.sessionActive || !agents.add.length },
         { value: "remove", label: "Remove Agent", disabled: !payload.sessionActive || !agents.remove.length },
+        { value: "pane", label: "tmux pane", disabled: !payload.sessionActive },
         { value: "worktree", label: "Worktree", disabled: payload.worktrees.length < 2 },
         { value: "gitFollow", label: `Follow Mode: ${payload.gitFollow ? "On" : "Off"}` },
         { value: "openShell", label: "Terminal" },
         { value: "openFinder", label: "Finder" },
-        { value: "openTerminal", label: "tmux window" },
         { value: "revealLog", label: "Reveal Log" },
         { value: "exportHtml", label: "Export as HTML…" },
         { value: "exportJsonl", label: "Export as JSONL…" },
@@ -45,6 +45,12 @@
             value: tree.path,
             label: `${tree.path === payload.gitTree ? "✓ " : ""}${tree.branch}`,
           })), (tree) => onAction({ action: "gitTree", tree }));
+          return;
+        }
+        if (action === "pane") {
+          openMenuSelect(anchor, "tmux pane", ["terminal", ...agents.remove].map((target) => ({ value: target, label: target })), (target) => {
+            onAction({ action: "openPane", target });
+          });
           return;
         }
         if (!agents[action]) {

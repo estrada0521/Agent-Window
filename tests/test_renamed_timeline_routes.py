@@ -11,7 +11,6 @@ from unittest import mock
 from tmux.session import find_session_for_workspace
 from fs.log.paths import workspace_timeline_port
 from server.timeline import server as timeline_server
-from server.timeline.routes.write import _post_open_terminal
 from server.timeline.binding import WorkspaceTimelineBinding
 
 
@@ -76,30 +75,6 @@ class RenamedTimelineRouteTests(unittest.TestCase):
             self.assertEqual(timeline_name, "new-label")
             self.assertEqual(log_path, root / "new-label" / ".log.jsonl")
             self.assertEqual(workspace_timeline_port(workspace), port_before)
-
-    def test_terminal_attaches_to_real_tmux_name_after_aw_rename(self) -> None:
-        handler = _JsonHandler()
-        state = SimpleNamespace(
-            session_is_active=True,
-            tmux_session_name="opaque-tmux-7",
-        )
-        size_result = SimpleNamespace(returncode=0, stdout="160 48")
-        ctx = {
-            "state": state,
-            "timeline_name": "renamed-aw-timeline",
-        }
-
-        with (
-            mock.patch("server.timeline.routes.write.subprocess.run", return_value=size_result) as run,
-            mock.patch("server.timeline.routes.write.subprocess.Popen") as popen,
-        ):
-            _post_open_terminal(handler, None, ctx)
-
-        self.assertEqual(handler.response, (200, {"ok": True}))
-        self.assertIn("=opaque-tmux-7:0", run.call_args.args[0])
-        apple_script = popen.call_args.args[0][-1]
-        self.assertIn("attach-session -t opaque-tmux-7", apple_script)
-        self.assertNotIn("renamed-aw-timeline", apple_script)
 
     def test_tmux_resolution_does_not_hide_query_failure_as_inactive(self) -> None:
         failed = SimpleNamespace(returncode=1, stdout="", stderr="tmux unavailable")

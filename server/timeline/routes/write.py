@@ -210,7 +210,7 @@ def _raise_terminal_window_for_tty(tty: str) -> bool:
     return result.returncode == 0 and (result.stdout or "").strip() == "true"
 
 
-def _open_terminal(handler, ctx, *, agent: str = "", pane_required: bool = False) -> None:
+def _open_pane(handler, ctx, agent: str) -> None:
     def _ok() -> None:
         handler._send_json(200, {"ok": True})
 
@@ -219,55 +219,53 @@ def _open_terminal(handler, ctx, *, agent: str = "", pane_required: bool = False
         handler._send_json(409, {"ok": False, "error": "tmux session is not active"})
         return
     tmux_name = state.tmux_session_name
-    if agent:
-        try:
-            pane_id = state.pane_id_for_control_target(agent)
-        except Exception as exc:
-            handler._send_json(500, {"ok": False, "error": str(exc)})
-            return
-        if not pane_id and pane_required:
-            handler._send_json(404, {"ok": False, "error": f"pane not found for {agent}"})
-            return
-        if pane_id:
-            win_res = subprocess.run(
-                [*TMUX, "display-message", "-p", "-t", pane_id, "#{window_id}"],
-                capture_output=True, text=True, check=False,
+    try:
+        pane_id = state.pane_id_for_control_target(agent)
+    except Exception as exc:
+        handler._send_json(500, {"ok": False, "error": str(exc)})
+        return
+    if not pane_id:
+        handler._send_json(404, {"ok": False, "error": f"pane not found for {agent}"})
+        return
+    win_res = subprocess.run(
+        [*TMUX, "display-message", "-p", "-t", pane_id, "#{window_id}"],
+        capture_output=True, text=True, check=False,
+    )
+    window_id = (win_res.stdout or "").strip()
+    if window_id:
+        subprocess.run(
+            [*TMUX, "select-window", "-t", window_id],
+            capture_output=True, check=False,
+        )
+    subprocess.run(
+        [*TMUX, "select-pane", "-t", pane_id],
+        capture_output=True, check=False,
+    )
+    if _switch_front_terminal_client(tmux_name):
+        subprocess.Popen(
+            ["osascript", "-e", 'tell application "Terminal" to activate'],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        _ok()
+        return
+    clients_res = subprocess.run(
+        [*TMUX, "list-clients", "-t", tmux_name, "-F", "#{client_tty}"],
+        capture_output=True, text=True, check=False,
+    )
+    if clients_res.returncode != 0:
+        handler._send_json(500, {"ok": False, "error": "could not determine tmux session attachment"})
+        return
+    attached_ttys = [line.strip() for line in (clients_res.stdout or "").splitlines() if line.strip()]
+    if attached_ttys:
+        if not _raise_terminal_window_for_tty(attached_ttys[0]):
+            subprocess.Popen(
+                ["osascript", "-e", 'tell application "Terminal" to activate'],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
-            window_id = (win_res.stdout or "").strip()
-            if window_id:
-                subprocess.run(
-                    [*TMUX, "select-window", "-t", window_id],
-                    capture_output=True, check=False,
-                )
-            subprocess.run(
-                [*TMUX, "select-pane", "-t", pane_id],
-                capture_output=True, check=False,
-            )
-            if _switch_front_terminal_client(tmux_name):
-                subprocess.Popen(
-                    ["osascript", "-e", 'tell application "Terminal" to activate'],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-                _ok()
-                return
-            clients_res = subprocess.run(
-                [*TMUX, "list-clients", "-t", tmux_name, "-F", "#{client_tty}"],
-                capture_output=True, text=True, check=False,
-            )
-            if clients_res.returncode != 0:
-                handler._send_json(500, {"ok": False, "error": "could not determine tmux session attachment"})
-                return
-            attached_ttys = [line.strip() for line in (clients_res.stdout or "").splitlines() if line.strip()]
-            if attached_ttys:
-                if not _raise_terminal_window_for_tty(attached_ttys[0]):
-                    subprocess.Popen(
-                        ["osascript", "-e", 'tell application "Terminal" to activate'],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                    )
-                _ok()
-                return
+        _ok()
+        return
     try:
         cols, rows = 200, 40
         try:
@@ -317,14 +315,6 @@ def _open_terminal(handler, ctx, *, agent: str = "", pane_required: bool = False
         handler._send_json(500, {"ok": False, "error": str(exc)})
 
 
-def _post_open_terminal(handler, _parsed, ctx) -> None:
-    data, err = _read_json_body(handler)
-    if err:
-        handler._send_json(400, {"ok": False, "error": err})
-        return
-    _open_terminal(handler, ctx, agent=str((data or {}).get("agent") or "").strip())
-
-
 def _post_open_pane(handler, _parsed, ctx) -> None:
     data, err = _read_json_body(handler)
     if err:
@@ -332,16 +322,12 @@ def _post_open_pane(handler, _parsed, ctx) -> None:
         return
     raw_targets = [item.strip() for item in str(data.get("target") or "").split(",") if item.strip()]
     if not raw_targets:
-        _open_terminal(
-            handler, ctx, agent="terminal", pane_required=True,
-        )
+        _open_pane(handler, ctx, "terminal")
         return
     if len(raw_targets) != 1:
         handler._send_json(400, {"ok": False, "error": "select exactly one target"})
         return
-    _open_terminal(
-        handler, ctx, agent=raw_targets[0], pane_required=True,
-    )
+    _open_pane(handler, ctx, raw_targets[0])
 
 
 def _post_open_finder(handler, _parsed, ctx) -> None:
@@ -635,7 +621,6 @@ _POST_ROUTES = {
     "/remove-agent": _post_remove_agent,
     "/upload": _post_upload,
     "/delete-upload": _post_delete_upload,
-    "/open-terminal": _post_open_terminal,
     "/open-pane": _post_open_pane,
     "/open-finder": _post_open_finder,
     "/open-shell": _post_open_shell,

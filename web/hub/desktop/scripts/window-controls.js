@@ -238,7 +238,7 @@
         }
         if (event.code === "KeyT") {
           event.preventDefault();
-          dispatchDeskNativeMenuAction({ action: "openTerminal" });
+          dispatchDeskNativeMenuAction({ action: "openPane" });
           return;
         }
         if (event.code === "KeyL") {

@@ -97,6 +97,10 @@
         }
         return;
       }
+      if (data.action === "openPane") {
+        await postAgentCommand({ command_id: "openpane", path: "/open-pane", target: String(data.target || "terminal") });
+        return;
+      }
       if (data.action === "gitFollow") {
         setGitFollow(!gitFollow());
         return;
@@ -201,18 +205,6 @@
       }
       if (action === "messageJumpBottom") {
         jumpConversationToBottom();
-        return;
-      }
-      if (action === "openTerminal") {
-        try {
-          const res = await fetch("/open-terminal", { method: "POST" });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            setStatus(data.error || "Terminal open failed");
-          }
-        } catch (err) {
-          setStatus(`Terminal: ${err.message}`);
-        }
         return;
       }
       if (action === "openShell") {

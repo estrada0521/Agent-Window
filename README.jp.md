@@ -59,7 +59,7 @@ Appをbuildし、`/Applications/Agent Window.app` に保存して起動する。
 
 `Add / Remove Agent` でAgentを追加・削除する。同じCLIを複数追加すると `Claude-2` のようなinstance名が付く。
 
-CLI本体は `tmux window` から開ける。
+CLI本体は `tmux pane` から開ける。
 
 ## Send
 
@@ -141,7 +141,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | Agentの追加 / 削除 | | |
 | Terminalを開く | `⌘T` | |
 | Finderでworkspaceを開く | `⌥⌘R` | |
-| tmux windowを開く | `⌥⌘T` | |
+| tmux paneを開く | `⌥⌘T` | |
 | FinderでLogを開く | `⌥⌘L` |  |
 | ブラウザでtimelineを開く | `⌥⌘O` |  |
 | timelineをHTML / JSONLとしてExport | | |

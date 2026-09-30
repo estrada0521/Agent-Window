@@ -1146,7 +1146,7 @@ __INCLUDE:git-panel/events.js__
           }
           if (event.code === "KeyT") {
             event.preventDefault();
-            window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openTerminal" }, "*");
+            window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openPane" }, "*");
             return;
           }
           if (event.code === "KeyL") {

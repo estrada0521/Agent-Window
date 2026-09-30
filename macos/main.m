@@ -128,6 +128,19 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSMenuItem *removeMenu = [self submenu:@"Remove Agent" items:remove];
     removeMenu.enabled = active && remove.count > 0;
     [self setImage:MenuImage([NSImage imageNamed:NSImageNameRemoveTemplate]) on:removeMenu];
+    NSMutableArray *panes = [NSMutableArray array];
+    NSMenuItem *terminalPane = [self item:@"terminal" payload:@{ @"action": @"openPane", @"target": @"terminal" } key:@"t" mods:NSEventModifierFlagCommand | NSEventModifierFlagOption];
+    [self setImage:MenuImage([NSImage imageWithSystemSymbolName:@"terminal" accessibilityDescription:nil]) on:terminalPane];
+    [panes addObject:terminalPane];
+    for (NSString *agent in p[@"removeAgents"]) {
+        NSMenuItem *item = [self item:agent payload:@{ @"action": @"openPane", @"target": agent } key:nil mods:0];
+        NSArray *rgba = icons[AgentBaseName(agent)];
+        [self setImage:(rgba ? RgbaImage(rgba) : MenuImage([NSImage imageNamed:NSImageNameUser])) on:item];
+        [panes addObject:item];
+    }
+    NSMenuItem *paneMenu = [self submenu:@"tmux pane" items:panes];
+    paneMenu.enabled = active;
+    [self setImage:MenuImage([NSImage imageWithSystemSymbolName:@"terminal" accessibilityDescription:nil]) on:paneMenu];
     NSMutableArray *trees = [NSMutableArray array];
     for (NSDictionary *tree in p[@"worktrees"]) {
         NSMenuItem *item = [self item:tree[@"branch"] payload:@{ @"action": @"gitTree", @"tree": tree[@"path"] } key:nil mods:0];
@@ -147,10 +160,9 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     [self setImage:MenuImage([NSWorkspace.sharedWorkspace iconForFile:@"/System/Library/CoreServices/Finder.app"]) on:finder];
 
     [self popUp:@[
-        addMenu, removeMenu, NSMenuItem.separatorItem,
+        addMenu, removeMenu, paneMenu, NSMenuItem.separatorItem,
         treeMenu, follow, NSMenuItem.separatorItem,
         shell, finder, NSMenuItem.separatorItem,
-        [self action:@"openTerminal" title:@"tmux window" key:@"t" mods:cmd | opt],
         [self action:@"revealLog" title:@"Reveal Log" key:@"l" mods:cmd | opt],
         [self action:@"openInBrowser" title:@"Open in Browser" key:@"o" mods:cmd | opt],
         NSMenuItem.separatorItem,

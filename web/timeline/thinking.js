@@ -361,18 +361,6 @@
         if (!row) return;
         const agent = row.dataset.agent || "";
         if (!agent) return;
-        try {
-          const res = await fetch("/open-terminal", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agent }),
-          });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            setStatus(data.error || "Terminal open failed");
-          }
-        } catch (err) {
-          setStatus(`Terminal: ${err.message}`);
-        }
+        await postAgentCommand({ command_id: "openpane", path: "/open-pane", target: agent });
       });
     }

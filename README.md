@@ -59,7 +59,7 @@ Builds the app, saves it to `/Applications/Agent Window.app`, and launches it.
 
 `Add / Remove Agent` adds and removes Agents. Adding the same CLI more than once gets an instance name like `Claude-2`.
 
-The CLI itself opens from `tmux window`.
+The CLI itself opens from `tmux pane`.
 
 ## Send
 
@@ -141,7 +141,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 | Add / remove Agent | | |
 | Open Terminal | `⌘T` | |
 | Open workspace in Finder | `⌥⌘R` | |
-| Open tmux window | `⌥⌘T` | |
+| Open tmux pane | `⌥⌘T` | |
 | Open log in Finder | `⌥⌘L` | |
 | Open timeline in browser | `⌥⌘O` | |
 | Export timeline as HTML / JSONL | | |
