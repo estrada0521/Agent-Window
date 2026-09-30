@@ -77,7 +77,6 @@
     .file-dropdown-loading .inline-loading-spinner {
       width: calc(var(--text-size, 13px) * 14 / 13);
       height: calc(var(--text-size, 13px) * 14 / 13);
-      border-width: 1.8px;
     }
     .file-item {
       display: flex;
@@ -150,9 +149,6 @@
     .file-dropdown-list {
       min-width: 0;
     }
-    @keyframes hub-inline-loading-spin {
-      to { transform: rotate(360deg); }
-    }
     .inline-loading {
       display: inline-flex;
       align-items: center;
@@ -164,11 +160,20 @@
     .inline-loading-spinner {
       width: calc(var(--text-size, 13px) * 15 / 13);
       height: calc(var(--text-size, 13px) * 15 / 13);
-      border: 2px solid var(--spinner-ring-color);
-      border-top-color: var(--icon-fg);
       border-radius: 50%;
-      animation: hub-inline-loading-spin 800ms linear infinite;
+      background: conic-gradient(
+        from 0deg,
+        var(--spinner-ring-color) 0deg,
+        var(--spinner-ring-color) 90deg,
+        color-mix(in srgb, var(--icon-fg) 35%, var(--spinner-ring-color)) 200deg,
+        var(--icon-fg) 360deg
+      );
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.8px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.8px));
+      animation: hub-inline-loading-spin 750ms linear infinite;
+      will-change: transform;
       flex: 0 0 auto;
+      box-sizing: border-box;
     }
     .page-menu-btn {
       display: inline-flex;

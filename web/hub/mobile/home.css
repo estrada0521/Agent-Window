@@ -500,10 +500,18 @@
     .mob-inline-loading-spinner {
       width: 17px;
       height: 17px;
-      border-radius: 999px;
-      border: 2px solid var(--spinner-ring-color);
-      border-top-color: var(--icon-fg);
-      animation: hub-inline-loading-spin 800ms linear infinite;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        var(--spinner-ring-color) 0deg,
+        var(--spinner-ring-color) 90deg,
+        color-mix(in srgb, var(--icon-fg) 35%, var(--spinner-ring-color)) 200deg,
+        var(--icon-fg) 360deg
+      );
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.8px));
+      mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.8px));
+      animation: hub-inline-loading-spin 750ms linear infinite;
+      will-change: transform;
       display: inline-block;
       vertical-align: middle;
       box-sizing: border-box;
