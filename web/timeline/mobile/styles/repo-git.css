@@ -36,8 +36,8 @@
       display: none;
     }
 
-    #mobileSheet[data-kind="repo"] :is(.git-worktree-button, .git-summary-pin, .git-tree-switch),
-    #mobileSheet.sheet-mode-preview :is(.git-worktree-button, .git-summary-pin, .git-tree-switch) {
+    #mobileSheet[data-kind="repo"] :is(.git-worktree-button, .git-summary-pin, .git-tree-switch, .git-more-button),
+    #mobileSheet.sheet-mode-preview :is(.git-worktree-button, .git-summary-pin, .git-tree-switch, .git-more-button) {
       display: none;
     }
 
@@ -628,14 +628,14 @@
       display: none;
     }
 
-    .mobile-bottom-sheet .git-summary-pin {
+    .mobile-bottom-sheet :is(.git-summary-pin, .git-more-button) {
       position: absolute;
       right: calc(14px + env(safe-area-inset-right, 0px) + var(--mobile-sheet-floating-height) + 8px);
       bottom: var(--mobile-sheet-footer-bottom);
       z-index: 6;
     }
 
-    html[data-hand="right"] .mobile-bottom-sheet .git-summary-pin {
+    html[data-hand="right"] .mobile-bottom-sheet :is(.git-summary-pin, .git-more-button) {
       right: auto;
       left: calc(14px + env(safe-area-inset-left, 0px) + var(--mobile-sheet-floating-height) + 8px);
     }
@@ -652,7 +652,7 @@
       left: calc(14px + env(safe-area-inset-left, 0px));
     }
 
-    .mobile-bottom-sheet :is(.git-summary-pin, .git-tree-switch)[hidden] {
+    .mobile-bottom-sheet :is(.git-summary-pin, .git-tree-switch, .git-more-button)[hidden] {
       display: none;
     }
 

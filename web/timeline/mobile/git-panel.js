@@ -30,6 +30,20 @@ __INCLUDE:../git-panel-controller.js__
     gitPinButton.className = "git-summary-pin mobile-bottom-sheet-button";
     gitPinButton.hidden = true;
     gitPinButton.innerHTML = GIT_SUMMARY_PIN_SVG;
+    const gitMoreButton = document.createElement("button");
+    gitMoreButton.type = "button";
+    gitMoreButton.className = "git-more-button mobile-bottom-sheet-button";
+    gitMoreButton.hidden = true;
+    gitMoreButton.setAttribute("aria-label", "Menu");
+    gitMoreButton.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><circle cx="5.5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="18.5" cy="12" r="1.6"></circle></svg>';
+    gitMoreButton.addEventListener("click", () => {
+      openSubMenu(
+        "Menu",
+        [["follow", `Follow Mode: ${gitFollow() ? "On" : "Off"}`]],
+        () => setGitFollow(!gitFollow()),
+        gitMoreButton,
+      );
+    });
     let gitWorktreeList = [];
     const gitTreeButton = document.createElement("button");
     gitTreeButton.type = "button";
@@ -49,20 +63,15 @@ __INCLUDE:../git-panel-controller.js__
       }
     });
     gitTreeButton.addEventListener("click", () => {
-      if (!gitWorktreeList.length) {
+      if (gitWorktreeList.length < 2) {
         setStatus("No other worktrees");
         return;
       }
       const trees = gitWorktreeList;
-      const items = trees.map((tree, index) => [String(index), tree.branch]);
-      items.unshift(["follow", `Follow Mode: ${gitFollow() ? "On" : "Off"}`]);
       openSubMenu(
         "Worktree",
-        items,
-        (index) => {
-          if (index === "follow") setGitFollow(!gitFollow());
-          else setGitTree(trees[Number(index)].path);
-        },
+        trees.map((tree, index) => [String(index), tree.branch]),
+        (index) => setGitTree(trees[Number(index)].path),
         gitTreeButton,
       );
     });
@@ -80,12 +89,12 @@ __INCLUDE:../git-panel-controller.js__
     };
     const showGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
-      if (btn) btn.hidden = gitTreeButton.hidden = !!gitPanel.detailContext;
+      if (btn) btn.hidden = gitTreeButton.hidden = gitMoreButton.hidden = !!gitPanel.detailContext;
       gitPinButton.hidden = true;
     };
     const hideGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
-      if (btn) btn.hidden = gitPinButton.hidden = gitTreeButton.hidden = true;
+      if (btn) btn.hidden = gitPinButton.hidden = gitTreeButton.hidden = gitMoreButton.hidden = true;
     };
     const gitWorktreeSummaryHtml = (data) => {
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
@@ -145,7 +154,7 @@ __INCLUDE:../git-panel-controller.js__
         btn = document.createElement("button");
         btn.type = "button";
         btn.className = "git-worktree-button mobile-bottom-sheet-button";
-        sheetPanel.append(btn, gitTreeButton, gitPinButton);
+        sheetPanel.append(btn, gitTreeButton, gitMoreButton, gitPinButton);
       }
       syncGitPinButton();
       const hasDiff = !!data?.worktree_has_diff;
