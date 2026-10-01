@@ -38,12 +38,11 @@
     const gitTreeStorageKey = `agent_window_git_tree:${TIMELINE_BASE_PATH}`;
     const gitTree = () => sessionStorage.getItem(gitTreeStorageKey) || "";
     const gitFollowStorageKey = `agent_window_git_follow:${TIMELINE_BASE_PATH}`;
-    const gitFollow = () => sessionStorage.getItem(gitFollowStorageKey) === "1";
+    const gitFollow = () => sessionStorage.getItem(gitFollowStorageKey) !== "0";
     let gitFollowRevision = 0;
     const setGitFollow = async (on) => {
       const revision = ++gitFollowRevision;
-      if (on) sessionStorage.setItem(gitFollowStorageKey, "1");
-      else sessionStorage.removeItem(gitFollowStorageKey);
+      sessionStorage.setItem(gitFollowStorageKey, on ? "1" : "0");
       document.dispatchEvent(new CustomEvent("git-follow-changed"));
       if (!on) return;
       try {

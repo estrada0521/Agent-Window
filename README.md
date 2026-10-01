@@ -98,6 +98,8 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 
 Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax-light.css` and `~/.agent-window/syntax-dark.css`.
 
+**Follow Mode** automatically switches Git to the worktree whose change was detected last.
+
 ## Fit Height
 
 `⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘M` collapses the window to its minimum; a new message restores it.
@@ -176,8 +178,7 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Copy commit message |  | |
 | Show commit info | hover | |
 | Switch worktree |  | timeline menu |
-
-Follow Mode switches Git to the worktree whose change was detected last, including when enabled. Until a change is observed after monitoring starts, it keeps the current worktree. Full rescans do not switch it; selecting a worktree manually turns Follow Mode off.
+| Follow Mode |  | ON by default |
 
 </details>
 
