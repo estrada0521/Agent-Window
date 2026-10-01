@@ -31,6 +31,7 @@ MOBILE_GIT_DIFF_CODE_TEXT_SIZE = 11
 GIT_DIFF_CODE_TEXT_SIZE = MOBILE_GIT_DIFF_CODE_TEXT_SIZE
 FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO = 1.35
 CODE_BLOCK_LINE_HEIGHT_RATIO = 1.35
+GIT_DIFF_CODE_LINE_HEIGHT_RATIO = FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO
 FILE_PREVIEW_LIGHT_CODE_WEIGHT = 550
 FILE_PREVIEW_DARK_CODE_WEIGHT = 250
 LINK_LIGHT_WEIGHT = 650
@@ -154,6 +155,7 @@ def timeline_font_style(*, text_size: object = DESKTOP_TEXT_SIZE) -> str:
       --font-main: {MESSAGE_FONT};
       --font-code: {CODE_FONT};
       --git-diff-code-size: {GIT_DIFF_CODE_TEXT_SIZE}px;
+      --git-diff-code-line-height: {GIT_DIFF_CODE_LINE_HEIGHT_RATIO:g};
     }}
     html[data-mobile="1"] .composer {{
       width: min(var(--composer-overlay-max-width, var(--message-max-width)), calc(100vw - 24px));

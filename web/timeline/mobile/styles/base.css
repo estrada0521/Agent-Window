@@ -26,6 +26,7 @@ __INCLUDE:../../markdown-theme-vars.css__
       --floating-btn-bottom: max(23%, calc(var(--mobile-menu-bottom) + var(--mobile-menu-size)));
       --spinner-ring-color: color-mix(in srgb, var(--icon-muted) 50%, transparent);
       --git-diff-code-size: 11px;
+      --git-diff-code-line-height: 1.35;
       --icon-hover: __ICON_HOVER__;
       --chip-color: __CHIP_COLOR__;
       --panel-row-bg: __PANEL_ROW_BG__;

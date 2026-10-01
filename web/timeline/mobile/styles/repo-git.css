@@ -110,7 +110,7 @@
       white-space: pre;
       font-family: var(--font-code);
       font-size: var(--git-diff-code-size, 11px);
-      line-height: 1.55;
+      line-height: var(--git-diff-code-line-height);
       color: var(--fg);
     }
 
