@@ -62,10 +62,10 @@
         notice.append(branch);
         setStatus(notice);
       }
-      setGitTree(tree, { follow: true });
+      setGitTree(tree, { preserveFollow: true });
     };
-    const setGitTree = (tree, { follow = false } = {}) => {
-      if (!follow) setGitFollow(false);
+    const setGitTree = (tree, { preserveFollow = false } = {}) => {
+      if (!preserveFollow) setGitFollow(false);
       if (tree) sessionStorage.setItem(gitTreeStorageKey, tree);
       else sessionStorage.removeItem(gitTreeStorageKey);
       document.dispatchEvent(new CustomEvent("git-tree-changed"));
@@ -77,7 +77,7 @@
     };
     const failIfGitTreeRemoved = (res) => {
       if (res.status !== 404 || !gitTree()) return;
-      setGitTree("");
+      setGitTree("", { preserveFollow: true });
       setStatus("Worktree removed");
       throw new Error("Worktree removed");
     };
