@@ -255,7 +255,7 @@
         if (normalizedExt === "md") {
           frame.contentDocument.addEventListener("click", (event) => {
             const anchor = event.target.closest?.("a[href]");
-            if (!anchor || anchor.classList.contains("local-file-link")) return;
+            if (!anchor || anchor.classList.contains("local-file-link") || anchor.classList.contains("inline-file-link")) return;
             const href = anchor.getAttribute("href");
             if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
             event.preventDefault();
