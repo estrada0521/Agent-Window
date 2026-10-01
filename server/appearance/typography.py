@@ -27,6 +27,8 @@ MOBILE_DARK_CODE_WEIGHT = 200
 MOBILE_DARK_INLINE_CODE_WEIGHT = 400
 FILE_PREVIEW_CODE_FONT = CODE_FONT
 FILE_PREVIEW_CODE_TEXT_SIZE = 12
+MOBILE_GIT_DIFF_CODE_TEXT_SIZE = 11
+GIT_DIFF_CODE_TEXT_SIZE = MOBILE_GIT_DIFF_CODE_TEXT_SIZE
 FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO = 1.35
 CODE_BLOCK_LINE_HEIGHT_RATIO = 1.35
 FILE_PREVIEW_LIGHT_CODE_WEIGHT = 550
@@ -151,6 +153,7 @@ def timeline_font_style(*, text_size: object = DESKTOP_TEXT_SIZE) -> str:
       --md-frontmatter-key-weight: {MD_FRONTMATTER_KEY_WEIGHT};
       --font-main: {MESSAGE_FONT};
       --font-code: {CODE_FONT};
+      --git-diff-code-size: {GIT_DIFF_CODE_TEXT_SIZE}px;
     }}
     html[data-mobile="1"] .composer {{
       width: min(var(--composer-overlay-max-width, var(--message-max-width)), calc(100vw - 24px));

@@ -109,7 +109,7 @@
       padding: 0 calc(var(--sheet-list-padding-inline) + var(--sheet-list-row-padding-inline));
       white-space: pre;
       font-family: var(--font-code);
-      font-size: calc(var(--text-size, 13px) * 11 / 13);
+      font-size: var(--git-diff-code-size, 11px);
       line-height: 1.55;
       color: var(--fg);
     }
