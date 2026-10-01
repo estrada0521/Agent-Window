@@ -363,6 +363,10 @@
       isolation: isolate;
     }
 
+    .mob-timeline-row.is-unread {
+      padding-left: 32px;
+    }
+
     .mob-timeline-row::before {
       content: "";
       position: absolute;
@@ -406,6 +410,20 @@
       justify-content: space-between;
       gap: 8px;
       margin-bottom: 4px;
+      position: relative;
+    }
+
+    .mob-timeline-row.is-unread .mob-row-head::before {
+      content: "";
+      position: absolute;
+      left: -14px;
+      top: 50%;
+      width: 7px;
+      height: 7px;
+      transform: translateY(-50%);
+      border-radius: 50%;
+      background: var(--icon-fg);
+      box-shadow: 0 0 5px color-mix(in srgb, var(--icon-fg) 68%, transparent);
     }
 
     .mob-row-name {

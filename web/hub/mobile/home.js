@@ -67,6 +67,8 @@
     let _hubLayoutRefH = 0;
     let _hubVVBridgeHandler = null;
     let _currentTimelineName = "";
+    let _mobPreviewRevisions = new Map();
+    const _mobUnreadTimelines = new Set();
     let _currentTimelineUrl = "";
     let _timelineFrameRenderReady = false;
     let _hubLaunchShellPending = false;
@@ -186,6 +188,7 @@
           _timelineOverlay.classList.add("overlay-settled");
           applyHubTimelineSquircle();
           resetHubTimelineScroll();
+          clearOpenedTimelineUnread();
         }
       };
       _overlaySettleHandler = (event) => {
@@ -284,9 +287,14 @@
       document.querySelectorAll("#mobListWrap .mob-timeline-row[data-timeline-name]").forEach((row) => {
         const isSelected = !!selectedName && row.dataset.timelineName === selectedName;
         row.classList.toggle("is-selected", isSelected);
+        row.classList.toggle("is-unread", _mobUnreadTimelines.has(row.dataset.timelineName));
         if (isSelected) row.setAttribute("aria-current", "page");
         else row.removeAttribute("aria-current");
       });
+    }
+    function clearOpenedTimelineUnread() {
+      if (!_timelineFrameRenderReady || !_timelineOverlay.classList.contains("overlay-settled")) return;
+      if (_mobUnreadTimelines.delete(_currentTimelineName)) syncMobileSelectedTimelineRows();
     }
     function persistTimelineFrameState(url, name) {
       const normalizedUrl = String(url || "").trim();
@@ -701,6 +709,7 @@
             persistTimelineFrameState(_currentTimelineUrl, _currentTimelineName || "");
           }
           finishTimelineRenderWait();
+          clearOpenedTimelineUnread();
         }
         return;
       }
@@ -981,6 +990,32 @@
         wrap.querySelectorAll(".swipe-row").forEach(initSwipeRow);
         flipListRows(wrap, ".swipe-row", rowKey, firstRects);
       };
+      const updateUnreadTimelines = (active) => {
+        const nextRevisions = new Map();
+        const activeNames = new Set();
+        const viewedName = _timelineOverlay.classList.contains("overlay-visible") ? _currentTimelineName : "";
+        active.forEach((timeline) => {
+          const name = String(timeline.name || "").trim();
+          if (!name) return;
+          activeNames.add(name);
+          const revision = String(timeline.latest_message_revision || "").trim();
+          const previousRevision = _mobPreviewRevisions.get(name);
+          if (
+            previousRevision &&
+            revision &&
+            revision !== previousRevision &&
+            name !== viewedName &&
+            String(timeline.latest_message_sender || "").trim() !== "user"
+          ) {
+            _mobUnreadTimelines.add(name);
+          }
+          nextRevisions.set(name, revision);
+        });
+        for (const name of _mobUnreadTimelines) {
+          if (!activeNames.has(name)) _mobUnreadTimelines.delete(name);
+        }
+        _mobPreviewRevisions = nextRevisions;
+      };
       const refresh = async (force) => {
         const requestSeq = ++_mobTimelinesRequestSeq;
         try {
@@ -994,6 +1029,7 @@
           const activeTimelines = data.active_timelines;
           const archivedTimelines = data.archived_timelines;
           _mobTimelinesCache = { active: activeTimelines, archived: archivedTimelines };
+          updateUnreadTimelines(activeTimelines);
 
           const sig = JSON.stringify({
             active: activeTimelines,
