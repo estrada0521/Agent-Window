@@ -96,7 +96,7 @@ The side bar shows git status and a file tree. Diffs open in `git difftool`. Fil
 
 File icons: put a symlink to a file icon theme's definition JSON (VS Code and similar) at `~/.agent-window/file-icon-theme.json`.
 
-Syntax colors: symlink highlight.js theme CSS to `~/.agent-window/syntax-light.css` and `~/.agent-window/syntax-dark.css`. Only text colors apply; AW switches them with its theme. Remove either link to use monochrome in that mode, then reload. Code blocks use their language label; file previews use the filename. Unsupported languages, code blocks over 512K characters, and file previews over 512 KiB remain monochrome.
+Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax-light.css` and `~/.agent-window/syntax-dark.css`.
 
 ## Fit Height
 

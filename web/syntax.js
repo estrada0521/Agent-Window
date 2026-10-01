@@ -49,20 +49,11 @@
     code.innerHTML = result.value;
     code.classList.add("aw-syntax");
   };
-  let fileRevision = 0;
-  const highlightFile = async () => {
-    const revision = ++fileRevision;
-    if (!config.filename) return;
-    const table = document.querySelector(".code-table, .preview-text-table");
-    if (!table || Number(table.dataset.previewBytes) > MAX_CODE_LENGTH) return;
-    const lines = [...table.querySelectorAll("td.lc > pre")];
-    const text = lines.map((line) => line.textContent).join("\n");
-    if (!lines.length || text.length > MAX_CODE_LENGTH) return;
-    const hljs = await loadEngine();
-    if (revision !== fileRevision) return;
-    const name = config.filename.split("/").pop().toLowerCase();
-    const language = hljs.getLanguage(name) ? name : name.split(".").pop();
-    if (!hljs.getLanguage(language) || !table.isConnected) return;
+  const languageForFile = (hljs, path) => {
+    const name = path.split("/").pop().toLowerCase();
+    return hljs.getLanguage(name) ? name : name.split(".").pop();
+  };
+  const highlightLines = (hljs, text, language) => {
     const parsed = document.createElement("div");
     parsed.innerHTML = hljs.highlight(text, { language }).value;
     const fragments = [document.createDocumentFragment()];
@@ -86,6 +77,22 @@
       }
     };
     parsed.childNodes.forEach((node) => walk(node, []));
+    return fragments;
+  };
+  let fileRevision = 0;
+  const highlightFile = async () => {
+    const revision = ++fileRevision;
+    if (!config.filename) return;
+    const table = document.querySelector(".code-table, .preview-text-table");
+    if (!table || Number(table.dataset.previewBytes) > MAX_CODE_LENGTH) return;
+    const lines = [...table.querySelectorAll("td.lc > pre")];
+    const text = lines.map((line) => line.textContent).join("\n");
+    if (!lines.length || text.length > MAX_CODE_LENGTH) return;
+    const hljs = await loadEngine();
+    if (revision !== fileRevision) return;
+    const language = languageForFile(hljs, config.filename);
+    if (!hljs.getLanguage(language) || !table.isConnected) return;
+    const fragments = highlightLines(hljs, text, language);
     if (fragments.length !== lines.length) throw new Error("Highlighted file line count changed");
     lines.forEach((line, index) => {
       line.replaceChildren(fragments[index]);
@@ -93,8 +100,38 @@
       line.classList.add("aw-syntax");
     });
   };
+  const highlightDiff = async (diff) => {
+    if (completed.has(diff) || diff.textContent.length > MAX_CODE_LENGTH) return;
+    completed.add(diff);
+    const hljs = await loadEngine();
+    const language = languageForFile(hljs, diff.closest(".git-file-diff").dataset.path);
+    if (!diff.isConnected || !hljs.getLanguage(language)) return;
+    let rows = [];
+    const applyHunk = () => {
+      for (const before of [true, false]) {
+        const side = rows.filter((row) => !row.classList.contains(before ? "is-add" : "is-del"));
+        if (!side.length) continue;
+        const code = side.map((row) => row.querySelector(".git-diff-code"));
+        const fragments = highlightLines(hljs, code.map((node) => node.textContent).join("\n"), language);
+        if (fragments.length !== side.length) throw new Error("Highlighted diff line count changed");
+        code.forEach((node, index) => {
+          if (before && !side[index].classList.contains("is-del")) return;
+          node.replaceChildren(fragments[index]);
+          node.classList.add("aw-syntax");
+        });
+      }
+      rows = [];
+    };
+    for (const row of diff.children) {
+      if (row.classList.contains("is-hunk")) applyHunk();
+      else rows.push(row);
+    }
+    applyHunk();
+  };
   const scan = (node) => {
     if (!(node instanceof Element)) return;
+    if (node.matches(".git-diff-scroll")) void highlightDiff(node).catch(report);
+    node.querySelectorAll(".git-diff-scroll").forEach((diff) => void highlightDiff(diff).catch(report));
     if (node.matches("pre > code")) void highlightBlock(node).catch(report);
     node.querySelectorAll("pre > code").forEach((code) => void highlightBlock(code).catch(report));
   };

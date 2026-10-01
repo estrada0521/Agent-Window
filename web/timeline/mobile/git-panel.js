@@ -262,7 +262,7 @@ __INCLUDE:../git-panel-controller.js__
         }
         if (line.startsWith("\\")) continue;
         const kind = line.startsWith("+") ? " is-add" : line.startsWith("-") ? " is-del" : "";
-        out.push(`<div class="git-diff-line${kind}">${escapeHtml(line) || "<br>"}</div>`);
+        out.push(`<div class="git-diff-line${kind}">${escapeHtml(line.slice(0, 1))}<span class="git-diff-code">${escapeHtml(line.slice(1))}</span></div>`);
       }
       return out.length ? `<div class="git-diff-scroll">${out.join("")}</div>` : '<div class="git-diff-line is-hunk">No textual changes</div>';
     };
@@ -273,6 +273,7 @@ __INCLUDE:../git-panel-controller.js__
         if (row.nextElementSibling?.classList.contains("git-file-diff")) return;
         const block = document.createElement("div");
         block.className = "git-file-diff";
+        block.dataset.path = row.dataset.path || "";
         row.after(block);
         const params = new URLSearchParams({ path: row.dataset.path || "", hash: context.hash || "" });
         if (row.dataset.oldPath) params.set("old_path", row.dataset.oldPath);
