@@ -9,6 +9,7 @@ from fs.log.jsonl import log_slice
 from git import repo as workspace_git
 from server.request import request_base_path
 from server.timeline.file_view import render_file_view
+from server.timeline.syntax import add_syntax_highlighting
 from server.timeline.state import ENTRY_WINDOW_LIMIT
 from server.timeline.slash_commands import public_slash_command_dicts
 
@@ -123,6 +124,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
     except FileNotFoundError:
         handler.send_error(404)
         return
+    page = add_syntax_highlighting(page, filename=rel, theme=str(qs.get("base_theme", ["dark"])[0]))
     body = page.encode("utf-8")
     _send_bytes(handler, 200, body, content_type="text/html; charset=utf-8")
 

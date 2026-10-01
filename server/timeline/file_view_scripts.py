@@ -68,6 +68,7 @@ def build_progressive_loader_js(
             f'const progressiveCodeBody=document.getElementById("{code_body_id}");'
             "const progressiveScrollTarget=progressiveCodeScroll||progressiveViewContainer;"
             "if(progressiveViewContainer&&progressiveGutterBody&&progressiveCodeBody&&progressiveScrollTarget){"
+            "progressiveCodeBody.closest('table').dataset.previewBytes=String(totalBytes);"
             "const decoder=new TextDecoder();"
             "let offset=0;let loading=false;let done=false;let pending='';let lineNo=1;"
             "const setStatus=()=>{};"
@@ -88,6 +89,7 @@ def build_progressive_loader_js(
             "  });"
             "  progressiveGutterBody.insertAdjacentHTML('beforeend',gutterRows.join(''));"
             "  progressiveCodeBody.insertAdjacentHTML('beforeend',codeRows.join(''));"
+            "  document.dispatchEvent(new CustomEvent('file-preview-text-updated'));"
             " }"
             "};"
             "const maybeLoad=()=>{if(done||loading)return;if((progressiveScrollTarget.scrollTop+progressiveScrollTarget.clientHeight)>=(progressiveScrollTarget.scrollHeight-320)){void loadNext();}};"

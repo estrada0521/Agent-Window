@@ -96,6 +96,8 @@ side barにgitの状態とfile treeが出る。差分は `git difftool`。file�
 
 file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.agent-window/file-icon-theme.json` に置くと使える。
 
+構文色は、highlight.jsのtheme CSSへのsymlinkを `~/.agent-window/syntax-light.css` と `~/.agent-window/syntax-dark.css` に置く。文字色だけを適用し、AWのthemeに追従する。各linkを削除して再読み込みすると、そのmodeは単色に戻る。code blockは言語指定、file previewはfile名を使い、未対応の言語、512K文字を超えるcode block、512 KiBを超えるfile previewは単色のまま。
+
 ## Fit Height
 
 `⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。

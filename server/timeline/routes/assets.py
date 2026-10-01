@@ -12,6 +12,7 @@ from server import APP_DISPLAY_NAME
 from server.request import request_base_path
 from server.request import request_view_variant
 from server.timeline.routes.read import _send_bytes
+from server.timeline.syntax import add_syntax_highlighting
 
 
 def _get_app_manifest(handler, _parsed, ctx) -> None:
@@ -124,7 +125,8 @@ def _get_timeline_index(handler, parsed, ctx) -> None:
         timeline_name=ctx["timeline_name"],
         theme=theme,
         text_size=text_size,
-    ).encode("utf-8")
+    )
+    body = add_syntax_highlighting(body, theme=theme).encode("utf-8")
     _send_bytes(handler, 200, body, content_type="text/html; charset=utf-8")
 
 
