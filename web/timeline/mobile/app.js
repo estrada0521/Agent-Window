@@ -164,6 +164,9 @@ __INCLUDE:../conversation-state.js__
       document.documentElement.removeAttribute("data-launch-shell");
       if (isEmbeddedHubTimeline) window.parent.postMessage({ type: "timeline-render-error" }, "*");
     };
+    document.addEventListener("timeline-agent-message", () => {
+      if (isEmbeddedHubTimeline) window.parent.postMessage({ type: "timeline-agent-message" }, "*");
+    });
     if (isEmbeddedHubTimeline) {
       document.documentElement.dataset.hubIframeTimeline = "1";
       _hubChildOriW = window.innerWidth || 0;

@@ -8,6 +8,59 @@
     const _timelineFrame = document.getElementById("timelineFrame");
     const _launchShell = document.getElementById("launchShell");
     const { setStatus, setResidentStatus } = createHud(document.getElementById("hubHud"));
+    const AGENT_SOUND_KEY = "agent_window_mobile_agent_sound";
+    let agentSoundEnabled = localStorage.getItem(AGENT_SOUND_KEY) === "1";
+    let agentSoundContext = null;
+    const syncAgentSoundMenu = () => {
+      const option = document.querySelector('#pageNativeMenuBridge option[value="agent-sound"]');
+      if (option) option.textContent = `Sound: ${agentSoundEnabled ? "On" : "Off"}`;
+    };
+    syncAgentSoundMenu();
+    const getAgentSoundContext = () => {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) throw new Error("Audio unavailable");
+      if (!agentSoundContext) agentSoundContext = new AudioContextClass();
+      return agentSoundContext;
+    };
+    const unlockAgentSound = () => {
+      if (!agentSoundEnabled) return;
+      try {
+        const context = getAgentSoundContext();
+        if (context.state !== "running") void context.resume().catch(() => setStatus("Agent sound unavailable"));
+      } catch (err) {
+        setStatus(err?.message || "Agent sound unavailable");
+      }
+    };
+    document.addEventListener("pointerdown", unlockAgentSound, { capture: true });
+    const playAgentSound = async () => {
+      if (!agentSoundEnabled || document.hidden) return;
+      try {
+        const context = getAgentSoundContext();
+        if (context.state !== "running") await context.resume();
+        if (!agentSoundEnabled || document.hidden) return;
+        const now = context.currentTime;
+        const tone = context.createOscillator();
+        const gain = context.createGain();
+        tone.type = "sine";
+        tone.frequency.value = 660;
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.055, now + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+        tone.connect(gain);
+        gain.connect(context.destination);
+        tone.start(now);
+        tone.stop(now + 0.2);
+      } catch (err) {
+        setStatus(err?.message || "Agent sound unavailable");
+      }
+    };
+    const toggleAgentSound = () => {
+      agentSoundEnabled = !agentSoundEnabled;
+      if (agentSoundEnabled) localStorage.setItem(AGENT_SOUND_KEY, "1");
+      else localStorage.removeItem(AGENT_SOUND_KEY);
+      syncAgentSoundMenu();
+      unlockAgentSound();
+    };
     let _hubTimelineParentLayoutMax = 0;
     let _hubMinParentChromeGap = Infinity;
     let _hubLayoutRefW = 0;
@@ -610,6 +663,10 @@
         });
     }
     window.addEventListener("message", function (e) {
+      if (e.data?.type === "timeline-agent-message" && e.source === _timelineFrame.contentWindow) {
+        if (document.documentElement.classList.contains("hub-timeline-ui-active")) void playAgentSound();
+        return;
+      }
       if (e.data?.type === "timeline-reload-stage" && e.source === _timelineFrame.contentWindow) {
         if (e.data.stage === "error") {
           stopHubReadyWait();
@@ -997,6 +1054,10 @@
             e.stopImmediatePropagation();
             bridge.value = "";
             openSettingNativeMenu("Hand", [["right", "Right"], ["left", "Left"]], applyMobileHand);
+          } else if (val === "agent-sound") {
+            e.stopImmediatePropagation();
+            bridge.value = "";
+            toggleAgentSound();
           }
         });
       }

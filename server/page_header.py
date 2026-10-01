@@ -102,6 +102,7 @@ MOBILE_HUB_HEADER_ACTIONS = """
   <option value="" disabled selected>Menu</option>
   <option value="theme">Theme</option>
   <option value="hand">Hand</option>
+  <option value="agent-sound">Sound: Off</option>
   <option value="restart-hub">Reload</option>
 </select>
 """

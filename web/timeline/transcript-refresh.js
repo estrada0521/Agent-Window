@@ -21,6 +21,13 @@
         if (!res.ok) throw new Error("messages unavailable");
         const data = await res.json();
         if (epoch !== refreshEpoch) return;
+        const previousEntries = latestPayloadData?.entries || [];
+        const previousIds = new Set(previousEntries.map((entry) => entry.context_hash));
+        const hasNewAgentMessage = hasInitialRefreshHydrated
+          && data.server_instance === currentServerInstance
+          && data.entries.some((entry) =>
+            entry.context_hash && !previousIds.has(entry.context_hash)
+            && entry.sender && entry.sender !== "user" && entry.sender !== "system");
         if (data.server_instance !== currentServerInstance) {
           olderEntries = [];
           olderHasMore = false;
@@ -34,6 +41,7 @@
           olderHasMore = !!data?.has_older;
         }
         render(data, refreshOptions);
+        if (hasNewAgentMessage) document.dispatchEvent(new Event("timeline-agent-message"));
         setResidentStatus("messages-failed", "");
         hasInitialRefreshHydrated = true;
         notifyHubTimelineRenderReady();
