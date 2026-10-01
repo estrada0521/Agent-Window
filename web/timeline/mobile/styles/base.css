@@ -154,22 +154,13 @@ __INCLUDE:../../markdown-theme-vars.css__
       background: var(--bg);
     }
 
-    html[data-launch-shell] body>.shell {
+    html[data-launch-shell] body>.shell,
+    html[data-launch-shell] #timelineHud:has(.git-worktree-button) {
       opacity: 0;
       pointer-events: none;
     }
 
-    @keyframes titleFadeIn {
-      0% {
-        opacity: 0;
-      }
-
-      100% {
-        opacity: 1;
-      }
-    }
-
-    html[data-launch-shell="1"] body::before {
+    html[data-launch-shell] body::before {
       content: "Agent Window";
       position: fixed;
       left: 50%;
@@ -183,13 +174,49 @@ __INCLUDE:../../markdown-theme-vars.css__
       line-height: 1;
       white-space: nowrap;
       padding: 0 12px;
-      opacity: 0;
-      animation: titleFadeIn 800ms ease-out forwards;
+      opacity: 1;
       z-index: 12000;
       pointer-events: none;
       box-sizing: border-box;
     }
 
+
+    .launch-status { display: none; }
+
+    html[data-launch-shell] .launch-status {
+      display: block;
+      position: fixed;
+      left: 50%;
+      top: calc(50% + 30px);
+      transform: translateX(-50%);
+      color: var(--icon-muted);
+      font-size: 12px;
+      line-height: 1.4;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 12000;
+    }
+
+    .launch-status::before { content: "Restarting server"; }
+
+    html[data-launch-shell="rendering"] .launch-status::before {
+      content: "Rendering";
+    }
+
+    .launch-status::after {
+      content: ".";
+      display: inline-block;
+      width: 1em;
+      text-align: left;
+      animation: launchDots 1.4s steps(1, end) infinite;
+    }
+
+    @keyframes launchDots {
+      0%, 100% { content: "."; }
+      25% { content: ".."; }
+      50% { content: "..."; }
+      75% { content: ""; }
+    }
 
     .shell>.page-header {
       position: absolute;

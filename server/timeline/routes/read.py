@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gzip
 import json
 from pathlib import Path
 from urllib.parse import parse_qs
@@ -23,8 +24,30 @@ def _send_bytes(
     cache_control: str = "no-store",
     extra_headers: dict[str, str] | None = None,
 ) -> None:
+    compressible = len(body) >= 1024 and content_type.startswith(("text/html", "application/json"))
+    use_gzip = False
+    if compressible:
+        for encoding in handler.headers.get("Accept-Encoding", "").split(","):
+            name, _, parameters = encoding.strip().partition(";")
+            if name.lower() != "gzip":
+                continue
+            quality = 1.0
+            for parameter in parameters.split(";"):
+                key, _, value = parameter.strip().partition("=")
+                if key.lower() == "q":
+                    try:
+                        quality = float(value)
+                    except ValueError:
+                        quality = 0
+            use_gzip = quality > 0
+        if use_gzip:
+            body = gzip.compress(body, compresslevel=1)
     handler.send_response(status)
     handler.send_header("Content-Type", content_type)
+    if compressible:
+        handler.send_header("Vary", "Accept-Encoding")
+    if use_gzip:
+        handler.send_header("Content-Encoding", "gzip")
     if cache_control:
         handler.send_header("Cache-Control", cache_control)
     if extra_headers:

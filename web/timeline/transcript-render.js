@@ -423,24 +423,32 @@ __INCLUDE:../hud.js__
         }
       }
     };
+    const LAUNCH_STAGE_MIN_MS = 700;
+    const waitForLaunchStage = () => new Promise((resolve) => {
+      requestAnimationFrame(() => setTimeout(resolve, LAUNCH_STAGE_MIN_MS));
+    });
     const reloadTimeline = async () => {
       if (reloadInFlight) return;
       reloadInFlight = true;
       if (document.body.classList.contains("side-bar-open")) closeSideBar();
       document.documentElement.dataset.launchShell = "1";
+      const minimumDisplay = document.documentElement.hasAttribute("data-mobile-timeline")
+        ? waitForLaunchStage() : Promise.resolve();
       let error = "";
-      const current = await (await fetch("/timeline-state", { cache: "no-store" })).json();
-      if (current.server_instance === SERVER_INSTANCE_SEED) {
-        try {
+      try {
+        const stateResponse = await fetch("/timeline-state", { cache: "no-store" });
+        if (!stateResponse.ok) throw new Error(`HTTP ${stateResponse.status}`);
+        const current = await stateResponse.json();
+        if (current.server_instance === SERVER_INSTANCE_SEED) {
           const response = await fetch("/reload-timeline", { method: "POST", cache: "no-store" });
           if (!response.ok) {
             error = response.headers.get("Content-Type")?.includes("json")
               ? (await response.json()).error
               : await response.text();
           }
-        } catch (err) {
-          error = err.message;
         }
+      } catch (err) {
+        error = err.message;
       }
       if (error) {
         reloadInFlight = false;
@@ -448,6 +456,7 @@ __INCLUDE:../hud.js__
         setStatus(`Reload failed: ${error}`);
         return;
       }
+      await minimumDisplay;
       const params = new URLSearchParams(window.location.search);
       params.set("ts", String(Date.now()));
       window.location.replace(`${window.location.pathname}?${params.toString()}`);

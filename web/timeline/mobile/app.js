@@ -143,16 +143,24 @@ __INCLUDE:../conversation-state.js__
       window.parent.postMessage("hub_close_timeline", "*");
     };
     const notifyHubTimelineRenderReady = () => {
-      if (!isEmbeddedHubTimeline) return;
-      requestAnimationFrame(() => {
+      const reveal = async () => {
+        await initialLaunchMinimum;
         requestAnimationFrame(() => {
-          window.parent.postMessage({ type: "timeline-render-ready" }, "*");
+          requestAnimationFrame(() => {
+            if (!reloadInFlight) document.documentElement.removeAttribute("data-launch-shell");
+            if (isEmbeddedHubTimeline) window.parent.postMessage({ type: "timeline-render-ready" }, "*");
+          });
         });
-      });
+      };
+      if (document.readyState === "loading") {
+        window.addEventListener("DOMContentLoaded", reveal, { once: true });
+      } else {
+        reveal();
+      }
     };
     const notifyHubTimelineRenderError = () => {
-      if (!isEmbeddedHubTimeline) return;
-      window.parent.postMessage({ type: "timeline-render-error" }, "*");
+      document.documentElement.removeAttribute("data-launch-shell");
+      if (isEmbeddedHubTimeline) window.parent.postMessage({ type: "timeline-render-error" }, "*");
     };
     if (isEmbeddedHubTimeline) {
       document.documentElement.dataset.hubIframeTimeline = "1";
@@ -284,6 +292,7 @@ __INCLUDE:../scroll-btn.js__
 
 __INCLUDE:../messages.js__
 __INCLUDE:../transcript-render.js__
+    const initialLaunchMinimum = waitForLaunchStage();
     if (typeof marked === "undefined") {
       const _rerenderWhenMarkedReady = () => {
         if (typeof marked !== "undefined") rerenderCurrentMessages({ suppressEntryAnimation: true });
