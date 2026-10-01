@@ -147,16 +147,11 @@
       _launchShell.hidden = false;
       _launchShell.classList.add("visible");
     }
-    function resetLaunchShellCard() {
-      const card = _launchShell?.querySelector(".launch-shell-card");
-      if (!card) return;
-      card.setAttribute("aria-hidden", "true");
-      card.innerHTML = '<span class="launch-shell-title">Agent Window</span>';
-    }
     function hideLaunchShell() {
       if (!_launchShell) return;
       _launchShell.classList.remove("visible");
       _launchShell.hidden = true;
+      _launchShell.removeAttribute("data-reload-stage");
     }
     function clearHubReadyTimeout() {
       if (!_hubReadyTimeoutTimer) return;
@@ -176,7 +171,6 @@
     }
     function startHubReadyTimeout() {
       if (_hubReadyTimeoutTimer) return;
-      resetLaunchShellCard();
       _hubReadyTimeoutTimer = setTimeout(() => {
         failHubReadyWait("timeout");
       }, HUB_READY_TIMEOUT_MS);
@@ -602,7 +596,6 @@
     });
     function openTimelineFrame(openHref, name) {
       rememberLastTimeline(name);
-      resetLaunchShellCard();
       const needsReviveTransition = /^\/revive-timeline(?:[/?]|$)/.test(String(openHref || ""));
       if (needsReviveTransition) showLaunchShell();
       return hubTimelineUrls.resolve(openHref, name, { force: needsReviveTransition })
@@ -617,6 +610,23 @@
         });
     }
     window.addEventListener("message", function (e) {
+      if (e.data?.type === "timeline-reload-stage" && e.source === _timelineFrame.contentWindow) {
+        if (e.data.stage === "error") {
+          stopHubReadyWait();
+          return;
+        }
+        if (e.data.stage !== "1" && e.data.stage !== "rendering") return;
+        if (e.data.stage === "1") {
+          clearHubReadyTimeout();
+          _awaitingTimelineRenderReady = true;
+          _timelineFrameRenderReady = false;
+        } else {
+          startTimelineRenderWait();
+        }
+        _launchShell.dataset.reloadStage = e.data.stage;
+        showLaunchShell();
+        return;
+      }
       if (e.data && e.data.type === "timeline-render-error" && e.source === _timelineFrame.contentWindow) {
         _timelineFrameRenderReady = false;
         if (!_awaitingTimelineRenderReady) {

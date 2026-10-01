@@ -427,11 +427,18 @@ __INCLUDE:../hud.js__
     const waitForLaunchStage = () => new Promise((resolve) => {
       requestAnimationFrame(() => setTimeout(resolve, LAUNCH_STAGE_MIN_MS));
     });
+    const setReloadStage = (stage) => {
+      if (stage === "error") document.documentElement.removeAttribute("data-launch-shell");
+      else document.documentElement.dataset.launchShell = stage;
+      if (document.documentElement.hasAttribute("data-mobile-timeline") && window.parent !== window) {
+        window.parent.postMessage({ type: "timeline-reload-stage", stage }, "*");
+      }
+    };
     const reloadTimeline = async () => {
       if (reloadInFlight) return;
       reloadInFlight = true;
       if (document.body.classList.contains("side-bar-open")) closeSideBar();
-      document.documentElement.dataset.launchShell = "1";
+      setReloadStage("1");
       const minimumDisplay = document.documentElement.hasAttribute("data-mobile-timeline")
         ? waitForLaunchStage() : Promise.resolve();
       let error = "";
@@ -452,13 +459,14 @@ __INCLUDE:../hud.js__
       }
       if (error) {
         reloadInFlight = false;
-        document.documentElement.removeAttribute("data-launch-shell");
+        setReloadStage("error");
         setStatus(`Reload failed: ${error}`);
         return;
       }
       await minimumDisplay;
       const params = new URLSearchParams(window.location.search);
       params.set("ts", String(Date.now()));
+      if (document.documentElement.hasAttribute("data-mobile-timeline")) setReloadStage("rendering");
       window.location.replace(`${window.location.pathname}?${params.toString()}`);
     };
 

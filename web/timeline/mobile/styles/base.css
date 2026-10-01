@@ -181,42 +181,7 @@ __INCLUDE:../../markdown-theme-vars.css__
     }
 
 
-    .launch-status { display: none; }
-
-    html[data-launch-shell] .launch-status {
-      display: block;
-      position: fixed;
-      left: 50%;
-      top: calc(50% + 30px);
-      transform: translateX(-50%);
-      color: var(--icon-muted);
-      font-size: 12px;
-      line-height: 1.4;
-      white-space: nowrap;
-      pointer-events: none;
-      z-index: 12000;
-    }
-
-    .launch-status::before { content: "Restarting server"; }
-
-    html[data-launch-shell="rendering"] .launch-status::before {
-      content: "Rendering";
-    }
-
-    .launch-status::after {
-      content: ".";
-      display: inline-block;
-      width: 1em;
-      text-align: left;
-      animation: launchDots 1.4s steps(1, end) infinite;
-    }
-
-    @keyframes launchDots {
-      0%, 100% { content: "."; }
-      25% { content: ".."; }
-      50% { content: "..."; }
-      75% { content: ""; }
-    }
+__INCLUDE:../../../mobile-launch-status.css__
 
     .shell>.page-header {
       position: absolute;

@@ -37,23 +37,13 @@ const setTimeout = (fn, ms) => {{
 const clearTimeout = (id) => cleared.push(id);
 const requestAnimationFrame = (fn) => fn();
 const setStatus = () => {{}};
-const card = {{
-  classList: {{
-    add: (name) => {{ card.errorClass = name; }},
-    remove: (name) => {{ if (card.errorClass === name) card.errorClass = ""; }},
-  }},
-  removeAttribute: (name) => {{ card.removedAttribute = name; }},
-  setAttribute: (name, value) => {{ card.attrs = card.attrs || {{}}; card.attrs[name] = value; }},
-  textContent: "",
-  innerHTML: "",
-}};
 const _launchShell = {{
   hidden: true,
   classList: {{
     add: () => {{ _launchShell.visible = true; }},
     remove: () => {{ _launchShell.visible = false; }},
   }},
-  querySelector: () => card,
+  removeAttribute: () => {{}},
 }};
 const window = {{
   location: {{ search: "?launch_shell=1", pathname: "/", hash: "" }},

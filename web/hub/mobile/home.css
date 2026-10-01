@@ -608,6 +608,14 @@
       pointer-events: none;
     }
 
+__INCLUDE:../../mobile-launch-status.css__
+
+    .launch-shell[data-reload-stage] {
+      background: rgb(var(--timeline-bg-rgb));
+      pointer-events: auto;
+      touch-action: none;
+    }
+
     .launch-shell.visible {
       display: flex;
     }
