@@ -27,6 +27,8 @@ MOBILE_DARK_CODE_WEIGHT = 200
 MOBILE_DARK_INLINE_CODE_WEIGHT = 400
 FILE_PREVIEW_CODE_FONT = CODE_FONT
 FILE_PREVIEW_CODE_TEXT_SIZE = 12
+FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO = 1.35
+CODE_BLOCK_LINE_HEIGHT_RATIO = 1.35
 FILE_PREVIEW_LIGHT_CODE_WEIGHT = 550
 FILE_PREVIEW_DARK_CODE_WEIGHT = 250
 LINK_LIGHT_WEIGHT = 650
@@ -75,6 +77,9 @@ def agent_detail_selectors(prefix: str = "") -> str:
 
 def body_typography_css() -> str:
     body_weight_tokens = f"""
+    :root {{
+      --code-block-line-height: {CODE_BLOCK_LINE_HEIGHT_RATIO:g};
+    }}
     html[data-theme="dark"],
     #paneTracePanel,
     .pane-viewer {{

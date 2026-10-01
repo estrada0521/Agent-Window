@@ -304,7 +304,7 @@
       min-height: var(--code-scroll-stable-height, auto);
       color: var(--fg);
       font-weight: var(--code-weight);
-      line-height: 1.5;
+      line-height: var(--code-block-line-height);
     }
 
     .md-body :is(.code-block-wrap, blockquote) {
