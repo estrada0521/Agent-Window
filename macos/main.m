@@ -417,7 +417,6 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     if ([cmd isEqualToString:@"show_timeline_header_menu"]) { [self showTimelineHeaderMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_appearance_menu"]) { [self showAppearanceMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_timeline_switcher_menu"]) { [self showListMenu:p action:@"switchTimeline" checks:YES]; return nil; }
-    if ([cmd isEqualToString:@"show_git_changes_menu"]) { [self showListMenu:p action:@"gitChange" checks:NO]; return nil; }
     if ([cmd isEqualToString:@"show_file_context_menu"]) { [self showFileContextMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_commit_context_menu"]) { [self showCommitContextMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_timeline_context_menu"]) { [self showTimelineContextMenu:p]; return nil; }

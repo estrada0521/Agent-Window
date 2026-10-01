@@ -125,42 +125,51 @@ __INCLUDE:../conversation-state.js__
       requestHubParentLayout();
     }
 
-    const reportFitHeight = ({ fromComposer = false, restore = false } = {}) => {
+    const FIT_COMPOSER_BASE_HEIGHT = 275 / 13;
+    const FIT_SIDEBAR_HEIGHT_SCALE = 1.8;
+    const reportFitHeight = ({ fromComposer = false, restore = false, preservePosition = false } = {}) => {
       if (!isHubIframeTimeline() || document.documentElement.dataset.autoWindowHeight !== "1") return;
       const scroller = messagesEl;
       const rows = scroller
         ? scroller.querySelectorAll(":scope > article.message-row, :scope > .sysmsg-row")
         : null;
       const composerOpen = isComposerOverlayOpen();
-      if ((!rows || !rows.length) && !composerOpen) return;
+      const sidebarOpen = document.body.classList.contains("side-bar-open");
+      if ((!rows || !rows.length) && !composerOpen && !sidebarOpen) return;
       const fitTarget = _fitTargetRow?.isConnected && _fitTargetRow.parentElement === scroller
         ? _fitTargetRow
         : null;
       if (_fitTargetRow && !fitTarget) _fitTargetRow = null;
       let contentHeight;
+      const textSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
+      const sidebarMinimumContentHeight = sidebarOpen
+        ? Math.ceil(textSize * FIT_COMPOSER_BASE_HEIGHT * FIT_SIDEBAR_HEIGHT_SCALE)
+        : 0;
       if (composerOpen) {
-        const textSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
         const input = document.getElementById("message");
         const inputSpareHeight = parseFloat(getComputedStyle(input).maxHeight) - input.offsetHeight;
         const aboveInput = document.querySelector(".composer-above-input");
         const aboveInputHeight = aboveInput.offsetHeight ? -aboveInput.offsetTop : 0;
-        contentHeight = Math.ceil(textSize * 275 / 13 + Math.max(0, aboveInputHeight - inputSpareHeight));
+        contentHeight = Math.ceil(textSize * FIT_COMPOSER_BASE_HEIGHT + Math.max(0, aboveInputHeight - inputSpareHeight));
       } else if (fitTarget) {
         const r = fitTarget.getBoundingClientRect();
         contentHeight = Math.ceil(r.bottom - r.top + messageStepTopGap()) + messageStepTopGap();
-      } else {
+      } else if (rows?.length) {
         const lastRow = rows[rows.length - 1];
         const lastTopWithin = lastRow.getBoundingClientRect().top
           - scroller.getBoundingClientRect().top + scroller.scrollTop;
         contentHeight = Math.ceil(scroller.scrollHeight - lastTopWithin) + messageStepTopGap();
+      } else {
+        contentHeight = sidebarMinimumContentHeight;
       }
+      contentHeight = Math.max(contentHeight, sidebarMinimumContentHeight);
       if (contentHeight > 0) {
-        if (!fromComposer && fitTarget) {
+        if (!preservePosition && !fromComposer && fitTarget) {
           _stickyToBottom = false;
           _programmaticScroll = true;
           positionConversationRowAtStepTop(fitTarget, "auto");
           requestAnimationFrame(() => { _programmaticScroll = false; });
-        } else if (!fromComposer) {
+        } else if (!preservePosition && !fromComposer) {
           _stickyToBottom = true;
           scrollConversationToBottom("auto");
         }
@@ -486,6 +495,10 @@ __INCLUDE:git-panel/events.js__
       applySideBarWidth();
       syncPanelState();
     });
+    const reportSideBarFitHeight = () => {
+      if (document.documentElement.dataset.autoWindowHeight !== "1") return;
+      requestAnimationFrame(() => reportFitHeight({ restore: true, preservePosition: true }));
+    };
     const setSideBarView = (view) => {
       activeSideBarView = view === "git" ? "git" : "repo";
       return activeSideBarView;
@@ -512,6 +525,7 @@ __INCLUDE:git-panel/events.js__
       sideBar.hidden = false;
       sideBar.classList.add("open");
       document.body.classList.add("side-bar-open");
+      reportSideBarFitHeight();
       if (gitContent && splitPanel && !_splitGitHeightInTextSize) {
         requestAnimationFrame(() => {
           const panelH = splitPanel.getBoundingClientRect().height;
@@ -531,6 +545,7 @@ __INCLUDE:git-panel/events.js__
       sideBar.classList.remove("open");
       sideBar.hidden = true;
       document.body.classList.remove("side-bar-open");
+      reportSideBarFitHeight();
       if (wasAtBottom) {
         messagesEl.scrollTop = messagesEl.scrollHeight;
         _stickyToBottom = true;
@@ -1056,36 +1071,6 @@ __INCLUDE:git-panel/events.js__
       }
       if (event.data.type === "file-copy-result") {
         setStatus(event.data.error ? String(event.data.error) : "Copied file");
-        return;
-      }
-      if (event.data.type === "desk-git-changes-request") {
-        (async () => {
-          let files = [];
-          let error = false;
-          try {
-            const loaded = await loadGitDiffFileStats({});
-            const byPath = new Map();
-            for (const f of (Array.isArray(loaded?.files) ? loaded.files : [])) {
-              const p = String(f?.path || "").trim();
-              if (!p) continue;
-              const cur = byPath.get(p) || { path: p, oldPath: String(f?.old_path || ""), ins: 0, dels: 0, untracked: !!f?.untracked };
-              cur.ins += Number(f?.ins) || 0;
-              cur.dels += Number(f?.dels) || 0;
-              cur.untracked = cur.untracked || !!f?.untracked;
-              byPath.set(p, cur);
-            }
-            files = Array.from(byPath.values());
-          } catch (_) { error = true; }
-          window.parent?.postMessage({ type: "desk-git-changes", files, error }, "*");
-        })();
-        return;
-      }
-      if (event.data.type === "desk-open-git-file") {
-        const p = String(event.data.path || "").trim();
-        if (p) {
-          if (event.data.untracked) void openFile(p);
-          else void openDiff(p, "", String(event.data.oldPath || ""));
-        }
         return;
       }
       if (event.data.type === "toggle-git-pin") {

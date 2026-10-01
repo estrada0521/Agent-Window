@@ -182,7 +182,6 @@
     }
 
     function toggleDeskSideBar() {
-      if (_deskAutoWindowHeight) { void openDeskNativeGitChanges(); return; }
       sendDeskSideBarCommand("");
     }
 

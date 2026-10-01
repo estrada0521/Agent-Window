@@ -364,10 +364,6 @@
     _deskSideBarToggle && _deskSideBarToggle.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      if (_deskAutoWindowHeight) {
-        void openDeskNativeGitChanges();
-        return;
-      }
       if (_deskSideBarActiveMode) {
         updateDeskSideBarButtonState("", 0);
         sendDeskSideBarCommand("close");
