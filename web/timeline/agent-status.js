@@ -40,7 +40,7 @@
           const timelineChanged = repoTimeline !== currentTimelineName;
           repoTimeline = currentTimelineName;
           if (latestPayloadData) updateRepoPanel(displayEntriesForData(latestPayloadData));
-          if (timelineChanged) void refreshGitPinHud();
+          if (timelineChanged) void refreshGitSummaryHud();
         }
       }
       if (typeof data.active === "boolean") {

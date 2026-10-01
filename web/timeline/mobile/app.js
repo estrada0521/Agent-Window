@@ -330,7 +330,7 @@ __INCLUDE:message-row-press.js__
       if (openMobileSheetKind() === "git") {
         void updateGitPanel().catch(() => {});
       } else {
-        void refreshGitPinHud();
+        void refreshGitSummaryHud({ notify: true });
       }
     };
     __INCLUDE:../events.js__

@@ -75,10 +75,10 @@ __INCLUDE:../git-panel-controller.js__
         gitTreeButton,
       );
     });
-    const gitPinHud = document.createElement("button");
-    gitPinHud.type = "button";
-    gitPinHud.className = "git-worktree-button";
-    gitPinHud.setAttribute("aria-label", "Open uncommitted changes");
+    const gitSummaryHud = document.createElement("button");
+    gitSummaryHud.type = "button";
+    gitSummaryHud.className = "git-worktree-button";
+    gitSummaryHud.setAttribute("aria-label", "Open uncommitted changes");
     const gitPinStorageKey = () => `agent_window_mobile_git_summary_pinned:${currentTimelineName}`;
     const gitPinned = () => localStorage.getItem(gitPinStorageKey()) === "1";
     const syncGitPinButton = () => {
@@ -102,23 +102,24 @@ __INCLUDE:../git-panel-controller.js__
       const deleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
       return `<span class="git-worktree-button-label">${gitPathCountText(changedPaths)}</span>${gitCountsHtml(added, deleted)}`;
     };
-    const renderGitPinHud = (data, { animate = true } = {}) => {
-      const previous = gitCountSnapshot(gitPinHud);
-      gitPinHud.innerHTML = gitWorktreeSummaryHtml(data);
-      if (animate) animateGitCountsFromSnapshot(gitPinHud, previous);
+    const renderGitSummaryHud = (data, { animate = true } = {}) => {
+      const previous = gitCountSnapshot(gitSummaryHud);
+      gitSummaryHud.innerHTML = gitWorktreeSummaryHtml(data);
+      if (animate) animateGitCountsFromSnapshot(gitSummaryHud, previous);
     };
-    const refreshGitPinHud = async () => {
-      if (!gitPinned()) {
+    const refreshGitSummaryHud = async ({ notify = false } = {}) => {
+      if (!gitPinned() && !notify) {
         setBackgroundStatus(null);
         return;
       }
       try {
         const tree = gitTree();
         const data = await fetchGitOverview({ summary: true });
-        if (tree !== gitTree() || !gitPinned()) return;
-        renderGitPinHud(data);
+        if (tree !== gitTree() || (!gitPinned() && !notify)) return;
+        renderGitSummaryHud(data);
         if (gitWorktreeButton()) renderGitWorktreeButton(data);
-        setBackgroundStatus(gitPinHud);
+        setBackgroundStatus(gitPinned() ? gitSummaryHud : null);
+        if (!gitPinned()) setStatus(gitSummaryHud);
       } catch (err) {
         setStatus(err?.message || "Failed to load Git summary");
       }
@@ -126,9 +127,9 @@ __INCLUDE:../git-panel-controller.js__
     gitPinButton.addEventListener("click", () => {
       localStorage.setItem(gitPinStorageKey(), gitPinned() ? "0" : "1");
       syncGitPinButton();
-      void refreshGitPinHud();
+      void refreshGitSummaryHud();
     });
-    gitPinHud.addEventListener("click", async () => {
+    gitSummaryHud.addEventListener("click", async () => {
       _ignoreGlobalClick = true;
       await openGitSheet();
       gitWorktreeButton()?.click();
@@ -411,12 +412,12 @@ __INCLUDE:../git-panel-controller.js__
         const previous = gitCountSnapshot(gitWorktreeButton());
         renderGitWorktreeButton(data || {});
         animateGitCountsFromSnapshot(gitWorktreeButton(), previous);
-        if (gitPinned()) renderGitPinHud(data || {}, { animate: false });
+        if (gitPinned()) renderGitSummaryHud(data || {}, { animate: false });
       },
     });
     document.addEventListener("git-tree-changed", () => {
       if (gitPanel.hasShell()) void gitPanel.loadPage({ reset: true });
-      void refreshGitPinHud();
+      void refreshGitSummaryHud();
     });
     const updateGitPanel = async () => {
       if (!mobileSheet) return;
