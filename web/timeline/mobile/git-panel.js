@@ -25,11 +25,6 @@ __INCLUDE:../git-panel-controller.js__
     };
     document.addEventListener("git-follow-changed", refreshGitSheetTitle);
     const gitWorktreeButton = () => mobileSheet?.querySelector(".git-worktree-button");
-    const gitPinButton = document.createElement("button");
-    gitPinButton.type = "button";
-    gitPinButton.className = "git-summary-pin mobile-bottom-sheet-button";
-    gitPinButton.hidden = true;
-    gitPinButton.innerHTML = GIT_SUMMARY_PIN_SVG;
     const gitMoreButton = document.createElement("button");
     gitMoreButton.type = "button";
     gitMoreButton.className = "git-more-button mobile-bottom-sheet-button";
@@ -39,8 +34,18 @@ __INCLUDE:../git-panel-controller.js__
     gitMoreButton.addEventListener("click", () => {
       openSubMenu(
         "Menu",
-        [["follow", `Follow Mode: ${gitFollow() ? "On" : "Off"}`]],
-        () => setGitFollow(!gitFollow()),
+        [
+          ["pin", `Pin Summary: ${gitPinned() ? "On" : "Off"}`],
+          ["follow", `Follow Mode: ${gitFollow() ? "On" : "Off"}`],
+        ],
+        (action) => {
+          if (action === "pin") {
+            localStorage.setItem(gitPinStorageKey(), gitPinned() ? "0" : "1");
+            void refreshGitSummaryHud();
+          } else if (action === "follow") {
+            setGitFollow(!gitFollow());
+          }
+        },
         gitMoreButton,
       );
     });
@@ -81,20 +86,13 @@ __INCLUDE:../git-panel-controller.js__
     gitSummaryHud.setAttribute("aria-label", "Open uncommitted changes");
     const gitPinStorageKey = () => `agent_window_mobile_git_summary_pinned:${currentTimelineName}`;
     const gitPinned = () => localStorage.getItem(gitPinStorageKey()) === "1";
-    const syncGitPinButton = () => {
-      const pinned = gitPinned();
-      gitPinButton.classList.toggle("is-pinned", pinned);
-      gitPinButton.setAttribute("aria-pressed", pinned ? "true" : "false");
-      gitPinButton.setAttribute("aria-label", pinned ? "Unpin Git summary" : "Pin Git summary");
-    };
     const showGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
       if (btn) btn.hidden = gitTreeButton.hidden = gitMoreButton.hidden = !!gitPanel.detailContext;
-      gitPinButton.hidden = true;
     };
     const hideGitWorktreeButton = () => {
       const btn = gitWorktreeButton();
-      if (btn) btn.hidden = gitPinButton.hidden = gitTreeButton.hidden = gitMoreButton.hidden = true;
+      if (btn) btn.hidden = gitTreeButton.hidden = gitMoreButton.hidden = true;
     };
     const gitWorktreeSummaryHtml = (data) => {
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
@@ -124,11 +122,6 @@ __INCLUDE:../git-panel-controller.js__
         setStatus(err?.message || "Failed to load Git summary");
       }
     };
-    gitPinButton.addEventListener("click", () => {
-      localStorage.setItem(gitPinStorageKey(), gitPinned() ? "0" : "1");
-      syncGitPinButton();
-      void refreshGitSummaryHud();
-    });
     gitSummaryHud.addEventListener("click", async () => {
       _ignoreGlobalClick = true;
       await openGitSheet();
@@ -155,9 +148,8 @@ __INCLUDE:../git-panel-controller.js__
         btn = document.createElement("button");
         btn.type = "button";
         btn.className = "git-worktree-button mobile-bottom-sheet-button";
-        sheetPanel.append(btn, gitTreeButton, gitMoreButton, gitPinButton);
+        sheetPanel.append(btn, gitTreeButton, gitMoreButton);
       }
-      syncGitPinButton();
       const hasDiff = !!data?.worktree_has_diff;
       btn.disabled = !hasDiff;
       btn.classList.toggle("clickable", hasDiff);
@@ -186,7 +178,6 @@ __INCLUDE:../git-panel-controller.js__
         titleEl.title = subject;
       }
       hideGitWorktreeButton();
-      gitPinButton.hidden = gitPanel.detailContext?.kind !== "worktree";
       setSharedSheetLeading(
         () => gitPanel.closeDetail({ refreshList: gitPanel.detailNeedsRefresh }),
         "Back to commits",
