@@ -263,6 +263,30 @@
             void openExternalLink(href).catch(reportExternalLinkFailure);
           }, true);
         }
+        if (normalizedExt === "html" || normalizedExt === "htm") {
+          const renderedFrame = frame.contentDocument.querySelector(".html-preview-panel-web iframe");
+          if (renderedFrame) {
+            let linkedDocument = null;
+            const wireRenderedLinks = () => {
+              const doc = renderedFrame.contentDocument;
+              if (!doc || doc === linkedDocument) return;
+              linkedDocument = doc;
+              doc.addEventListener("click", (event) => {
+                const anchor = event.target.closest?.("a[href]");
+                const rawHref = anchor?.getAttribute("href")?.trim() || "";
+                if (!rawHref || rawHref.startsWith("#")) return;
+                const href = anchor.href;
+                if (anchor.protocol !== "mailto:" &&
+                    !((anchor.protocol === "http:" || anchor.protocol === "https:") && anchor.origin !== window.location.origin)) return;
+                event.preventDefault();
+                event.stopPropagation();
+                void openExternalLink(href).catch(reportExternalLinkFailure);
+              }, true);
+            };
+            renderedFrame.addEventListener("load", wireRenderedLinks);
+            wireRenderedLinks();
+          }
+        }
         wireMobileSheetSwipeBack(
           frame.contentDocument,
           () => sheetPreviewOpen(),
