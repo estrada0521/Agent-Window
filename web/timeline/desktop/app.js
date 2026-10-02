@@ -1345,6 +1345,10 @@ __INCLUDE:git-panel/events.js__
     };
     const handleWorkspaceGitChanged = () => {
       gitPanel.invalidateFingerprint();
+      if (!sideBarOpen && !gitSummaryPinned) {
+        void notifyUnpinnedGitSummary();
+        return;
+      }
       if (!sideBarOpen && !pinnedStripActive()) return;
       if (sideBarOpen && !gitPanel.hasShell()) {
         void loadGitPage({ reset: true });

@@ -16,6 +16,25 @@
       gitHeaderSummaryState = buildSummaryState(data);
       applyGitOverviewHeader();
     };
+    let unpinnedGitSummaryRequest = 0;
+    const notifyUnpinnedGitSummary = async () => {
+      const request = ++unpinnedGitSummaryRequest;
+      const timeline = currentTimelineName;
+      const tree = gitTree();
+      const relevant = () => request === unpinnedGitSummaryRequest &&
+        timeline === currentTimelineName && tree === gitTree() && !gitSummaryPinned && !sideBarOpen;
+      try {
+        const data = await fetchGitOverview({ summary: true });
+        if (!relevant()) return;
+        const row = document.createElement("div");
+        row.innerHTML = gitSummaryRowHtml(data);
+        const summary = row.querySelector(".git-commit-meta");
+        if (!summary) throw new Error("Git summary unavailable");
+        setStatus(summary);
+      } catch (err) {
+        if (relevant()) setStatus(err?.message || "Failed to load Git summary");
+      }
+    };
     const onTimelineSummaryPinReload = ({ force = false } = {}) => {
       const storageKey = gitSummaryPinnedStorageKey();
       if (!force && _gitSummaryPinnedLoadedForKey === storageKey) return;

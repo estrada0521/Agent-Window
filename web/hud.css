@@ -12,6 +12,7 @@
       --pill-border: rgba(0, 0, 0, 0.3);
     }
     .hud {
+      --hud-inline-padding: 1.2em;
       position: fixed;
       top: calc(env(safe-area-inset-top, 0px) + var(--text-size, 13px) * 10 / 13);
       left: 50%;
@@ -19,7 +20,7 @@
       max-width: calc(100% - 32px);
       box-sizing: border-box;
       height: var(--hud-height);
-      padding: 0 1.2em;
+      padding: 0 var(--hud-inline-padding);
       border-radius: 999px;
       color: var(--hud-fg);
       font-family: var(--font-main);
@@ -45,7 +46,7 @@
       align-items: center;
       gap: 0.5em;
       height: 100%;
-      padding: 0 calc(1.2em - var(--pill-row-margin));
+      padding: 0 calc(var(--hud-inline-padding) - var(--pill-row-margin));
     }
     .hud-worktree svg {
       width: 1.4em;

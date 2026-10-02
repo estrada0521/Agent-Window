@@ -1001,6 +1001,16 @@
     .git-summary-count.del {
       color: rgba(var(--git-del-red-channels), 0.9);
     }
+    #timelineHud .git-summary-meta-text,
+    #timelineHud .git-summary-counts {
+      font-size: inherit;
+      color: inherit;
+    }
+    #timelineHud:has(> .git-commit-meta) {
+      padding-inline: var(--hud-inline-padding);
+      overflow: hidden;
+      pointer-events: none;
+    }
     .git-summary-count.is-rolling {
       display: inline-flex;
       vertical-align: baseline;
