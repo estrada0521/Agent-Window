@@ -219,12 +219,13 @@
       cursor: pointer;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
-      transition: border-color 120ms ease, background 250ms ease;
+      transition: border-color 120ms ease;
     }
     .has-hover .composer-attach-btn:hover,
-    .has-hover .composer-dock-btn:hover {
+    .has-hover .composer-dock-btn:hover:not(.suppress-hover) {
       color: var(--icon-hover);
       background: var(--panel-row-hover-bg);
+      transition: border-color 120ms ease, background 250ms ease;
     }
 
     .composer-attach-btn:disabled {

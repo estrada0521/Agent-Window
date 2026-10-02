@@ -154,6 +154,8 @@
     if (document.documentElement.dataset.mobile !== "1") {
       composerDockBtn?.addEventListener("click", () => {
         if (!isComposerOverlayOpen() || document.documentElement.dataset.autoWindowHeight === "1") return;
+        composerDockBtn.classList.add("suppress-hover");
+        window.addEventListener("pointermove", () => composerDockBtn.classList.remove("suppress-hover"), { once: true });
         setComposerDocked(!composerOverlay.classList.contains("docked"));
         messageInput.focus({ preventScroll: true });
       });
