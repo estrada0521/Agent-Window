@@ -59,6 +59,7 @@
       const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
       if (sheetPanel) {
         sheetPanel.style.transition = "";
+        sheetPanel.style.transform = "";
         if (sheetPanel._sheetSlideEnd) {
           sheetPanel.removeEventListener("transitionend", sheetPanel._sheetSlideEnd);
           sheetPanel._sheetSlideEnd = null;
@@ -95,14 +96,12 @@
       const finishDrag = () => {
         if (!dragging) return;
         dragging = false;
+        if (activeSheetRef.panel) activeSheetRef.panel.style.transition = "";
         if (dragY > 80) {
           onClose();
           return;
         }
-        if (activeSheetRef.panel) {
-          activeSheetRef.panel.style.transition = "";
-          activeSheetRef.panel.style.transform = "";
-        }
+        if (activeSheetRef.panel) activeSheetRef.panel.style.transform = "";
       };
       sheetNav.addEventListener("touchend", finishDrag, { passive: true });
       sheetNav.addEventListener("touchcancel", finishDrag, { passive: true });
