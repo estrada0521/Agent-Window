@@ -63,6 +63,7 @@
     __HUB_HEADER_CSS__
     :root {
       --desk-inner-radius: calc(var(--text-size, 13px) * 2 + 1px - var(--native-window-edge-inset));
+      --fit-chrome-mark-height: 0.38em;
     }
     .page-header {
       --page-side-pad: 0.92em;
@@ -181,9 +182,10 @@
       content: "";
       display: block;
       width: 1.08em;
-      height: 0.15em;
-      border-radius: 0.23em;
+      height: var(--fit-chrome-mark-height);
+      border-radius: 0.15em;
       background: var(--fg);
+      box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--bg) 35%, transparent);
     }
     .desk-window-traffic { display: none; }
     html[data-native-app="1"][data-native-root-window="1"] .desk-window-traffic {
@@ -287,7 +289,7 @@
       --desk-window-glyph: 180, 11, 10;
       position: relative;
       width: 1.08em;
-      height: 0.38em;
+      height: var(--fit-chrome-mark-height);
       border-radius: 0.15em;
       background: transparent;
       cursor: pointer;

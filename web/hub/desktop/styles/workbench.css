@@ -244,9 +244,9 @@
       content: "";
       position: absolute;
       top: 50%;
-      right: -0.05em;
-      width: 0.24em;
-      height: 0.24em;
+      right: -0.35em;
+      width: var(--fit-chrome-mark-height);
+      height: var(--fit-chrome-mark-height);
       transform: translateY(-50%);
       border-radius: 50%;
       background: var(--fg);
