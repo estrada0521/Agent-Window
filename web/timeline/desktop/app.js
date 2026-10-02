@@ -423,9 +423,26 @@ __INCLUDE:../pointer-capability.js__
       const raw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
       return Number.isFinite(raw) && raw > 0 ? raw : TEXT_SIZE_DEFAULT;
     };
+    const applySplitGitHeight = () => {
+      gitContent.style.height = `calc(var(--text-size) * ${_splitGitHeightInTextSize})`;
+    };
     const setSplitGitHeight = (px) => {
       _splitGitHeightInTextSize = px / currentTextSizePx();
-      gitContent.style.height = `calc(var(--text-size) * ${_splitGitHeightInTextSize})`;
+      applySplitGitHeight();
+    };
+    const syncSplitGitHeightForMode = () => {
+      if (!gitContent || !splitPanel) return;
+      if (document.documentElement.dataset.autoWindowHeight === "1") {
+        gitContent.style.height = "50%";
+      } else if (_splitGitHeightInTextSize !== null) {
+        applySplitGitHeight();
+      } else {
+        requestAnimationFrame(() => {
+          if (!sideBarOpen || document.documentElement.dataset.autoWindowHeight === "1" || _splitGitHeightInTextSize !== null) return;
+          const panelH = splitPanel.getBoundingClientRect().height;
+          if (panelH > 0) setSplitGitHeight(Math.floor(panelH * 0.5));
+        });
+      }
     };
     const scaleSideBarWidth = (value) => (
       roundSideBarWidth(Number(value) * currentTextSizePx() / TEXT_SIZE_DEFAULT)
@@ -526,12 +543,7 @@ __INCLUDE:git-panel/events.js__
       sideBar.classList.add("open");
       document.body.classList.add("side-bar-open");
       reportSideBarFitHeight();
-      if (gitContent && splitPanel && !_splitGitHeightInTextSize) {
-        requestAnimationFrame(() => {
-          const panelH = splitPanel.getBoundingClientRect().height;
-          if (panelH > 0 && !_splitGitHeightInTextSize) setSplitGitHeight(Math.floor(panelH * 0.5));
-        });
-      }
+      syncSplitGitHeightForMode();
       const loadP = loadSideBarView({ reset, animateRepo: false });
       syncPanelState();
       return loadP;
@@ -1049,6 +1061,7 @@ __INCLUDE:git-panel/events.js__
       if (event.data.type === "hub-auto-window-height") {
         _fitTargetRow = null;
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
+        if (sideBarOpen) syncSplitGitHeightForMode();
         if (isComposerOverlayOpen()) autoResizeTextarea();
         syncMainAfterHeight();
         syncPinnedSummaryStrip();
