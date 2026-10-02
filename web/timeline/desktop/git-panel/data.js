@@ -17,6 +17,8 @@
       applyGitOverviewHeader();
     };
     let unpinnedGitSummaryRequest = 0;
+    const unpinnedGitSummaryHud = document.createElement("div");
+    unpinnedGitSummaryHud.className = "git-commit-meta";
     const notifyUnpinnedGitSummary = async () => {
       const request = ++unpinnedGitSummaryRequest;
       const timeline = currentTimelineName;
@@ -30,7 +32,12 @@
         row.innerHTML = gitSummaryRowHtml(data);
         const summary = row.querySelector(".git-commit-meta");
         if (!summary) throw new Error("Git summary unavailable");
-        setStatus(summary);
+        const previous = gitCountSnapshot(unpinnedGitSummaryHud);
+        unpinnedGitSummaryHud.replaceChildren(...summary.childNodes);
+        animateGitCountsFromSnapshot(unpinnedGitSummaryHud, previous);
+        gitHeaderSummaryState = buildSummaryState(data);
+        applyGitOverviewHeader();
+        setStatus(unpinnedGitSummaryHud);
       } catch (err) {
         if (relevant()) setStatus(err?.message || "Failed to load Git summary");
       }
