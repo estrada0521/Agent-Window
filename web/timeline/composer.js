@@ -88,6 +88,7 @@
           if (typeof positionComposerDropdown === "function") positionComposerDropdown(attachPreviewRow);
         };
         card.addEventListener("mousedown", (event) => event.preventDefault());
+        if (isMobileComposer) card.addEventListener("contextmenu", (event) => event.preventDefault());
         card.addEventListener("click", () => {
           cancelled = true;
           abort.abort();
@@ -304,7 +305,7 @@ __INCLUDE:upload-attached-files.js__
       }
       if (!sendBtn.classList.contains("is-mic")) return;
       const recognition = new SpeechRecognitionClass();
-      recognition.lang = "ja-JP";
+      recognition.lang = navigator.language;
       recognition.continuous = false;
       recognition.interimResults = true;
       const previousPlaceholder = messageInput.placeholder;
