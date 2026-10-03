@@ -385,14 +385,12 @@
     });
     {
       const hint = document.getElementById("deskPaneDirectionHint");
-      let hovered = "";
+      let hovered = false;
       let altHeld = false;
       const hideHint = () => { if (hint) hint.hidden = true; };
       const updateHint = () => {
-        if (!hint || !hovered || !_deskTimelineFrameLoadedUrl ||
-            (hovered === "hub" && isDeskHubOpen()) ||
-            (hovered === "side" && _deskSideBarActiveMode)) { hideHint(); return; }
-        const side = hovered === "hub" || document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right";
+        if (!hint || !hovered || !_deskTimelineFrameLoadedUrl || _deskSideBarActiveMode) { hideHint(); return; }
+        const side = document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right";
         const outward = altHeld && !_deskAutoWindowHeight && !!getNativeInvoke();
         hint.dataset.direction = side === "left" ? outward ? "left" : "right" : outward ? "right" : "left";
         const rect = _deskTimelineFrame.getBoundingClientRect();
@@ -400,28 +398,26 @@
         hint.style.top = `${Math.round(rect.top + rect.height / 2)}px`;
         hint.hidden = false;
       };
-      for (const [button, kind] of [[_deskAppSidebarToggle, "hub"], [_deskSideBarToggle, "side"]]) {
-        button?.addEventListener("pointerenter", (event) => {
-          if (event.pointerType === "touch") return;
-          hovered = kind;
-          altHeld = event.altKey;
-          updateHint();
-        });
-        button?.addEventListener("mousemove", (event) => {
-          if (hovered !== kind || (altHeld === event.altKey && !hint.hidden)) return;
-          altHeld = event.altKey;
-          updateHint();
-        });
-        button?.addEventListener("pointerleave", () => { hovered = ""; hideHint(); });
-        button?.addEventListener("click", hideHint);
-      }
+      _deskSideBarToggle?.addEventListener("pointerenter", (event) => {
+        if (event.pointerType === "touch") return;
+        hovered = true;
+        altHeld = event.altKey;
+        updateHint();
+      });
+      _deskSideBarToggle?.addEventListener("mousemove", (event) => {
+        if (!hovered || (altHeld === event.altKey && !hint.hidden)) return;
+        altHeld = event.altKey;
+        updateHint();
+      });
+      _deskSideBarToggle?.addEventListener("pointerleave", () => { hovered = false; hideHint(); });
+      _deskSideBarToggle?.addEventListener("click", hideHint);
       window.addEventListener("keydown", (event) => {
         if (hovered && event.key === "Alt") { altHeld = true; updateHint(); }
       });
       window.addEventListener("keyup", (event) => {
         if (hovered && event.key === "Alt") { altHeld = false; updateHint(); }
       });
-      window.addEventListener("blur", () => { hovered = ""; hideHint(); });
+      window.addEventListener("blur", () => { hovered = false; hideHint(); });
       window.addEventListener("resize", updateHint);
     }
     (function armDeskWindowTraffic() {
