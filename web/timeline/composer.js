@@ -67,7 +67,7 @@
         const card = document.createElement("button");
         card.type = "button";
         card.className = "attach-card is-uploading";
-        card.setAttribute("aria-label", `Uploading ${file.name}`);
+        card.setAttribute("aria-label", `Cancel upload of ${file.name}`);
         card.setAttribute("aria-busy", "true");
         let attachment = null;
         let cancelled = false;

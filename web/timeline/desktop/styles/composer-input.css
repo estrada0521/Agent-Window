@@ -177,6 +177,36 @@
       background: rgba(28, 28, 28, 0.5);
       border-color: rgba(255, 255, 255, 0.22);
     }
+    .attach-card::before,
+    .attach-card::after {
+      content: "";
+      position: absolute;
+      z-index: 1;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .attach-card::before {
+      inset: 2px;
+      border-radius: calc(var(--text-size, 13px) * 24 / 13);
+      background: var(--floating-bg);
+    }
+    .attach-card::after {
+      top: 50%;
+      left: 50%;
+      width: 14px;
+      height: 14px;
+      transform: translate(-50%, -50%);
+      color: var(--icon-fg);
+      background:
+        linear-gradient(45deg, transparent calc(50% - 0.75px), currentColor calc(50% - 0.75px), currentColor calc(50% + 0.75px), transparent calc(50% + 0.75px)),
+        linear-gradient(-45deg, transparent calc(50% - 0.75px), currentColor calc(50% - 0.75px), currentColor calc(50% + 0.75px), transparent calc(50% + 0.75px));
+    }
+    .attach-card:hover::before,
+    .attach-card:hover::after,
+    .attach-card:focus-visible::before,
+    .attach-card:focus-visible::after {
+      opacity: 1;
+    }
     .attach-card:focus-visible {
       outline: 2px solid var(--line-strong);
       outline-offset: 3px;
