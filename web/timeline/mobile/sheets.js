@@ -138,13 +138,16 @@
       sharedSheetOnClose();
     });
     wireMobileSheetNavDrag(sharedSheetNav, sharedSheetActiveRef, () => sharedSheetOnClose());
-    const attachSharedSheetChrome = (sheetPanel, { title, closeLabel, onClose }) => {
+    const activateSheetChrome = (panel, { title, closeLabel, onClose }) => {
+      const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
+      if (sharedSheetNav.parentElement === sheetPanel) return;
       sharedSheetOnClose = onClose;
       sharedSheetActiveRef.panel = sheetPanel;
       sharedSheetTitleEl.textContent = title;
       sharedSheetCloseBtn.setAttribute("aria-label", closeLabel);
       sheetPanel.prepend(sharedSheetNav);
       sheetPanel.appendChild(sharedSheetFooter);
+      setSharedSheetLeading(null);
     };
     const setSharedSheetLeading = (onClick, ariaLabel, html) => {
       if (!onClick) {
@@ -158,26 +161,9 @@
       if (html) sharedSheetLeadingBtn.innerHTML = html;
       if (ariaLabel) sharedSheetLeadingBtn.setAttribute("aria-label", ariaLabel);
     };
-    const ensureMobileSheetDom = (panel, {
-      kind,
-      title,
-      closeLabel,
-      onClose,
-      leading = null,
-      afterBuild = null,
-    }) => {
-      if (!panel) return null;
-      const activate = () => {
-        const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
-        if (!sheetPanel || sharedSheetNav.parentElement === sheetPanel) return;
-        attachSharedSheetChrome(sheetPanel, { title, closeLabel, onClose });
-        setSharedSheetLeading(leading?.onClick || null, leading?.ariaLabel, leading?.html);
-      };
+    const ensureMobileSheetDom = (panel, { kind, afterBuild = null }) => {
       const existingContent = panel.querySelector(`.${kind}-sheet-content`);
-      if (existingContent) {
-        activate();
-        return existingContent;
-      }
+      if (existingContent) return existingContent;
       const sheet = document.createElement("div");
       sheet.className = `${kind}-sheet mobile-bottom-sheet`;
       const sheetPanel = document.createElement("div");
@@ -191,7 +177,6 @@
       sheet.appendChild(sheetPanel);
       afterBuild?.({ sheetPanel, contentEl });
       panel.appendChild(sheet);
-      activate();
       return contentEl;
     };
     const createMobileSheetController = (panel, activeClass, { onOpened = () => { }, onClosed = () => { } } = {}) => {
@@ -282,19 +267,18 @@
     });
     const closeSheet = (options) => workspaceSheet.close(options);
     const paneTraceSheet = createMobileSheetController(paneTracePanel, MOBILE_SHEET_ACTIVE_CLASS);
-    const ensurePaneTraceSheetDom = () => ensureMobileSheetDom(paneTracePanel, {
-      kind: "pane-trace",
-      title: "Pane Trace",
-      closeLabel: "Close pane trace",
-      onClose: () => exitPaneTraceMode(),
-    });
     const closePaneTraceSheet = (options) => {
       if (!paneTracePanel) return;
       paneTraceSheet.close(options);
     };
     const openPaneTraceSheet = (onOpened = () => { }) => {
       if (!paneTracePanel) return;
-      ensurePaneTraceSheetDom();
+      ensureMobileSheetDom(paneTracePanel, { kind: "pane-trace" });
+      activateSheetChrome(paneTracePanel, {
+        title: "Pane Trace",
+        closeLabel: "Close pane trace",
+        onClose: () => exitPaneTraceMode(),
+      });
       paneTraceSheet.open(onOpened);
     };
     const sheetIsOpen = () => !!(mobileSheet && mobileSheet.classList.contains("open") && !mobileSheet.hidden);
@@ -303,8 +287,9 @@
     const setSheetKind = (kind) => {
       if (!mobileSheet) return;
       mobileSheet.dataset.kind = kind;
-      sharedSheetOnClose = () => closeSheet();
-      sharedSheetCloseBtn.setAttribute("aria-label", kind === "git" ? "Close git" : "Close workspace");
+      const closeLabel = kind === "git" ? "Close git" : "Close workspace";
+      activateSheetChrome(mobileSheet, { title: "", closeLabel, onClose: () => closeSheet() });
+      sharedSheetCloseBtn.setAttribute("aria-label", closeLabel);
     };
     const updateHeaderMenuViewportMetrics = () => {
       if (!headerRoot) return;
@@ -494,22 +479,9 @@
     };
     const ensureSheetDom = () => {
       if (!mobileSheet) return false;
-      const existing = mobileSheet.querySelector(".mobile-bottom-sheet-content");
-      if (existing) {
-        const sheetPanel = mobileSheet.querySelector(".mobile-bottom-sheet-panel");
-        if (sheetPanel && sharedSheetNav.parentElement !== sheetPanel) {
-          sheetPanel.prepend(sharedSheetNav);
-          sheetPanel.appendChild(sharedSheetFooter);
-          sharedSheetActiveRef.panel = sheetPanel;
-          sharedSheetOnClose = () => closeSheet();
-        }
-        return true;
-      }
+      if (mobileSheet.querySelector(".mobile-bottom-sheet-content")) return true;
       ensureMobileSheetDom(mobileSheet, {
         kind: "workspace",
-        title: "",
-        closeLabel: "Close",
-        onClose: () => closeSheet(),
         afterBuild: ({ contentEl }) => {
           const gitHost = document.createElement("div");
           gitHost.className = "git-host mobile-sheet-stack";
