@@ -961,7 +961,7 @@
         if (active.length) {
           html += `<div class="mob-section-label">Active</div>`;
           html += active.map((s) => {
-            const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
+            const preview = `<div class="mob-row-preview">${s.latest_message_preview ? `<span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}` : ""}</div>`;
             return `<div class="swipe-row" data-timeline-name="${esc(s.name)}" data-swipe-right="kill">` +
               `<div class="mob-timeline-row" data-timeline-name="${esc(s.name)}" data-open-href="/open-timeline?timeline=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
@@ -974,7 +974,7 @@
         if (archived.length) {
           html += `<div class="mob-section-label">Archived</div>`;
           html += archived.map((s) => {
-            const preview = s.latest_message_preview ? `<div class="mob-row-preview"><span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}</div>` : "";
+            const preview = `<div class="mob-row-preview">${s.latest_message_preview ? `<span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}` : ""}</div>`;
             return `<div class="swipe-row" data-timeline-name="${esc(s.name)}" data-swipe-right="revive,delete-archived">` +
               `<div class="mob-timeline-row archived-row" data-timeline-name="${esc(s.name)}" data-open-href="/open-timeline?timeline=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +

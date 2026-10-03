@@ -297,22 +297,13 @@
       flex-shrink: 0;
     }
 
-    main::before,
+    main::before {
+      min-height: calc(var(--main-spacer-height, 50vh) * 0.8);
+    }
     main::after {
       min-height: var(--main-spacer-height, 50vh);
     }
 
     html[data-mobile="1"] main {
       padding-right: 20px;
-    }
-
-
-    .conversation-empty {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-height: clamp(200px, 48vh, 420px);
-      padding: 0 16px;
-      box-sizing: border-box;
     }

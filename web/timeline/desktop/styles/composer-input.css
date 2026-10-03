@@ -304,7 +304,9 @@
       display: block;
       flex-shrink: 0;
     }
-    main::before,
+    main::before {
+      min-height: calc(var(--main-spacer-height, 50vh) * 0.8);
+    }
     main::after {
       min-height: var(--main-spacer-height, 50vh);
     }
@@ -434,16 +436,4 @@
     html[data-auto-window-height="1"] #scrollToBottomBtn:active,
     html[data-auto-window-height="1"] #scrollToBottomBtn.visible:active {
       transform: translateY(0) scale(0.94);
-    }
-    .conversation-empty {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-height: clamp(200px, 48vh, 420px);
-      padding: 0 16px;
-      box-sizing: border-box;
-      background: transparent;
-      border: none;
-      border-radius: 0;
     }

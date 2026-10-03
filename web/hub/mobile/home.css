@@ -458,6 +458,7 @@
 
     .mob-row-preview {
       margin-top: 3px;
+      min-height: 1.2em;
       color: var(--row-preview-fg);
       font-family: var(--font-main);
       font-size: 13px;
