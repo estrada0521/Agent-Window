@@ -2,7 +2,8 @@ __INCLUDE:../../list-flip.js__
 __INCLUDE:../git-panel-html.js__
 __INCLUDE:../git-panel-data.js__
 __INCLUDE:../git-panel-controller.js__
-    const gitSheetTitleEl = () => sharedSheetTitleEl;
+    const gitSheetTitleEl = () =>
+      chromeBelongsTo(mobileSheet) && sheetKind() === "git" ? sharedSheetTitleEl : null;
     let gitSheetBranch = "";
     const setGitSheetTitle = () => {
       const titleEl = gitSheetTitleEl();
@@ -105,6 +106,7 @@ __INCLUDE:../git-panel-controller.js__
       gitSummaryHud.innerHTML = gitWorktreeSummaryHtml(data);
       if (animate) animateGitCountsFromSnapshot(gitSummaryHud, previous);
     };
+    let gitSummaryHudShown = "";
     const refreshGitSummaryHud = async ({ notify = false } = {}) => {
       if (!gitPinned() && !notify) {
         setBackgroundStatus(null);
@@ -117,7 +119,11 @@ __INCLUDE:../git-panel-controller.js__
         renderGitSummaryHud(data);
         if (gitWorktreeButton()) renderGitWorktreeButton(data);
         setBackgroundStatus(gitPinned() ? gitSummaryHud : null);
-        if (!gitPinned()) setStatus(gitSummaryHud);
+        if (gitPinned()) return;
+        const shown = `${currentTimelineName}\n${tree}\n${gitWorktreeCountsKey(data)}`;
+        if (shown === gitSummaryHudShown) return;
+        gitSummaryHudShown = shown;
+        setStatus(gitSummaryHud);
       } catch (err) {
         setStatus(err?.message || "Failed to load Git summary");
       }
@@ -162,21 +168,20 @@ __INCLUDE:../git-panel-controller.js__
     let _gitDetailChrome = null;
     const applyGitDetailChrome = ({ rowHtml = "", subject = "Git" } = {}) => {
       const titleEl = gitSheetTitleEl();
-      if (titleEl) {
-        const subjectEl = document.createElement("span");
-        subjectEl.className = "git-sheet-detail-subject";
-        subjectEl.textContent = subject;
-        const template = document.createElement("template");
-        template.innerHTML = rowHtml.trim();
-        const countsEl = template.content.querySelector(".git-summary-counts");
-        titleEl.classList.add("git-sheet-detail-title", "git-sheet-title");
-        titleEl.replaceChildren(subjectEl);
-        if (countsEl) {
-          const [ins, dels] = [...countsEl.querySelectorAll(".git-summary-count")].map((el) => el.dataset.countValue);
-          titleEl.insertAdjacentHTML("beforeend", gitCountsHtml(ins, dels));
-        }
-        titleEl.title = subject;
+      if (!titleEl) return;
+      const subjectEl = document.createElement("span");
+      subjectEl.className = "git-sheet-detail-subject";
+      subjectEl.textContent = subject;
+      const template = document.createElement("template");
+      template.innerHTML = rowHtml.trim();
+      const countsEl = template.content.querySelector(".git-summary-counts");
+      titleEl.classList.add("git-sheet-detail-title", "git-sheet-title");
+      titleEl.replaceChildren(subjectEl);
+      if (countsEl) {
+        const [ins, dels] = [...countsEl.querySelectorAll(".git-summary-count")].map((el) => el.dataset.countValue);
+        titleEl.insertAdjacentHTML("beforeend", gitCountsHtml(ins, dels));
       }
+      titleEl.title = subject;
       hideGitWorktreeButton();
       setSharedSheetLeading(
         () => gitPanel.closeDetail({ refreshList: gitPanel.detailNeedsRefresh }),
@@ -316,8 +321,10 @@ __INCLUDE:../git-panel-controller.js__
     const resetGitDetailChrome = ({ hadDetail = false } = {}) => {
       _gitDetailChrome = null;
       syncGitDiffToggle();
-      setGitSheetTitle();
-      setSharedSheetLeading(null);
+      if (gitSheetTitleEl()) {
+        setGitSheetTitle();
+        setSharedSheetLeading(null);
+      }
       showGitWorktreeButton();
       if (hadDetail) {
         animateGitSheetList(".git-list-view", "back");

@@ -96,7 +96,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
     state.native_log.remove_binding(instance)
-    state.publish_event("state")
+    state.mark_agents_idle([instance])
     handler._send_json(
         200,
         {"ok": True, "agent": instance, "message": f"Removed agent {instance}", "targets": state.active_agents()},
@@ -578,6 +578,7 @@ def _run_restart_command(state, target: str) -> tuple[int, dict]:
             if not ok:
                 return 400, {"ok": False, "error": detail or f"failed to restart {agent}"}
             state.native_log.remove_binding(agent)
+            state.mark_agents_idle([agent])
     except Exception as exc:
         return 500, {"ok": False, "error": str(exc)}
     state.append_system_entry(f"Restarted: {', '.join(agents)}", targets=agents)

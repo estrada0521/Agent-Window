@@ -17,6 +17,7 @@
       applyGitOverviewHeader();
     };
     let unpinnedGitSummaryRequest = 0;
+    let unpinnedGitSummaryShown = "";
     const unpinnedGitSummaryHud = document.createElement("div");
     unpinnedGitSummaryHud.className = "git-commit-meta";
     const notifyUnpinnedGitSummary = async () => {
@@ -37,6 +38,9 @@
         animateGitCountsFromSnapshot(unpinnedGitSummaryHud, previous);
         gitHeaderSummaryState = buildSummaryState(data);
         applyGitOverviewHeader();
+        const shown = `${timeline}\n${tree}\n${gitWorktreeCountsKey(data)}`;
+        if (shown === unpinnedGitSummaryShown) return;
+        unpinnedGitSummaryShown = shown;
         setStatus(unpinnedGitSummaryHud);
       } catch (err) {
         if (relevant()) setStatus(err?.message || "Failed to load Git summary");
