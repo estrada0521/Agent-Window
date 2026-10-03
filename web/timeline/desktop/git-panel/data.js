@@ -9,10 +9,10 @@
       }
     };
     const bootstrapPinnedGitSummary = async () => {
-      if (!pinnedStripActive()) return;
+      if (!gitSummaryPinned) return;
       const tree = gitTree();
       const data = await fetchGitOverview({ offset: 0, summary: true });
-      if (tree !== gitTree() || !pinnedStripActive()) return;
+      if (tree !== gitTree() || !gitSummaryPinned) return;
       gitHeaderSummaryState = buildSummaryState(data);
       applyGitOverviewHeader();
     };
@@ -63,8 +63,8 @@
       modeEl: () => gitContent?.querySelector(".git-stack") || gitContent,
       observerRoot: () => gitContent?.querySelector(".git-commit-scroll") ?? gitContent,
       scrollRoot: () => gitContent,
-      canLoad: () => (sideBarOpen || pinnedStripActive()) && !!gitContent,
-      canRefresh: () => sideBarOpen || pinnedStripActive(),
+      canLoad: () => (sideBarOpen || gitSummaryPinned) && !!gitContent,
+      canRefresh: () => sideBarOpen || gitSummaryPinned,
       renderShell: () => renderGitShell(),
       setBodyHtml: (html) => {
         if (gitContent) gitContent.innerHTML = html;

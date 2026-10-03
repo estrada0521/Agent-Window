@@ -1052,7 +1052,9 @@ __INCLUDE:git-panel/events.js__
       }
       if (event.data.type === "hub-auto-window-height") {
         _fitTargetRow = null;
+        const enteringFitMode = !!event.data.on && document.documentElement.dataset.autoWindowHeight !== "1";
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
+        if (enteringFitMode && gitSummaryPinned) toggleGitSummaryPinned();
         if (sideBarOpen) syncSplitGitHeightForMode();
         if (isComposerOverlayOpen()) autoResizeTextarea();
         syncMainAfterHeight();
@@ -1062,7 +1064,7 @@ __INCLUDE:git-panel/events.js__
         } else {
           _stickyToBottom = true;
           requestAnimationFrame(() => scrollConversationToBottom("auto"));
-          if (pinnedStripActive()) void refreshGitOverview();
+          if (gitSummaryPinned) void refreshGitOverview();
         }
         return;
       }
@@ -1345,7 +1347,6 @@ __INCLUDE:git-panel/events.js__
         void notifyUnpinnedGitSummary();
         return;
       }
-      if (!sideBarOpen && !pinnedStripActive()) return;
       if (sideBarOpen && !gitPanel.hasShell()) {
         void loadGitPage({ reset: true });
       } else {
@@ -1364,7 +1365,7 @@ __INCLUDE:git-panel/events.js__
       void postGitTreeLabel();
       gitPanel.invalidateFingerprint();
       if (sideBarOpen) void loadGitPage({ reset: true });
-      else if (pinnedStripActive()) void bootstrapPinnedGitSummary();
+      else if (gitSummaryPinned) void bootstrapPinnedGitSummary();
     });
     __INCLUDE:../events.js__
     onTimelineSummaryPinReload({ force: true });

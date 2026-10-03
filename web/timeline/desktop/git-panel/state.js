@@ -1,7 +1,5 @@
     const gitSummaryPinnedStorageKey = () => `agent_window_git_summary_pinned:${String(currentTimelineName || "").trim() || "__none"}`;
     let gitSummaryPinned = true;
-    const pinnedStripActive = () =>
-      gitSummaryPinned && document.documentElement.dataset.autoWindowHeight !== "1";
     let pinnedExpandRefresh = null;
     let pinnedExpandSections = null;
     let _gitSummaryPinnedLoadedForKey = "";
@@ -62,7 +60,7 @@
       const panelWrap = gitContent?.querySelector(".git-summary-wrap");
       const aside = document.getElementById("gitPinnedSummaryAside");
       const inner = document.getElementById("gitPinnedSummaryInner");
-      const stripShown = pinnedStripActive() && !sideBarOpen;
+      const stripShown = gitSummaryPinned && !sideBarOpen;
       aside.hidden = !stripShown;
       renderGitSummaryRoot(inner, rowHtml, { animateCounts: stripShown });
       if (stripShown) pinnedExpandRefresh?.();
