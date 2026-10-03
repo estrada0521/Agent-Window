@@ -100,12 +100,12 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 **Follow changes**では、最後に変更を検知したworktreeへGit表示が自動で切り替わる。
 
-## Fit Height
+## Fit Window to Message
 
 `⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。
 
 <p align="center">
-  <img src="media/agent-window-fit.gif" width="100%" alt="Fit Height demo">
+  <img src="media/agent-window-fit.gif" width="100%" alt="Fit Window to Message demo">
 </p>
 
 ## Shortcut
@@ -194,8 +194,8 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | Git / Workspaceの上下入れ替え | `⇧⌥⌘E` | |
 | 画面端へ移動 | `⌥⌘↑` `←` `→` `↓` | `↓` は中央 |
 | 最前面に固定 | `⌥⌘P` | |
-| Fit Height | `⌥⌘H` | |
-| 最小まで畳む | `⌥⌘M` | 新しいmessageで復帰。Fit Height中のみ |
+| Fit Window to Message | `⌥⌘H` | |
+| Collapse Window | `⌥⌘M` | 新しいmessageで復帰。Fit Window to Message中のみ |
 
 </details>
 

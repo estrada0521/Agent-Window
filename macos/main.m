@@ -213,9 +213,9 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSMenuItem *alwaysOnTop = [self action:@"toggleAlwaysOnTop" title:@"Always on Top" key:@"p" mods:cmd | opt];
     alwaysOnTop.state = [p[@"alwaysOnTop"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     BOOL fit = [p[@"autoWindowHeight"] boolValue];
-    NSMenuItem *fitHeight = [self action:@"toggleAutoWindowHeight" title:@"Fit Height to Message" key:@"h" mods:cmd | opt];
+    NSMenuItem *fitHeight = [self action:@"toggleAutoWindowHeight" title:@"Fit Window to Message" key:@"h" mods:cmd | opt];
     fitHeight.state = fit ? NSControlStateValueOn : NSControlStateValueOff;
-    NSMenuItem *fitCollapsed = [self action:@"toggleFitCollapsed" title:@"Collapse Fit Window" key:@"m" mods:cmd | opt];
+    NSMenuItem *fitCollapsed = [self action:@"toggleFitCollapsed" title:@"Collapse Window" key:@"m" mods:cmd | opt];
     fitCollapsed.state = [p[@"fitCollapsed"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     fitCollapsed.enabled = fit;
     NSMenuItem *selectedTargetLabel = [[NSMenuItem alloc] initWithTitle:@"For the selected target" action:nil keyEquivalent:@""];

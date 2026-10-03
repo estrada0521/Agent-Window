@@ -100,12 +100,12 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 
 **Follow changes** automatically switches Git to the worktree whose change was detected last.
 
-## Fit Height
+## Fit Window to Message
 
 `⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘M` collapses the window to its minimum; a new message restores it.
 
 <p align="center">
-  <img src="media/agent-window-fit.gif" width="100%" alt="Fit Height demo">
+  <img src="media/agent-window-fit.gif" width="100%" alt="Fit Window to Message demo">
 </p>
 
 ## Shortcuts
@@ -194,8 +194,8 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Swap Git and Workspace vertically | `⇧⌥⌘E` | |
 | Move to screen edge | `⌥⌘↑` `←` `→` `↓` | `↓` centers |
 | Keep above other windows | `⌥⌘P` | |
-| Fit Height | `⌥⌘H` | |
-| Collapse to minimum | `⌥⌘M` | Restores on a new message. Fit Height only |
+| Fit Window to Message | `⌥⌘H` | |
+| Collapse Window | `⌥⌘M` | Restores on a new message. Fit Window to Message only |
 
 </details>
 
