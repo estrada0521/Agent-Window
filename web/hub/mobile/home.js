@@ -984,9 +984,6 @@
               `</div></div>`;
           }).join("");
         }
-        if (!active.length && !archived.length) {
-          html += `<div class="mob-empty">No timelines found</div>`;
-        }
         wrap.innerHTML = html;
         syncMobileSelectedTimelineRows();
         wrap.querySelectorAll(".swipe-row").forEach(initSwipeRow);

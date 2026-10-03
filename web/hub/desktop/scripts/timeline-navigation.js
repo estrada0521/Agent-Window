@@ -217,8 +217,7 @@
           openTimelineFrame(buildTimelineOpenHref(requested, false), requested);
           return;
         }
-        persistDeskSelection("");
-        failDeskOpen("Timeline not found");
+        clearDeskSelection();
         showDeskHubList({ open: true });
         return;
       }

@@ -419,9 +419,6 @@
         html += `<div class="desk-section-label">Archived</div>`;
         html += archived.map((timeline) => renderDeskTimelineRow(timeline, true)).join("");
       }
-      if (!active.length && !archived.length) {
-        html = `<div class="desk-empty-list">No timelines found</div>`;
-      }
       _deskTimelineList.innerHTML = html;
       if (newTimelineSection) _deskTimelineList.prepend(newTimelineSection);
       _deskTimelineList.querySelectorAll(".desk-swipe-row").forEach(initDeskSwipeRow);
