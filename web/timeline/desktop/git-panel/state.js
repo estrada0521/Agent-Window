@@ -12,7 +12,7 @@
       root.querySelectorAll(".git-summary-pin").forEach((btn) => {
         btn.setAttribute("aria-pressed", gitSummaryPinned ? "true" : "false");
         btn.classList.toggle("is-pinned", gitSummaryPinned);
-        btn.title = gitSummaryPinned ? "Unpin from Timeline [⇧⌘P]" : "Pin to Timeline [⇧⌘P]";
+        btn.title = gitSummaryPinned ? "Unpin changes [⇧⌘P]" : "Pin changes [⇧⌘P]";
       });
     };
     const renderGitSummaryRoot = (root, rowHtml, { animateCounts = true } = {}) => {

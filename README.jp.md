@@ -98,7 +98,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 構文色は、highlight.jsのtheme CSSへのsymlinkを `~/.agent-window/syntax-light.css` と `~/.agent-window/syntax-dark.css` に置くと使える。
 
-**Follow Mode**では、最後に変更を検知したworktreeへGit表示が自動で切り替わる。
+**Follow changes**では、最後に変更を検知したworktreeへGit表示が自動で切り替わる。
 
 ## Fit Height
 
@@ -178,7 +178,8 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | commit messageをcopy |  | |
 | commitのinfo表示 | hover |  |
 | worktreeの切り替え |  | timeline menuから |
-| Follow Mode |  | 既定でON |
+| Follow changes |  | 既定でON |
+| Pin changes | `⇧⌘P` | |
 
 </details>
 

@@ -1,5 +1,5 @@
     const buildSummaryHtml = (data) => {
-      const pinBtn = `<button type="button" class="git-summary-pin" aria-pressed="false" aria-label="Pin Git Summary" title="Pin to Timeline [⇧⌘P]">${GIT_SUMMARY_PIN_SVG}</button>`;
+      const pinBtn = `<button type="button" class="git-summary-pin" aria-pressed="false" aria-label="Pin changes" title="Pin changes [⇧⌘P]">${GIT_SUMMARY_PIN_SVG}</button>`;
       return gitSummaryRowHtml(data, { leadingHtml: pinBtn });
     };
     const buildSummaryState = (data) => {

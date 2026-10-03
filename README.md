@@ -98,7 +98,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 
 Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax-light.css` and `~/.agent-window/syntax-dark.css`.
 
-**Follow Mode** automatically switches Git to the worktree whose change was detected last.
+**Follow changes** automatically switches Git to the worktree whose change was detected last.
 
 ## Fit Height
 
@@ -178,7 +178,8 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Copy commit message |  | |
 | Show commit info | hover | |
 | Switch worktree |  | timeline menu |
-| Follow Mode |  | ON by default |
+| Follow changes |  | ON by default |
+| Pin changes | `⇧⌘P` | |
 
 </details>
 

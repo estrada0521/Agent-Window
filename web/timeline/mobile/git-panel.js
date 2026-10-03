@@ -36,8 +36,8 @@ __INCLUDE:../git-panel-controller.js__
       openSubMenu(
         "Menu",
         [
-          ["pin", `Pin Summary: ${gitPinned() ? "On" : "Off"}`],
-          ["follow", `Follow Mode: ${gitFollow() ? "On" : "Off"}`],
+          ["follow", `${gitFollow() ? "✓ " : ""}Follow changes`],
+          ["pin", `${gitPinned() ? "✓ " : ""}Pin changes`],
         ],
         (action) => {
           if (action === "pin") {

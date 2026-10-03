@@ -167,9 +167,12 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     treeMenu.enabled = trees.count > 1;
     [self setImage:MenuImage([NSImage imageWithSystemSymbolName:@"arrow.triangle.branch" accessibilityDescription:nil]) on:treeMenu];
 
-    NSMenuItem *follow = [self action:@"gitFollow" title:([p[@"gitFollow"] boolValue] ? @"Follow Mode: On" : @"Follow Mode: Off") key:nil mods:0];
-
     NSEventModifierFlags cmd = NSEventModifierFlagCommand, opt = NSEventModifierFlagOption;
+    NSMenuItem *follow = [self action:@"gitFollow" title:@"Follow changes" key:nil mods:0];
+    follow.state = [p[@"gitFollow"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
+    NSMenuItem *pin = [self action:@"gitPin" title:@"Pin changes" key:@"p" mods:cmd | NSEventModifierFlagShift];
+    pin.state = [p[@"gitSummaryPinned"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
+
     NSMenuItem *shell = [self action:@"openShell" title:@"Terminal" key:@"t" mods:cmd];
     [self setImage:MenuImage([NSWorkspace.sharedWorkspace iconForFile:@"/System/Applications/Utilities/Terminal.app"]) on:shell];
     NSMenuItem *finder = [self action:@"openFinder" title:@"Finder" key:@"r" mods:cmd | opt];
@@ -177,7 +180,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 
     [self popUp:@[
         addMenu, removeMenu, paneMenu, NSMenuItem.separatorItem,
-        treeMenu, follow, NSMenuItem.separatorItem,
+        treeMenu, follow, pin, NSMenuItem.separatorItem,
         shell, finder,
         [self action:@"revealLog" title:@"Reveal Log" key:@"l" mods:cmd | opt],
         [self action:@"openInBrowser" title:@"Open in Browser" key:@"o" mods:cmd | opt],

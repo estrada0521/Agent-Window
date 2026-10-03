@@ -50,6 +50,7 @@
           worktrees,
           gitTree: gitTree(),
           gitFollow: gitFollow(),
+          gitSummaryPinned,
         }, (action) => void handleTimelineMenuAction(action));
         return true;
       }
@@ -78,6 +79,7 @@
         worktrees,
         gitTree: gitTree(),
         gitFollow: gitFollow(),
+        gitSummaryPinned,
       };
       window.parent.postMessage({
         type: "show-timeline-header-menu",
@@ -103,6 +105,10 @@
       }
       if (data.action === "gitFollow") {
         setGitFollow(!gitFollow());
+        return;
+      }
+      if (data.action === "gitPin") {
+        toggleGitSummaryPinned();
         return;
       }
       if (data.action === "gitTree") {
