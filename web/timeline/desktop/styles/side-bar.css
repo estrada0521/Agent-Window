@@ -1214,9 +1214,6 @@
       padding-right: var(--side-reserve-right);
       box-sizing: border-box;
     }
-    html[data-desktop-timeline="1"] body.side-bar-open .composer-overlay {
-      padding-right: calc(var(--text-size, 13px) * 12 / 13);
-    }
     .git-pinned-expand {
       --git-pinned-scroll-fade: round(nearest, calc(var(--text-size, 13px) * 16 / 13), 1px);
       contain: inline-size;

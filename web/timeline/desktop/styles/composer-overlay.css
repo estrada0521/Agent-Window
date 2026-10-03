@@ -1,15 +1,19 @@
     .composer-overlay {
       --composer-overlay-max-width: calc(var(--text-size, 13px) * 680 / 13);
+      --composer-available-width: max(0px, calc(100vw - var(--side-reserve-left) - var(--side-reserve-right)));
       position: fixed;
       top: 0;
-      right: var(--side-reserve-right);
+      right: auto;
       bottom: 0;
       left: var(--side-reserve-left);
+      width: var(--composer-available-width);
+      box-sizing: border-box;
+      overflow: hidden;
       z-index: 280;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 calc(var(--text-size, 13px) * 12 / 13);
+      padding: 0 min(calc(var(--text-size, 13px) * 12 / 13), calc(var(--composer-available-width) / 2));
       background: transparent;
       backdrop-filter: blur(0px);
       -webkit-backdrop-filter: blur(0px);

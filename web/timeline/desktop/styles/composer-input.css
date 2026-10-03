@@ -331,6 +331,7 @@
     #composerFabBtn {
       --fab-icon-size: round(nearest, calc(var(--text-size, 13px) * 18 / 13), 1px);
       --fab-size: calc(var(--fab-icon-size) + round(nearest, calc(var(--text-size, 13px) * 16 / 13), 2px));
+      --fab-available-width: max(0px, calc(100vw - var(--side-reserve-left) - var(--side-reserve-right) - var(--message-side-padding) - var(--message-side-padding)));
       position: fixed;
       bottom: var(--floating-btn-bottom, 18%);
       left: calc(var(--side-reserve-left) + var(--message-side-padding));
@@ -341,7 +342,9 @@
       margin-inline: auto;
       transform: translateY(10px) scale(0.75);
       width: var(--fab-size);
+      max-width: var(--fab-available-width);
       height: var(--fab-size);
+      overflow: hidden;
       font-size: round(nearest, calc(var(--text-size, 13px) * 17 / 13), 1px);
       line-height: 1;
       cursor: pointer;
@@ -366,6 +369,10 @@
         inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
         0 1px 2px rgba(0, 0, 0, 0.12);
       color: var(--icon-fg);
+    }
+    #scrollToBottomBtn,
+    #composerFabBtn {
+      border-width: min(0.5px, calc(var(--fab-available-width) / 2));
     }
     #scrollToBottomBtn svg,
     #composerFabBtn svg,

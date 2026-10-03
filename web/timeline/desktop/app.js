@@ -336,7 +336,6 @@ __INCLUDE:../pointer-capability.js__
     const SIDE_BAR_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE = 220;
     const SIDE_BAR_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE = 144;
     const SIDE_BAR_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE = 560;
-    const TIMELINE_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE = 360;
     const SIDE_BAR_WIDTH_KEY = "agent_window_desktop_side_bar_width_at_default_text_size";
     const SIDE_BAR_POSITION_KEY = "agent_window_desktop_side_bar_position";
     if (localStorage.getItem(SIDE_BAR_POSITION_KEY) === "left") document.documentElement.dataset.sideBarPosition = "left";
@@ -452,18 +451,10 @@ __INCLUDE:../pointer-capability.js__
     const unscaleSideBarWidth = (value) => (
       roundSideBarWidth(Number(value) * TEXT_SIZE_DEFAULT / currentTextSizePx())
     );
-    const clampSideBarWidthAtDefaultTextSize = (value, { constrainToViewport = true } = {}) => {
+    const clampSideBarWidthAtDefaultTextSize = (value) => {
       const numeric = Number(value);
       const width = Number.isFinite(numeric) ? numeric : SIDE_BAR_DEFAULT_WIDTH_AT_DEFAULT_TEXT_SIZE;
-      let maxWidth = SIDE_BAR_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE;
-      if (constrainToViewport) {
-        const viewportWidthAtDefaultTextSize = Math.max(0, window.innerWidth || 0) * TEXT_SIZE_DEFAULT / currentTextSizePx();
-        maxWidth = Math.max(
-          SIDE_BAR_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE,
-          Math.min(SIDE_BAR_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE, viewportWidthAtDefaultTextSize - TIMELINE_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE),
-        );
-      }
-      return roundSideBarWidth(Math.max(SIDE_BAR_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE, Math.min(maxWidth, width)));
+      return roundSideBarWidth(Math.max(SIDE_BAR_MIN_WIDTH_AT_DEFAULT_TEXT_SIZE, Math.min(SIDE_BAR_MAX_WIDTH_AT_DEFAULT_TEXT_SIZE, width)));
     };
     const storedPanelWidth = Number.parseFloat(localStorage.getItem(SIDE_BAR_WIDTH_KEY) || "");
     if (Number.isFinite(storedPanelWidth) && storedPanelWidth > 0) {
@@ -471,10 +462,7 @@ __INCLUDE:../pointer-capability.js__
     }
     const outwardSideBarWidthPx = () => {
       if (sideBarOpen) return currentSideBarWidthPx();
-      return scaleSideBarWidth(clampSideBarWidthAtDefaultTextSize(
-        sideBarWidthAtDefaultTextSize,
-        { constrainToViewport: false },
-      ));
+      return scaleSideBarWidth(clampSideBarWidthAtDefaultTextSize(sideBarWidthAtDefaultTextSize));
     };
     const persistSideBarWidthAtDefaultTextSize = () => {
       if (sideBarWidthAtDefaultTextSize > 0) {
