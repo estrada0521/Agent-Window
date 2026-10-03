@@ -6,8 +6,9 @@ import threading
 
 
 class NativeLogWatcher:
-    def __init__(self, projector) -> None:
+    def __init__(self, projector, publish_state) -> None:
         self._projector = projector
+        self._publish_state = publish_state
         self._lock = threading.Lock()
         self._kq = select.kqueue()
         self._fd_by_agent: dict[str, int] = {}
@@ -48,6 +49,7 @@ class NativeLogWatcher:
         bindings = self._projector.bindings()
         failed_opens: list[tuple[str, OSError]] = []
         with self._lock:
+            previous_paths = dict(self._path_by_agent)
             for agent in list(self._fd_by_agent):
                 if agent not in bindings:
                     self._close_locked(agent)
@@ -59,6 +61,9 @@ class NativeLogWatcher:
                         self._open_locked(agent, binding.path)
                     except OSError as exc:
                         failed_opens.append((agent, exc))
+            paths_changed = self._path_by_agent != previous_paths
+        if paths_changed:
+            self._publish_state()
         for agent, exc in failed_opens:
             self._projector.failed(agent, f"watch failed: {exc}")
 

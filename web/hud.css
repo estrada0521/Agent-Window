@@ -55,6 +55,33 @@
     .hud-text {
       animation: hud-text-in 0.3s ease;
     }
+    .add-agent-hint svg {
+      width: 1.2em;
+      height: 1.2em;
+      vertical-align: -0.23em;
+    }
+    html:not([data-mobile="1"]) .hud:has(> .native-log-hint) {
+      height: auto;
+      min-height: var(--hud-height);
+      padding-top: 0.55em;
+      padding-bottom: 0.55em;
+      line-height: normal;
+    }
+    .native-log-hint {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2em;
+      line-height: 1.3;
+    }
+    .native-log-hint svg {
+      width: 1.2em;
+      height: 1.2em;
+      vertical-align: -0.23em;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+    }
     @keyframes hud-text-in {
       from { opacity: 0; }
     }

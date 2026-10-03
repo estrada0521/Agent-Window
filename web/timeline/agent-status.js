@@ -1,5 +1,34 @@
     const _optimisticRunning = new Map();
     let _serverAgentStatuses = {};
+    let agentAdded = false;
+    let nativeLogWatched = false;
+    const addAgentHint = document.createElement("span");
+    addAgentHint.className = "add-agent-hint";
+    let nativeLogHint = null;
+    if (document.documentElement.dataset.mobile === "1") {
+      addAgentHint.textContent = "Add Agent from menu (left swipe)";
+    } else {
+      const menuIcon = document.querySelector("#timelineMenuBtn svg").cloneNode(true);
+      const composerIcon = document.querySelector("#composerFabBtn svg").cloneNode(true);
+      addAgentHint.append("Add Agent from menu (", menuIcon.cloneNode(true), ")");
+      const hintRow = (...parts) => {
+        const row = document.createElement("span");
+        row.append(...parts);
+        return row;
+      };
+      nativeLogHint = document.createElement("span");
+      nativeLogHint.className = "native-log-hint";
+      nativeLogHint.append(
+        hintRow("Open CLI: menu (", menuIcon, ") → tmux pane"),
+        hintRow("Open Composer: bottom ", composerIcon, ", Enter, or press the mouse wheel"),
+        hintRow("First send starts native log monitoring"),
+      );
+    }
+    const syncAddAgentHint = () => {
+      const noAgent = sessionActive && !agentAdded && !availableTargets.length;
+      const awaitingLog = document.documentElement.dataset.mobile !== "1" && sessionActive && agentAdded && availableTargets.length > 0 && !nativeLogWatched;
+      setResidentStatus("add-agent-hint", noAgent ? addAgentHint : awaitingLog ? nativeLogHint : "", -1);
+    };
     const markAgentOptimisticallyRunning = (agent) => {
       const now = Date.now();
       _optimisticRunning.set(agent, { started: now, until: now + 4000, confirmed: false });
@@ -54,6 +83,8 @@
       }
       updateSendBtnVisibility();
       const resolvedTargets = normalizedTimelineTargets(data.targets);
+      if (resolvedTargets.length) agentAdded = true;
+      if (data.native_log_watching === true) nativeLogWatched = true;
       const picker = document.getElementById("targetPicker");
       if (!picker.dataset.loaded) {
         selectedTargets = loadTargetSelection(currentTimelineName, resolvedTargets);
@@ -76,6 +107,7 @@
       syncThinkingRunningItems(data.statuses, { suppressRender: true });
       renderAgentStatus(data.statuses);
       syncSessionMenuOptions();
+      syncAddAgentHint();
       setResidentStatus("thread-stopped", data.stopped_threads.join(" · "));
       if (document.documentElement.dataset.mobile !== "1" && typeof data.timeline === "string" && data.timeline) {
         onTimelineSummaryPinReload();

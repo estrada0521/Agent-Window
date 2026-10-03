@@ -10,10 +10,17 @@
       let state = "hidden";
       let morphTimer = 0;
       const transitionMs = parseFloat(getComputedStyle(hud).transitionDuration) * 1000;
-      const currentContent = () => transient || (covered ? "" : overlay || [...residents.values()].at(-1) || background || "");
+      const currentContent = () => {
+        let resident = null;
+        for (const entry of residents.values()) {
+          if (!resident || entry.priority >= resident.priority) resident = entry;
+        }
+        return transient || (covered ? "" : overlay || resident?.content || background || "");
+      };
       const setContent = (content) => {
         shown = content;
-        hud.classList.toggle("has-controls", typeof content !== "string");
+        hud.classList.toggle("has-controls", typeof content !== "string" &&
+          (content.matches?.("button, a, input, select, textarea") || !!content.querySelector?.("button, a, input, select, textarea")));
         if (typeof content !== "string") {
           hud.replaceChildren(content);
           return;
@@ -79,10 +86,10 @@
         }
         render();
       };
-      const setResidentStatus = (key, text) => {
+      const setResidentStatus = (key, text, priority = 0) => {
         residents.delete(key);
-        if (text) residents.set(key, text);
-        if (overlay && text) {
+        if (text) residents.set(key, { content: text, priority });
+        if (overlay && text && priority >= 0) {
           setStatus(text);
           return;
         }

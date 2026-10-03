@@ -68,7 +68,7 @@ class NativeLogProjector:
 
     def start(self) -> None:
         self.refresh_bindings(start_at_end=True)
-        self._watcher = NativeLogWatcher(self)
+        self._watcher = NativeLogWatcher(self, self._publish_state)
         threading.Thread(target=self._watcher.run, daemon=True, name="native-vnode").start()
 
     def bindings(self) -> dict[str, NativeLogBinding]:
