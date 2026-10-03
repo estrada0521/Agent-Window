@@ -1,4 +1,5 @@
 __INCLUDE:../base.js__
+__INCLUDE:../link-presentation.js__
     const DESKTOP_FILE_PANE_MIN_VIEWPORT_PX = 961;
     let _scrollbarLayoutSyncFrame = 0;
     let _fitTargetRow = null;
@@ -62,6 +63,7 @@ __INCLUDE:../base.js__
     }
 __INCLUDE:../conversation-state.js__
     const messagesEl = document.getElementById("messages");
+    wireLinkPresentation(messagesEl);
     let _pollScrollLockTop = null;
     let _pollScrollAnchor = null;
     let _hubChromeGapClientMin = Infinity;

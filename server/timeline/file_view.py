@@ -81,6 +81,10 @@ def _timeline_file_link_parse_js() -> str:
     return (_REPO_ROOT / "web/timeline/file-link-parse.js").read_text(encoding="utf-8")
 
 
+def _timeline_link_presentation_js() -> str:
+    return (_REPO_ROOT / "web/timeline/link-presentation.js").read_text(encoding="utf-8")
+
+
 def _timeline_markdown_render_js() -> str:
     return (_REPO_ROOT / "web/timeline/markdown-render.js").read_text(encoding="utf-8")
 
@@ -309,6 +313,9 @@ def render_file_view(
             + text_panel_js
             + html_progressive_loader_js
             + 'setMode("text");'
+            + _timeline_link_presentation_js()
+            + 'const renderedFrame=document.querySelector(".html-preview-panel-web iframe");'
+            + 'renderedFrame.addEventListener("load",()=>wireLinkPresentation(renderedFrame.contentDocument,{press:true}));'
         )
         return (
             f'<!DOCTYPE html><html data-preview-mode="text"{preview_shell_attrs(gutter_width=gutter_width, title_offset=title_offset)}><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
@@ -778,6 +785,8 @@ window.addEventListener("message", (event) => {{
   document.documentElement.style.setProperty("--text-line-height", (sz * {TEXT_LINE_HEIGHT_RATIO}) + "px");
 }});
 const out = document.getElementById("out");
+{_timeline_link_presentation_js()}
+wireLinkPresentation(out, {{ press: true }});
 applyPreviewTheme({json.dumps(initial_preview_theme)});
 const renderPreview = async () => {{
   const staging = document.createElement("div");
@@ -804,43 +813,6 @@ const renderPreview = async () => {{
 void renderPreview().catch((err) => {{
   console.error("markdown preview failed", err);
   out.textContent = `Markdown preview failed: ${{err.message}}`;
-}});
-const PRESS_SEL = "a.inline-file-link, a.local-file-link, summary";
-let __pressTouch = null;
-const __clearPressed = () => {{
-  out.querySelectorAll(".is-pressed").forEach((node) => node.classList.remove("is-pressed"));
-}};
-out.addEventListener("touchstart", (e) => {{
-  const el = e.target.closest(PRESS_SEL);
-  const t = e.touches && e.touches[0];
-  if (!el || !t) {{
-    __clearPressed();
-    __pressTouch = null;
-    return;
-  }}
-  __clearPressed();
-  el.classList.add("is-pressed");
-  __pressTouch = {{ x: t.clientX, y: t.clientY, el }};
-}}, {{ passive: true }});
-out.addEventListener("touchmove", (e) => {{
-  const start = __pressTouch;
-  if (!start) return;
-  const t = e.touches && e.touches[0];
-  if (!t) return;
-  const dx = t.clientX - start.x;
-  const dy = t.clientY - start.y;
-  if (dx * dx + dy * dy > 100) start.el?.classList.remove("is-pressed");
-}}, {{ passive: true }});
-out.addEventListener("touchend", () => {{
-  __pressTouch = null;
-  __clearPressed();
-}}, {{ passive: true }});
-out.addEventListener("touchcancel", () => {{
-  __pressTouch = null;
-  __clearPressed();
-}}, {{ passive: true }});
-out.addEventListener("contextmenu", (e) => {{
-  if (e.target.closest(PRESS_SEL)) e.preventDefault();
 }});
 </script></body></html>'''
         )

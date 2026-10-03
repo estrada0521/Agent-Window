@@ -1,4 +1,5 @@
 __INCLUDE:../base.js__
+__INCLUDE:../link-presentation.js__
     document.documentElement.dataset.mobile = "1";
 __INCLUDE:../../mobile-hand.js__
     const _safariSafeAreaDummy = document.createElement("div");
