@@ -128,7 +128,7 @@ __INCLUDE:transcript-refresh.js__
       attachButton.setAttribute("aria-label", on ? "Exit Terminal mode" : "Import");
       attachButton.title = on ? "Exit Terminal mode" : "Import";
       messageInput.placeholder = on ? "Type into Terminal" : "Write a message";
-      document.querySelector(".send-btn").setAttribute("aria-label", on ? "Type into Terminal" : "Send");
+      updateSendBtnVisibility();
     };
     const submitMessage = async ({ closeOverlayOnStart = false, forcedText = null } = {}) => {
       if (sendLocked) {

@@ -4,7 +4,7 @@
     const saveComposerDraft = () => {
       const label = currentTimelineName;
       const input = document.getElementById("message");
-      if (!label || !input) return;
+      if (!label || !input || input.readOnly) return;
       const text = isTerminalMode() && input.value ? `${terminalCommandSlash} ${input.value}` : input.value;
       if (!text) {
         localStorage.removeItem(composerDraftStorageKey(label));

@@ -2,19 +2,24 @@
     let composing = false;
     const messageInput = document.getElementById("message");
     const sendBtn = document.querySelector(".send-btn");
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const speechAvailable = !!SpeechRecognitionClass && window.isSecureContext;
+    let speechRecognition = null;
+    let speechStopReason = "";
+    let spokenText = "";
     const attachBtn = document.getElementById("attachBtn");
     attachBtn?.addEventListener("mousedown", (e) => {
       e.preventDefault();
     });
+    const clearSendPressed = () => sendBtn?.classList.remove("is-pressed");
+    sendBtn?.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 || sendBtn.disabled) return;
+      sendBtn.classList.add("is-pressed");
+    });
+    sendBtn?.addEventListener("pointerleave", clearSendPressed);
+    document.addEventListener("pointerup", clearSendPressed, true);
+    document.addEventListener("pointercancel", clearSendPressed, true);
     if (isMobileComposer) {
-      const clearSendPressed = () => sendBtn?.classList.remove("is-pressed");
-      sendBtn?.addEventListener("pointerdown", (event) => {
-        if (event.button !== 0 || sendBtn.disabled) return;
-        sendBtn.classList.add("is-pressed");
-      });
-      sendBtn?.addEventListener("pointerleave", clearSendPressed);
-      document.addEventListener("pointerup", clearSendPressed, true);
-      document.addEventListener("pointercancel", clearSendPressed, true);
       let composerBlurCloseTimer = null;
       const clearComposerBlurCloseTimer = () => {
         if (composerBlurCloseTimer) {
@@ -29,6 +34,7 @@
         clearComposerBlurCloseTimer();
         composerBlurCloseTimer = setTimeout(() => {
           if (!isComposerOverlayOpen()) return;
+          if (speechRecognition) return;
           const active = document.activeElement;
           if (active === messageInput) return;
           if (composerForm && active && composerForm.contains(active)) return;
@@ -273,14 +279,103 @@ __INCLUDE:upload-attached-files.js__
     }
 
     const updateSendBtnVisibility = () => {
-      if (!sendBtn || isMobileComposer) return;
-      if (!sessionActive) {
-        sendBtn.classList.remove("visible");
+      if (!sendBtn) return;
+      const hasContent = messageInput.value.trim().length > 0 || pendingAttachments.length > 0;
+      const listening = !!speechRecognition;
+      const microphone = speechAvailable && sessionActive && !isTerminalMode() && !hasContent;
+      sendBtn.classList.toggle("is-mic", microphone && !listening);
+      sendBtn.classList.toggle("is-listening", listening);
+      sendBtn.type = microphone || listening ? "button" : "submit";
+      const label = listening ? "Stop listening" : microphone ? "Dictate" : isTerminalMode() ? "Type into Terminal" : "Send";
+      sendBtn.setAttribute("aria-label", label);
+      sendBtn.title = label;
+      if (!isMobileComposer) sendBtn.classList.toggle("visible", !!sessionActive && (hasContent || microphone || listening));
+    };
+    const stopSpeechRecognition = (reason) => {
+      if (!speechRecognition || speechStopReason) return;
+      speechStopReason = reason;
+      speechRecognition.stop();
+    };
+    sendBtn?.addEventListener("click", () => {
+      clearSendPressed();
+      if (speechRecognition) {
+        stopSpeechRecognition("manual");
         return;
       }
-      const hasContent = messageInput.value.trim().length > 0 || pendingAttachments.length > 0;
-      sendBtn.classList.toggle("visible", hasContent);
-    };
+      if (!sendBtn.classList.contains("is-mic")) return;
+      const recognition = new SpeechRecognitionClass();
+      recognition.lang = "ja-JP";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      const previousPlaceholder = messageInput.placeholder;
+      spokenText = "";
+      let interimText = "";
+      speechStopReason = "";
+      speechRecognition = recognition;
+      messageInput.readOnly = true;
+      messageInput.placeholder = "Starting voice input…";
+      const finish = (text) => {
+        speechRecognition = null;
+        speechStopReason = "";
+        messageInput.readOnly = false;
+        messageInput.placeholder = previousPlaceholder;
+        messageInput.classList.remove("is-speech-interim");
+        messageInput.value = text;
+        messageInput.dispatchEvent(new Event("input", { bubbles: true }));
+        updateSendBtnVisibility();
+      };
+      recognition.onaudiostart = () => {
+        if (speechRecognition === recognition) messageInput.placeholder = "Listening…";
+      };
+      recognition.onspeechstart = () => {
+        if (speechRecognition === recognition) messageInput.placeholder = "Hearing you…";
+      };
+      recognition.onspeechend = () => {
+        if (speechRecognition === recognition) stopSpeechRecognition("speech-end");
+      };
+      recognition.onresult = (event) => {
+        if (speechRecognition !== recognition) return;
+        const results = Array.from(event.results);
+        spokenText = results.filter((result) => result.isFinal)
+          .map((result) => result[0]?.transcript || "").join(" ").trim();
+        interimText = results.filter((result) => !result.isFinal)
+          .map((result) => result[0]?.transcript || "").join(" ").trim();
+        messageInput.value = [spokenText, interimText].filter(Boolean).join(" ");
+        messageInput.classList.toggle("is-speech-interim", !!interimText);
+        autoResizeTextarea();
+        if (spokenText && !interimText) stopSpeechRecognition("final");
+      };
+      recognition.onerror = (event) => {
+        if (speechRecognition !== recognition) return;
+        const stopReason = speechStopReason;
+        finish(stopReason ? spokenText || interimText : "");
+        spokenText = "";
+        if (stopReason === "manual" || stopReason === "final") return;
+        const reason = event.message || event.error;
+        const status = /Siri and Dictation are disabled/i.test(reason)
+          ? "Turn on Siri for voice input"
+          : event.error === "no-speech" ? "No speech heard"
+          : event.error === "not-allowed" ? "Allow voice input in System Settings"
+          : event.error === "audio-capture" ? "Microphone unavailable"
+          : event.error === "network" ? "Voice input connection failed"
+          : event.error === "aborted" ? "Voice input interrupted"
+          : `Voice input: ${reason}`;
+        setStatus(status);
+      };
+      recognition.onend = () => {
+        if (speechRecognition !== recognition) return;
+        finish(spokenText || interimText);
+      };
+      setStatus("");
+      updateSendBtnVisibility();
+      try {
+        recognition.start();
+      } catch (error) {
+        finish("");
+        setStatus(`Voice input: ${error.message}`);
+      }
+    });
+    document.addEventListener("composer-overlay-close-start", () => stopSpeechRecognition("manual"));
     messageInput.addEventListener("input", updateSendBtnVisibility);
     messageInput.addEventListener("input", saveComposerDraft);
     window.addEventListener("pagehide", saveComposerDraft);

@@ -52,6 +52,7 @@
       if (typeof data.timeline === "string" && data.timeline) {
         restoreComposerDraft();
       }
+      updateSendBtnVisibility();
       const resolvedTargets = normalizedTimelineTargets(data.targets);
       const picker = document.getElementById("targetPicker");
       if (!picker.dataset.loaded) {

@@ -65,6 +65,7 @@
       width: calc(var(--composer-field-base-height) - 2 * var(--composer-send-inset));
       aspect-ratio: 1;
       border-radius: 50%;
+      appearance: none;
       border: none;
       background: var(--fg);
       color: var(--surface);
@@ -81,6 +82,24 @@
       width: 50%;
       height: 50%;
     }
+    .send-btn .mic-icon,
+    .send-btn .stop-icon,
+    .send-btn.is-mic .send-icon,
+    .send-btn.is-listening .send-icon {
+      display: none;
+    }
+    .send-btn.is-mic .mic-icon,
+    .send-btn.is-listening .stop-icon {
+      display: block;
+    }
+    .send-btn.is-mic .mic-icon {
+      width: 55%;
+      height: 55%;
+    }
+    .send-btn.is-listening .stop-icon {
+      width: 55%;
+      height: 55%;
+    }
     .send-btn.visible {
       opacity: 1;
       pointer-events: auto;
@@ -88,7 +107,17 @@
     html[data-theme="dark"] .send-btn {
       background: color-mix(in srgb, var(--fg) 60%, var(--muted));
     }
-    .send-btn:active {
+    .composer .send-btn.is-mic,
+    .composer .send-btn.is-listening {
+      background: transparent;
+      color: var(--icon-fg);
+    }
+    .has-hover .composer .send-btn.is-mic:hover {
+      background: var(--panel-row-hover-bg);
+      color: var(--icon-hover);
+      transition: background 250ms ease;
+    }
+    .send-btn.is-pressed {
       transform: scale(0.93);
       transition: transform 80ms ease-out;
     }
@@ -212,6 +241,9 @@
       outline: none;
       background: transparent;
       box-shadow: none;
+    }
+    .composer textarea.is-speech-interim {
+      color: var(--muted);
     }
     .composer textarea::placeholder {
       color: var(--muted);

@@ -24,5 +24,9 @@
   <string>26.0</string>
   <key>NSHighResolutionCapable</key>
   <true/>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Record speech for dictation into the message composer.</string>
+  <key>NSSpeechRecognitionUsageDescription</key>
+  <string>Transcribe speech into a message draft.</string>
 </dict>
 </plist>

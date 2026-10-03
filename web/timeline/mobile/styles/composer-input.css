@@ -70,17 +70,32 @@
       padding: 0;
       -webkit-tap-highlight-color: transparent;
     }
-
     html[data-hand="right"] .send-btn {
       left: auto;
       right: calc(var(--composer-btn-center-x) - var(--composer-btn-d) / 2);
     }
 
-    .send-btn svg {
+    .send-btn .send-icon {
       width: 18px;
       height: 18px;
       display: block;
       transform: rotate(90deg);
+    }
+    .send-btn .mic-icon,
+    .send-btn .stop-icon,
+    .send-btn.is-mic .send-icon,
+    .send-btn.is-listening .send-icon {
+      display: none;
+    }
+    .send-btn.is-mic .mic-icon,
+    .send-btn.is-listening .stop-icon {
+      display: block;
+      width: 18px;
+      height: 18px;
+    }
+    .send-btn.is-pressed {
+      transform: scale(0.93);
+      transition: transform 80ms ease-out;
     }
 
     .send-btn::before {
@@ -92,6 +107,10 @@
     .send-btn:disabled {
       cursor: not-allowed;
       opacity: 0.4;
+    }
+
+    .composer textarea.is-speech-interim {
+      color: var(--muted);
     }
 
     .attach-preview-row {

@@ -203,16 +203,7 @@
         refreshViewportCenterAnchor();
         updateScrollBtn();
         requestCenteredMessageRowUpdate();
-        if (document.documentElement.dataset.mobile !== "1") {
-          const input = document.getElementById("message");
-          const sendBtnEl = document.querySelector(".send-btn");
-          const hasText = !!(input && input.value.trim().length > 0);
-          if (!sessionActive) {
-            if (sendBtnEl) sendBtnEl.classList.remove("visible");
-          } else {
-            if (sendBtnEl) sendBtnEl.classList.toggle("visible", hasText);
-          }
-        }
+        updateSendBtnVisibility();
         if (pendingStreamRowCleanups.length || !_firstContentSettleFired) {
           _firstContentSettleFired = true;
           document.dispatchEvent(new CustomEvent("timeline-transcript-settled"));
