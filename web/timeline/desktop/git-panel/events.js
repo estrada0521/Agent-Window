@@ -92,6 +92,7 @@
       const expand = document.createElement("div");
       expand.className = "git-pinned-expand";
       aside.appendChild(expand);
+      const pinnedSel = createRowSelection({ container: expand, rowSelector: ".git-commit-file-row" });
 
       const updateExpandFade = () => {
         const { scrollTop, scrollHeight, clientHeight } = expand;
@@ -143,12 +144,15 @@
         const startHeight = shouldAnimate ? expand.getBoundingClientRect().height : 0;
         cancelExpandAnimation();
         expand.innerHTML = html;
+        pinnedSel.prune();
+        pinnedSel.applyClasses();
         if (shouldAnimate) animateExpandFrom(startHeight);
       }
 
       function close({ clear = false } = {}) {
         cancelTimers();
         cancelExpandAnimation();
+        pinnedSel.clear();
         aside.classList.remove("is-expanded");
         expand.dataset.scrollFade = "none";
         if (!clear) return;
@@ -216,22 +220,28 @@
         if (!aside.hidden) void refreshContent();
       };
 
-      expand.addEventListener("click", (event) => {
+      expand.addEventListener("click", async (event) => {
         const file = event.target.closest(".git-commit-file-row");
         if (!file) return;
         const path = file.dataset.path || "";
         if (!path) return;
-        if (file.dataset.untracked !== "1") {
-          void openDiff(path, "", file.dataset.oldPath || "");
+        const resolved = resolveRowClick(pinnedSel, path, event);
+        if (!resolved) return;
+        if (resolved.quickLook) {
+          await quickLookPaths(resolved.targets.map(gitTreePath));
           return;
         }
-        void openFile(gitTreePath(path));
+        for (const target of resolved.targets) {
+          const row = expand.querySelector(`.git-commit-file-row[data-path="${gitCssEscape(target)}"]`);
+          if (row?.dataset.untracked !== "1") await openDiff(target, "", row?.dataset.oldPath || "");
+          else await openFile(gitTreePath(target));
+        }
       });
 
       expand.addEventListener("contextmenu", (event) => {
         const file = event.target.closest(".git-commit-file-row");
         const path = String(file?.dataset.path || "").trim();
-        if (path) void openFileContextMenu(gitTreePath(path), event, { openFile: file.dataset.untracked !== "1" });
+        if (path) void openFileContextMenu(resolveContextMenuTargets(pinnedSel, path).map(gitTreePath), event, { openFile: file.dataset.untracked !== "1", triggerPath: gitTreePath(path) });
       });
 
       summary.addEventListener("mouseover", (event) => {
