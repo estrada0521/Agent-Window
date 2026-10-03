@@ -149,7 +149,8 @@ __INCLUDE:../../markdown-theme-vars.css__
     html[data-launch-shell] body {
       background: transparent;
     }
-    html[data-launch-shell] body > .shell {
+    html[data-launch-shell] body > .shell,
+    html[data-launch-shell] .git-pinned-summary-aside {
       opacity: 0;
       pointer-events: none;
     }
