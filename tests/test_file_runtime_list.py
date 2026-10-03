@@ -35,7 +35,7 @@ class FileRuntimeListTests(unittest.TestCase):
 
     def test_list_dir_fails_when_workspace_folder_is_gone(self) -> None:
         state = WorkspaceFiles(workspace="/no/such/even-parity")
-        with self.assertRaisesRegex(RuntimeError, "workspace is not available"):
+        with self.assertRaises(FileNotFoundError):
             state.list_dir("")
 
     def test_search_files_uses_git_visible_paths_not_ignored_dumps(self) -> None:

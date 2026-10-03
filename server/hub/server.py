@@ -410,7 +410,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _send_unhealthy(self, fmt, detail):
-        msg = f"tmux is currently unresponsive ({detail}). Please wait a few seconds."
+        self.log_error("tmux unresponsive: %s", detail)
+        msg = "tmux is unresponsive"
         if fmt == "json":
             self._send_json(503, {"ok": False, "error": msg})
         else:
@@ -439,7 +440,8 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 getattr(self, handler_name)(parsed)
         except Exception as exc:
-            self._send_json(500, {"ok": False, "error": f"{type(exc).__name__}: {exc}"})
+            self.log_error("Hub request failed: %s: %s", type(exc).__name__, exc)
+            self._send_json(500, {"ok": False, "error": "Hub request failed"})
         return True
 
     def _get_hub_manifest(self, _parsed):

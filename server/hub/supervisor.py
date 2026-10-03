@@ -119,7 +119,7 @@ def revive_timeline(hub, timeline_name: str) -> tuple[bool, str]:
         return False, "That archived timeline is not available in this repo."
     workspace = meta["workspace"]
     if not Path(workspace).is_dir():
-        return False, f"Saved workspace is unavailable: {workspace}"
+        return False, "Workspace not found"
     stop_ok, stop_detail = stop_timeline_server(workspace)
     if not stop_ok:
         return False, stop_detail

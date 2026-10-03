@@ -48,6 +48,10 @@
     }
 
     const { setStatus, setResidentStatus } = createHud(document.getElementById("hubHud"));
+    const reportHubError = (message, error) => {
+      console.error(message, error);
+      setStatus(message);
+    };
 
     async function copyDeskText(text) {
       if (navigator.clipboard?.writeText) {

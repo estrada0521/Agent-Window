@@ -28,7 +28,8 @@
         const context = getAgentSoundContext();
         if (context.state !== "running") void context.resume().catch(() => setStatus("Agent sound unavailable"));
       } catch (err) {
-        setStatus(err?.message || "Agent sound unavailable");
+        console.error("Agent sound unavailable", err);
+        setStatus("Agent sound unavailable");
       }
     };
     document.addEventListener("pointerdown", unlockAgentSound, { capture: true });
@@ -51,7 +52,8 @@
         tone.start(now);
         tone.stop(now + 0.2);
       } catch (err) {
-        setStatus(err?.message || "Agent sound unavailable");
+        console.error("Agent sound unavailable", err);
+        setStatus("Agent sound unavailable");
       }
     };
     const toggleAgentSound = () => {

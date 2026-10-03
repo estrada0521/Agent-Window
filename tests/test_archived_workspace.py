@@ -164,7 +164,7 @@ class ArchivedWorkspaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(str(workspace_git._git_root(tmp)), tmp)
             self.assertNotEqual(str(workspace_git._git_root(tmp)), "/Users/okadaharuto/workspace/Agent-Window")
-        with self.assertRaisesRegex(RuntimeError, "workspace is not available"):
+        with self.assertRaisesRegex(RuntimeError, "Workspace not found"):
             workspace_git.git_overview("/no/such/even-parity")
 
     def test_mirrors_link_inside_an_existing_workspace(self) -> None:

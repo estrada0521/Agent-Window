@@ -118,7 +118,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
 
             handler._send_json.assert_called_once_with(
                 409,
-                {"ok": False, "error": "A timeline already exists for this workspace: existing-timeline"},
+                {"ok": False, "error": "Workspace already in use"},
             )
             log_dir.assert_not_called()
 

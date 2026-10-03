@@ -71,7 +71,7 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
     if start_path:
         candidate = Path(start_path).expanduser().resolve()
         if not candidate.exists():
-            handler._send_json(400, {"ok": False, "error": f"path not found: {candidate}"})
+            handler._send_json(400, {"ok": False, "error": "Workspace not found"})
             return
         escaped = str(candidate).replace("\\", "\\\\").replace('"', '\\"')
         start_clause = f' default location POSIX file "{escaped}"'
@@ -95,7 +95,9 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
         if "-128" in stderr_text or "User canceled" in stderr_text:
             handler._send_json(200, {"ok": False, "canceled": True})
             return
-        handler._send_json(500, {"ok": False, "error": stderr_text or "workspace picker failed"})
+        if stderr_text:
+            handler.log_error("Workspace picker failed: %s", stderr_text)
+        handler._send_json(500, {"ok": False, "error": "Workspace picker failed"})
         return
     chosen = str(proc.stdout or "").strip()
     if not chosen:
@@ -104,10 +106,11 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
     try:
         resolved = Path(chosen).expanduser().resolve()
     except Exception as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
+        handler.log_error("Workspace picker failed: %s", exc)
+        handler._send_json(500, {"ok": False, "error": "Workspace picker failed"})
         return
     if not resolved.is_dir():
-        handler._send_json(400, {"ok": False, "error": f"Invalid workspace: {resolved}"})
+        handler._send_json(400, {"ok": False, "error": "Workspace not found"})
         return
     handler._send_json(200, {"ok": True, "path": str(resolved)})
 
@@ -130,23 +133,25 @@ def post_start_timeline_draft(handler, _parsed, ctx) -> None:
     try:
         resolved_workspace = str(Path(workspace).expanduser().resolve())
     except Exception as exc:
-        handler._send_json(400, {"ok": False, "error": str(exc)})
+        handler.log_error("Invalid workspace: %s", exc)
+        handler._send_json(400, {"ok": False, "error": "Invalid workspace"})
         return
     if not Path(resolved_workspace).is_dir():
-        handler._send_json(400, {"ok": False, "error": f"Invalid workspace: {resolved_workspace}"})
+        handler._send_json(400, {"ok": False, "error": "Workspace not found"})
         return
     owner = find_timeline_name_for_workspace(resolved_workspace)
     if owner:
-        handler._send_json(409, {"ok": False, "error": f"A timeline already exists for this workspace: {owner}"})
+        handler._send_json(409, {"ok": False, "error": "Workspace already in use"})
         return
     try:
         timeline_name, notice = _timeline_name_for_workspace(resolved_workspace)
     except RuntimeError as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
+        handler.log_error("Failed to create timeline: %s", exc)
+        handler._send_json(500, {"ok": False, "error": "Failed to create timeline"})
         return
     timeline_port = workspace_timeline_port(resolved_workspace)
     if not port_is_bindable(timeline_port):
-        handler._send_json(409, {"ok": False, "error": f"timeline port {timeline_port} is occupied"})
+        handler._send_json(409, {"ok": False, "error": "Timeline port occupied"})
         return
     try:
         create_session(
@@ -160,10 +165,12 @@ def post_start_timeline_draft(handler, _parsed, ctx) -> None:
             workspace=resolved_workspace,
         )
         if not ok:
-            handler._send_json(500, {"ok": False, "error": detail})
+            handler.log_error("Failed to open timeline: %s", detail)
+            handler._send_json(500, {"ok": False, "error": "Failed to open timeline"})
             return
     except Exception as exc:
-        handler._send_json(500, {"ok": False, "error": str(exc)})
+        handler.log_error("Failed to create timeline: %s", exc)
+        handler._send_json(500, {"ok": False, "error": "Failed to create timeline"})
         return
     ctx["hub"].publish_timeline_messages_changed()
     timeline_url = ctx["format_timeline_url_fn"](

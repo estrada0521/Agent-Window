@@ -57,7 +57,9 @@ def _timeline_query(parsed) -> tuple[str, str]:
     return (qs.get("timeline", [""])[0] or "").strip(), qs.get("format", [""])[0]
 
 
-def _fail(handler, ctx, fmt: str, status: int, message: str) -> None:
+def _fail(handler, ctx, fmt: str, status: int, message: str, *, detail: str = "") -> None:
+    if detail:
+        handler.log_error("%s: %s", message, detail)
     if fmt == "json":
         handler._send_json(status, {"ok": False, "error": message})
     else:
@@ -92,7 +94,7 @@ def get_open_timeline(handler, parsed, ctx) -> None:
         _fail(handler, ctx, fmt, 404, "That timeline is not available in this repo.")
         return
     if resolved["status"] != "ok":
-        _fail(handler, ctx, fmt, 500, f"Failed to start timeline server for {timeline_name}: {resolved['detail']}")
+        _fail(handler, ctx, fmt, 500, "Failed to open timeline", detail=f"{timeline_name}: {resolved['detail']}")
         return
     _open_timeline(handler, ctx, fmt, resolved["timeline_port"])
 
@@ -108,13 +110,16 @@ def get_revive_timeline(handler, parsed, ctx) -> None:
         handler._send_unhealthy(fmt, str(exc))
         return
     if not ok:
-        _fail(handler, ctx, fmt, 500, f"Failed to revive {timeline_name}: {detail}")
+        if detail == "Workspace not found":
+            _fail(handler, ctx, fmt, 404, detail)
+        else:
+            _fail(handler, ctx, fmt, 500, "Failed to revive timeline", detail=f"{timeline_name}: {detail}")
         return
     ctx["hub"].publish_timeline_messages_changed()
     workspace = log_workspace(timeline_name)
     ok, timeline_port, detail = ensure_timeline_server(ctx["hub"], expected_active=True, workspace=workspace)
     if not ok:
-        _fail(handler, ctx, fmt, 500, f"Failed to start timeline server for {timeline_name}: {detail}")
+        _fail(handler, ctx, fmt, 500, "Failed to open timeline", detail=f"{timeline_name}: {detail}")
         return
     _open_timeline(handler, ctx, fmt, timeline_port)
 
@@ -130,7 +135,7 @@ def get_archive_timeline(handler, parsed, ctx) -> None:
         handler._send_unhealthy(fmt, str(exc))
         return
     if not ok:
-        _fail(handler, ctx, fmt, 500, f"Failed to kill {timeline_name}: {detail}")
+        _fail(handler, ctx, fmt, 500, "Failed to archive timeline", detail=f"{timeline_name}: {detail}")
         return
     ctx["hub"].publish_timeline_messages_changed()
     _back_to_hub(handler, fmt, timeline_name, "killed")
@@ -147,7 +152,7 @@ def get_delete_archived_timeline(handler, parsed, ctx) -> None:
         handler._send_unhealthy(fmt, str(exc))
         return
     if not ok:
-        _fail(handler, ctx, fmt, 500, f"Failed to delete archived timeline {timeline_name}: {detail}")
+        _fail(handler, ctx, fmt, 500, "Failed to delete timeline", detail=f"{timeline_name}: {detail}")
         return
     ctx["hub"].publish_timeline_messages_changed()
     _back_to_hub(handler, fmt, timeline_name, "deleted")
@@ -238,10 +243,10 @@ def post_rename_timeline(handler, _parsed, ctx) -> None:
     source = agent_window_log_root() / old_name
     target = agent_window_log_root() / new_name
     if not source.is_dir():
-        handler._send_json(409, {"ok": False, "error": f"Timeline not found: {old_name}"})
+        handler._send_json(409, {"ok": False, "error": "Timeline not found"})
         return
     if old_name != new_name and (target.exists() or target.is_symlink()):
-        handler._send_json(409, {"ok": False, "error": f"A timeline labeled {new_name} already exists."})
+        handler._send_json(409, {"ok": False, "error": "Timeline name already exists"})
         return
     try:
         if old_name != new_name:
@@ -256,7 +261,8 @@ def post_rename_timeline(handler, _parsed, ctx) -> None:
                 },
             )
     except OSError as exc:
-        handler._send_json(409, {"ok": False, "error": str(exc)})
+        handler.log_error("Failed to rename timeline: %s", exc)
+        handler._send_json(409, {"ok": False, "error": "Failed to rename timeline"})
         return
     ctx["hub"].publish_timeline_messages_changed()
     handler._send_json(200, {"ok": True, "old_name": old_name, "new_name": new_name})
@@ -269,7 +275,8 @@ def post_change_timeline_workspace(handler, _parsed, ctx) -> None:
     try:
         set_log_workspace(timeline_name, workspace)
     except LogMetaError as exc:
-        handler._send_json(409, {"ok": False, "error": str(exc)})
+        handler.log_error("Failed to change workspace: %s", exc)
+        handler._send_json(409, {"ok": False, "error": "Failed to change workspace"})
         return
     ctx["hub"].publish_timeline_messages_changed()
     handler._send_json(200, {"ok": True, "timeline": timeline_name, "workspace": workspace})
@@ -281,7 +288,8 @@ def post_reset_timeline_agents(handler, _parsed, ctx) -> None:
     try:
         reset_log_agents(timeline_name)
     except LogMetaError as exc:
-        handler._send_json(409, {"ok": False, "error": str(exc)})
+        handler.log_error("Failed to reset agents: %s", exc)
+        handler._send_json(409, {"ok": False, "error": "Failed to reset agents"})
         return
     ctx["hub"].publish_timeline_messages_changed()
     handler._send_json(200, {"ok": True, "timeline": timeline_name})
