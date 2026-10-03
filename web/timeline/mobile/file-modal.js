@@ -262,6 +262,15 @@
             event.stopPropagation();
             void openExternalLink(href).catch(reportExternalLinkFailure);
           }, true);
+          frame.contentDocument.addEventListener("click", (event) => {
+            const image = event.target.closest?.(".md-body img");
+            if (!image || image.closest("a[href]")) return;
+            const path = pathFromLocalHref(image.currentSrc || image.src);
+            if (!path) return;
+            event.preventDefault();
+            event.stopPropagation();
+            void openSheetPreview(path, extFromPath(path), { kind: sheetKind() || "repo" });
+          }, true);
         }
         if (normalizedExt === "html" || normalizedExt === "htm") {
           const renderedFrame = frame.contentDocument.querySelector(".html-preview-panel-web iframe");
