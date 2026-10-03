@@ -305,6 +305,27 @@
       flex-direction: row;
       pointer-events: auto;
     }
+    .desk-pane-direction-hint {
+      position: fixed;
+      z-index: 1305;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      --swap-icon-size: round(nearest, calc(var(--text-size, 13px) * 14 / 13), 1px);
+      width: calc(var(--swap-icon-size) + round(nearest, calc(var(--text-size, 13px) * 12 / 13), 2px));
+      height: calc(var(--swap-icon-size) + round(nearest, calc(var(--text-size, 13px) * 12 / 13), 2px));
+      border: 0.5px solid var(--line-strong);
+      border-radius: 999px;
+      background: rgba(48, 48, 48, 0.5);
+      color: var(--icon-fg);
+      box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.12);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+    }
+    html[data-theme="light"] .desk-pane-direction-hint { background: rgba(var(--pill-bg-rgb), 0.8); }
+    .desk-pane-direction-hint[hidden] { display: none; }
+    .desk-pane-direction-hint svg { width: var(--swap-icon-size); height: var(--swap-icon-size); stroke-width: 1.7; }
+    .desk-pane-direction-hint[data-direction="left"] svg { transform: rotate(180deg); }
     html[data-native-app="1"][data-native-root-window="1"] .desk-top-right-controls {
       display: inline-flex;
       top: env(safe-area-inset-top, 0px);

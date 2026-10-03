@@ -204,20 +204,15 @@
 
     function toggleDeskSideBarOutward() {
       if (_deskAutoWindowHeight || !deskSideBarAvailable()) return;
-      const width = _deskSideBarWidth;
       const opening = !_deskSideBarActiveMode;
+      const width = _deskSideBarWidth;
+      const edge = document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right";
       void resizeDeskWindowAroundPane({
-        edge: "right",
+        edge,
         delta: opening ? width : -width,
         applyAfterResize: !opening,
-        apply: () => {
-          updateDeskSideBarButtonState(opening ? "open" : "", width);
-          sendDeskSideBarCommand("");
-        },
-        rollback: () => {
-          updateDeskSideBarButtonState(opening ? "" : "open", width);
-          sendDeskSideBarCommand("");
-        },
+        apply: () => sendDeskSideBarCommand(""),
+        rollback: () => sendDeskSideBarCommand(""),
         label: "Toggle side bar outward",
       });
     }

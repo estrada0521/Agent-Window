@@ -257,6 +257,14 @@ __INCLUDE:upload-attached-files.js__
           return;
         }
         const text = e.clipboardData?.getData("text/plain") || "";
+        const start = messageInput.selectionStart;
+        const end = messageInput.selectionEnd;
+        if (start !== end && !messageInput.value.slice(start, end).includes("\n") && /^https?:\/\/\S+$/.test(text.trim())) {
+          e.preventDefault();
+          messageInput.setRangeText(`[${messageInput.value.slice(start, end)}](${text.trim()})`, start, end, "end");
+          messageInput.dispatchEvent(new Event("input", { bubbles: true }));
+          return;
+        }
         if (text.length <= LARGE_PASTE_TEXT_CHARS) return;
         e.preventDefault();
         maybeOpenComposerForAttachDrag();
@@ -282,6 +290,40 @@ __INCLUDE:upload-attached-files.js__
     messageInput.addEventListener("compositionend", () => {
       composing = false;
       setTimeout(updateFileAutocomplete, 10);
+    });
+    messageInput.addEventListener("keydown", (event) => {
+      if (isTerminalMode() || composing || event.isComposing || event.keyCode === 229 || event.metaKey || event.ctrlKey || event.altKey) return;
+      const newline = event.key === "Enter" && (isMobileComposer ? !event.shiftKey : event.shiftKey);
+      if (!newline && event.key !== "Tab") return;
+      if (document.querySelector("#fileDropdown.visible, #cmdDropdown.visible")) return;
+      const start = messageInput.selectionStart;
+      const end = messageInput.selectionEnd;
+      if (start !== end) return;
+      const lineStart = messageInput.value.lastIndexOf("\n", start - 1) + 1;
+      const lineEnd = messageInput.value.indexOf("\n", start);
+      const line = messageInput.value.slice(lineStart, lineEnd < 0 ? undefined : lineEnd);
+      const match = line.match(/^([ \t]*)(?:(\d+)([.)])|([-+*])|(>))(\s+)(?:\[([ xX])\](?=\s|$)(\s*))?/);
+      if (!match) return;
+      const [prefix, indent, number, punctuation, bullet, quote, spacing, checkbox] = match;
+      if (newline) {
+        event.preventDefault();
+        if (!line.slice(prefix.length).trim()) {
+          messageInput.setRangeText("", lineStart, lineStart + prefix.length, "start");
+        } else {
+          const marker = number ? `${Number(number) + 1}${punctuation}` : bullet || quote;
+          const next = `${indent}${marker}${spacing}${checkbox !== undefined ? "[ ] " : ""}`;
+          messageInput.setRangeText(`\n${next}`, start, end, "end");
+        }
+      } else {
+        event.preventDefault();
+        if (event.shiftKey) {
+          const removable = indent.startsWith("  ") ? "  " : indent.startsWith("\t") ? "\t" : "";
+          if (removable) messageInput.setRangeText("", lineStart, lineStart + removable.length, "preserve");
+        } else {
+          messageInput.setRangeText("  ", lineStart, lineStart, "preserve");
+        }
+      }
+      messageInput.dispatchEvent(new Event("input", { bubbles: true }));
     });
     if (!isMobileComposer) {
       messageInput.addEventListener("keydown", (event) => {

@@ -260,8 +260,9 @@
     });
     _deskAppSidebarToggle && _deskAppSidebarToggle.addEventListener("click", (event) => {
       event.preventDefault();
+      if (event.altKey && !_deskAutoWindowHeight && getNativeInvoke()) { toggleDeskHubOutward(); return; }
       if (isDeskHubOpen()) {
-        setDeskHubOpen(false);
+        toggleDeskHub();
         return;
       }
       if (_deskAutoWindowHeight) {
@@ -364,14 +365,54 @@
     _deskSideBarToggle && _deskSideBarToggle.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (event.altKey && !_deskAutoWindowHeight && getNativeInvoke()) { toggleDeskSideBarOutward(); return; }
       if (_deskSideBarActiveMode) {
-        updateDeskSideBarButtonState("", 0);
         sendDeskSideBarCommand("close");
         return;
       }
-      updateDeskSideBarButtonState("open", _deskSideBarWidth);
       sendDeskSideBarCommand("repo");
     });
+    {
+      const hint = document.getElementById("deskPaneDirectionHint");
+      let hovered = "";
+      let altHeld = false;
+      const hideHint = () => { if (hint) hint.hidden = true; };
+      const updateHint = () => {
+        if (!hint || !hovered || !_deskTimelineFrameLoadedUrl ||
+            (hovered === "hub" && isDeskHubOpen()) ||
+            (hovered === "side" && _deskSideBarActiveMode)) { hideHint(); return; }
+        const side = hovered === "hub" || document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right";
+        const outward = altHeld && !_deskAutoWindowHeight && !!getNativeInvoke();
+        hint.dataset.direction = side === "left" ? outward ? "left" : "right" : outward ? "right" : "left";
+        const rect = _deskTimelineFrame.getBoundingClientRect();
+        hint.style.left = `${Math.round(side === "left" ? rect.left + 22 : rect.right - 22)}px`;
+        hint.style.top = `${Math.round(rect.top + rect.height / 2)}px`;
+        hint.hidden = false;
+      };
+      for (const [button, kind] of [[_deskAppSidebarToggle, "hub"], [_deskSideBarToggle, "side"]]) {
+        button?.addEventListener("pointerenter", (event) => {
+          if (event.pointerType === "touch") return;
+          hovered = kind;
+          altHeld = event.altKey;
+          updateHint();
+        });
+        button?.addEventListener("mousemove", (event) => {
+          if (hovered !== kind || (altHeld === event.altKey && !hint.hidden)) return;
+          altHeld = event.altKey;
+          updateHint();
+        });
+        button?.addEventListener("pointerleave", () => { hovered = ""; hideHint(); });
+        button?.addEventListener("click", hideHint);
+      }
+      window.addEventListener("keydown", (event) => {
+        if (hovered && event.key === "Alt") { altHeld = true; updateHint(); }
+      });
+      window.addEventListener("keyup", (event) => {
+        if (hovered && event.key === "Alt") { altHeld = false; updateHint(); }
+      });
+      window.addEventListener("blur", () => { hovered = ""; hideHint(); });
+      window.addEventListener("resize", updateHint);
+    }
     (function armDeskWindowTraffic() {
       const invoke = getNativeInvoke();
       if (!_deskWindowTraffic || !invoke) return;

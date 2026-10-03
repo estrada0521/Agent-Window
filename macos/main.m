@@ -341,9 +341,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 - (NSString *)resizeFromEdge:(NSString *)edge delta:(double)delta {
     if (!isfinite(delta) || delta == 0) return @"window width delta must be a non-zero finite number";
     NSRect frame = self.window.frame;
-    CGFloat next = frame.size.width + delta;
-    if (next < kMinWindowWidth) return [NSString stringWithFormat:@"window width would fall below the minimum (%g)", kMinWindowWidth];
-    if ([edge isEqualToString:@"left"]) frame.origin.x -= delta;
+    CGFloat next = MAX(kMinWindowWidth, frame.size.width + delta);
+    if ([edge isEqualToString:@"left"]) frame.origin.x -= next - frame.size.width;
     else if (![edge isEqualToString:@"right"]) return [NSString stringWithFormat:@"unsupported window edge: %@", edge];
     frame.size.width = next;
     [self.window setFrame:frame display:YES];
