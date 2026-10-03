@@ -95,7 +95,8 @@
       );
       if (!res.ok) {
         failIfGitTreeRemoved(res);
-        throw new Error(offset > 0 ? "Failed to load more commits" : "Failed to load git overview");
+        const error = (await res.json().catch(() => ({}))).error;
+        throw new Error(error || (offset > 0 ? "Failed to load more commits" : "Failed to load git overview"));
       }
       return res.json();
     };

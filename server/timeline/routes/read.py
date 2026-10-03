@@ -160,8 +160,11 @@ def _get_files_dir(handler, parsed, ctx) -> None:
     except PermissionError:
         handler.send_error(403)
         return
-    except (FileNotFoundError, NotADirectoryError):
-        handler.send_error(404)
+    except FileNotFoundError:
+        _send_bytes(handler, 404, b'{"error":"Workspace not found"}', content_type="application/json; charset=utf-8")
+        return
+    except NotADirectoryError:
+        _send_bytes(handler, 404, b'{"error":"Directory not found"}', content_type="application/json; charset=utf-8")
         return
     except Exception as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")

@@ -771,7 +771,7 @@ __INCLUDE:git-panel/events.js__
     const fetchRepoDir = async (rawPath) => {
       const path = normalizePath(rawPath);
       const res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
-      if (!res.ok) throw new Error(res.status === 404 ? "Directory not found" : "Failed to load directory");
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load directory");
       const payload = await res.json().catch(() => ({}));
       const rawEntries = Array.isArray(payload?.entries) ? payload.entries : [];
       return rawEntries
@@ -864,6 +864,13 @@ __INCLUDE:git-panel/events.js__
       repoBrowserPath = path;
       if (!isSamePath) repoSel.clear();
       repoContent.innerHTML = "";
+      if (error) {
+        const node = document.createElement("div");
+        node.className = "empty-state error";
+        node.textContent = error;
+        repoContent.appendChild(node);
+        return;
+      }
       const stack = document.createElement("div");
       stack.className = `repo-browser-stack repo-browser-nav-${direction}`;
       const pathWrap = document.createElement("div");
@@ -916,17 +923,6 @@ __INCLUDE:git-panel/events.js__
         const node = document.createElement("div");
         node.className = "repo-browser-empty inline-loading-row";
         node.textContent = "";
-        list.appendChild(node);
-      } else if (error) {
-        const node = document.createElement("button");
-        node.type = "button";
-        node.className = "repo-browser-empty error";
-        node.textContent = error;
-        node.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          void loadRepoDir(path);
-        });
         list.appendChild(node);
       } else {
         const dirs = (entries || []).filter(e => e.kind === "dir");

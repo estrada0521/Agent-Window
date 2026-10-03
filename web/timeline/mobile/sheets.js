@@ -654,8 +654,15 @@ __INCLUDE:git-panel.js__
       if (!sheetIsOpen()) workspaceSheet.open();
       await updateGitPanel();
     };
-    const openRepoSheet = () => {
+    const openRepoSheet = async () => {
       if (!mobileSheet) return;
+      try {
+        const res = await fetchWithTimeout("/files-dir?path=", {}, 12000);
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load workspace");
+      } catch (err) {
+        setStatus(err?.message || "Failed to load workspace");
+        return;
+      }
       ensureSheetDom();
       closePaneTraceSheet({ immediate: true });
       closeSheetPreview();
@@ -687,7 +694,7 @@ __INCLUDE:git-panel.js__
         const path = normalizeRepoPath(rawPath);
         const res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
         if (!res.ok) {
-          throw new Error(res.status === 404 ? "Directory not found" : "Failed to load directory");
+          throw new Error((await res.json().catch(() => ({}))).error || "Failed to load directory");
         }
         const payload = await res.json().catch(() => ({}));
         const rawEntries = Array.isArray(payload?.entries) ? payload.entries : [];

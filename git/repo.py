@@ -14,7 +14,7 @@ def _git_root(workspace: str) -> Path:
         raise RuntimeError("git workspace is not configured")
     path = Path(root)
     if not path.is_dir():
-        raise RuntimeError("workspace is not available")
+        raise RuntimeError("Workspace not found")
     return path
 
 
@@ -222,6 +222,8 @@ def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = 
         with _commit_list_cache_lock:
             cached_commits = _commit_list_cache.get(commit_key)
     status_res = _run("status", "--short", "--branch", "--untracked-files=all")
+    if status_res.returncode != 0 and "not a git repository" in (status_res.stderr or ""):
+        raise NotGitRepository("Not a git repository")
     if status_res.returncode != 0:
         raise RuntimeError((status_res.stderr or status_res.stdout or "git status failed").strip())
     status_lines = []

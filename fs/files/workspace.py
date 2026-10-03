@@ -89,7 +89,7 @@ class WorkspaceFiles:
         if not root:
             raise RuntimeError("workspace is not configured")
         if not os.path.isdir(root):
-            raise RuntimeError("workspace is not available")
+            raise FileNotFoundError(root)
         return root
 
     def resolve_path(self, rel: str) -> str:
@@ -102,7 +102,7 @@ class WorkspaceFiles:
         for rel in paths:
             try:
                 result[rel] = os.path.exists(self.resolve_path(rel))
-            except RuntimeError:
+            except (RuntimeError, FileNotFoundError):
                 result[rel] = False
         return result
 
