@@ -2,7 +2,7 @@
       --composer-input-font-size: calc(var(--text-size, 13px) * 15 / 13);
       --composer-input-line-height: 1.5;
       --composer-input-padding: calc(var(--text-size, 13px) * 14 / 13);
-      --composer-input-padding-y: calc(var(--text-size, 13px) * 12 / 13);
+      --composer-input-padding-y: calc(var(--text-size, 13px) * 10 / 13);
       --composer-field-base-height: calc(var(--composer-input-font-size) * var(--composer-input-line-height) + 2 * var(--composer-input-padding-y));
       --composer-field-max-height: calc(var(--text-size, 13px) * 200 / 13);
       --composer-send-inset: calc(var(--text-size, 13px) * 7 / 13);
@@ -79,8 +79,8 @@
     }
     .send-btn svg {
       display: block;
-      width: 50%;
-      height: 50%;
+      width: calc(var(--text-size, 13px) * 16 / 13);
+      height: calc(var(--text-size, 13px) * 16 / 13);
     }
     .send-btn .mic-icon,
     .send-btn .stop-icon,
@@ -92,13 +92,10 @@
     .send-btn.is-listening .stop-icon {
       display: block;
     }
-    .send-btn.is-mic .mic-icon {
-      width: 55%;
-      height: 55%;
-    }
+    .send-btn.is-mic .mic-icon,
     .send-btn.is-listening .stop-icon {
-      width: 55%;
-      height: 55%;
+      width: calc(var(--text-size, 13px) * 18 / 13);
+      height: calc(var(--text-size, 13px) * 18 / 13);
     }
     .send-btn.visible {
       opacity: 1;
