@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import <QuickLookUI/QuickLookUI.h>
 #import <WebKit/WebKit.h>
 #include <sys/stat.h>
 
@@ -11,11 +12,26 @@ static const CGFloat kMiniWindowWidth = 384;
 static const CGFloat kMiniWindowHeight = 600;
 static const CGFloat kMenuIconSize = 18;
 
-@interface AWWindow : NSWindow
+@interface AWPreviewItem : NSObject <QLPreviewItem>
+@property (strong) NSURL *previewItemURL;
+@end
+
+@implementation AWPreviewItem
+@end
+
+@interface AWWindow : NSWindow <QLPreviewPanelDataSource>
+@property (strong) NSArray<AWPreviewItem *> *previewItems;
 @end
 
 @implementation AWWindow
 - (BOOL)hasKeyAppearance { return YES; }
+- (BOOL)acceptsPreviewPanelControl:(QLPreviewPanel *)panel { return self.previewItems.count > 0; }
+- (void)beginPreviewPanelControl:(QLPreviewPanel *)panel { panel.dataSource = self; }
+- (void)endPreviewPanelControl:(QLPreviewPanel *)panel { panel.dataSource = nil; }
+- (NSInteger)numberOfPreviewItemsInPreviewPanel:(QLPreviewPanel *)panel { return self.previewItems.count; }
+- (id<QLPreviewItem>)previewPanel:(QLPreviewPanel *)panel previewItemAtIndex:(NSInteger)index {
+    return index >= 0 && index < self.previewItems.count ? self.previewItems[index] : nil;
+}
 @end
 
 @interface AWApp : NSObject <NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandlerWithReply, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate>
@@ -409,10 +425,33 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     return [pasteboard writeObjects:urls] ? nil : @"Failed to copy files to clipboard";
 }
 
+- (NSString *)openQuickLook:(NSArray<NSString *> *)paths {
+    if (![paths isKindOfClass:NSArray.class] || paths.count == 0) return @"No files to preview";
+    NSMutableArray<AWPreviewItem *> *items = [NSMutableArray array];
+    for (id value in paths) {
+        if (![value isKindOfClass:NSString.class] || ![value isAbsolutePath]) return @"Invalid Quick Look path";
+        BOOL directory = NO;
+        if (![NSFileManager.defaultManager fileExistsAtPath:value isDirectory:&directory] || directory) continue;
+        AWPreviewItem *item = [AWPreviewItem new];
+        item.previewItemURL = [NSURL fileURLWithPath:value];
+        [items addObject:item];
+    }
+    if (items.count == 0) return @"File not found";
+    self.window.previewItems = items;
+    QLPreviewPanel *panel = QLPreviewPanel.sharedPreviewPanel;
+    [panel updateController];
+    [panel reloadData];
+    panel.currentPreviewItemIndex = 0;
+    [panel makeKeyAndOrderFront:nil];
+    [NSApp activateIgnoringOtherApps:YES];
+    return nil;
+}
+
 - (NSString *)run:(NSString *)cmd args:(NSDictionary *)a {
     NSDictionary *p = a[@"payload"];
     if ([cmd isEqualToString:@"open_external_url"]) return [self openExternalURL:a[@"url"]];
     if ([cmd isEqualToString:@"copy_files_to_clipboard"]) return [self copyFiles:a[@"paths"]];
+    if ([cmd isEqualToString:@"open_quick_look"]) return [self openQuickLook:a[@"paths"]];
     if ([cmd isEqualToString:@"show_timeline_header_menu"]) { [self showTimelineHeaderMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_appearance_menu"]) { [self showAppearanceMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_timeline_switcher_menu"]) { [self showListMenu:p action:@"switchTimeline" checks:YES]; return nil; }

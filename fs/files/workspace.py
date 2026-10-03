@@ -276,7 +276,7 @@ class WorkspaceFiles:
         self._reveal_in_finder(full)
         return {"ok": True, "path": rel, "revealed_in_finder": True}
 
-    def quick_look(self, rels: list[str]):
+    def quick_look(self, rels: list[str], *, native: bool = False):
         fulls = []
         missing = False
         for rel in rels:
@@ -294,6 +294,8 @@ class WorkspaceFiles:
             if missing:
                 raise FileNotFoundError()
             raise ValueError("no files to preview")
+        if native:
+            return {"ok": True, "paths": fulls}
         proc = subprocess.Popen(
             ["qlmanage", "-p", *fulls],
             stdout=subprocess.DEVNULL,

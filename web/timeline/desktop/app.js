@@ -729,15 +729,17 @@ __INCLUDE:git-panel/events.js__
     };
     const quickLookPaths = async (paths) => {
       try {
+        const native = document.documentElement.dataset.nativeApp === "1" && window.parent !== window;
         const response = await fetchWithTimeout("/quick-look", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paths }),
+          body: JSON.stringify({ paths, native }),
         }, 8000);
+        const data = await response.json();
         if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
           throw new Error(data?.error || "Quick Look failed");
         }
+        if (native) window.parent.postMessage({ type: "open-quick-look", paths: data.paths }, "*");
       } catch (err) {
         setStatus(err?.message || "Quick Look failed");
       }
@@ -1086,6 +1088,10 @@ __INCLUDE:git-panel/events.js__
       }
       if (event.data.type === "file-copy-result") {
         setStatus(event.data.error ? String(event.data.error) : "Copied file");
+        return;
+      }
+      if (event.data.type === "quick-look-error") {
+        setStatus(String(event.data.message || "Quick Look failed"));
         return;
       }
       if (event.data.type === "toggle-git-pin") {

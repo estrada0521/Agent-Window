@@ -469,7 +469,9 @@ def _post_quick_look(handler, _parsed, ctx) -> None:
     if not isinstance(paths, list) or not paths:
         handler._send_json(400, {"ok": False, "error": "paths required"})
         return
-    _send_workspace_result(handler, lambda: ctx["files"].quick_look([str(p or "").strip() for p in paths]))
+    _send_workspace_result(handler, lambda: ctx["files"].quick_look(
+        [str(p or "").strip() for p in paths], native=data.get("native") is True,
+    ))
 
 
 def _post_open_diff(handler, _parsed, ctx) -> None:

@@ -82,6 +82,17 @@
         });
         return;
       }
+      if (event.data && event.data.type === "open-quick-look" && event.source === _deskTimelineFrame?.contentWindow) {
+        const invoke = getNativeInvoke();
+        if (typeof invoke !== "function") {
+          event.source?.postMessage({ type: "quick-look-error", message: "Quick Look is unavailable." }, "*");
+          return;
+        }
+        invoke("open_quick_look", { paths: event.data.paths }).catch((err) => {
+          event.source?.postMessage({ type: "quick-look-error", message: String(err || "Quick Look failed") }, "*");
+        });
+        return;
+      }
       if (event.data && event.data.type === "show-commit-context-menu" && event.source === _deskTimelineFrame?.contentWindow) {
         const invoke = getNativeInvoke();
         const childPayload = event.data.payload || {};
