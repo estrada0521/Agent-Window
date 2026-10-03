@@ -187,6 +187,38 @@
       border-color: rgba(0, 0, 0, 0.45);
     }
 
+    .attach-card::before,
+    .attach-card::after {
+      content: "";
+      position: absolute;
+      z-index: 1;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .attach-card::before {
+      inset: 2px;
+      border-radius: 24px;
+      background: rgba(var(--bg-rgb), 0.8);
+    }
+
+    .attach-card::after {
+      top: 50%;
+      left: 50%;
+      width: 14px;
+      height: 14px;
+      transform: translate(-50%, -50%);
+      color: var(--icon-fg);
+      background:
+        linear-gradient(45deg, transparent calc(50% - 0.75px), currentColor calc(50% - 0.75px), currentColor calc(50% + 0.75px), transparent calc(50% + 0.75px)),
+        linear-gradient(-45deg, transparent calc(50% - 0.75px), currentColor calc(50% - 0.75px), currentColor calc(50% + 0.75px), transparent calc(50% + 0.75px));
+    }
+
+    .attach-card:active::before,
+    .attach-card:active::after {
+      opacity: 1;
+    }
+
     .attach-card:focus-visible {
       outline: 2px solid var(--line-strong);
       outline-offset: 3px;
