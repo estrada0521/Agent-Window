@@ -105,6 +105,7 @@ __INCLUDE:../git-panel-controller.js__
       gitSummaryHud.innerHTML = gitWorktreeSummaryHtml(data);
       if (animate) animateGitCountsFromSnapshot(gitSummaryHud, previous);
     };
+    let gitSummaryHudShown = "";
     const refreshGitSummaryHud = async ({ notify = false } = {}) => {
       if (!gitPinned() && !notify) {
         setBackgroundStatus(null);
@@ -117,7 +118,11 @@ __INCLUDE:../git-panel-controller.js__
         renderGitSummaryHud(data);
         if (gitWorktreeButton()) renderGitWorktreeButton(data);
         setBackgroundStatus(gitPinned() ? gitSummaryHud : null);
-        if (!gitPinned()) setStatus(gitSummaryHud);
+        if (gitPinned()) return;
+        const shown = `${currentTimelineName}\n${tree}\n${gitWorktreeCountsKey(data)}`;
+        if (shown === gitSummaryHudShown) return;
+        gitSummaryHudShown = shown;
+        setStatus(gitSummaryHud);
       } catch (err) {
         setStatus(err?.message || "Failed to load Git summary");
       }

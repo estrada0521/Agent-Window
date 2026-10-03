@@ -60,6 +60,8 @@
     };
     const shouldAnimateGitCounts = () =>
       !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const gitWorktreeCountsKey = (data) =>
+      `${data?.worktree_changed_paths} ${data?.worktree_added} ${data?.worktree_deleted}`;
     const gitCountSnapshot = (root) =>
       root
         ? Array.from(root.querySelectorAll(".git-summary-counts .git-summary-count"))
