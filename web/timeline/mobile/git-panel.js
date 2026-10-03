@@ -99,7 +99,7 @@ __INCLUDE:../git-panel-controller.js__
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
       const added = Math.max(0, parseInt(data?.worktree_added) || 0);
       const deleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
-      return `<span class="git-worktree-button-label">${gitPathCountText(changedPaths)}</span>${gitCountsHtml(added, deleted)}`;
+      return `<span class="git-worktree-button-label">${changedPaths ? gitPathCountText(changedPaths) : "No changes"}</span>${gitCountsHtml(added, deleted)}`;
     };
     const renderGitSummaryHud = (data, { animate = true } = {}) => {
       const previous = gitCountSnapshot(gitSummaryHud);
@@ -161,7 +161,7 @@ __INCLUDE:../git-panel-controller.js__
       btn.classList.toggle("clickable", hasDiff);
       if (hasDiff) btn.dataset.diffKind = "worktree";
       else delete btn.dataset.diffKind;
-      btn.setAttribute("aria-label", hasDiff ? "Open uncommitted changes" : "Working tree clean");
+      btn.setAttribute("aria-label", hasDiff ? "Open uncommitted changes" : "No changes");
       btn.innerHTML = gitWorktreeSummaryHtml(data);
       showGitWorktreeButton();
     };
@@ -313,7 +313,7 @@ __INCLUDE:../git-panel-controller.js__
       if (!titleEl?.classList.contains("git-sheet-detail-title")) return;
       const previous = gitCountSnapshot(titleEl);
       const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
-      const subject = changedPaths ? "Uncommitted changes" : "Working tree clean";
+      const subject = changedPaths ? "Uncommitted changes" : "No changes";
       _gitDetailChrome = { rowHtml: gitSummaryRowHtml(data || {}), subject };
       applyGitDetailChrome(_gitDetailChrome);
       animateGitCountsFromSnapshot(titleEl, previous);
