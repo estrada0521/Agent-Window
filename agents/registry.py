@@ -36,7 +36,7 @@ _register(
         display_name="Codex",
         executable="codex",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        launch_args="--no-daemon",
+        launch_args="--no-daemon --no-alt-screen",
     ),
     AgentDef(
         name="antigravity",

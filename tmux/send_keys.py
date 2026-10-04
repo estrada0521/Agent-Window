@@ -13,8 +13,16 @@ def deliver_text_to_pane(
     pane = str(pane_id or "").strip()
     if not pane:
         return False
-    dead = run_tmux(["display-message", "-p", "-t", pane, "#{pane_dead}"]).stdout.strip() == "1"
-    if dead:
+    state = run_tmux(["display-message", "-p", "-t", pane, "#{pane_dead} #{pane_in_mode}"])
+    if state.returncode != 0:
+        return False
+    fields = state.stdout.strip().split()
+    if len(fields) != 2:
+        return False
+    dead, in_mode = fields
+    if dead == "1":
+        return False
+    if in_mode != "0" and run_tmux(["send-keys", "-t", pane, "-X", "cancel"]).returncode != 0:
         return False
     if run_tmux(["send-keys", "-t", pane, "-l", "--", str(payload)]).returncode != 0:
         return False
