@@ -261,7 +261,7 @@ __INCLUDE:../git-panel-controller.js__
         const kind = line.startsWith("+") ? " is-add" : line.startsWith("-") ? " is-del" : "";
         out.push(`<div class="git-diff-line${kind}">${escapeHtml(line.slice(0, 1))}<span class="git-diff-code">${escapeHtml(line.slice(1))}</span></div>`);
       }
-      return out.length ? `<div class="git-diff-scroll">${out.join("")}</div>` : '<div class="git-diff-line is-hunk">No textual changes</div>';
+      return out.length ? `<div class="git-diff-scroll"><div class="git-diff-lines">${out.join("")}</div></div>` : '<div class="git-diff-line is-hunk">No textual changes</div>';
     };
     const renderGitFileDiffs = () => {
       const context = gitPanel.detailContext;

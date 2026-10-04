@@ -122,7 +122,7 @@
       }
       rows = [];
     };
-    for (const row of diff.children) {
+    for (const row of diff.querySelectorAll(".git-diff-line")) {
       if (row.classList.contains("is-hunk")) applyHunk();
       else rows.push(row);
     }

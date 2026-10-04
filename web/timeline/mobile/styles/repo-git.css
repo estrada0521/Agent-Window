@@ -105,6 +105,11 @@
       display: none;
     }
 
+    .git-diff-lines {
+      width: max-content;
+      min-width: 100%;
+    }
+
     .git-diff-line {
       min-width: max-content;
       padding: 0 calc(var(--sheet-list-padding-inline) + var(--sheet-list-row-padding-inline));
@@ -113,6 +118,10 @@
       font-size: var(--git-diff-code-size, 11px);
       line-height: var(--git-diff-code-line-height);
       color: var(--fg);
+    }
+
+    .git-diff-code {
+      margin-left: 1ch;
     }
 
     .git-diff-line.is-add {
