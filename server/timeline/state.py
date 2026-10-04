@@ -155,7 +155,6 @@ class TimelineState:
             "workspace": self.workspace,
             "repo_root": str(self.repo_root),
             "targets": self.active_agents() if self.session_is_active else log_meta_agents(timeline_name),
-            "native_log_watching": bool(self.native_log.watched_paths()),
             "statuses": self.agent_statuses(),
             "running_display": self.native_log.running_display_for_api(),
             "stopped_threads": stopped_threads,
