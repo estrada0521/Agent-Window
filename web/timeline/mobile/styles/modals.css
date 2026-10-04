@@ -273,7 +273,7 @@
       overflow-x: auto;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 100px 12px calc(var(--pane-viewer-keys-bottom) + var(--pane-viewer-keys-height) + 14px);
+      padding: 112px 12px calc(var(--pane-viewer-keys-bottom) + var(--pane-viewer-keys-height) + 14px);
       font-family: var(--font-code);
       font-weight: var(--body-weight);
       font-style: normal;
