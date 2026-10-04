@@ -316,9 +316,7 @@ __INCLUDE:../transcript-actions.js__
 __INCLUDE:menu.js__
 __INCLUDE:header-actions.js__
 __INCLUDE:../export.js__
-__INCLUDE:composer-send.js__
 __INCLUDE:../composer.js__
-__INCLUDE:voice-input.js__
 __INCLUDE:../file-links.js__
 __INCLUDE:../composer-commands.js__
 __INCLUDE:../thinking.js__

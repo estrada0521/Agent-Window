@@ -312,7 +312,6 @@ __INCLUDE:hub-navigation.js__
 
 __INCLUDE:sheets.js__
 __INCLUDE:../export.js__
-__INCLUDE:composer-send.js__
 __INCLUDE:../composer.js__
 __INCLUDE:../file-links.js__
 __INCLUDE:../composer-commands.js__

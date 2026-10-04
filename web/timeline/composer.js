@@ -273,6 +273,15 @@ __INCLUDE:upload-attached-files.js__
       });
     }
 
+    const updateSendBtnVisibility = () => {
+      const label = isTerminalMode() ? "Type into Terminal" : "Send";
+      sendBtn.setAttribute("aria-label", label);
+      sendBtn.title = label;
+      if (!isMobileComposer) {
+        const hasContent = messageInput.value.trim().length > 0 || pendingAttachments.length > 0;
+        sendBtn.classList.toggle("visible", !!sessionActive && hasContent);
+      }
+    };
     messageInput.addEventListener("input", updateSendBtnVisibility);
     messageInput.addEventListener("input", saveComposerDraft);
     window.addEventListener("pagehide", saveComposerDraft);
