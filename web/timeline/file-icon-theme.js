@@ -106,6 +106,7 @@
       fileIconThemeState.inline = payload.inline;
       fileIconThemeState.ready = true;
       decorateInlineFileLinkIcons(document);
+      if (payload.warning) queueMicrotask(() => setStatus(payload.warning));
       return fileIconThemeState;
     };
 

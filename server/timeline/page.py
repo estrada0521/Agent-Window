@@ -7,7 +7,7 @@ from agents.registry import agent_names_js_set, agent_names_js_array
 from server.timeline.page_scripts import TIMELINE_HEADER_MENU_BUTTON_HTML, TIMELINE_SHEET_PANELS_HTML
 from server.template import load_timeline_template
 from server.appearance.colors import apply_color_tokens
-from server.timeline.file_icon_theme import load_file_icon_theme_document, resolve_file_icon_theme
+from server.timeline.file_icon_theme import load_file_icon_theme_document
 from server.appearance.colors import MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, apply_font_tokens, timeline_font_style
 from server import APP_DISPLAY_NAME
@@ -153,9 +153,8 @@ def render_timeline_html(
         theme=theme,
         mobile_theme_default=MOBILE_THEME_DEFAULT,
     )
-    _theme_json, inline = resolve_file_icon_theme()
-    if inline:
-        boot = load_file_icon_theme_document()
+    boot = load_file_icon_theme_document()
+    if boot["inline"]:
         boot_json = json.dumps(boot, ensure_ascii=True).replace("<", "\\u003c")
         html = html.replace("</head>", f"<script>window.__FILE_ICON_THEME__={boot_json};</script></head>", 1)
     return html
