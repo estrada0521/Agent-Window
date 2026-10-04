@@ -57,7 +57,7 @@ _register(
         display_name="Grok",
         executable="grok",
         launch_extra=f"env {_AGENT_TMUX_COLOR_SUFFIX}",
-        launch_args="",
+        launch_args="--no-alt-screen --minimal",
     ),
 )
 

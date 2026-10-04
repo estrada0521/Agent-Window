@@ -16,7 +16,8 @@ def deliver_text_to_pane(
     state = run_tmux(["display-message", "-p", "-t", pane, "#{pane_dead} #{pane_in_mode}"])
     if state.returncode != 0:
         return False
-    fields = state.stdout.strip().split()
+    output = state.stdout.decode("utf-8") if isinstance(state.stdout, bytes) else state.stdout
+    fields = output.strip().split()
     if len(fields) != 2:
         return False
     dead, in_mode = fields
