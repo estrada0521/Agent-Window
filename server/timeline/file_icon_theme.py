@@ -35,7 +35,7 @@ def _file_icon_theme() -> tuple[Path, dict, bool, str]:
             theme_json = user_theme.resolve(strict=True)
             return theme_json, _read_theme(theme_json), False, warning
         except (OSError, ValueError):
-            warning = "Icon theme unavailable. Using default icons."
+            warning = "Icon theme unavailable"
     return _BUILTIN_THEME_JSON, _read_theme(_BUILTIN_THEME_JSON), True, warning
 
 

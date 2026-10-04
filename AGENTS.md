@@ -1,9 +1,9 @@
 # Agent Window Agent Handbook
 
 - For Agent Window basics, see [README.md](README.md); for its design philosophy, see [DESIGN.md](DESIGN.md).
-- The Agent Window website is managed in `/Users/okadaharuto/workspace/okadaharuto-web`.
+- The Agent Window website is managed in `/Users/okadaharuto/workspace/okadaharuto.com`.
 
-## Note by H.Okada(User)
+## Additional Note by H.Okada
 
 - 作業は**The Algorithm**の順序を守ること。そもそも要件は何か？そもそも問題の存在自体を消せないか。単純化と最適化は、これらを通った対象についてのみ許容される。高速化はその後でなければならない。なぜならば、そもそもまだ単純化すべき、無駄に複雑なものを賢く高速化するのは馬鹿だからだ。末端の自動化（ソフトウェア的にはショートカットなど）は、その果てに追加する。
 
