@@ -75,43 +75,11 @@
       right: calc(var(--composer-btn-center-x) - var(--composer-btn-d) / 2);
     }
 
-    body.composer-voice-open > .send-btn {
-      position: fixed;
-      left: calc(50% - 22px);
-      right: auto;
-      bottom: var(--floating-btn-bottom, 194px);
-      width: 44px;
-      height: 44px;
-      z-index: 390;
-    }
-
-    body.composer-voice-open > .send-btn :is(.send-icon, .mic-icon, .stop-icon) {
-      width: var(--icon-size);
-      height: var(--icon-size);
-    }
-
-    body.composer-voice-open .composer .composer-field textarea {
-      padding-left: 14px;
-      padding-right: 14px;
-    }
-
     .send-btn .send-icon {
       width: 18px;
       height: 18px;
       display: block;
       transform: rotate(90deg);
-    }
-    .send-btn .mic-icon,
-    .send-btn .stop-icon,
-    .send-btn.is-mic .send-icon,
-    .send-btn.is-listening .send-icon {
-      display: none;
-    }
-    .send-btn.is-mic .mic-icon,
-    .send-btn.is-listening .stop-icon {
-      display: block;
-      width: 18px;
-      height: 18px;
     }
     .send-btn.is-pressed {
       transform: scale(0.93);
@@ -127,10 +95,6 @@
     .send-btn:disabled {
       cursor: not-allowed;
       opacity: 0.4;
-    }
-
-    .composer textarea.is-speech-interim {
-      color: var(--muted);
     }
 
     .attach-preview-row {

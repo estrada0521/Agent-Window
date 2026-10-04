@@ -35,16 +35,6 @@
       };
       lockComposerMenuPan(document.getElementById("fileDropdown"));
       lockComposerMenuPan(document.getElementById("cmdDropdown"));
-      mobileComposerInput?.addEventListener("touchstart", (event) => {
-        if (document.activeElement !== mobileComposerInput) return;
-        const parentChromeGap = Number.parseFloat(
-          getComputedStyle(document.documentElement).getPropertyValue("--hub-parent-chrome-gap"),
-        );
-        if (!Number.isFinite(parentChromeGap) || parentChromeGap >= HUB_KEYBOARD_GAP_THRESHOLD) return;
-        event.preventDefault();
-        mobileComposerInput.blur();
-        mobileComposerInput.focus({ preventScroll: true });
-      }, { passive: false });
     }
     const setComposerCaretToEnd = () => {
       if (!messageInput) return;

@@ -57,6 +57,11 @@ def load_timeline_template(variant: str) -> str:
         _COMPOSER_DROPDOWNS_HTML if normalized == "desktop" else "",
         1,
     )
+    composer = composer.replace(
+        "__TIMELINE_COMPOSER_VOICE_ICONS__",
+        _read_text(template_dir / "voice-icons.html") if normalized == "desktop" else "",
+        1,
+    )
     css = expand_includes(template_dir / "main.css")
     js = expand_includes(template_dir / "app.js")
     if _STYLE_MARKER not in shell:
