@@ -1124,6 +1124,11 @@ __INCLUDE:git-panel/events.js__
     });
     (() => {
       window.addEventListener("keydown", (event) => {
+        if (event.metaKey && event.ctrlKey && !event.altKey && !event.shiftKey && event.code === "KeyT") {
+          event.preventDefault();
+          window.parent?.postMessage({ type: "always-on-top-shortcut" }, "*");
+          return;
+        }
         if (event.metaKey && event.altKey) {
           if (event.code === "KeyB") {
             event.preventDefault();
@@ -1138,7 +1143,7 @@ __INCLUDE:git-panel/events.js__
           }
           if (event.code === "KeyT") {
             event.preventDefault();
-            window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openPane" }, "*");
+            window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openShell" }, "*");
             return;
           }
           if (event.code === "KeyL") {
@@ -1164,11 +1169,6 @@ __INCLUDE:git-panel/events.js__
             } else {
               window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openFinder" }, "*");
             }
-            return;
-          }
-          if (event.code === "KeyP") {
-            event.preventDefault();
-            window.parent?.postMessage({ type: "always-on-top-shortcut" }, "*");
             return;
           }
           if (event.code === "KeyH") {
@@ -1248,7 +1248,7 @@ __INCLUDE:git-panel/events.js__
         }
         if (event.metaKey && !event.altKey && !event.shiftKey && !event.ctrlKey && event.code === "KeyT") {
           event.preventDefault();
-          window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openShell" }, "*");
+          window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openPane" }, "*");
           return;
         }
         if (event.metaKey && !event.altKey && !event.ctrlKey && event.code === "KeyR") {

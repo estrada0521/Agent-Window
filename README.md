@@ -143,9 +143,9 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Action | Key | Note |
 |---|---|---|
 | Add / remove Agent | | |
-| Open Terminal | `⌘T` | |
+| Open Terminal | `⌥⌘T` | |
 | Open workspace in Finder | `⌥⌘R` | |
-| Open tmux pane | `⌥⌘T` | |
+| Open tmux pane | `⌘T` | |
 | Open log in Finder | `⌥⌘L` | |
 | Open timeline in browser | `⌥⌘O` | |
 | Export timeline as HTML / JSONL | | |
@@ -193,7 +193,7 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Swap the side bar to the other side | `⇧⌘E` | |
 | Swap Git and Workspace vertically | `⇧⌥⌘E` | |
 | Move to screen edge | `⌥⌘↑` `←` `→` `↓` | `↓` centers |
-| Keep above other windows | `⌥⌘P` | |
+| Keep above other windows | `⌃⌘T` | |
 | Fit Window to Message | `⌥⌘H` | |
 | Collapse Window | `⌥⌘M` | Restores on a new message. Fit Window to Message only |
 

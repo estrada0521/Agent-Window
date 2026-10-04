@@ -143,9 +143,9 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | 操作 | キー | 備考 |
 |---|---|---|
 | Agentの追加 / 削除 | | |
-| Terminalを開く | `⌘T` | |
+| Terminalを開く | `⌥⌘T` | |
 | Finderでworkspaceを開く | `⌥⌘R` | |
-| tmux paneを開く | `⌥⌘T` | |
+| tmux paneを開く | `⌘T` | |
 | FinderでLogを開く | `⌥⌘L` |  |
 | ブラウザでtimelineを開く | `⌥⌘O` |  |
 | timelineをHTML / JSONLとしてExport | | |
@@ -193,7 +193,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | side barの左右入れ替え | `⇧⌘E` | |
 | Git / Workspaceの上下入れ替え | `⇧⌥⌘E` | |
 | 画面端へ移動 | `⌥⌘↑` `←` `→` `↓` | `↓` は中央 |
-| 最前面に固定 | `⌥⌘P` | |
+| 最前面に固定 | `⌃⌘T` | |
 | Fit Window to Message | `⌥⌘H` | |
 | Collapse Window | `⌥⌘M` | 新しいmessageで復帰。Fit Window to Message中のみ |
 

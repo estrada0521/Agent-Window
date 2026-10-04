@@ -145,7 +145,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     removeMenu.enabled = active && remove.count > 0;
     [self setImage:MenuImage([NSImage imageNamed:NSImageNameRemoveTemplate]) on:removeMenu];
     NSMutableArray *panes = [NSMutableArray array];
-    NSMenuItem *terminalPane = [self item:@"terminal" payload:@{ @"action": @"openPane", @"target": @"terminal" } key:@"t" mods:NSEventModifierFlagCommand | NSEventModifierFlagOption];
+    NSMenuItem *terminalPane = [self item:@"terminal" payload:@{ @"action": @"openPane", @"target": @"terminal" } key:@"t" mods:NSEventModifierFlagCommand];
     [self setImage:MenuImage([NSImage imageWithSystemSymbolName:@"terminal" accessibilityDescription:nil]) on:terminalPane];
     [panes addObject:terminalPane];
     for (NSString *agent in p[@"removeAgents"]) {
@@ -173,7 +173,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSMenuItem *pin = [self action:@"gitPin" title:@"Pin changes" key:@"p" mods:cmd | NSEventModifierFlagShift];
     pin.state = [p[@"gitSummaryPinned"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
 
-    NSMenuItem *shell = [self action:@"openShell" title:@"Terminal" key:@"t" mods:cmd];
+    NSMenuItem *shell = [self action:@"openShell" title:@"Terminal" key:@"t" mods:cmd | opt];
     [self setImage:MenuImage([NSWorkspace.sharedWorkspace iconForFile:@"/System/Applications/Utilities/Terminal.app"]) on:shell];
     NSMenuItem *finder = [self action:@"openFinder" title:@"Finder" key:@"r" mods:cmd | opt];
     [self setImage:MenuImage([NSWorkspace.sharedWorkspace iconForFile:@"/System/Library/CoreServices/Finder.app"]) on:finder];
@@ -210,7 +210,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     swapSideBarPosition.enabled = sideBarAvailable;
     NSMenuItem *swapGitRepoPosition = [self action:@"swapGitRepoPosition" title:@"Swap Git and Workspace" key:@"e" mods:cmd | opt | shift];
     swapGitRepoPosition.enabled = sideBarAvailable;
-    NSMenuItem *alwaysOnTop = [self action:@"toggleAlwaysOnTop" title:@"Always on Top" key:@"p" mods:cmd | opt];
+    NSMenuItem *alwaysOnTop = [self action:@"toggleAlwaysOnTop" title:@"Always on Top" key:@"t" mods:cmd | NSEventModifierFlagControl];
     alwaysOnTop.state = [p[@"alwaysOnTop"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     BOOL fit = [p[@"autoWindowHeight"] boolValue];
     NSMenuItem *fitHeight = [self action:@"toggleAutoWindowHeight" title:@"Fit Window to Message" key:@"h" mods:cmd | opt];

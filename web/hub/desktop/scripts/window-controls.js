@@ -218,6 +218,11 @@
     }
 
     window.addEventListener("keydown", (event) => {
+      if (event.metaKey && event.ctrlKey && !event.altKey && !event.shiftKey && event.code === "KeyT") {
+        event.preventDefault();
+        toggleDeskAlwaysOnTop();
+        return;
+      }
       if (event.metaKey && event.altKey) {
         if (event.code === "KeyB") {
           event.preventDefault();
@@ -232,7 +237,7 @@
         }
         if (event.code === "KeyT") {
           event.preventDefault();
-          dispatchDeskNativeMenuAction({ action: "openPane" });
+          dispatchDeskNativeMenuAction({ action: "openShell" });
           return;
         }
         if (event.code === "KeyL") {
@@ -244,11 +249,6 @@
           event.preventDefault();
           if (event.shiftKey) openDeskHubInBrowser();
           else sendDeskTimelineAction("openInBrowser");
-          return;
-        }
-        if (event.code === "KeyP") {
-          event.preventDefault();
-          toggleDeskAlwaysOnTop();
           return;
         }
         if (event.code === "KeyH") {
@@ -329,7 +329,7 @@
       }
       if (event.metaKey && !event.altKey && !event.shiftKey && !event.ctrlKey && event.code === "KeyT") {
         event.preventDefault();
-        dispatchDeskNativeMenuAction({ action: "openShell" });
+        dispatchDeskNativeMenuAction({ action: "openPane" });
         return;
       }
       if (event.metaKey && !event.altKey && !event.ctrlKey && event.code === "KeyR") {
