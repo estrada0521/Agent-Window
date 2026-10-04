@@ -112,6 +112,8 @@ def project_codex_native_log(
                 if not texts:
                     return False
                 display = _without_codex_memory_citation("\n".join(texts))
+        elif entry_type == "compacted":
+            display = "Context compacted"
         elif entry_type == "event_msg":
             payload = entry.get("payload", {})
             payload_type = str(payload.get("type") or "").strip().lower()

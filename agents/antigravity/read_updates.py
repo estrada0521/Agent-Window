@@ -40,7 +40,10 @@ def project_antigravity_native_log(
     scan = CompleteJsonlScan(session_path_str, start)
     appended = False
     for line_start, entry in scan:
+        compacted = entry.get("source") == "SYSTEM" and entry.get("type") == "CHECKPOINT" and entry.get("status") == "DONE"
         text, tool_calls = parse_antigravity_transcript_step(entry)
+        if compacted:
+            text = "Context compacted"
         if tool_calls:
             running_events: list[dict] = []
             for tool_name, arguments in tool_calls:
@@ -58,12 +61,13 @@ def project_antigravity_native_log(
                 "sender": agent,
                 "targets": ["user"],
                 "message": text,
-                "native_log_kind": "antigravity_assistant_response",
+                "native_log_kind": "antigravity_checkpoint" if compacted else "antigravity_assistant_response",
                 "native_log_path": session_path_str,
                 "native_log_offset": line_start,
             },
         )
-        appended = True
+        if not compacted:
+            appended = True
 
     advance_read_offset(projector.offsets, session_path_str, scan.consumed)
     report_skipped_lines(projector, agent, scan)

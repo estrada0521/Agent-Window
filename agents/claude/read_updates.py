@@ -61,24 +61,30 @@ def project_claude_native_log(
         return
 
     def _append_claude_entry(entry: dict, line_start: int) -> None:
-        if entry.get("type") != "assistant":
-            return
-        msg = entry.get("message")
-        if not isinstance(msg, dict):
-            return
+        if entry.get("type") == "system" and entry.get("subtype") == "compact_boundary" and not entry.get("isSidechain"):
+            trigger = entry.get("compactMetadata", {}).get("trigger")
+            display = "Context compacted"
+            if trigger in ("auto", "manual"):
+                display += f" ({trigger})"
+        else:
+            if entry.get("type") != "assistant":
+                return
+            msg = entry.get("message")
+            if not isinstance(msg, dict):
+                return
 
-        content = msg.get("content", [])
-        if not isinstance(content, list):
-            return
-        texts = []
-        for c in content:
-            if isinstance(c, dict) and c.get("type") in ("text", "thinking"):
-                text = str(c.get(c["type"]) or "").strip()
-                if text:
-                    texts.append(text)
-        if not texts:
-            return
-        display = "\n".join(texts)
+            content = msg.get("content", [])
+            if not isinstance(content, list):
+                return
+            texts = []
+            for c in content:
+                if isinstance(c, dict) and c.get("type") in ("text", "thinking"):
+                    text = str(c.get(c["type"]) or "").strip()
+                    if text:
+                        texts.append(text)
+            if not texts:
+                return
+            display = "\n".join(texts)
         jsonl_entry = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "sender": agent,
