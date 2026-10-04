@@ -8,7 +8,7 @@ import time
 from collections import Counter
 from pathlib import Path
 
-from fs.log.jsonl import append_jsonl_entry
+from fs.log.jsonl import append_jsonl_entry, iter_log_entries_reversed
 from server.timeline.probe import read_timeline_server_state
 from fs.log.meta import (
     LogMetaError,
@@ -202,8 +202,8 @@ def _start_agent(
     workspace: str,
     pane_id: str,
     instance_name: str,
+    command: str,
 ) -> None:
-    command = agent_launch_cmd(instance_name)
     _run(["select-pane", "-t", pane_id, "-T", instance_name])
     shell = os.environ.get("SHELL") or "/bin/zsh"
     result = _run(
@@ -221,7 +221,7 @@ def _require_on_path(agent: str) -> None:
         raise SessionControlError(str(exc)) from exc
 
 
-def _prepare_instances(requested: list[str]) -> list[str]:
+def _prepare_instances(requested: list[str], *, preserve_names: bool = False) -> list[str]:
     bases: list[str] = []
     for raw in requested:
         base = agent_base_name(raw)
@@ -229,7 +229,27 @@ def _prepare_instances(requested: list[str]) -> list[str]:
             raise SessionControlError(f"Unknown agent: {raw}")
         _require_on_path(base)
         bases.append(base)
+    if preserve_names:
+        if len(set(requested)) != len(requested):
+            raise SessionControlError("Duplicate saved agent instance names")
+        return list(requested)
     return _instance_names(bases)
+
+
+def _resume_native_logs(timeline_name: str, instances: list[str]) -> dict[str, str]:
+    pending = set(instances)
+    paths = {}
+    for entry in iter_log_entries_reversed(log_jsonl_path(timeline_name)):
+        if not pending:
+            break
+        sender = entry["sender"]
+        if sender in pending and entry.get("native_log_path"):
+            paths[sender] = entry["native_log_path"]
+            pending.remove(sender)
+        elif sender == "system":
+            if entry["message"].startswith("Add Agent: "):
+                pending.discard(entry["message"][len("Add Agent: "):])
+    return paths
 
 
 def _create_tmux_session(workspace: Path) -> str:
@@ -264,7 +284,19 @@ def create_session(
     workspace_path = Path(workspace).expanduser().resolve()
     if not workspace_path.is_dir():
         raise SessionControlError(f"Invalid workspace: {workspace_path}")
-    instances = _prepare_instances(agents)
+    instances = _prepare_instances(agents, preserve_names=revive)
+    try:
+        native_logs = _resume_native_logs(timeline_name, instances) if revive else {}
+        if revive:
+            missing = [instance for instance in instances if instance not in native_logs]
+            if missing:
+                raise ValueError(f"No recorded conversation for: {', '.join(missing)}")
+        commands = {
+            instance: agent_launch_cmd(instance, native_log_path=native_logs[instance] if revive else "")
+            for instance in instances
+        }
+    except (OSError, ValueError, KeyError, TypeError, IndexError) as exc:
+        raise SessionControlError(f"Cannot revive timeline: {exc}") from exc
     if not revive:
         create_log_dir(timeline_name, str(workspace_path), instances)
     ensure_workspace_log_link(timeline_name, str(workspace_path))
@@ -306,11 +338,12 @@ def create_session(
                 workspace=str(workspace_path),
                 pane_id=pane_id,
                 instance_name=instance,
+                command=commands[instance],
             )
         _run(["select-pane", "-t", panes[0]])
 
     if revive:
-        _append_log(timeline_name, f"Session created: {workspace_path}")
+        _append_log(timeline_name, f"Session revived: {workspace_path}")
 
 
 def kill_session(
@@ -363,6 +396,7 @@ def add_agent(
         workspace=workspace,
         pane_id=pane_id,
         instance_name=instance,
+        command=agent_launch_cmd(instance),
     )
     _append_log(timeline_name, f"Add Agent: {instance}")
     return instance

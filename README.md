@@ -47,11 +47,11 @@ Builds the app, saves it to `/Applications/Agent Window.app`, and launches it.
 | Action | Effect | Note |
 |---|---|---|
 | Archive | Kills the tmux session | Log stays |
-| Revive | Creates a new tmux session from the saved workspace and Agent set | Resume the conversation with the CLI's own `/resume` |
+| Revive | Creates a new tmux session from the saved workspace and Agent set | Resumes each Agent's last conversation recorded in the log |
 | Delete | Permanently deletes the timeline's saved data | Archived only |
 | Rename | Changes the timeline's name | |
 | Change Workspace | Changes the workspace | Archived only |
-| Reset Agents | Clears the saved Agent set | The one used by Revive |
+| Reset Agents | Clears the saved Agent set | Revive, then Add Agent to start fresh |
 
 </details>
 

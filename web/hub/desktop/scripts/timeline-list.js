@@ -3,7 +3,7 @@
     const DESK_REVIVE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`;
     const DESK_TIMELINE_ACTION_TITLE = {
       kill: "Archive — Kill tmux session; keep log",
-      revive: "Revive — Restart tmux session with saved agent topology",
+      revive: "Revive",
       "delete-archived": "Delete — Delete ~/.agent-window/log/{label}",
     };
 

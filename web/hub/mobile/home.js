@@ -809,7 +809,7 @@
           svg: reviveSvg,
           label: "Revive",
           tone: "success",
-          title: "Revive — Restart tmux session with saved agent topology",
+          title: "Revive",
         },
       };
       let anyOpen = null;
