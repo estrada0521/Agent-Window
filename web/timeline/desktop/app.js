@@ -305,12 +305,12 @@ __INCLUDE:../scroll-btn.js__
 
 __INCLUDE:../messages.js__
 __INCLUDE:../transcript-render.js__
-    if (typeof marked === "undefined") {
-      const _rerenderWhenMarkedReady = () => {
-        if (typeof marked !== "undefined") rerenderCurrentMessages({ suppressEntryAnimation: true });
+    if (typeof marked === "undefined" || typeof DOMPurify === "undefined") {
+      const rerenderWhenMarkdownReady = () => {
+        if (typeof marked !== "undefined" && typeof DOMPurify !== "undefined") rerenderCurrentMessages({ suppressEntryAnimation: true });
       };
-      window.addEventListener("DOMContentLoaded", _rerenderWhenMarkedReady, { once: true });
-      window.addEventListener("load", _rerenderWhenMarkedReady, { once: true });
+      window.addEventListener("DOMContentLoaded", rerenderWhenMarkdownReady, { once: true });
+      window.addEventListener("load", rerenderWhenMarkdownReady, { once: true });
     }
 __INCLUDE:../transcript-actions.js__
 __INCLUDE:menu.js__

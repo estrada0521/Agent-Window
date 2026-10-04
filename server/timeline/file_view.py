@@ -31,6 +31,7 @@ from server.timeline.page_scripts import (
     KATEX_CDN_CSS_HREF,
     KATEX_CDN_JS_SRC,
     MARKED_CDN_SRC,
+    DOMPURIFY_CDN_SRC,
 )
 from server.appearance.typography import (
     CODE_FONT,
@@ -410,6 +411,7 @@ def render_file_view(
         rel_json = json.dumps(rel.replace("\\", "/"))
         prefix_json = json.dumps(prefix)
         markdown_head_tags = [
+            f'<script src="{DOMPURIFY_CDN_SRC}"></script>',
             f'<script src="{MARKED_CDN_SRC}"></script>',
             f'<link rel="stylesheet" href="{KATEX_CDN_CSS_HREF}">',
             f'<script src="{KATEX_CDN_JS_SRC}"></script>',

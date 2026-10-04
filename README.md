@@ -243,7 +243,7 @@ The stack is HTML/CSS/vanilla JavaScript, the Python standard library, and one O
 
 ## Footprint
 
-No telemetry. The only network dependencies besides the Agent CLIs are `marked` and `katex` from `cdn.jsdelivr.net`. Vendor them yourself if you want it fully local.
+No telemetry. The only network dependencies besides the Agent CLIs are `marked`, `DOMPurify`, and `katex` from `cdn.jsdelivr.net`. Vendor them yourself if you want it fully local.
 
 The Hub occupies the port in the `server/hub/port` file (default `8788`); edit the file to change it. Each timeline occupies a fixed port derived from its workspace's path.
 

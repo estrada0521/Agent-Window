@@ -5,20 +5,6 @@
       if (matches.length < 2 && !/\\n\\n|\\n\s*(?:[-*]|\d+\.|#{1,6}\s)/.test(value)) return value;
       return value.replace(/\\r\\n|\\n|\\r/g, "\n");
     };
-    const UNSAFE_URL_ATTR_PATTERN = /^\s*javascript:/i;
-    const stripUnsafeMarkup = (root) => {
-      root.querySelectorAll("iframe, object, embed, form").forEach((el) => el.remove());
-      root.querySelectorAll("*").forEach((el) => {
-        for (const attr of Array.from(el.attributes)) {
-          const name = attr.name.toLowerCase();
-          if (name.startsWith("on")) {
-            el.removeAttribute(attr.name);
-          } else if (/^(?:href|src|xlink:href|action|formaction)$/.test(name) && UNSAFE_URL_ATTR_PATTERN.test(attr.value)) {
-            el.removeAttribute(attr.name);
-          }
-        }
-      });
-    };
     const applyWrittenOrderedListNumbers = (root, source) => {
       if (!root || typeof marked?.lexer !== "function") return;
       const values = [];
@@ -57,18 +43,20 @@
         anchor.removeAttribute("href");
       });
     };
-    const renderMarkdownFallback = (text) => markdownEscapeHtml(String(text ?? "")).replace(/\n/g, "<br>");
     const renderMarkdown = (text) => {
       try {
-        return renderMarkdownUnsafe(text);
+        return renderMarkdownContent(text);
       } catch (err) {
-        console.error("markdown render failed, showing plain text", err);
-        return renderMarkdownFallback(text);
+        console.error("markdown render failed", err);
+        return `<p role="alert">Markdown unavailable: ${markdownEscapeHtml(err.message)}</p>`;
       }
     };
-    const renderMarkdownUnsafe = (text) => {
+    const renderMarkdownContent = (text) => {
       if (typeof marked === "undefined") {
         throw new Error("marked is unavailable");
+      }
+      if (typeof DOMPurify === "undefined" || !DOMPurify.isSupported) {
+        throw new Error("DOMPurify is unavailable");
       }
       let frontmatterHtml = "";
       let bodyText = text;
@@ -110,9 +98,12 @@
         html = rewriteMarkdownHtml(html);
       }
 
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = html;
-      stripUnsafeMarkup(tempDiv);
+      const tempDiv = DOMPurify.sanitize(html, {
+        USE_PROFILES: { html: true },
+        FORBID_TAGS: ["style", "iframe", "object", "embed", "form"],
+        FORBID_ATTR: ["style"],
+        RETURN_DOM: true,
+      });
       applyWrittenOrderedListNumbers(tempDiv, processedText);
       tempDiv.querySelectorAll(".MATH_SAFE_BLOCK").forEach((span) => {
         const block = mathBlocks.find((b) => b.id === span.dataset.id);
