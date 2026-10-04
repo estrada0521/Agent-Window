@@ -365,7 +365,10 @@ __INCLUDE:upload-attached-files.js__
       };
       recognition.onend = () => {
         if (speechRecognition !== recognition) return;
+        const autoSend = document.body.classList.contains("composer-voice-open")
+          && speechStopReason !== "manual" && !!spokenText && !interimText;
         finish(spokenText || interimText);
+        if (autoSend) composerForm.requestSubmit(sendBtn);
       };
       setStatus("");
       updateSendBtnVisibility();

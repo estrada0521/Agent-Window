@@ -2,6 +2,8 @@
       --composer-open-fade: 640ms ease;
     }
 
+    body #composerFabBtn { touch-action: none; }
+
     .composer-overlay {
       position: fixed;
       inset: 0;
@@ -148,6 +150,9 @@
 
     .target-picker {
       grid-area: targets;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
       display: block;
       white-space: nowrap;
       overflow-x: auto;
