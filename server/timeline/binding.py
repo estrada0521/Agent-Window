@@ -42,7 +42,7 @@ class WorkspaceTimelineBinding:
             log_path = log_jsonl_path(timeline_name)
             self._timeline_name = timeline_name
             self._log_path = log_path
-            self._root_signature = self._current_root_signature()
+            self._root_signature = signature
             return self._timeline_name, self._log_path
 
     def snapshot(self) -> tuple[str, Path]:

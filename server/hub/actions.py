@@ -17,7 +17,7 @@ from fs.log.meta import (
     set_log_workspace,
 )
 from fs.log.jsonl import append_jsonl_entry
-from fs.log.paths import agent_window_log_root, log_jsonl_path
+from fs.log.paths import agent_window_log_root, log_jsonl_path, port_is_bindable, workspace_timeline_port
 from server.hub.supervisor import (
     TmuxUnhealthy,
     delete_archived_timeline,
@@ -273,7 +273,18 @@ def post_change_timeline_workspace(handler, _parsed, ctx) -> None:
     data = handler._read_form()
     timeline_name = str(data.get("timeline") or "").strip()
     workspace = str(data.get("workspace") or "").strip()
+    live = live_timelines_query(ctx["hub"])
+    if live.state == "unhealthy":
+        handler._send_unhealthy("json", live.detail)
+        return
+    if timeline_name in live.workspaces:
+        handler._send_json(409, {"ok": False, "error": "Archive first"})
+        return
     try:
+        current_workspace = log_workspace(timeline_name)
+        if not port_is_bindable(workspace_timeline_port(current_workspace)):
+            handler._send_json(409, {"ok": False, "error": "Close timeline first"})
+            return
         set_log_workspace(timeline_name, workspace)
     except LogMetaError as exc:
         handler.log_error("Failed to change workspace: %s", exc)

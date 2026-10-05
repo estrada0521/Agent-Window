@@ -170,6 +170,15 @@
 
     async function changeDeskTimelineWorkspace(timelineName) {
       if (!timelineName) return;
+      const rec = findTimelineRecord(timelineName);
+      if (!rec?.archived) {
+        setError("Archive first");
+        return;
+      }
+      if (timelineName === _deskSelectedTimelineName) {
+        setError("Close timeline first");
+        return;
+      }
       setStatus("");
       let picked;
       try {
@@ -196,7 +205,7 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) throw new Error(data.error || "Failed to change workspace");
       } catch (err) {
-        setError("Workspace change failed", err);
+        setError(["Archive first", "Close timeline first"].includes(err.message) ? err.message : "Workspace change failed", err);
         return;
       }
       hubTimelineUrls.forget(buildTimelineOpenHref(timelineName, true));

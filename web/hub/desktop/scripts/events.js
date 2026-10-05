@@ -466,13 +466,12 @@
         _deskContextTimelineName = timelineName;
         const rec = findTimelineRecord(timelineName);
         const archived = !!(rec && rec.archived);
-        const selected = timelineName === _deskSelectedTimelineName;
         invoke("show_timeline_context_menu", {
           payload: {
             x: Math.round(event.clientX),
             y: Math.round(event.clientY),
             resetAgentsEnabled: archived && rec.timeline.has_agents,
-            changeWorkspaceEnabled: archived && !selected,
+            changeWorkspaceEnabled: true,
             archiveEnabled: !archived,
             deleteEnabled: archived,
             reviveEnabled: archived,
