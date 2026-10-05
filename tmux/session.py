@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import os
-import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import partial
+from subprocess import CompletedProcess
 
-from tmux import TMUX
+from tmux import run_tmux
 from tmux.process_cleanup import cleanup_target_process_groups
 from fs.log.paths import normalize_workspace
 
@@ -19,20 +20,8 @@ class AgentPane:
     pane_id: str
 
 
-def _run(args: list[str]):
-    return subprocess.run(
-        [*TMUX, *args],
-        capture_output=True,
-        text=True,
-        timeout=2,
-        check=False,
-    )
-
-
 def live_sessions() -> list[tuple[str, str]]:
-    result = _run(
-        ["list-sessions", "-F", "#{session_name}\t#{session_path}"],
-    )
+    result = run_tmux(["list-sessions", "-F", "#{session_name}\t#{session_path}"], timeout=2)
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
         lowered = detail.lower()
@@ -64,9 +53,7 @@ def find_session_for_workspace(
 def tmux_session_workspace(
     session_name: str,
 ) -> str:
-    result = _run(
-        ["display-message", "-p", "-t", session_name, "#{session_path}"],
-    )
+    result = run_tmux(["display-message", "-p", "-t", session_name, "#{session_path}"], timeout=2)
     workspace = (result.stdout or "").strip()
     if result.returncode != 0 or not workspace:
         detail = (result.stderr or result.stdout or "").strip()
@@ -77,15 +64,13 @@ def tmux_session_workspace(
 def agent_topology(
     session_name: str,
 ) -> list[AgentPane]:
-    result = _run(
-        [
+    result = run_tmux([
             "list-windows",
             "-t",
             session_name,
             "-F",
             "#{window_name}\t#{window_panes}\t#{pane_id}",
-        ],
-    )
+        ], timeout=2)
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
         raise RuntimeError(detail or f"cannot read tmux topology for {session_name}")
@@ -117,7 +102,7 @@ def parse_agent_topology(output: str) -> list[AgentPane]:
 def terminal_window_pane_id(
     session_name: str,
     *,
-    run_tmux: Callable[[list[str]], subprocess.CompletedProcess[str]] = _run,
+    run_tmux: Callable[[list[str]], CompletedProcess[str]] = partial(run_tmux, timeout=2),
 ) -> str:
     result = run_tmux(
         ["list-windows", "-t", session_name, "-F", "#{window_name}\t#{pane_id}"],
@@ -133,41 +118,15 @@ def terminal_window_pane_id(
 
 
 def pane_field(pane_id: str, field: str) -> str:
-    result = subprocess.run(
-        [*TMUX, "display-message", "-p", "-t", pane_id, field],
-        capture_output=True,
-        text=True,
-        timeout=2,
-        check=False,
-    )
+    result = run_tmux(["display-message", "-p", "-t", pane_id, field], timeout=2)
     return result.stdout.strip()
 
 
 def respawn_pane(pane_id: str, *, workspace: str, command: str, title: str) -> tuple[bool, str]:
     shell = os.environ.get("SHELL") or "/bin/zsh"
     cleanup_target_process_groups(target=pane_id)
-    respawn_res = subprocess.run(
-        [
-            *TMUX,
-            "respawn-pane",
-            "-k",
-            "-t",
-            pane_id,
-            "-c",
-            workspace,
-            shell,
-            "-lc",
-            command,
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    respawn_res = run_tmux(["respawn-pane", "-k", "-t", pane_id, "-c", workspace, shell, "-lc", command])
     if respawn_res.returncode != 0:
         return False, (respawn_res.stderr or respawn_res.stdout or "").strip()
-    subprocess.run(
-        [*TMUX, "select-pane", "-t", pane_id, "-T", title],
-        capture_output=True,
-        check=False,
-    )
+    run_tmux(["select-pane", "-t", pane_id, "-T", title])
     return True, ""

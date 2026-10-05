@@ -1,7 +1,6 @@
 from __future__ import annotations
 import json
 import os
-import subprocess
 import threading
 import uuid
 from datetime import datetime
@@ -9,7 +8,7 @@ from pathlib import Path
 
 from fs.log.jsonl import append_jsonl_entry
 from fs.log.meta import log_meta_agents
-from tmux import TMUX
+from tmux import run_tmux
 from tmux.send_keys import deliver_text_to_pane
 from fs.log.jsonl import newest_entries
 from agents.native_log_projector import NativeLogProjector
@@ -229,8 +228,6 @@ class TimelineState:
     def deliver_message(self, targets: list[str], message: str) -> list[str]:
         panes_by_agent = self.agent_panes()
 
-        def run_tmux(args):
-            return subprocess.run([*TMUX, *args], capture_output=True, text=True, check=False)
 
         failed: list[str] = []
         for agent in targets:

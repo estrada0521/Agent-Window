@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from tmux import TMUX
+from tmux import run_tmux
 from fs.log.paths import normalize_workspace
 
 
@@ -54,13 +54,7 @@ class HubState:
 
     def tmux_run(self, args, timeout=2) -> TmuxRunResult:
         try:
-            res = subprocess.run(
-                [*TMUX, *args],
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                check=False,
-            )
+            res = run_tmux(args, timeout=timeout)
             return TmuxRunResult(
                 args=list(args),
                 returncode=res.returncode,

@@ -1,21 +1,16 @@
 from __future__ import annotations
 
 import os
-import subprocess
 
 from fs.log.meta import read_log_meta
-from tmux import TMUX
+from tmux import run_tmux
 from tmux.session import agent_topology, find_session_for_workspace
 
 
-def _run(args: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run([*TMUX, *args], capture_output=True, text=True, check=False)
-
-
 def _pane_status(pane_id: str) -> dict:
-    title = _run(["display-message", "-p", "-t", pane_id, "#{pane_title}"]).stdout.strip()
-    command = _run(["display-message", "-p", "-t", pane_id, "#{pane_current_command}"]).stdout.strip()
-    dead = _run(["display-message", "-p", "-t", pane_id, "#{pane_dead}"]).stdout.strip() == "1"
+    title = run_tmux(["display-message", "-p", "-t", pane_id, "#{pane_title}"]).stdout.strip()
+    command = run_tmux(["display-message", "-p", "-t", pane_id, "#{pane_current_command}"]).stdout.strip()
+    dead = run_tmux(["display-message", "-p", "-t", pane_id, "#{pane_dead}"]).stdout.strip() == "1"
     return {"pane_id": pane_id, "title": title, "command": command, "dead": dead}
 
 
@@ -32,12 +27,12 @@ def describe_timeline(timeline_name: str) -> dict:
     if not tmux_name:
         return info
 
-    attached = _run(["display-message", "-p", "-t", tmux_name, "#{session_attached}"]).stdout.strip()
-    created_epoch = _run(["display-message", "-p", "-t", tmux_name, "#{session_created}"]).stdout.strip()
-    window_count = len(_run(["list-windows", "-t", tmux_name, "-F", "#{window_id}"]).stdout.splitlines())
+    attached = run_tmux(["display-message", "-p", "-t", tmux_name, "#{session_attached}"]).stdout.strip()
+    created_epoch = run_tmux(["display-message", "-p", "-t", tmux_name, "#{session_created}"]).stdout.strip()
+    window_count = len(run_tmux(["list-windows", "-t", tmux_name, "-F", "#{window_id}"]).stdout.splitlines())
     dead_panes = sum(
         1
-        for line in _run(["list-panes", "-s", "-t", tmux_name, "-F", "#{pane_dead}"]).stdout.splitlines()
+        for line in run_tmux(["list-panes", "-s", "-t", tmux_name, "-F", "#{pane_dead}"]).stdout.splitlines()
         if line.strip() == "1"
     )
     topology = agent_topology(tmux_name)

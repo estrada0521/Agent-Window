@@ -32,7 +32,7 @@ from tmux.session import (
     find_session_for_workspace as find_live_session_for_workspace,
     tmux_session_workspace,
 )
-from tmux import TMUX
+from tmux import run_tmux
 from tmux.window import (
     configure_window_size,
     create_agent_window,
@@ -49,16 +49,6 @@ class SessionControlError(RuntimeError):
     pass
 
 
-def _run(args: list[str], *, timeout: float | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [*TMUX, *args],
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        check=False,
-    )
-
-
 def _resolve_tmux_name(timeline_name: str) -> str | None:
     try:
         workspace = log_workspace(timeline_name)
@@ -68,11 +58,11 @@ def _resolve_tmux_name(timeline_name: str) -> str | None:
 
 
 def _set_env(tmux_name: str, key: str, value: str) -> None:
-    _run(["set-environment", "-t", tmux_name, key, value])
+    run_tmux(["set-environment", "-t", tmux_name, key, value])
 
 
 def _unset_env(tmux_name: str, key: str) -> None:
-    _run(["set-environment", "-t", tmux_name, "-u", key])
+    run_tmux(["set-environment", "-t", tmux_name, "-u", key])
 
 
 def _instance_names(bases: list[str]) -> list[str]:
@@ -204,11 +194,9 @@ def _start_agent(
     instance_name: str,
     command: str,
 ) -> None:
-    _run(["select-pane", "-t", pane_id, "-T", instance_name])
+    run_tmux(["select-pane", "-t", pane_id, "-T", instance_name])
     shell = os.environ.get("SHELL") or "/bin/zsh"
-    result = _run(
-        ["respawn-pane", "-k", "-t", pane_id, "-c", workspace, shell, "-lc", command],
-    )
+    result = run_tmux(["respawn-pane", "-k", "-t", pane_id, "-c", workspace, shell, "-lc", command])
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip() or f"failed to start {instance_name}"
         raise SessionControlError(detail)
@@ -253,8 +241,7 @@ def _resume_native_logs(timeline_name: str, instances: list[str]) -> dict[str, s
 
 
 def _create_tmux_session(workspace: Path) -> str:
-    created = _run(
-        [
+    created = run_tmux([
             "new-session",
             "-d",
             "-P",
@@ -266,8 +253,7 @@ def _create_tmux_session(workspace: Path) -> str:
             str(SESSION_HEIGHT),
             "-c",
             str(workspace),
-        ],
-    )
+        ])
     if created.returncode != 0:
         detail = (created.stderr or created.stdout or "").strip() or "tmux new-session failed"
         raise SessionControlError(detail)
@@ -304,7 +290,7 @@ def create_session(
     tmux_name = _create_tmux_session(workspace_path)
 
     configure_window_size(target=f"{tmux_name}:0", width=SESSION_WIDTH)
-    _run(["rename-window", "-t", f"{tmux_name}:0", TERMINAL_WINDOW_NAME])
+    run_tmux(["rename-window", "-t", f"{tmux_name}:0", TERMINAL_WINDOW_NAME])
     for args in (
         ["set-option", "-t", tmux_name, "-g", "remain-on-exit", "on"],
         ["set-option", "-t", tmux_name, "-g", "mouse", "on"],
@@ -313,8 +299,8 @@ def create_session(
         ["set-option", "-t", tmux_name, "-g", "status-style", "bg=#38393D,fg=#ACB4BE"],
         ["set-option", "-t", tmux_name, "-g", "history-limit", "50000"],
     ):
-        _run(args)
-    _run(["set-option", "-t", tmux_name, "-g", "@scroll-speed-num-lines-per-scroll", "1"])
+        run_tmux(args)
+    run_tmux(["set-option", "-t", tmux_name, "-g", "@scroll-speed-num-lines-per-scroll", "1"])
 
     panes: list[str] = []
     for instance in instances:
@@ -340,7 +326,7 @@ def create_session(
                 instance_name=instance,
                 command=commands[instance],
             )
-        _run(["select-pane", "-t", panes[0]])
+        run_tmux(["select-pane", "-t", panes[0]])
 
     if revive:
         _append_log(timeline_name, f"Session revived: {workspace_path}")
@@ -358,7 +344,7 @@ def kill_session(
     if not stop_ok:
         raise SessionControlError(f"failed to stop timeline server for {timeline_name}: {stop_detail}")
     cleanup_target_process_groups(target=tmux_name)
-    result = _run(["kill-session", "-t", tmux_name], timeout=4)
+    result = run_tmux(["kill-session", "-t", tmux_name], timeout=4)
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip() or "tmux kill-session failed"
         raise SessionControlError(detail)

@@ -81,7 +81,7 @@ class RenamedTimelineRouteTests(unittest.TestCase):
 
         with self.assertRaisesRegex(RuntimeError, "tmux list-sessions failed"):
             with mock.patch(
-                "tmux.session.subprocess.run",
+                "tmux.session.run_tmux",
                 return_value=failed,
             ):
                 find_session_for_workspace("/work/project")

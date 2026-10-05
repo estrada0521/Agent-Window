@@ -13,7 +13,7 @@ from agents.registry import ALL_AGENT_NAMES
 from fs.log.jsonl import append_jsonl_entry
 from fs.log.meta import find_timeline_name_for_workspace
 from tmux.session import AgentPane, parse_agent_topology, terminal_window_pane_id
-from tmux import TMUX_SOCKET_NAME
+from tmux import TMUX_SOCKET_NAME, run_tmux
 from tmux.send_keys import deliver_text_to_pane
 from fs.log.paths import log_jsonl_path, workspace_timeline_port
 
@@ -36,13 +36,7 @@ class TmuxClient:
     def run(self, args: list[str]) -> subprocess.CompletedProcess[str]:
         cmd = ["tmux", "-S", self.socket_path, *args]
         try:
-            return subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=False,
-                env=self.env,
-            )
+            return run_tmux(args, socket_path=self.socket_path, env=self.env)
         except OSError as exc:
             return subprocess.CompletedProcess(cmd, 127, "", str(exc))
 

@@ -11,7 +11,7 @@ from server.timeline.control import SessionControlError, _create_tmux_session, _
 class TmuxIdentityTests(unittest.TestCase):
     def test_tmux_allocates_its_own_opaque_timeline_name(self) -> None:
         created = SimpleNamespace(returncode=0, stdout="7\n", stderr="")
-        with patch("server.timeline.control._run", return_value=created) as run:
+        with patch("server.timeline.control.run_tmux", return_value=created) as run:
             tmux_name = _create_tmux_session(Path("/workspace/project"))
 
         self.assertEqual(tmux_name, "7")

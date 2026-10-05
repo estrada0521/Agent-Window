@@ -2,22 +2,16 @@ from __future__ import annotations
 
 import os
 import signal
-import subprocess
 import time
 
-from tmux import TMUX
+from tmux import run_tmux
 
 
 def pane_pid_for_target(*, target: str) -> int | None:
     pane = (target or "").strip()
     if not pane:
         return None
-    res = subprocess.run(
-        [*TMUX, "display-message", "-p", "-t", pane, "#{pane_pid}"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    res = run_tmux(["display-message", "-p", "-t", pane, "#{pane_pid}"])
     if res.returncode != 0:
         return None
     value = (res.stdout or "").strip()
@@ -30,12 +24,7 @@ def pane_pids_for_target(*, target: str) -> list[int]:
     tmux_target = (target or "").strip()
     if not tmux_target:
         return []
-    res = subprocess.run(
-        [*TMUX, "list-panes", "-t", tmux_target, "-F", "#{pane_pid}"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    res = run_tmux(["list-panes", "-t", tmux_target, "-F", "#{pane_pid}"])
     if res.returncode != 0:
         pid = pane_pid_for_target(target=tmux_target)
         return [pid] if pid else []
