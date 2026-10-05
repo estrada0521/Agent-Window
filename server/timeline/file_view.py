@@ -412,6 +412,7 @@ def render_file_view(
         markdown_frontmatter_js = _timeline_markdown_frontmatter_js()
         file_link_parse_js = _timeline_file_link_parse_js()
         markdown_render_js = _timeline_markdown_render_js()
+        markdown_tables_js = (_REPO_ROOT / "web/timeline/markdown-tables.js").read_text(encoding="utf-8")
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
         dark_preview_fg_channels = TEXT_PRIMARY_MOBILE_DARK_CHANNELS.replace(" ", "")
         dark_preview_fg = f"rgb({dark_preview_fg_channels})"
@@ -688,17 +689,7 @@ const mathRenderOptions = {{
   ignoredClasses: ["no-math"],
   throwOnError: false
 }};
-const ensureWideTables = (scope = document) => {{
-  scope.querySelectorAll(".md-body table").forEach((table) => {{
-if (table.closest(".table-scroll")) return;
-const parent = table.parentNode;
-if (!parent) return;
-const scroll = document.createElement("div");
-scroll.className = "table-scroll";
-parent.insertBefore(scroll, table);
-scroll.appendChild(table);
-  }});
-}};
+{markdown_tables_js}
 const applyPreviewTheme = (theme) => {{
   const nextTheme = theme === "light" ? "light" : "dark";
   __root.setAttribute("data-preview-theme", nextTheme);

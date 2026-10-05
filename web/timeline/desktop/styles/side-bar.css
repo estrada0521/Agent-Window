@@ -1227,7 +1227,6 @@
       scrollbar-width: none;
       padding-bottom: 0;
     }
-    .git-pinned-summary-aside.is-expanded .git-pinned-expand::-webkit-scrollbar { display: none; }
     .git-pinned-summary-aside.is-expanded .git-pinned-expand[data-scroll-fade="top"] {
       mask-image: linear-gradient(to bottom, transparent 0, black var(--git-pinned-scroll-fade));
       -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--git-pinned-scroll-fade));

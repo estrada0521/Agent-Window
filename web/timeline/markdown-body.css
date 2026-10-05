@@ -11,6 +11,8 @@
       font-size: var(--text-size, 13px);
       line-height: var(--text-line-height, 22px);
       color: var(--fg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
 
     .message.user .md-body {
@@ -214,7 +216,7 @@
       overflow-x: auto;
       overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
-      margin: 0.5em 0;
+      margin: 0.5em 0 1em;
     }
 
     .md-body .katex-display {
@@ -415,11 +417,20 @@
 
     .md-body th,
     .md-body td {
-      white-space: nowrap;
+      white-space: normal;
+      vertical-align: top;
       border: none;
       padding: 0.38em var(--table-cell-padding-inline);
       text-align: left;
       font: inherit;
+    }
+
+    .md-body table.measuring-columns {
+      width: max-content;
+    }
+
+    .md-body table.measuring-columns :is(th, td) {
+      white-space: nowrap;
     }
 
     .md-body tbody tr:not(:last-child) td {
@@ -466,6 +477,10 @@
     .md-body .md-frontmatter .md-frontmatter {
       margin: 0;
       width: 100%;
+    }
+
+    .md-body .table-scroll > table {
+      margin: 0;
     }
 
     .md-body a:not(.inline-file-link):not(.local-file-link) {

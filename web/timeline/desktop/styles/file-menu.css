@@ -26,8 +26,6 @@
       padding: 0;
       box-sizing: border-box;
       will-change: transform, opacity;
-      scrollbar-width: thin;
-      scrollbar-color: var(--scrollbar-thumb) transparent;
     }
 
     #fileDropdown,
@@ -41,17 +39,7 @@
       flex-direction: column;
     }
 
-    #fileDropdown::-webkit-scrollbar,
-    #cmdDropdown::-webkit-scrollbar {
-      width: 2px;
-      height: 2px;
-    }
 
-    #fileDropdown::-webkit-scrollbar-thumb,
-    #cmdDropdown::-webkit-scrollbar-thumb {
-      background: var(--scrollbar-thumb);
-      border-radius: calc(var(--text-size, 13px) * 999 / 13);
-    }
     #fileDropdown.visible,
     #cmdDropdown.visible {
       display: flex;

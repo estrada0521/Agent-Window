@@ -189,9 +189,6 @@
       mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black calc(100% - var(--target-picker-fade-right)), transparent 100%);
       -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--target-picker-fade-left), black calc(100% - var(--target-picker-fade-right)), transparent 100%);
     }
-    .target-picker::-webkit-scrollbar {
-      display: none;
-    }
     .composer-stack {
       display: contents;
     }

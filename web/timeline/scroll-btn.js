@@ -2,19 +2,6 @@
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;
     };
-    let _scrollbarFadeTimer = null;
-    const revealScrollbar = () => {
-      messagesEl.classList.add("is-scrolling");
-      clearTimeout(_scrollbarFadeTimer);
-      _scrollbarFadeTimer = setTimeout(() => {
-        messagesEl.classList.remove("is-scrolling");
-      }, 1000);
-    };
-    messagesEl.addEventListener("wheel", revealScrollbar, { passive: true });
-    messagesEl.addEventListener("touchstart", revealScrollbar, { passive: true });
-    messagesEl.addEventListener("scroll", () => {
-      if (messagesEl.classList.contains("is-scrolling")) revealScrollbar();
-    }, { passive: true });
     messagesEl.addEventListener("wheel", clearPollScrollLock, { passive: true });
     messagesEl.addEventListener("touchstart", clearPollScrollLock, { passive: true });
     messagesEl.addEventListener("scroll", updateStickyState, { passive: true });

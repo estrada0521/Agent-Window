@@ -31,17 +31,7 @@
         if (ready) applyMath();
       });
     };
-    const ensureWideTables = (scope = document) => {
-      scope.querySelectorAll(".md-body table").forEach((table) => {
-        if (table.closest(".table-scroll")) return;
-        const parent = table.parentNode;
-        if (!parent) return;
-        const scroll = document.createElement("div");
-        scroll.className = "table-scroll";
-        parent.insertBefore(scroll, table);
-        scroll.appendChild(table);
-      });
-    };
+__INCLUDE:markdown-tables.js__
     const syncWideBlockRows = (scope = document) => {
       ensureWideTables(scope);
       scope.querySelectorAll(".message-body-row").forEach((row) => {

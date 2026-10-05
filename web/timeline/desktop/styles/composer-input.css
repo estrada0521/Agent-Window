@@ -149,9 +149,6 @@
       mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - var(--attach-preview-fade-right)), transparent 100%);
       -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - var(--attach-preview-fade-right)), transparent 100%);
     }
-    .attach-preview-row::-webkit-scrollbar {
-      display: none;
-    }
     .attach-file-input {
       position: absolute;
       width: 1px;
@@ -321,9 +318,6 @@
     html:not([data-mobile="1"]) .composer textarea {
       scrollbar-width: none;
     }
-    html:not([data-mobile="1"]) .composer textarea::-webkit-scrollbar {
-      display: none;
-    }
     html[data-mobile="1"] .composer-overlay {
       --composer-overlay-max-width: calc(100vw - calc(var(--text-size, 13px) * 16 / 13));
     }
@@ -348,7 +342,6 @@
       --timeline-scrollbar-layout-width: 2px;
     }
     main {
-      --timeline-scrollbar-width: 2px;
       --message-step-top-gap: calc(var(--text-size, 13px) * 20 / 13 + var(--timeline-band-h));
       scroll-padding-top: var(--message-step-top-gap);
       font-size: var(--text-size, 13px);
@@ -396,9 +389,6 @@
     html[data-mobile="1"] main {
       padding-right: var(--message-side-padding);
     }
-    main { scrollbar-width: thin; scrollbar-color: transparent transparent; }
-    main.is-scrolling { scrollbar-color: var(--scrollbar-thumb) transparent; }
-    main::-webkit-scrollbar { width: var(--timeline-scrollbar-width) !important; height: var(--timeline-scrollbar-width) !important; }
     #scrollToBottomBtn,
     #composerFabBtn {
       --fab-icon-size: round(nearest, calc(var(--text-size, 13px) * 18 / 13), 1px);
