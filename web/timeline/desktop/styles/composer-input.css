@@ -100,7 +100,7 @@
       display: flex;
       flex-wrap: nowrap;
       gap: calc(var(--text-size, 13px) * 8 / 13);
-      padding: 0 calc(var(--text-size, 13px) * 6 / 13) calc(var(--text-size, 13px) * 10 / 13) calc(var(--text-size, 13px) * 10 / 13);
+      padding: 0 0 calc(var(--text-size, 13px) * 10 / 13);
       overflow-x: auto;
       overflow-y: hidden;
       scrollbar-width: none;
@@ -208,6 +208,38 @@
       letter-spacing: 0.08em;
       color: var(--fg);
       text-transform: uppercase;
+    }
+    .attach-card.attach-card-file {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: calc(var(--text-size, 13px) * 3 / 13);
+      height: calc(var(--text-size, 13px) * 80 / 13);
+    }
+    .attach-card-icon {
+      flex: none;
+      width: calc(var(--text-size, 13px) * 24 / 13);
+      height: calc(var(--text-size, 13px) * 24 / 13);
+      color: var(--icon-fg);
+    }
+    .attach-card-name {
+      box-sizing: border-box;
+      width: 100%;
+      padding: calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 6 / 13);
+      color: var(--fg);
+      font-size: calc(var(--text-size, 13px) * 11 / 13);
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .attach-card-icon > img,
+    .attach-card-icon > svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
     .composer textarea {
       display: block;

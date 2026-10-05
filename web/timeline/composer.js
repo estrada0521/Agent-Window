@@ -60,6 +60,7 @@
       const beginAttachCard = (file) => {
         const card = document.createElement("button");
         card.type = "button";
+        card.title = file.name;
         card.className = "attach-card is-uploading";
         card.setAttribute("aria-label", `Cancel upload of ${file.name}`);
         card.setAttribute("aria-busy", "true");
@@ -127,10 +128,12 @@
               img.alt = file.name;
               card.appendChild(img);
             } else {
-              const ext = document.createElement("div");
-              ext.className = "attach-card-ext";
-              ext.textContent = file.name.split(".").pop().slice(0, 5) || "FILE";
-              card.appendChild(ext);
+              card.classList.add("attach-card-file");
+              card.appendChild(fileIconElement(file.name, {}, "attach-card-icon"));
+              const filename = document.createElement("span");
+              filename.className = "attach-card-name";
+              filename.textContent = file.name;
+              card.appendChild(filename);
             }
           },
           discard() {

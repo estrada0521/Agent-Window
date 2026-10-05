@@ -9,6 +9,7 @@
         const files = Array.from(fileList || []).filter((f) => f && typeof f.name === "string");
         if (!files.length) return false;
         try {
+          if (files.some((file) => !file.type.startsWith("image/"))) await ensureFileIconTheme();
           await Promise.all(files.map(async (file) => {
             const card = beginAttachCard(file);
             attachUploadsInFlight += 1;
