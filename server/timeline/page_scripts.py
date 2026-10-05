@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tmux.key_macro import PANE_TEXT_MACROS
+from tmux.key_macro import PANE_TEXT_MACROS, PANE_FUNCTION_KEYS
 
 
 _PANE_TEXT_MACRO_OPTIONS_HTML = "\n".join(
@@ -22,13 +22,17 @@ TIMELINE_SHEET_PANELS_HTML = f"""
         <div class="pane-viewer-carousel" id="paneViewerCarousel"></div>
       </div>
       <div class="pane-viewer-keys" id="paneViewerKeys">
-        <button type="button" id="paneViewerMacroBtn" class="pane-viewer-key-btn pane-viewer-key-btn-text" aria-label="Command">/</button>
         <select id="paneViewerMacroSelect" class="pane-viewer-key-native-select" aria-label="Command" tabindex="-1">
           <option value="" disabled selected>Command</option>
 {_PANE_TEXT_MACRO_OPTIONS_HTML}
         </select>
         <button type="button" class="pane-viewer-key-btn pane-viewer-key-btn-text" data-key-macro="esc" aria-label="Escape">Esc</button>
         <button type="button" class="pane-viewer-key-btn pane-viewer-key-btn-text" data-key-macro="ctrlc" aria-label="Ctrl+C">^C</button>
+        <button type="button" id="paneViewerFunctionBtn" class="pane-viewer-key-btn pane-viewer-key-btn-text" aria-label="Function keys">F</button>
+        <select id="paneViewerFunctionSelect" class="pane-viewer-key-native-select" aria-label="Function keys" tabindex="-1">
+          <option value="" disabled selected>Function keys</option>
+{''.join(f'<option value="{key.lower()}">{key}</option>' for key in PANE_FUNCTION_KEYS)}
+        </select>
         <button type="button" class="pane-viewer-key-btn" data-key-macro="up" aria-label="Up">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
         </button>

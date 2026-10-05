@@ -9,8 +9,9 @@ from tmux.send_keys import deliver_text_to_pane
 
 PANE_KEY_MACROS = frozenset({"up", "down", "left", "right", "enter", "esc", "ctrlc"})
 PANE_TEXT_MACROS = ("/model", "/effort", "/usage", "/permission", "/resume")
+PANE_FUNCTION_KEYS = tuple(f"F{i}" for i in range(1, 13))
 TERMINAL_INPUT = "terminal"
-KEY_MACRO_IDS = PANE_KEY_MACROS | frozenset(PANE_TEXT_MACROS) | {TERMINAL_INPUT}
+KEY_MACRO_IDS = PANE_KEY_MACROS | frozenset(PANE_TEXT_MACROS) | frozenset(key.lower() for key in PANE_FUNCTION_KEYS) | {TERMINAL_INPUT}
 _SINGLE_KEYS = {"esc": "Escape", "ctrlc": "C-c", "enter": "Enter"}
 _ARROW_KEYS = {"up": "Up", "down": "Down", "left": "Left", "right": "Right"}
 
@@ -41,7 +42,7 @@ def run_key_macro(
                 if not deliver_text_to_pane(_run_tmux, pane_id, text):
                     return 400, {"ok": False, "error": f"send-keys failed for {target_item}"}
                 continue
-            key = _ARROW_KEYS[macro_id] if arrow else _SINGLE_KEYS[macro_id]
+            key = macro_id.upper() if macro_id.startswith("f") else (_ARROW_KEYS[macro_id] if arrow else _SINGLE_KEYS[macro_id])
             for _ in range(arrow or 1):
                 result = _run_tmux(["send-keys", "-t", pane_id, key])
                 if result.returncode != 0:

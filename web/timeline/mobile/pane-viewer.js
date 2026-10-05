@@ -13,9 +13,6 @@
     const paneViewerTabs = document.getElementById("paneViewerTabs");
     const paneViewerCarousel = document.getElementById("paneViewerCarousel");
     const paneViewerMacroSelect = document.getElementById("paneViewerMacroSelect");
-    document.getElementById("paneViewerMacroBtn")?.addEventListener("click", () => {
-      if (paneViewerMacroSelect) openNativeSelect(paneViewerMacroSelect);
-    });
     paneViewerMacroSelect?.addEventListener("change", () => {
       const commandId = String(paneViewerMacroSelect.value || "");
       paneViewerMacroSelect.value = "";
@@ -25,6 +22,17 @@
     });
     paneViewerMacroSelect?.addEventListener("blur", () => {
       setTimeout(() => { paneViewerMacroSelect.value = ""; }, 0);
+    });
+    const paneViewerFunctionSelect = document.getElementById("paneViewerFunctionSelect");
+    document.getElementById("paneViewerFunctionBtn").addEventListener("click", () => openNativeSelect(paneViewerFunctionSelect));
+    paneViewerFunctionSelect.addEventListener("change", () => {
+      const commandId = paneViewerFunctionSelect.value;
+      paneViewerFunctionSelect.value = "";
+      const agent = paneViewerAgents[lastPaneViewerTabIdx];
+      if (commandId && agent) void postAgentCommand({ command_id: commandId, target: agent });
+    });
+    paneViewerFunctionSelect.addEventListener("blur", () => {
+      setTimeout(() => { paneViewerFunctionSelect.value = ""; }, 0);
     });
     document.getElementById("paneViewerKeys")?.querySelectorAll(".pane-viewer-key-btn[data-key-macro]").forEach((btn) => {
       btn.addEventListener("click", () => {
