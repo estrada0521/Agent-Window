@@ -4,6 +4,7 @@
       --composer-input-padding: calc(var(--text-size, 13px) * 14 / 13);
       --composer-input-padding-y: calc(var(--text-size, 13px) * 10 / 13);
       --composer-field-base-height: calc(var(--composer-input-font-size) * var(--composer-input-line-height) + 2 * var(--composer-input-padding-y));
+      --composer-corner-radius: calc(var(--composer-field-base-height) / 2);
       --composer-field-max-height: calc(var(--text-size, 13px) * 200 / 13);
       --composer-send-inset: calc(var(--text-size, 13px) * 7 / 13);
       --composer-bar-btn-size: calc(var(--text-size, 13px) * 30 / 13);
@@ -44,7 +45,7 @@
     }
     .composer-field {
       position: relative;
-      border-radius: calc(var(--composer-field-base-height) / 2);
+      border-radius: var(--composer-corner-radius);
       background: rgba(242, 242, 240, 0.5);
       border: 0.5px solid rgba(0, 0, 0, 0.45);
       box-shadow:
@@ -175,7 +176,7 @@
       box-shadow:
         inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
         0 1px 2px rgba(0, 0, 0, 0.12);
-      border-radius: calc(var(--text-size, 13px) * 26 / 13);
+      border-radius: var(--composer-corner-radius);
       padding: calc(var(--text-size, 13px) * 2 / 13);
       overflow: hidden;
       font: inherit;
@@ -198,7 +199,7 @@
     }
     .attach-card::before {
       inset: 2px;
-      border-radius: calc(var(--text-size, 13px) * 24 / 13);
+      border-radius: calc(var(--composer-corner-radius) - var(--text-size, 13px) * 2 / 13);
       background: var(--floating-bg);
     }
     .attach-card::after {
@@ -221,7 +222,6 @@
     .attach-card:focus-visible {
       outline: 2px solid var(--line-strong);
       outline-offset: 3px;
-      border-radius: calc(var(--text-size, 13px) * 29 / 13);
     }
     .attach-card:active {
       transform: scale(0.95);
@@ -230,7 +230,7 @@
     .attach-card-ext {
       width: 100%;
       aspect-ratio: 1;
-      border-radius: calc(var(--text-size, 13px) * 24 / 13);
+      border-radius: calc(var(--composer-corner-radius) - var(--text-size, 13px) * 2 / 13);
     }
     .attach-card-thumb {
       object-fit: cover;
