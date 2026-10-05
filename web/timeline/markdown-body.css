@@ -439,6 +439,7 @@
 
     .md-body th {
       background: transparent;
+      vertical-align: bottom;
       font-size: 0.85em;
       font-weight: var(--md-heading-weight);
       letter-spacing: 0.04em;
