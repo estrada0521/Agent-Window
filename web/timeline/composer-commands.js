@@ -55,7 +55,7 @@
         if (item.id === "terminal" && isMobileComposer) {
           if (pendingAttachments.length || attachUploadsInFlight > 0) {
             closeCmdDrop();
-            setStatus("Remove attachments");
+            setError("Remove attachments");
             return;
           }
           messageInput.value = "";

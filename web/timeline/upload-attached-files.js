@@ -3,7 +3,7 @@
       const uploadAttachedFiles = async (fileList) => {
         if (!canCompose()) return false;
         if (isTerminalMode()) {
-          setStatus("Exit Terminal mode");
+          setError("Exit Terminal mode");
           return false;
         }
         const files = Array.from(fileList || []).filter((f) => f && typeof f.name === "string");

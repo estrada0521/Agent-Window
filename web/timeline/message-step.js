@@ -67,7 +67,7 @@
         if (loadedEntries() === before) break;
         target = findStepTarget(stepRows(senders), false, anchor);
       }
-      if (!target) setStatus("No earlier message");
+      if (!target) setError("No earlier message");
       return target;
     };
     const stepConversationByMessage = async (down, senders = null) => {

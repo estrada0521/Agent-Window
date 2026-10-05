@@ -26,7 +26,7 @@
     const beginExportRange = (format) => {
       const rows = exportRows();
       if (!rows.length) {
-        setStatus("No messages to export");
+        setError("No messages to export");
         return;
       }
       exportRange = { format, start: null, end: rows[rows.length - 1] };

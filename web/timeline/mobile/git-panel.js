@@ -70,7 +70,7 @@ __INCLUDE:../git-panel-controller.js__
     });
     gitTreeButton.addEventListener("click", () => {
       if (gitWorktreeList.length < 2) {
-        setStatus("No other worktrees");
+        setError("No other worktrees");
         return;
       }
       const trees = gitWorktreeList;

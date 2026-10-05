@@ -88,7 +88,7 @@ __INCLUDE:transcript-refresh.js__
       }
       sendLocked = true;
       if (!target.trim() && command_id !== "openpane") {
-        setStatus("No target");
+        setError("No target");
         sendLocked = false;
         return false;
       }
@@ -135,7 +135,7 @@ __INCLUDE:transcript-refresh.js__
         return false;
       }
       if (attachUploadsInFlight > 0) {
-        setStatus("Still uploading");
+        setError("Still uploading");
         return false;
       }
       sendLocked = true;
@@ -143,12 +143,12 @@ __INCLUDE:transcript-refresh.js__
       const rawInput = forcedText != null ? forcedText : message.value;
       const terminalMode = forcedText == null && isTerminalMode();
       if (terminalMode && pendingAttachments.length) {
-        setStatus("Remove attachments");
+        setError("Remove attachments");
         sendLocked = false;
         return false;
       }
       if (terminalMode && !rawInput.trim()) {
-        setStatus("Empty Terminal input");
+        setError("Empty Terminal input");
         sendLocked = false;
         return false;
       }
@@ -179,6 +179,12 @@ __INCLUDE:transcript-refresh.js__
             return false;
           }
           const arg = parsed.arg;
+          const target = parsed.id === "terminal" ? "terminal" : selectedTargets.join(",");
+          if (!target.trim() && parsed.id !== "openpane") {
+            setError("No target");
+            sendLocked = false;
+            return false;
+          }
           if (closeOverlayOnStart && isComposerOverlayOpen()) {
             blurComposerOnMobile(message);
             document.documentElement.dataset.sendInFlight = "1";
@@ -192,7 +198,7 @@ __INCLUDE:transcript-refresh.js__
               body: JSON.stringify({
                 command_id: parsed.id,
                 arg,
-                target: parsed.id === "terminal" ? "terminal" : selectedTargets.join(","),
+                target,
               }),
             });
             const data = await res.json();
@@ -239,7 +245,7 @@ __INCLUDE:transcript-refresh.js__
           : "";
       const messageBody = rawInput + attachSuffix;
       if (!messageBody.trim()) {
-        setStatus("Empty message");
+        setError("Empty message");
         sendLocked = false;
         return false;
       }

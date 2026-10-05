@@ -247,7 +247,7 @@ __INCLUDE:upload-attached-files.js__
         if (isTerminalMode()) {
           if (dtHasFiles(e.clipboardData)) {
             e.preventDefault();
-            setStatus("Exit Terminal mode");
+            setError("Exit Terminal mode");
           }
           return;
         }

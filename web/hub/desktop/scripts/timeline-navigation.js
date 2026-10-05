@@ -38,7 +38,7 @@
         openTimelineInDesk(data.timeline_url, data.timeline || "");
         if (data.notice) {
           console.info(data.notice);
-          setStatus("Timeline name adjusted");
+          setError("Timeline name adjusted");
         }
         if (isPhoneViewport()) {
           setDeskHubOpen(false);
