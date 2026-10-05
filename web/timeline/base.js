@@ -38,8 +38,8 @@
     }
     const loadExternalScriptOnce = (() => {
       const pending = new Map();
-      return (src) => {
-        const raw = String(src || "").trim();
+      return (resource) => {
+        const raw = String(resource.url).trim();
         if (!raw) return Promise.resolve(false);
         const href = new URL(raw, window.location.href).href;
         for (const script of document.scripts) {
@@ -49,6 +49,8 @@
         const promise = new Promise((resolve, reject) => {
           const script = document.createElement("script");
           script.src = href;
+          script.integrity = resource.integrity;
+          script.crossOrigin = "anonymous";
           script.onload = () => resolve(true);
           script.onerror = () => reject(new Error(`failed to load ${href}`));
           document.head.appendChild(script);
@@ -59,8 +61,8 @@
     })();
     const loadExternalStylesheetOnce = (() => {
       const pending = new Map();
-      return (href) => {
-        const raw = String(href || "").trim();
+      return (resource) => {
+        const raw = String(resource.url).trim();
         if (!raw) return Promise.resolve(false);
         const absHref = new URL(raw, window.location.href).href;
         for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {
@@ -71,6 +73,8 @@
           const link = document.createElement("link");
           link.rel = "stylesheet";
           link.href = absHref;
+          link.integrity = resource.integrity;
+          link.crossOrigin = "anonymous";
           link.onload = () => resolve(true);
           link.onerror = () => reject(new Error(`failed to load ${absHref}`));
           document.head.appendChild(link);
@@ -79,9 +83,9 @@
         return promise;
       };
     })();
-    const KATEX_CSS_HREF = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
-    const KATEX_JS_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
-    const KATEX_AUTO_RENDER_SRC = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+    const KATEX_CSS = window.cdnResources.katex_css;
+    const KATEX_JS = window.cdnResources.katex;
+    const KATEX_AUTO_RENDER = window.cdnResources.katex_auto;
 __INCLUDE:file-link-parse.js__
 __INCLUDE:markdown-frontmatter.js__
 __INCLUDE:markdown-render.js__

@@ -160,7 +160,7 @@
         node.setAttribute("style", style);
       }));
       const css = [...document.querySelectorAll("style")].map((node) => exportThemeCss(node.sheet.cssRules)).join("\n");
-      const katex = host.querySelector(".katex") ? `<link rel="stylesheet" href="${KATEX_CSS_HREF}">` : "";
+      const katex = host.querySelector(".katex") ? `<link rel="stylesheet" href="${KATEX_CSS.url}" integrity="${KATEX_CSS.integrity}" crossorigin="anonymous">` : "";
       const title = escapeHtml(document.title);
       return `<!DOCTYPE html>
 <html lang="en"${exportRootAttrs()}>

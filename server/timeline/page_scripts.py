@@ -3,15 +3,6 @@ from __future__ import annotations
 from tmux.key_macro import PANE_TEXT_MACROS
 
 
-MARKED_VERSION = "18.0.12"
-KATEX_VERSION = "0.16.11"
-
-DOMPURIFY_CDN_SRC = "https://cdn.jsdelivr.net/npm/dompurify@3.4.16/dist/purify.min.js"
-MARKED_CDN_SRC = f"https://cdn.jsdelivr.net/npm/marked@{MARKED_VERSION}/lib/marked.umd.min.js"
-KATEX_CDN_CSS_HREF = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/katex.min.css"
-KATEX_CDN_JS_SRC = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/katex.min.js"
-KATEX_CDN_AUTO_RENDER_SRC = f"https://cdn.jsdelivr.net/npm/katex@{KATEX_VERSION}/dist/contrib/auto-render.min.js"
-
 _PANE_TEXT_MACRO_OPTIONS_HTML = "\n".join(
     f'          <option value="{macro}">{macro}</option>' for macro in PANE_TEXT_MACROS
 )

@@ -243,7 +243,7 @@ HTML/CSS/vanilla JavaScript、Python標準libraryと、app用のObjective-Cが1 
 
 ## Footprint
 
-telemetryなし。Agent CLI以外のネットワーク依存は `cdn.jsdelivr.net` の `marked`・`DOMPurify`・`katex` のみ。local完結させたいなら、自分でvendorする。
+telemetryなし。Agent CLI以外のネットワーク依存は `cdn.jsdelivr.net` の `marked`・`DOMPurify`・`katex`・構文配色設定時の `highlight.js` のみ。URLとSRIハッシュは `server/cdn.py` に固定。local完結させたいなら、自分でvendorする。
 
 Hubの port は `server/hub/port` fileの値(既定 `8788`)を専有する。fileを書き換えれば変わる。timelineごとのport はworkspaceのpathから決まる固定値を専有する。
 

@@ -26,13 +26,7 @@ from server.appearance.colors import (
     TEXT_STRONG_MOBILE_LIGHT_CHANNELS,
     resolve_theme_palette,
 )
-from server.timeline.page_scripts import (
-    KATEX_CDN_AUTO_RENDER_SRC,
-    KATEX_CDN_CSS_HREF,
-    KATEX_CDN_JS_SRC,
-    MARKED_CDN_SRC,
-    DOMPURIFY_CDN_SRC,
-)
+from server.cdn import resource_config_script, resource_tag
 from server.appearance.typography import (
     CODE_FONT,
     FILE_PREVIEW_CODE_FONT,
@@ -410,14 +404,9 @@ def render_file_view(
         content_json = json.dumps(content)
         rel_json = json.dumps(rel.replace("\\", "/"))
         prefix_json = json.dumps(prefix)
-        markdown_head_tags = [
-            f'<script src="{DOMPURIFY_CDN_SRC}"></script>',
-            f'<script src="{MARKED_CDN_SRC}"></script>',
-            f'<link rel="stylesheet" href="{KATEX_CDN_CSS_HREF}">',
-            f'<script src="{KATEX_CDN_JS_SRC}"></script>',
-            f'<script src="{KATEX_CDN_AUTO_RENDER_SRC}"></script>',
-        ]
-        markdown_head_libs = "".join(markdown_head_tags)
+        markdown_head_libs = resource_config_script() + "".join(
+            resource_tag(name) for name in ("dompurify", "marked", "katex_css", "katex", "katex_auto")
+        )
         markdown_preview_css = _timeline_markdown_preview_css()
         markdown_typography_css = body_typography_css()
         markdown_frontmatter_js = _timeline_markdown_frontmatter_js()
@@ -479,13 +468,13 @@ const __previewBasePath = {prefix_json};
 const __previewAgentTextSize = {json.dumps(resolved_text_size)};
 const __rawBase = `${{__fileBase}}/file-raw?path=`;
 const __root = document.documentElement;
-const KATEX_CSS_HREF = {json.dumps(KATEX_CDN_CSS_HREF)};
-const KATEX_JS_SRC = {json.dumps(KATEX_CDN_JS_SRC)};
-const KATEX_AUTO_RENDER_SRC = {json.dumps(KATEX_CDN_AUTO_RENDER_SRC)};
+const KATEX_CSS = window.cdnResources.katex_css;
+const KATEX_JS = window.cdnResources.katex;
+const KATEX_AUTO_RENDER = window.cdnResources.katex_auto;
 const loadExternalScriptOnce = (() => {{
   const pending = new Map();
-  return (src) => {{
-    const raw = String(src || "").trim();
+  return (resource) => {{
+    const raw = String(resource.url).trim();
     if (!raw) return Promise.resolve(false);
     const href = new URL(raw, window.location.href).href;
     for (const script of document.scripts) {{
@@ -495,6 +484,8 @@ const loadExternalScriptOnce = (() => {{
     const promise = new Promise((resolve, reject) => {{
       const script = document.createElement("script");
       script.src = href;
+      script.integrity = resource.integrity;
+      script.crossOrigin = "anonymous";
       script.onload = () => resolve(true);
       script.onerror = () => reject(new Error(`failed to load ${{href}}`));
       document.head.appendChild(script);
@@ -505,8 +496,8 @@ const loadExternalScriptOnce = (() => {{
 }})();
 const loadExternalStylesheetOnce = (() => {{
   const pending = new Map();
-  return (href) => {{
-    const raw = String(href || "").trim();
+  return (resource) => {{
+    const raw = String(resource.url).trim();
     if (!raw) return Promise.resolve(false);
     const absHref = new URL(raw, window.location.href).href;
     for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {{
@@ -517,6 +508,8 @@ const loadExternalStylesheetOnce = (() => {{
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = absHref;
+      link.integrity = resource.integrity;
+      link.crossOrigin = "anonymous";
       link.onload = () => resolve(true);
       link.onerror = () => reject(new Error(`failed to load ${{absHref}}`));
       document.head.appendChild(link);
@@ -530,9 +523,9 @@ const ensureKatexReady = async () => {{
   if (typeof renderMathInElement === "function") return true;
   if (katexLoadPromise) return katexLoadPromise;
   katexLoadPromise = (async () => {{
-    const cssReady = await loadExternalStylesheetOnce(KATEX_CSS_HREF);
-    const katexReady = await loadExternalScriptOnce(KATEX_JS_SRC);
-    const autoRenderReady = katexReady ? await loadExternalScriptOnce(KATEX_AUTO_RENDER_SRC) : false;
+    const cssReady = await loadExternalStylesheetOnce(KATEX_CSS);
+    const katexReady = await loadExternalScriptOnce(KATEX_JS);
+    const autoRenderReady = katexReady ? await loadExternalScriptOnce(KATEX_AUTO_RENDER) : false;
     return cssReady && katexReady && autoRenderReady && typeof renderMathInElement === "function";
   }})().catch(() => false);
   return katexLoadPromise;

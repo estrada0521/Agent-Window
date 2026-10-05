@@ -10,7 +10,9 @@
   };
   const loadEngine = () => engine ||= new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/highlight.min.js";
+    script.src = config.engine.url;
+    script.integrity = config.engine.integrity;
+    script.crossOrigin = "anonymous";
     script.onload = () => resolve(window.hljs);
     script.onerror = () => reject(new Error("Could not load highlight.js"));
     document.head.append(script);

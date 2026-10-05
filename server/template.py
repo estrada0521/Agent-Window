@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
+from server.cdn import resource_config_script, resource_tag
+
 _WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
 _TIMELINE_DIR = _WEB_ROOT / "timeline"
 
@@ -67,6 +69,8 @@ def load_timeline_template(variant: str) -> str:
         raise ValueError(f"Timeline template shell missing {_SCRIPT_MARKER}: {template_dir / 'shell.html'}")
     return (
         shell
+        .replace("__CDN_CONFIG__", resource_config_script(), 1)
+        .replace("__MARKDOWN_LIBS__", resource_tag("dompurify", defer=True) + resource_tag("marked", defer=True), 1)
         .replace(_COMPOSER_MARKER, composer, 1)
         .replace(_STYLE_MARKER, _style_block(css), 1)
         .replace(_SCRIPT_MARKER, _script_block(js), 1)

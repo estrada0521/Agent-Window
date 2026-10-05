@@ -7,9 +7,9 @@
       if (typeof renderMathInElement === "function") return true;
       if (katexLoadPromise) return katexLoadPromise;
       katexLoadPromise = (async () => {
-        const cssReady = await loadExternalStylesheetOnce(KATEX_CSS_HREF);
-        const katexReady = await loadExternalScriptOnce(KATEX_JS_SRC);
-        const autoRenderReady = katexReady ? await loadExternalScriptOnce(KATEX_AUTO_RENDER_SRC) : false;
+        const cssReady = await loadExternalStylesheetOnce(KATEX_CSS);
+        const katexReady = await loadExternalScriptOnce(KATEX_JS);
+        const autoRenderReady = katexReady ? await loadExternalScriptOnce(KATEX_AUTO_RENDER) : false;
         return cssReady && katexReady && autoRenderReady && typeof renderMathInElement === "function";
       })().catch(() => false);
       return katexLoadPromise;
