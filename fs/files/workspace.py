@@ -371,12 +371,6 @@ class WorkspaceFiles:
         files.sort(key=lambda item: str(item.get("path") or "").casefold())
         return files
 
-    @staticmethod
-    def _basename(path: str) -> str:
-        s = str(path or "")
-        i = s.rfind("/")
-        return s if i == -1 else s[i + 1 :]
-
     def list_files(self):
         self._require_workspace()
         return self._search_paths()

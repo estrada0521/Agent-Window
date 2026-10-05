@@ -147,11 +147,8 @@
     const refreshSystemMobileTheme = () => {
       if (currentMobileThemeSetting() === "system") publishMobileTheme();
     };
-    try {
-      const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      if (systemThemeQuery.addEventListener) systemThemeQuery.addEventListener("change", refreshSystemMobileTheme);
-      else if (systemThemeQuery.addListener) systemThemeQuery.addListener(refreshSystemMobileTheme);
-    } catch (_) {}
+    const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    systemThemeQuery.addEventListener("change", refreshSystemMobileTheme);
     window.addEventListener("pageshow", refreshSystemMobileTheme);
     window.addEventListener("focus", refreshSystemMobileTheme);
     document.addEventListener("visibilitychange", () => {

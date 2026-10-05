@@ -228,11 +228,8 @@ __INCLUDE:../conversation-state.js__
           theme: window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
         }, "*");
       };
-      try {
-        const query = window.matchMedia("(prefers-color-scheme: dark)");
-        if (query.addEventListener) query.addEventListener("change", reportObservedSystemTheme);
-        else if (query.addListener) query.addListener(reportObservedSystemTheme);
-      } catch (_) {}
+      const query = window.matchMedia("(prefers-color-scheme: dark)");
+      query.addEventListener("change", reportObservedSystemTheme);
       window.addEventListener("pageshow", reportObservedSystemTheme);
       window.addEventListener("focus", reportObservedSystemTheme);
       document.addEventListener("visibilitychange", () => {

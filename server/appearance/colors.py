@@ -93,16 +93,6 @@ def _text_color_token_replacements() -> tuple[tuple[str, str], ...]:
     )
 
 
-def _gray_rgb(level: int) -> tuple[int, int, int]:
-    value = max(0, min(255, int(level)))
-    return (value, value, value)
-
-
-def _gray_channels(level: int) -> str:
-    value = max(0, min(255, int(level)))
-    return f"{value}, {value}, {value}"
-
-
 def _gray_rgb_string(level: int) -> str:
     value = max(0, min(255, int(level)))
     return f"rgb({value},{value},{value})"

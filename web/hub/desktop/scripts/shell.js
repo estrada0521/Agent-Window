@@ -143,17 +143,10 @@
     }
 
     syncAppShellHeight({ force: true });
-    if (typeof _phoneViewportQuery.addEventListener === "function") {
-      _phoneViewportQuery.addEventListener("change", () => {
-        syncAppShellHeight({ force: true });
-        syncDeskHubResizerVisibility();
-      });
-    } else if (typeof _phoneViewportQuery.addListener === "function") {
-      _phoneViewportQuery.addListener(() => {
-        syncAppShellHeight({ force: true });
-        syncDeskHubResizerVisibility();
-      });
-    }
+    _phoneViewportQuery.addEventListener("change", () => {
+      syncAppShellHeight({ force: true });
+      syncDeskHubResizerVisibility();
+    });
     window.addEventListener("pageshow", () => syncAppShellHeight({ force: true }));
     window.addEventListener("resize", () => syncAppShellHeight());
     if (window.visualViewport) {

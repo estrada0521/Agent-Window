@@ -27,9 +27,5 @@
       }, 0);
     };
     syncHoverCapabilityClass();
-    if (hoverCapabilityMedia.addEventListener) {
-      hoverCapabilityMedia.addEventListener("change", syncHoverCapabilityClass);
-    } else if (hoverCapabilityMedia.addListener) {
-      hoverCapabilityMedia.addListener(syncHoverCapabilityClass);
-    }
+    hoverCapabilityMedia.addEventListener("change", syncHoverCapabilityClass);
     document.addEventListener("click", blurTouchControlAfterTap, true);

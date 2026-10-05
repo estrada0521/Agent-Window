@@ -1,6 +1,5 @@
 __INCLUDE:../base.js__
 __INCLUDE:../link-presentation.js__
-    const DESKTOP_FILE_PANE_MIN_VIEWPORT_PX = 961;
     let _scrollbarLayoutSyncFrame = 0;
     let _fitTargetRow = null;
     let _fitCollapsed = false;
@@ -347,10 +346,6 @@ __INCLUDE:../pointer-capability.js__
     let repoBrowserPath = "";
     let repoLoadSeq = 0;
     let cancelDpRepoLoading = () => {};
-    // A row-list multi-select: a Set of selected paths plus a shift-range anchor,
-    // read fresh from the DOM each time (order, membership) instead of a
-    // separately-maintained array -- one implementation shared by the repo file
-    // tree and the git panel's file rows, which only differ in container/selector.
     const createRowSelection = ({ container, rowSelector, selectedClass = "is-selected" }) => {
       let selected = new Set();
       let anchor = "";
@@ -378,10 +373,6 @@ __INCLUDE:../pointer-capability.js__
       container?.addEventListener("mouseleave", clear);
       return { get selected() { return selected; }, set, clear, toggle, selectRangeTo, orderedSelected, prune, applyClasses };
     };
-    // Consumes a click's modifier keys against a selection: shift/meta only
-    // mutate the selection (returns null); otherwise resolves what to act on --
-    // the rest of the current selection if the click landed on it, else just
-    // this row -- and whether it was an option-click (Quick Look) or plain.
     const resolveRowClick = (sel, path, event) => {
       if (event.shiftKey) { sel.selectRangeTo(path); return null; }
       if (event.metaKey) { sel.toggle(path); return null; }

@@ -5,17 +5,11 @@
       return normalizeWorkspaceFilePath(raw);
     };
     const postOpenFile = async (path) => {
-      const tryPost = () =>
-        fetch("/open-file", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ path }),
-        });
-      let res = await tryPost();
-      if (!res.ok && (res.status >= 500 || res.status === 429)) {
-        await new Promise((r) => setTimeout(r, 220));
-        res = await tryPost();
-      }
+      const res = await fetch("/open-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path }),
+      });
       if (!res.ok) {
         let detail = "Open failed";
         try {
