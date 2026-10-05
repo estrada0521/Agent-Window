@@ -113,7 +113,8 @@ def get_revive_timeline(handler, parsed, ctx) -> None:
         if detail == "Workspace not found":
             _fail(handler, ctx, fmt, 404, detail)
         else:
-            _fail(handler, ctx, fmt, 500, f"Failed to revive timeline: {detail}", detail=timeline_name)
+            message = "Conversation unavailable" if detail == "Conversation unavailable" else "Revive failed"
+            _fail(handler, ctx, fmt, 500, message, detail=f"{timeline_name}: {detail}")
         return
     ctx["hub"].publish_timeline_messages_changed()
     workspace = log_workspace(timeline_name)

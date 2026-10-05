@@ -729,7 +729,7 @@ __INCLUDE:git-panel/events.js__
         }
         if (native) window.parent.postMessage({ type: "open-quick-look", paths: data.paths }, "*");
       } catch (err) {
-        setStatus(err?.message || "Quick Look failed");
+        setError("Quick Look failed", err);
       }
     };
     function handleDesktopCommitContextMenuAction(payload) {
@@ -742,7 +742,7 @@ __INCLUDE:git-panel/events.js__
         await doCopyText(action === "copyCommitHash" ? info.hash : info.message);
         setStatus(action === "copyCommitHash" ? "Copied hash" : "Copied message");
       })().catch((err) => {
-        setStatus(err?.message || "Commit action failed");
+        setError("Commit action failed", err);
       });
       return true;
     }
@@ -761,7 +761,7 @@ __INCLUDE:git-panel/events.js__
               ? copyFiles(paths)
               : copyFilePath(paths, action === "copyAbsoluteFilePath");
       void operation.catch((err) => {
-        setStatus(err?.message || "File action failed");
+        setError("File action failed", err);
       });
       return true;
     }
@@ -1069,15 +1069,15 @@ __INCLUDE:git-panel/events.js__
         return;
       }
       if (event.data.type === "file-context-menu-error") {
-        setStatus(String(event.data.message || "File menu failed"));
+        setError("File menu failed", event.data.message);
         return;
       }
       if (event.data.type === "file-copy-result") {
-        setStatus(event.data.error ? String(event.data.error) : "Copied file");
+        event.data.error ? setError("Copy failed", event.data.error) : setStatus("Copied file");
         return;
       }
       if (event.data.type === "quick-look-error") {
-        setStatus(String(event.data.message || "Quick Look failed"));
+        setError("Quick Look failed", event.data.message);
         return;
       }
       if (event.data.type === "toggle-git-pin") {
@@ -1164,7 +1164,7 @@ __INCLUDE:git-panel/events.js__
             ).slice(-1)[0] || "";
             if (revealTarget) {
               void revealFileInFinder(revealTarget).catch((err) => {
-                setStatus(err?.message || "Reveal failed");
+                setError("Reveal failed", err);
               });
             } else {
               window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openFinder" }, "*");
@@ -1298,7 +1298,7 @@ __INCLUDE:git-panel/events.js__
           if (targets.length) {
             event.preventDefault();
             void copyFilePath(targets, !event.shiftKey).catch((err) => {
-              setStatus(err?.message || "Copy failed");
+              setError("Copy failed", err);
             });
           }
           return;
@@ -1314,7 +1314,7 @@ __INCLUDE:git-panel/events.js__
           if (targets.length) {
             event.preventDefault();
             void copyFiles(targets).catch((err) => {
-              setStatus(err?.message || "Copy failed");
+              setError("Copy failed", err);
             });
           }
           return;

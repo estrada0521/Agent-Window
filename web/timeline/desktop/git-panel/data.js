@@ -43,7 +43,7 @@
         unpinnedGitSummaryShown = shown;
         setStatus(unpinnedGitSummaryHud);
       } catch (err) {
-        if (relevant()) setStatus(err?.message || "Failed to load Git summary");
+        if (relevant()) setError("Git unavailable", err);
       }
     };
     const onTimelineSummaryPinReload = ({ force = false } = {}) => {

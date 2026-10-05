@@ -55,6 +55,17 @@
     .hud-text {
       animation: hud-text-in 0.3s ease;
     }
+    .hud-error {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+      height: 100%;
+    }
+    .hud-error-icon {
+      width: 1.1em;
+      height: 1.1em;
+      flex: none;
+    }
     .add-agent-hint svg {
       width: 1.2em;
       height: 1.2em;

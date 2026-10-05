@@ -213,9 +213,9 @@ ${katex}<style>${css}</style>
         link.download = file.name;
         link.click();
         endExportRange();
-        setStatus(document.documentElement.dataset.nativeApp === "1" ? "Exported to ~/Downloads" : "Exported");
+        setStatus("Exported");
       } catch (err) {
-        if (err?.name !== "AbortError") setStatus(`Export failed: ${err?.message || err}`);
+        if (err?.name !== "AbortError") setError("Export failed", err);
       }
     };
     exportHudExportBtn.addEventListener("click", () => void runExport());

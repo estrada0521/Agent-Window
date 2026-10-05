@@ -43,15 +43,12 @@
     }
     function failDeskOpen(message) {
       clearDeskTimelineFrame();
-      setResidentStatus("timeline-open", message);
+      console.error("Timeline open failed", message);
+      setResidentError("timeline-open", message === "Conversation unavailable" || message === "Revive failed" ? message : "Open failed");
       showDeskHubList({ open: true });
     }
 
-    const { setStatus, setResidentStatus } = createHud(document.getElementById("hubHud"));
-    const reportHubError = (message, error) => {
-      console.error(message, error);
-      setStatus(message);
-    };
+    const { setStatus, setError, setResidentStatus, setResidentError } = createHud(document.getElementById("hubHud"));
 
     async function copyDeskText(text) {
       if (navigator.clipboard?.writeText) {
@@ -106,7 +103,7 @@
       const message = sessionStorage.getItem(HUB_PENDING_ERROR_KEY) || "";
       if (!message) return;
       sessionStorage.removeItem(HUB_PENDING_ERROR_KEY);
-      setStatus(message);
+      setError("Open failed", message);
     }
 
     function isPhoneViewport() {

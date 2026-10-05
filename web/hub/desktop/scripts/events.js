@@ -47,7 +47,7 @@
             x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
             y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
           },
-        }).catch((err) => reportHubError("Timeline menu failed", err));
+        }).catch((err) => setError("Menu failed", err));
         return;
       }
       if (event.data && event.data.type === "show-file-context-menu" && event.source === _deskTimelineFrame?.contentWindow) {
@@ -478,7 +478,7 @@
             reviveEnabled: archived,
           },
         }).catch((err) => {
-          reportHubError("Failed to open timeline menu", err);
+          setError("Menu failed", err);
         });
       });
       attachDeskTimelineStatsHover(_deskTimelineList);

@@ -37,6 +37,7 @@ const setTimeout = (fn, ms) => {{
 const clearTimeout = (id) => cleared.push(id);
 const requestAnimationFrame = (fn) => fn();
 const setStatus = () => {{}};
+const setError = () => {{}};
 const _launchShell = {{
   hidden: true,
   classList: {{

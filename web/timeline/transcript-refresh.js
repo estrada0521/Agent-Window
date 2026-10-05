@@ -34,7 +34,7 @@
           currentServerInstance = data.server_instance;
         }
         if (data.server_instance !== SERVER_INSTANCE_SEED) {
-          setResidentStatus("server-restarted", "Server restarted; reload");
+          setResidentError("server-restarted", "Server restarted; reload");
         }
         latestPayloadData = data;
         if (!olderEntries.length) {
@@ -42,13 +42,13 @@
         }
         render(data, refreshOptions);
         if (hasNewAgentMessage) document.dispatchEvent(new Event("timeline-agent-message"));
-        setResidentStatus("messages-failed", "");
+        setResidentError("messages-failed", "");
         hasInitialRefreshHydrated = true;
         notifyHubTimelineRenderReady();
       } catch (err) {
-        const detail = err?.message || String(err);
+        console.error("Messages unavailable", err);
         if (!hasInitialRefreshHydrated) notifyHubTimelineRenderError();
-        if (!renderFailed) setResidentStatus("messages-failed", detail);
+        if (!renderFailed) setResidentError("messages-failed", "Messages unavailable");
       } finally {
         refreshInFlight = false;
         if (pendingRefreshOptions) {

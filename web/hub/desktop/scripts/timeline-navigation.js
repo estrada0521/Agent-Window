@@ -36,13 +36,16 @@
           throw new Error(data.error || "Failed to open draft timeline");
         }
         openTimelineInDesk(data.timeline_url, data.timeline || "");
-        setStatus(data.notice || "");
+        if (data.notice) {
+          console.info(data.notice);
+          setStatus("Timeline name adjusted");
+        }
         if (isPhoneViewport()) {
           setDeskHubOpen(false);
         }
         void refreshHubTimelines(true, { skipRestore: true });
       } catch (err) {
-        setStatus(err?.message || "Failed to open draft timeline");
+        setError("Open failed", err);
       } finally {
         _deskNewTimelineStarting = false;
         _deskNewTimelineToggle?.classList.remove("archived");

@@ -99,7 +99,7 @@
               const data = await res.json().catch(() => ({}));
               throw new Error(data.error || `HTTP ${res.status}`);
             }).catch((err) => {
-              setStatus(`Upload delete failed: ${err.message}`);
+              setError("Upload delete failed", err);
             });
           }
         });
@@ -247,7 +247,7 @@ __INCLUDE:upload-attached-files.js__
         if (isTerminalMode()) {
           if (dtHasFiles(e.clipboardData)) {
             e.preventDefault();
-            setStatus("Exit Terminal mode before attaching files");
+            setStatus("Exit Terminal mode");
           }
           return;
         }

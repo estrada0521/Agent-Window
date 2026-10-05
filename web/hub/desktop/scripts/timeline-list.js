@@ -132,7 +132,7 @@
         clearDeskSelection();
         showDeskHubList({ open: true });
       } catch (err) {
-        setStatus(err?.message || (isDelete ? "Failed to delete timeline" : "Failed to archive timeline"));
+        setError(isDelete ? "Delete failed" : "Archive failed", err);
       }
     }
 
@@ -163,7 +163,7 @@
         }
         return true;
       } catch (err) {
-        setStatus(err?.message || "Failed to rename timeline");
+        setError("Rename failed", err);
         return false;
       }
     }
@@ -182,7 +182,7 @@
         picked = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(picked.error || "Workspace picker failed");
       } catch (err) {
-        setStatus(err?.message || "Workspace picker failed");
+        setError("Picker failed", err);
         return;
       }
       if (picked.canceled || !picked.path) return;
@@ -196,7 +196,7 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) throw new Error(data.error || "Failed to change workspace");
       } catch (err) {
-        setStatus(err?.message || "Failed to change workspace");
+        setError("Workspace change failed", err);
         return;
       }
       hubTimelineUrls.forget(buildTimelineOpenHref(timelineName, true));
@@ -215,7 +215,7 @@
         }
         await copyDeskText(`\`${workspace}\``);
       } catch (err) {
-        setStatus(err?.message || "Failed to copy workspace path");
+        setError("Copy failed", err);
         return;
       }
       setStatus("Copied path");
@@ -234,7 +234,7 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) throw new Error(data.error || "Failed to reset agents");
       } catch (err) {
-        setStatus(err?.message || "Failed to reset agents");
+        setError("Reset failed", err);
         return;
       }
       if (_deskSelectedTimelineName === timelineName) {
@@ -520,7 +520,7 @@
         if (!response.ok) throw new Error("failed");
         const data = await response.json();
         if (data.hub_instance !== HUB_INSTANCE) {
-          setResidentStatus("hub-restarted", "Hub restarted; reload");
+          setResidentError("hub-restarted", "Hub restarted; reload");
         }
         const active = data.active_timelines;
         const archived = data.archived_timelines;

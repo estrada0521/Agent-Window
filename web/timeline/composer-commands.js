@@ -55,7 +55,7 @@
         if (item.id === "terminal" && isMobileComposer) {
           if (pendingAttachments.length || attachUploadsInFlight > 0) {
             closeCmdDrop();
-            setStatus("Remove attachments before using Terminal");
+            setStatus("Remove attachments");
             return;
           }
           messageInput.value = "";
@@ -106,7 +106,7 @@
         } catch (err) {
           cancelCmdAutocompleteLoading();
           closeCmdDrop();
-          setStatus(err?.message || "Commands unavailable");
+          setError("Commands unavailable", err);
           return;
         }
         cancelCmdAutocompleteLoading();
@@ -320,7 +320,7 @@
       window.open(href, "_blank", "noopener,noreferrer");
       return Promise.resolve();
     };
-    const reportExternalLinkFailure = () => setStatus("Link failed");
+    const reportExternalLinkFailure = () => setError("Link failed");
     window.addEventListener("message", (event) => {
       if (event.source !== window.parent || event.data?.type !== "external-url-open-failed") return;
       reportExternalLinkFailure();
@@ -371,7 +371,7 @@
         const text = wrap.matches("blockquote") ? wrap.innerText.trimEnd() : (wrap.querySelector("code") || wrap.querySelector("pre")).textContent;
         doCopyText(text).then(() => {
           markCopied(codeCopyBtn);
-        }).catch((err) => setStatus(`Copy failed: ${err.message}`));
+        }).catch((err) => setError("Copy failed", err));
         return;
       }
       const btn = e.target.closest(".copy-btn");
@@ -386,7 +386,7 @@
           } else {
             markCopied(btn, 3000);
           }
-        }).catch((err) => setStatus(`Copy failed: ${err.message}`));
+        }).catch((err) => setError("Copy failed", err));
         return;
       }
       if (!revealMobileCopy) return;

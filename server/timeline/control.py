@@ -290,7 +290,7 @@ def create_session(
         if revive:
             missing = [instance for instance in instances if instance not in native_logs]
             if missing:
-                raise ValueError(f"No recorded conversation for: {', '.join(missing)}")
+                raise SessionControlError("Conversation unavailable")
         commands = {
             instance: agent_launch_cmd(instance, native_log_path=native_logs[instance] if revive else "")
             for instance in instances

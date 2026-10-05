@@ -52,9 +52,9 @@
         return true;
       } catch (err) {
         const message = err?.status === 404
-          ? `file not found: ${displayAttachmentFilename(normalizedPath) || normalizedPath}`
-          : err?.message || "Open failed";
-        setStatus(message);
+          ? "File not found"
+          : "Open failed";
+        setError(message, err);
         return false;
       }
     };
@@ -65,7 +65,7 @@
       try {
         await postOpenDiff(normalizedPath, hash, oldPath);
       } catch (err) {
-        setStatus(err?.message || errMsg);
+        setError(errMsg, err);
       }
     };
     let _openSurfaceChain = Promise.resolve();

@@ -13,7 +13,7 @@
       try {
         localStorage.setItem(composerDraftStorageKey(label), text);
       } catch (err) {
-        setStatus(`Draft not saved: ${err.message}`);
+        setError("Draft not saved", err);
       }
     };
     const clearStoredComposerDraft = () => {

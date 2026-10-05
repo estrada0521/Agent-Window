@@ -50,7 +50,7 @@
         if (revision !== gitFollowRevision || !gitFollow()) return;
         if (followTree !== null && followTree !== gitTree()) applyFollowTree(followTree, worktrees);
       } catch (err) {
-        if (revision === gitFollowRevision) setStatus(err?.message || "Failed to follow changes");
+        if (revision === gitFollowRevision) setError("Follow failed", err);
       }
     };
     const applyFollowTree = (tree, worktrees) => {

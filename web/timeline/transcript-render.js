@@ -210,7 +210,7 @@
         }
         if (renderFailed) {
           renderFailed = false;
-          setResidentStatus("render-failed", "");
+          setResidentError("render-failed", "");
         }
       } catch (err) {
         console.error("timeline render failed", err);
@@ -219,12 +219,12 @@
         lastMessagesSig = "";
         updateScrollBtn();
         renderFailed = true;
-        setResidentStatus("render-failed", `Render failed: ${err?.message || err}`);
+        setResidentError("render-failed", "Render failed");
         throw err;
       }
     };
 __INCLUDE:../hud.js__
-    const { setStatus, setResidentStatus, setOverlay: setHudOverlay, setBackgroundStatus, setCovered: setHudCovered } = createHud(document.getElementById("timelineHud"), (visible) => {
+    const { setStatus, setError, setResidentStatus, setResidentError, setOverlay: setHudOverlay, setBackgroundStatus, setCovered: setHudCovered } = createHud(document.getElementById("timelineHud"), (visible) => {
       window.parent?.postMessage({ type: "timeline-hud-visible", visible }, "*");
     });
     const agentActionCandidates = (mode) => {
@@ -254,7 +254,7 @@ __INCLUDE:../hud.js__
           throw new Error(data.error || `failed to ${adding ? "add" : "remove"} agent`);
         }
       } catch (err) {
-        setStatus(err?.message || `${adding ? "Add" : "Remove"} agent failed`);
+        setError(`${adding ? "Add" : "Remove"} agent failed`, err);
       }
     };
     let subMenuPick = null;
@@ -451,7 +451,7 @@ __INCLUDE:../hud.js__
       if (error) {
         reloadInFlight = false;
         setReloadStage("error");
-        setStatus(`Reload failed: ${error}`);
+        setError("Reload failed", error);
         return;
       }
       await minimumDisplay;

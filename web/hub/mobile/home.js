@@ -7,7 +7,7 @@
     const _timelineFrameClip = _timelineOverlay.querySelector(".timeline-frame-clip");
     const _timelineFrame = document.getElementById("timelineFrame");
     const _launchShell = document.getElementById("launchShell");
-    const { setStatus, setResidentStatus } = createHud(document.getElementById("hubHud"));
+    const { setStatus, setError, setResidentStatus, setResidentError } = createHud(document.getElementById("hubHud"));
     const AGENT_SOUND_KEY = "agent_window_mobile_agent_sound";
     let agentSoundEnabled = localStorage.getItem(AGENT_SOUND_KEY) === "1";
     let agentSoundContext = null;
@@ -26,10 +26,9 @@
       if (!agentSoundEnabled) return;
       try {
         const context = getAgentSoundContext();
-        if (context.state !== "running") void context.resume().catch(() => setStatus("Agent sound unavailable"));
+        if (context.state !== "running") void context.resume().catch((err) => setError("Agent sound unavailable", err));
       } catch (err) {
-        console.error("Agent sound unavailable", err);
-        setStatus("Agent sound unavailable");
+        setError("Agent sound unavailable", err);
       }
     };
     document.addEventListener("pointerdown", unlockAgentSound, { capture: true });
@@ -52,8 +51,7 @@
         tone.start(now);
         tone.stop(now + 0.2);
       } catch (err) {
-        console.error("Agent sound unavailable", err);
-        setStatus("Agent sound unavailable");
+        setError("Agent sound unavailable", err);
       }
     };
     const toggleAgentSound = () => {
@@ -225,7 +223,7 @@
     }
     function failHubReadyWait(message) {
       stopHubReadyWait();
-      setStatus(message);
+      setError(message === "Conversation unavailable" || message === "Revive failed" ? message : "Open failed", message);
     }
     function startHubReadyTimeout() {
       if (_hubReadyTimeoutTimer) return;
@@ -1023,7 +1021,7 @@
           const data = await res.json();
           if (requestSeq !== _mobTimelinesRequestSeq) return;
           if (data.hub_instance !== HUB_INSTANCE) {
-            setResidentStatus("hub-restarted", "Hub restarted; reload");
+            setResidentError("hub-restarted", "Hub restarted; reload");
           }
           const activeTimelines = data.active_timelines;
           const archivedTimelines = data.archived_timelines;

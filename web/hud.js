@@ -86,6 +86,17 @@
         }
         render();
       };
+      const errorContent = (message) => {
+        const content = document.createElement("span");
+        content.className = "hud-text hud-error";
+        content.innerHTML = '<svg class="hud-error-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10" fill="#ff3b30"/><path d="M10 5v6" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="14.5" r="1" fill="white"/></svg>';
+        content.append(document.createTextNode(message));
+        return content;
+      };
+      const setError = (message, error) => {
+        if (error !== undefined) console.error(message, error);
+        setStatus(errorContent(message));
+      };
       const setResidentStatus = (key, text, priority = 0) => {
         residents.delete(key);
         if (text) residents.set(key, { content: text, priority });
@@ -94,6 +105,14 @@
           return;
         }
         render();
+      };
+      const setResidentError = (key, message) => {
+        const previous = residents.get(key)?.content;
+        const content = message
+          ? previous?.classList?.contains("hud-error") && previous.textContent === message
+            ? previous : errorContent(message)
+          : "";
+        setResidentStatus(key, content);
       };
       const setOverlay = (node) => {
         overlay = node;
@@ -107,5 +126,5 @@
         covered = value;
         render();
       };
-      return { setStatus, setResidentStatus, setOverlay, setBackgroundStatus, setCovered };
+      return { setStatus, setError, setResidentStatus, setResidentError, setOverlay, setBackgroundStatus, setCovered };
     };

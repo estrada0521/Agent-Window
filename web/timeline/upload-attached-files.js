@@ -3,7 +3,7 @@
       const uploadAttachedFiles = async (fileList) => {
         if (!canCompose()) return false;
         if (isTerminalMode()) {
-          setStatus("Exit Terminal mode before attaching files");
+          setStatus("Exit Terminal mode");
           return false;
         }
         const files = Array.from(fileList || []).filter((f) => f && typeof f.name === "string");
@@ -40,7 +40,7 @@
           }));
           return true;
         } catch (err) {
-          setStatus("Upload failed: " + err.message);
+          setError("Upload failed", err);
           return false;
         }
       };

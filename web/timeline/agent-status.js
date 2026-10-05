@@ -91,7 +91,8 @@
       renderAgentStatus(data.statuses);
       syncSessionMenuOptions();
       syncAddAgentHint();
-      setResidentStatus("thread-stopped", data.stopped_threads.join(" · "));
+      if (data.stopped_threads.length) console.error("Agent watcher stopped", data.stopped_threads);
+      setResidentError("thread-stopped", data.stopped_threads.length ? "Agent watcher stopped" : "");
       if (document.documentElement.dataset.mobile !== "1" && typeof data.timeline === "string" && data.timeline) {
         onTimelineSummaryPinReload();
       }
@@ -106,9 +107,10 @@
         const res = await fetchWithTimeout(`/timeline-state?ts=${Date.now()}`, {}, 4000);
         if (!res.ok) throw new Error("timeline state unavailable");
         applyTimelineState(await res.json());
-        setResidentStatus("state-failed", "");
+        setResidentError("state-failed", "");
       } catch (err) {
-        setResidentStatus("state-failed", err?.message || String(err));
+        console.error("Agent state unavailable", err);
+        setResidentError("state-failed", "Agent state unavailable");
       } finally {
         refreshTimelineState.inFlight = false;
         if (refreshTimelineState.pending) {

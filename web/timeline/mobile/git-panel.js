@@ -65,7 +65,7 @@ __INCLUDE:../git-panel-controller.js__
         await loadGitWorktreeList();
       } catch (err) {
         gitWorktreeList = [];
-        setStatus(err?.message || "Failed to load worktrees");
+        setError("Worktrees unavailable", err);
       }
     });
     gitTreeButton.addEventListener("click", () => {
@@ -125,7 +125,7 @@ __INCLUDE:../git-panel-controller.js__
         gitSummaryHudShown = shown;
         setStatus(gitSummaryHud);
       } catch (err) {
-        setStatus(err?.message || "Failed to load Git summary");
+        setError("Git unavailable", err);
       }
     };
     gitSummaryHud.addEventListener("click", async () => {

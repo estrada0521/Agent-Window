@@ -19,7 +19,7 @@
           olderEntries = mergeEntriesById(olderBatch, olderEntries);
         }
       } catch (err) {
-        setStatus(err?.message || String(err));
+        setError("History unavailable", err);
       } finally {
         olderLoading = false;
         render(latestPayloadData, { suppressEntryAnimation: true });
@@ -114,7 +114,7 @@ __INCLUDE:transcript-refresh.js__
         }
         return true;
       } catch (error) {
-        setStatus(error.message);
+        setError("Command failed", error);
         return false;
       } finally {
         sendLocked = false;
@@ -143,7 +143,7 @@ __INCLUDE:transcript-refresh.js__
       const rawInput = forcedText != null ? forcedText : message.value;
       const terminalMode = forcedText == null && isTerminalMode();
       if (terminalMode && pendingAttachments.length) {
-        setStatus("Remove attachments before using Terminal");
+        setStatus("Remove attachments");
         sendLocked = false;
         return false;
       }
@@ -164,7 +164,7 @@ __INCLUDE:transcript-refresh.js__
         try {
           list = await loadSlashCommandsOnce();
         } catch (err) {
-          setStatus(err?.message || "Commands unavailable");
+          setError("Commands unavailable", err);
           sendLocked = false;
           return false;
         }
@@ -222,7 +222,7 @@ __INCLUDE:transcript-refresh.js__
             }
             return true;
           } catch (error) {
-            setStatus(error.message);
+            setError("Command failed", error);
             document.dispatchEvent(new CustomEvent("timeline-send-failed"));
             return false;
           } finally {
@@ -286,7 +286,7 @@ __INCLUDE:transcript-refresh.js__
         }
         return true;
       } catch (error) {
-        setStatus(error.message);
+        setError("Send failed", error);
         document.dispatchEvent(new CustomEvent("timeline-send-failed"));
         return false;
       } finally {

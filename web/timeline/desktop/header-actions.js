@@ -143,7 +143,7 @@
           }
         : null;
       closeHeaderMenus();
-      openNativeHeaderMenu(anchorRect).catch((err) => setStatus(`Timeline menu failed: ${err}`));
+      openNativeHeaderMenu(anchorRect).catch((err) => setError("Menu failed", err));
     });
     window.addEventListener("native-menu-action", (event) => {
       void handleTimelineMenuAction(event.detail || {});
@@ -152,7 +152,7 @@
       event.preventDefault();
       event.stopPropagation();
       closeHeaderMenus();
-      openNativeHeaderMenu().catch((err) => setStatus(`Timeline menu failed: ${err}`));
+      openNativeHeaderMenu().catch((err) => setError("Menu failed", err));
     });
     document.getElementById("timelineReloadBtn").addEventListener("click", () => void reloadTimeline());
     document.getElementById("sideBarToggle").addEventListener("click", () => toggleSideBar());
@@ -185,7 +185,7 @@
         const res = await fetch("/reveal-log", { method: "POST" });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          setStatus(data.error || "Reveal failed");
+          setError("Reveal failed", data.error);
         }
         return;
       }
@@ -218,10 +218,10 @@
           const res = await fetch("/open-shell", { method: "POST" });
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            setStatus(data.error || "Terminal open failed");
+            setError("Terminal unavailable", data.error);
           }
         } catch (err) {
-          setStatus(`Terminal: ${err.message}`);
+          setError("Terminal unavailable", err);
         }
         return;
       }
@@ -230,10 +230,10 @@
           const res = await fetch("/open-finder", { method: "POST" });
           if (!res.ok) {
             const data = await res.json().catch(() => ({}));
-            setStatus(data.error || "Finder open failed");
+            setError("Finder unavailable", data.error);
           }
         } catch (err) {
-          setStatus(`Finder: ${err.message}`);
+          setError("Finder unavailable", err);
         }
         return;
       }

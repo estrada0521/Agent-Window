@@ -13,15 +13,15 @@
         const worktrees = await fetchGitWorktrees();
         if (revision === gitFollowRevision && gitFollow() && tree !== gitTree()) applyFollowTree(tree, worktrees);
       } catch (err) {
-        if (revision === gitFollowRevision) setStatus(err?.message || "Failed to load worktrees");
+        if (revision === gitFollowRevision) setError("Worktrees unavailable", err);
       }
     });
     timelineEvents.addEventListener("git", (event) => {
       if (JSON.parse(event.data) === gitTree()) handleWorkspaceGitChanged();
     });
-    timelineEvents.addEventListener("failure", (event) => { setStatus(JSON.parse(event.data)); });
+    timelineEvents.addEventListener("failure", (event) => { setError("Update failed", JSON.parse(event.data)); });
     timelineEvents.onopen = () => {
-      setResidentStatus("disconnected", "");
+      setResidentError("disconnected", "");
       if (!timelineEventsOpened) {
         timelineEventsOpened = true;
         return;
@@ -34,5 +34,5 @@
     };
     timelineEvents.onerror = () => {
       if (reloadInFlight) return;
-      setResidentStatus("disconnected", "Disconnected");
+      setResidentError("disconnected", "Disconnected");
     };

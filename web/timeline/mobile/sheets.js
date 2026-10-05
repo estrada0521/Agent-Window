@@ -531,7 +531,7 @@
       if (!path || !mobileSheet) return;
       const [exists] = await Promise.all([fileExistsOnDisk(path), ensureFileIconTheme()]);
       if (!exists) {
-        setStatus("File not found");
+        setError("File not found");
         return;
       }
       ensureSheetDom();
@@ -643,7 +643,7 @@ __INCLUDE:git-panel.js__
       try {
         await loadGitWorktreeList();
       } catch (err) {
-        setStatus(err?.message || "Failed to load worktrees");
+        setError("Worktrees unavailable", err);
         return;
       }
       ensureSheetDom();
@@ -660,7 +660,7 @@ __INCLUDE:git-panel.js__
         const res = await fetchWithTimeout("/files-dir?path=", {}, 12000);
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load workspace");
       } catch (err) {
-        setStatus(err?.message || "Failed to load workspace");
+        setError("Workspace unavailable", err);
         return;
       }
       ensureSheetDom();
