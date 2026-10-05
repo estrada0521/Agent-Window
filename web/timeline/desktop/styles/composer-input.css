@@ -96,11 +96,47 @@
     .send-btn:disabled {
       cursor: not-allowed;
     }
+    .attach-preview-controls {
+      position: relative;
+      min-width: 0;
+    }
+    .attach-preview-controls[hidden],
+    .attach-scroll-btn[hidden] {
+      display: none;
+    }
+    .attach-scroll-btn {
+      position: absolute;
+      top: calc(50% - var(--text-size, 13px) * 5 / 13);
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: calc(var(--text-size, 13px) * 26 / 13);
+      height: calc(var(--text-size, 13px) * 26 / 13);
+      transform: translateY(-50%);
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+    .attach-scroll-btn:first-child {
+      left: 0;
+    }
+    .attach-scroll-btn:last-child {
+      right: 0;
+    }
+    .attach-scroll-btn svg {
+      width: calc(var(--text-size, 13px) * 14 / 13);
+      height: calc(var(--text-size, 13px) * 14 / 13);
+    }
+    .attach-scroll-btn:active {
+      transform: translateY(-50%) scale(0.94);
+    }
     .attach-preview-row {
+      min-width: 0;
       display: flex;
       flex-wrap: nowrap;
       gap: calc(var(--text-size, 13px) * 8 / 13);
-      padding: 0 0 calc(var(--text-size, 13px) * 10 / 13);
+      margin-inline: -1px;
+      padding: 0 1px calc(var(--text-size, 13px) * 10 / 13);
       overflow-x: auto;
       overflow-y: hidden;
       scrollbar-width: none;
@@ -396,6 +432,7 @@
     }
     #scrollToBottomBtn,
     #composerFabBtn,
+    .attach-scroll-btn,
     .side-bar-swap-btn {
       padding: 0;
       border-radius: 999px;
@@ -412,6 +449,7 @@
     }
     #scrollToBottomBtn svg,
     #composerFabBtn svg,
+    .attach-scroll-btn svg,
     .side-bar-swap-btn svg {
       display: block;
       stroke: currentColor;

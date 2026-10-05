@@ -40,9 +40,34 @@
     const attachInput = document.getElementById("attachInput");
     const attachPreviewRow = document.getElementById("attachPreviewRow");
     const composerShellEl = document.querySelector(".composer-shell");
-    const syncAttachPreviewFade = () => {
+    const attachScrollButtons = [];
+    let attachPreviewControls;
+    if (!isMobileComposer && attachPreviewRow) {
+      attachPreviewControls = document.createElement("div");
+      attachPreviewControls.className = "attach-preview-controls";
+      attachPreviewControls.hidden = true;
+      attachPreviewRow.before(attachPreviewControls);
+      attachPreviewControls.appendChild(attachPreviewRow);
+      for (const direction of [-1, 1]) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "attach-scroll-btn";
+        button.setAttribute("aria-label", direction < 0 ? "Previous attachments" : "Next attachments");
+        button.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${direction < 0 ? "m14 6-6 6 6 6" : "m10 6 6 6-6 6"}"/></svg>`;
+        button.addEventListener("mousedown", (event) => event.preventDefault());
+        button.addEventListener("click", () => attachPreviewRow.scrollBy({ left: direction * attachPreviewRow.clientWidth, behavior: "smooth" }));
+        if (direction < 0) attachPreviewControls.prepend(button);
+        else attachPreviewControls.append(button);
+        attachScrollButtons.push(button);
+      }
+    }
+    const syncAttachPreviewScroll = () => {
       if (!attachPreviewRow) return;
+      if (attachPreviewControls) attachPreviewControls.hidden = !attachPreviewRow.children.length;
       const max = attachPreviewRow.scrollWidth - attachPreviewRow.clientWidth;
+      attachScrollButtons.forEach((button, index) => {
+        button.hidden = index === 0 ? attachPreviewRow.scrollLeft <= 1 : attachPreviewRow.scrollLeft >= max - 1;
+      });
       attachPreviewRow.style.setProperty("--attach-preview-fade-left", attachPreviewRow.scrollLeft > 1 ? "8px" : "0px");
       attachPreviewRow.style.setProperty("--attach-preview-fade-right", max > 1 && attachPreviewRow.scrollLeft < max - 1 ? "8px" : "0px");
     };
@@ -53,8 +78,8 @@
     };
     if (isMobileComposer && attachPreviewRow) document.body.appendChild(attachPreviewRow);
     if (attachPreviewRow) {
-      attachPreviewRow.addEventListener("scroll", syncAttachPreviewFade, { passive: true });
-      if (typeof ResizeObserver === "function") new ResizeObserver(syncAttachPreviewFade).observe(attachPreviewRow);
+      attachPreviewRow.addEventListener("scroll", syncAttachPreviewScroll, { passive: true });
+      if (typeof ResizeObserver === "function") new ResizeObserver(syncAttachPreviewScroll).observe(attachPreviewRow);
     }
     if (attachBtn && attachInput && attachPreviewRow) {
       const beginAttachCard = (file) => {
@@ -77,7 +102,7 @@
           objectUrl = "";
           card.remove();
           updateSendBtnVisibility();
-          syncAttachPreviewFade();
+          syncAttachPreviewScroll();
           if (!attachPreviewRow.children.length) attachPreviewRow.style.display = "none";
           repositionOpenComposerMenu();
           if (typeof positionComposerDropdown === "function") positionComposerDropdown(attachPreviewRow);
@@ -106,7 +131,7 @@
         });
         attachPreviewRow.appendChild(card);
         attachPreviewRow.style.display = "flex";
-        syncAttachPreviewFade();
+        syncAttachPreviewScroll();
         repositionOpenComposerMenu();
         if (typeof positionComposerDropdown === "function") positionComposerDropdown(attachPreviewRow);
         return {
