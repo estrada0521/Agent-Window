@@ -527,7 +527,7 @@
     }
 
     .has-hover .message-row:not(.user):hover .message::before {
-      opacity: 1;
+      opacity: 0.4;
     }
 
     html[data-auto-window-height="1"] .message-row:not(.user) .message::before {

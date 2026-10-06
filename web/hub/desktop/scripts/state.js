@@ -81,6 +81,11 @@
       document.documentElement.style.setProperty("--text-size", `${clamped}px`);
       return clamped;
     }
+    function syncDeskWindowCornerRadius() {
+      getNativeInvoke()?.("set_window_corner_radius", { radius: currentDeskTextSizePx() * 22 / 13 }).catch((err) => {
+        setError("Corner radius failed", err);
+      });
+    }
     function applyDeskTextSizeAndBroadcast(px) {
       const previous = currentDeskTextSizePx();
       const clamped = clampDeskTextSize(px);
@@ -93,9 +98,10 @@
       _deskTimelineFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
       if (scalesWindow) {
         _deskLastFitTarget *= clamped / previous;
-        invoke("scale_window_from_top_center", { scale: clamped / previous, cornerRadius: clamped * 16 / 13 }).catch((err) => {
+        invoke("scale_window_from_top_center", { scale: clamped / previous }).catch((err) => {
           setError("Resize failed", err);
         });
+        syncDeskWindowCornerRadius();
       }
     }
     function dispatchDeskNativeMenuAction(payload) {

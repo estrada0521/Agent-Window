@@ -420,6 +420,7 @@
       window.addEventListener("blur", () => { hovered = false; hideHint(); });
       window.addEventListener("resize", updateHint);
     }
+    syncDeskWindowCornerRadius();
     (function armDeskWindowTraffic() {
       const invoke = getNativeInvoke();
       if (!_deskWindowTraffic || !invoke) return;
