@@ -99,9 +99,12 @@
       }
 
       const tempDiv = DOMPurify.sanitize(html, {
-        USE_PROFILES: { html: true },
+        USE_PROFILES: { html: true, svg: true, svgFilters: true, mathMl: true },
         FORBID_TAGS: ["style", "iframe", "object", "embed", "form"],
         FORBID_ATTR: ["style"],
+        ADD_ATTR: ["target"],
+        ALLOWED_URI_REGEXP: /^(?!javascript:)/i,
+        CUSTOM_ELEMENT_HANDLING: { tagNameCheck: /./, attributeNameCheck: /./, allowCustomizedBuiltInElements: true },
         RETURN_DOM: true,
       });
       applyWrittenOrderedListNumbers(tempDiv, processedText);

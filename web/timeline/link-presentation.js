@@ -19,9 +19,8 @@
         if (!doc.getElementById("agent-link-press-style")) {
           const style = doc.createElement("style");
           style.id = "agent-link-press-style";
-          style.textContent = `.agent-link-presentation-root a[href]{-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
-            a.agent-external-link-press{display:inline-block;transition:transform var(--liquid-glass-press-out,600ms cubic-bezier(0.16,1,0.3,1))}
-            a.agent-external-link-press.is-pressed{transform:scale(var(--liquid-glass-press-scale,1.06));transition:transform var(--liquid-glass-press-in,120ms ease-out)}`;
+          style.textContent = `.agent-link-presentation-root a[href]{-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;display:inline-block;transition:transform var(--liquid-glass-press-out,600ms cubic-bezier(0.16,1,0.3,1))}
+            .agent-link-presentation-root a[href].is-pressed{transform:scale(var(--liquid-glass-press-scale,1.06));transition:transform var(--liquid-glass-press-in,120ms ease-out)}`;
           doc.head.appendChild(style);
         }
         let touch = null;
@@ -38,7 +37,7 @@
           const node = pressable(event.target);
           const point = event.touches?.[0];
           if (!node || !point) return;
-          if (externalLink(node)) node.classList.add("agent-external-link-press");
+          node.style.setProperty("--liquid-glass-press-scale", Math.min(1.06, 1 + 6 / node.getBoundingClientRect().width));
           node.classList.add("is-pressed");
           touch = { node, x: point.clientX, y: point.clientY };
         }, { passive: true });

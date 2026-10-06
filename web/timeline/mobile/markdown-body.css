@@ -34,17 +34,3 @@
       width: 28px;
       height: 28px;
     }
-
-    .md-body a.inline-file-link,
-    .md-body a.local-file-link {
-      --liquid-glass-press-scale: 1.06;
-      display: inline-block;
-      transition: transform var(--liquid-glass-press-out, 600ms cubic-bezier(0.16, 1, 0.3, 1));
-    }
-
-    .md-body a.inline-file-link.is-pressed,
-    .md-body a.local-file-link.is-pressed {
-      transform: scale(var(--liquid-glass-press-scale, 1.06));
-      transition: transform var(--liquid-glass-press-in, 120ms ease-out);
-    }
-
