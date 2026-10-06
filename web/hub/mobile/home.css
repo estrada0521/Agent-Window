@@ -87,17 +87,10 @@
       background: var(--bg);
       color: var(--fg);
       font-family: var(--font-main);
-      scrollbar-width: none;
-      -ms-overflow-style: none;
       overscroll-behavior-x: none;
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
-    }
-
-    html::-webkit-scrollbar,
-    body::-webkit-scrollbar {
-      display: none;
     }
 
     body {

@@ -18,9 +18,6 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    :is(.table-scroll, .katex-display)::-webkit-scrollbar { display: none; }
-    :is(.table-scroll, .katex-display) { scrollbar-width: none; }
-
     .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn {
       -webkit-tap-highlight-color: transparent;
     }

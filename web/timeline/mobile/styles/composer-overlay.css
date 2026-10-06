@@ -154,8 +154,6 @@
       overflow-y: hidden;
       overscroll-behavior-x: contain;
       touch-action: pan-x;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
       margin: 0;
       padding: 4px 20px 4px 10px;
       align-self: center;
@@ -218,10 +216,6 @@
     body:not(.composer-overlay-open) > .target-picker {
       visibility: hidden;
       pointer-events: none;
-    }
-
-    .target-picker::-webkit-scrollbar {
-      display: none;
     }
 
     .composer-stack {
