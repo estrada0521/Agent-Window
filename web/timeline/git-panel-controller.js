@@ -60,7 +60,7 @@
         if (!btn) return;
         btn.hidden = !state.loadError;
         btn.disabled = state.pageLoading;
-        btn.textContent = state.loadError ? (host.loadMoreRetryText || "Retry loading commits") : "";
+        btn.textContent = state.loadError ? "Retry loading commits" : "";
       };
       const ensureObserver = () => {
         disconnectObserver();

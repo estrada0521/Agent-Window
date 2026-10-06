@@ -532,7 +532,6 @@
       });
     }
 
-    window.refreshHubTimelineLists = refreshHubTimelines;
     startHubTimelineMessagesEvents(() => refreshHubTimelines(true, { skipRestore: true }));
     consumeHubPendingError();
     if (isNativeApp() && !isPhoneViewport()) {

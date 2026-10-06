@@ -72,7 +72,6 @@
       loadingHtml: '<div class="empty-state inline-loading-row"></div>',
       errorHtml: (message) => `<div class="empty-state error">${escapeHtml(message)}</div>`,
       emptyCommitsHtml: '<div class="empty-state" data-git-empty="1">No commits</div>',
-      loadMoreRetryText: "Retry loading commits",
       worktreeDetailClass: true,
       detailHeadHtml: ({ isWorktree, rowHtml }) => {
         if (isWorktree) return "";
