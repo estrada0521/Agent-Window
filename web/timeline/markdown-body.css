@@ -121,7 +121,7 @@
     .md-body a.inline-file-link,
     .md-body a.local-file-link {
       color: var(--file-link-fg);
-      font-weight: var(--link-weight);
+      font-weight: var(--md-strong-weight);
       text-decoration: none;
       -webkit-touch-callout: none;
       -webkit-tap-highlight-color: transparent;
@@ -486,7 +486,7 @@
 
     .md-body a:not(.inline-file-link):not(.local-file-link) {
       color: var(--external-link-fg);
-      font-weight: var(--link-weight);
+      font-weight: var(--md-strong-weight);
       text-decoration: none;
     }
 

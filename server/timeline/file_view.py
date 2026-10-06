@@ -32,9 +32,9 @@ from server.appearance.typography import (
     FILE_PREVIEW_CODE_FONT,
     FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO,
     FILE_PREVIEW_CODE_TEXT_SIZE,
-    FILE_PREVIEW_DARK_CODE_WEIGHT,
-    FILE_PREVIEW_LIGHT_CODE_WEIGHT,
     MESSAGE_FONT,
+    MOBILE_DARK_FILE_PREVIEW_CODE_WEIGHT,
+    MOBILE_LIGHT_FILE_PREVIEW_CODE_WEIGHT,
     TEXT_LINE_HEIGHT_RATIO,
     apply_font_tokens,
     body_typography_css,
@@ -141,7 +141,7 @@ def render_file_view(
     code_top_offset = f"calc({preview_top_gap} + {preview_top_offset})" if embed else "0px"
     preview_bottom_offset = "calc(20px + env(safe-area-inset-bottom) + env(safe-area-inset-bottom))" if embed else "0px"
     base_css = (
-        f':root{{color-scheme: {"light" if is_light_theme else "dark"};--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--file-preview-code-font:{FILE_PREVIEW_CODE_FONT};--file-preview-code-weight:{FILE_PREVIEW_LIGHT_CODE_WEIGHT if is_light_theme else FILE_PREVIEW_DARK_CODE_WEIGHT};--text-size:{agent_text_size}px;--text-line-height:{resolved_line_height}px;--file-preview-code-size:{FILE_PREVIEW_CODE_TEXT_SIZE}px;--file-preview-code-line-height:{FILE_PREVIEW_CODE_TEXT_SIZE * FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO:g}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--code-tpad:{code_top_offset};--bpad:{preview_bottom_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
+        f':root{{color-scheme: {"light" if is_light_theme else "dark"};--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--file-preview-code-font:{FILE_PREVIEW_CODE_FONT};--file-preview-code-weight:{MOBILE_LIGHT_FILE_PREVIEW_CODE_WEIGHT if is_light_theme else MOBILE_DARK_FILE_PREVIEW_CODE_WEIGHT};--text-size:{agent_text_size}px;--text-line-height:{resolved_line_height}px;--file-preview-code-size:{FILE_PREVIEW_CODE_TEXT_SIZE}px;--file-preview-code-line-height:{FILE_PREVIEW_CODE_TEXT_SIZE * FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO:g}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--code-tpad:{code_top_offset};--bpad:{preview_bottom_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
         f".view-container,.preview-text-wrap{{--text-size:var(--file-preview-code-size);--text-line-height:var(--file-preview-code-line-height)}}"
