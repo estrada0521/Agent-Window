@@ -1,7 +1,7 @@
     .md-body {
       --prose-rhythm: 0.5em;
       --prose-block-rhythm: 0.5em;
-      --code-block-radius: round(nearest, calc(var(--text-size, 13px) * 26 / 13), 1px);
+      --code-block-radius: round(nearest, calc(var(--text-size, 13px) * 20 / 13), 1px);
       --code-block-padding-start: round(nearest, calc(var(--text-size, 13px) * 16 / 13), 1px);
       --code-block-padding-end: round(nearest, calc(var(--text-size, 13px) * 36 / 13), 1px);
       --table-cell-padding-inline: round(nearest, calc(var(--text-size, 13px) * 12 / 13), 1px);
@@ -294,7 +294,7 @@
       box-sizing: border-box;
       position: relative;
       background: var(--code-bg);
-      border: none;
+      border: var(--code-block-border);
       border-radius: var(--code-block-radius);
       padding: 0.62em var(--code-block-padding-end) 0.62em var(--code-block-padding-start);
       margin: 0.75em 0;
@@ -351,6 +351,11 @@
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       opacity: 1;
+    }
+
+    .md-body .code-block-wrap > .code-copy-btn {
+      top: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
+      right: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
     }
 
     .has-hover .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn:hover,

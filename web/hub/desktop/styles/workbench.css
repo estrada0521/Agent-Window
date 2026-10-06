@@ -8,7 +8,7 @@
       min-height: 0;
       width: 100%;
       background: var(--bg);
-      border-radius: var(--desk-inner-radius);
+      border-radius: var(--desk-inner-top-radius) var(--desk-inner-top-radius) var(--desk-inner-radius) var(--desk-inner-radius);
       overflow: hidden;
       isolation: isolate;
       grid-template-columns: 0 minmax(0, 1fr);
@@ -46,7 +46,7 @@
       background: transparent;
       box-shadow: none;
       z-index: 6;
-      border-radius: var(--desk-inner-radius) 0 0 var(--desk-inner-radius);
+      border-radius: var(--desk-inner-top-radius) 0 0 var(--desk-inner-radius);
       isolation: isolate;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
       user-select: none;
@@ -109,7 +109,7 @@
       background: var(--hub-glass);
       backdrop-filter: var(--glass-filter-20);
       -webkit-backdrop-filter: var(--glass-filter-20);
-      border-radius: var(--desk-inner-radius) 0 0 var(--desk-inner-radius);
+      border-radius: var(--desk-inner-top-radius) 0 0 var(--desk-inner-radius);
       box-shadow: none;
       transition: none;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
@@ -132,7 +132,7 @@
     .desk-workbench.hub-open .desk-main {
       display: flex;
       pointer-events: auto;
-      border-radius: 0 var(--desk-inner-radius) var(--desk-inner-radius) 0;
+      border-radius: 0 var(--desk-inner-top-radius) var(--desk-inner-radius) 0;
     }
     .desk-hub-shell > * {
       position: relative;
@@ -228,8 +228,8 @@
     html:not([data-auto-window-height="1"]) #deskAppSidebarToggle.is-unread::after {
       content: "";
       position: absolute;
-      top: 0.23em;
-      right: 0.23em;
+      top: 0;
+      right: 0;
       width: 0.38em;
       height: 0.38em;
       border-radius: 50%;
@@ -322,7 +322,7 @@
       pointer-events: none;
       transform: translate(-50%, -50%);
     }
-    html[data-theme="light"] .desk-pane-direction-hint { background: rgba(var(--pill-bg-rgb), 0.8); }
+    html[data-theme="light"] .desk-pane-direction-hint { background: var(--pill-bg); }
     .desk-pane-direction-hint[hidden] { display: none; }
     .desk-pane-direction-hint svg { width: var(--swap-icon-size); height: var(--swap-icon-size); stroke-width: 1.7; }
     .desk-pane-direction-hint[data-direction="left"] svg { transform: rotate(180deg); }

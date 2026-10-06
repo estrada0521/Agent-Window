@@ -16,6 +16,7 @@
       user-select: none;
       -webkit-user-select: none;
     }
+    html[data-theme="light"] .desk-hub-hover-popover { background: var(--pill-bg); }
     .desk-hub-hover-list {
       display: block;
       max-height: 70vh;

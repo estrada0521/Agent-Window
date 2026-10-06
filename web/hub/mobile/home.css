@@ -20,7 +20,6 @@
       --hub-timeline-peek-width: 25vw;
       --hub-tagline-fade-height: 64px;
       --mob-top-gradient-rgb: var(--bg-rgb);
-      --code-bg: rgba(255, 255, 255, 0.05);
       --row-preview-fg: var(--muted);
       --timeline-dim-fg: rgb(__TEXT_TIMELINE_DIM_MOBILE_LIGHT_CHANNELS__);
       --row-name-weight: 700;
@@ -43,7 +42,6 @@
       --timeline-danger-fg: rgb(207, 34, 46);
       --timeline-success-fg: rgb(36, 157, 66);
       --mob-top-gradient-rgb: var(--bg-rgb);
-      --code-bg: rgba(0, 0, 0, 0.05);
       --row-preview-fg: var(--muted);
       --timeline-dim-fg: rgb(__TEXT_TIMELINE_DIM_MOBILE_LIGHT_CHANNELS__);
       --row-name-weight: 700;
@@ -67,7 +65,6 @@
       --timeline-danger-fg: rgb(204, 47, 38);
       --timeline-success-fg: rgb(41, 178, 75);
       --mob-top-gradient-rgb: var(--bg-rgb);
-      --code-bg: rgba(255, 255, 255, 0.05);
       --row-preview-fg: color-mix(in srgb, var(--muted) 85%, var(--bg));
       --timeline-dim-fg: rgb(__TEXT_TIMELINE_DIM_MOBILE_DARK_CHANNELS__);
       --row-name-weight: 600;

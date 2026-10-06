@@ -264,7 +264,7 @@
     .message-row.is-collapsible .message-body-row.is-collapsed .md-body {
       overflow: hidden;
       max-height: var(--message-collapse-max-height);
-      --message-collapse-fade: linear-gradient(to bottom, black 0, black calc(100% - 56px), transparent 100%);
+      --message-collapse-fade: linear-gradient(to bottom, black 0, black calc(100% - var(--text-size, 13px) * 56 / 13), transparent 100%);
       mask-image: var(--message-collapse-fade);
       -webkit-mask-image: var(--message-collapse-fade);
     }
@@ -274,13 +274,13 @@
       position: absolute;
       left: 0;
       right: auto;
-      bottom: 10px;
+      bottom: calc(var(--text-size, 13px) * 10 / 13);
       z-index: 2;
       padding: 0;
       border: none;
       background: transparent;
       color: var(--muted);
-      font: 600 12px/1 var(--font-main);
+      font: 600 calc(var(--text-size, 13px) * 12 / 13)/1 var(--font-main);
       letter-spacing: 0.01em;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;

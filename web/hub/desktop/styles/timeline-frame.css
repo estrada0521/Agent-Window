@@ -14,7 +14,7 @@
       overflow: hidden;
       isolation: isolate;
       border: none;
-      border-radius: var(--desk-inner-radius);
+      border-radius: var(--desk-inner-top-radius) var(--desk-inner-top-radius) var(--desk-inner-radius) var(--desk-inner-radius);
       -webkit-mask-image: -webkit-radial-gradient(white, black);
       transition: none;
     }
