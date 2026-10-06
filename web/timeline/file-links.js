@@ -401,3 +401,13 @@ __INCLUDE:file-autocomplete.js__
     }, true);
 
     const cmdDrop = document.getElementById("cmdDropdown");
+    [fileDrop, cmdDrop].forEach((menu) => {
+      const syncFade = () => {
+        const atTop = menu.scrollTop <= 1;
+        const atBottom = menu.scrollTop + menu.clientHeight >= menu.scrollHeight - 1;
+        menu.dataset.scrollFade = atTop && atBottom ? "none" : atTop ? "bottom" : atBottom ? "top" : "both";
+      };
+      menu.addEventListener("scroll", syncFade, { passive: true });
+      new MutationObserver(syncFade).observe(menu, { childList: true, subtree: true });
+      new ResizeObserver(syncFade).observe(menu);
+    });

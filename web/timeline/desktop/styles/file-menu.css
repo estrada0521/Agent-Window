@@ -13,7 +13,6 @@
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
       border: none;
-      border-radius: calc(var(--text-size, 13px) * 16 / 13) calc(var(--text-size, 13px) * 16 / 13) 0 0;
       overflow-y: auto;
       overflow-x: hidden;
       scrollbar-gutter: stable;
@@ -30,8 +29,22 @@
 
     #fileDropdown,
     #cmdDropdown {
-      mask-image: linear-gradient(to bottom, black 0, black calc(100% - calc(var(--text-size, 13px) * 16 / 13)), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, black 0, black calc(100% - calc(var(--text-size, 13px) * 16 / 13)), transparent 100%);
+      --composer-menu-fade: calc(var(--text-size, 13px) * 16 / 13);
+    }
+
+    :is(#fileDropdown, #cmdDropdown)[data-scroll-fade="top"] {
+      mask-image: linear-gradient(to bottom, transparent 0, black var(--composer-menu-fade));
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--composer-menu-fade));
+    }
+
+    :is(#fileDropdown, #cmdDropdown)[data-scroll-fade="bottom"] {
+      mask-image: linear-gradient(to bottom, black calc(100% - var(--composer-menu-fade)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black calc(100% - var(--composer-menu-fade)), transparent 100%);
+    }
+
+    :is(#fileDropdown, #cmdDropdown)[data-scroll-fade="both"] {
+      mask-image: linear-gradient(to bottom, transparent 0, black var(--composer-menu-fade), black calc(100% - var(--composer-menu-fade)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--composer-menu-fade), black calc(100% - var(--composer-menu-fade)), transparent 100%);
     }
 
     #fileDropdown,

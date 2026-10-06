@@ -931,5 +931,8 @@
     }
 
     .file-item:not(:last-child) {
-      border-bottom: 0.5px solid var(--composer-menu-row-border);
+      background-image: linear-gradient(var(--composer-menu-row-border), var(--composer-menu-row-border));
+      background-repeat: no-repeat;
+      background-position: bottom center;
+      background-size: calc(100% - 28px) 0.5px;
     }

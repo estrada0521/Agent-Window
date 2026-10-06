@@ -27,8 +27,26 @@
     #fileDropdown,
     #cmdDropdown {
       flex-direction: column;
-      mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+    }
+
+    #fileDropdown,
+    #cmdDropdown {
+      --composer-menu-fade: 16px;
+    }
+
+    :is(#fileDropdown, #cmdDropdown)[data-scroll-fade="top"] {
+      mask-image: linear-gradient(to bottom, transparent 0, black var(--composer-menu-fade));
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--composer-menu-fade));
+    }
+
+    :is(#fileDropdown, #cmdDropdown)[data-scroll-fade="bottom"] {
+      mask-image: linear-gradient(to bottom, black calc(100% - var(--composer-menu-fade)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, black calc(100% - var(--composer-menu-fade)), transparent 100%);
+    }
+
+    :is(#fileDropdown, #cmdDropdown)[data-scroll-fade="both"] {
+      mask-image: linear-gradient(to bottom, transparent 0, black var(--composer-menu-fade), black calc(100% - var(--composer-menu-fade)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--composer-menu-fade), black calc(100% - var(--composer-menu-fade)), transparent 100%);
     }
 
     #fileDropdown.is-scrollable,
