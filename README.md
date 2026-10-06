@@ -35,60 +35,28 @@ Requires `python3`, `tmux`, Xcode Command Line Tools. Install and authenticate t
 ./macos/build
 ```
 
-Builds the app, saves it to `/Applications/Agent Window.app`, and launches it.
+The app builds in 1s, and is saved to `/Applications/Agent Window.app` and launched.
 
 ## timeline
 
 `New Timeline` picks a workspace and starts a tmux session there.
 
+`Add / Remove Agent` adds and removes Agents. Adding the same CLI more than once gets an instance name like `Claude-2`. The CLI itself opens from `tmux pane`.
+
+
 <details>
-<summary>Actions</summary>
+<summary>State actions</summary>
 
 | Action | Effect | Note |
 |---|---|---|
 | Archive | Kills the tmux session | Log stays |
-| Revive | Creates a new tmux session from the saved workspace and Agent set | Resumes each Agent's last conversation recorded in the log |
+| Revive | Recreates the tmux session from the saved workspace and Agent set | Uses each CLI's resume |
 | Delete | Permanently deletes the timeline's saved data | Archived only |
 | Rename | Changes the timeline's name | |
 | Change Workspace | Changes the workspace | Archived only |
-| Reset Agents | Clears the saved Agent set | Revive, then Add Agent to start fresh |
+| Reset Agents | Clears the saved Agent set | The one used by Revive |
 
 </details>
-
-## Agent
-
-`Add / Remove Agent` adds and removes Agents. Adding the same CLI more than once gets an instance name like `Claude-2`.
-
-The CLI itself opens from `tmux pane`.
-
-## Send
-
-The `O` button opens the input field.
-
-`@` searches files in the workspace. Attached files are saved to `<workspace>/.agent-window/uploads/`, and their path is passed to the Agent as text.
-
-<details>
-<summary>Commands in the input field</summary>
-
-| Command | Target | Effect | Note |
-| --- | --- | --- | --- |
-| `/restart` |  | Restarts the Agent's pane | |
-| `/idle` |  | Clears the Agent's running indicator | |
-| `/log` |  | Inserts the log's path into the message | |
-| `/skill` |  | Inserts the `agent-send` SKILL reference into the message | |
-| `/openpane` | desktop | Opens the Agent's pane | Opens the terminal pane if none is selected |
-| `/nativelog` | desktop | Reveals the Agent's native log in Finder | |
-| `/terminal <text>` | mobile | Sends text to the terminal pane | |
-
-</details>
-
-An Agent can send to another Agent with `agent-send`. It's typed into the target's pane with a prefix like `[From: Claude]`.
-
-```bash
-printf '%s' '<message>' | agent-send <target>
-```
-
-To use it, add `tmux/agent_send/agent-send` to PATH and place `tmux/agent_send/SKILL.md` yourself.
 
 ## workspace
 
@@ -118,22 +86,33 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | New Timeline | `⌘N` | |
 | Switch active timeline | `⌘1`–`⌘9` | |
 | Open Hub in browser | `⇧⌥⌘O` | |
+| Restart Hub server | `⇧⌘R` | Re-reads changed source |
 | Copy workspace path | | right-click menu |
 | Show timeline stats | hover | |
 
 </details>
 
 <details>
-<summary>Control</summary>
+<summary>Composer</summary>
 
 | Action | Key | Note |
 |---|---|---|
-| Open the input field | `Enter` / wheel click | |
+| Open the input field | `Enter` / wheel click | The `O` button also opens it |
 | Close the input field | `Esc` | |
-| Move the input field to bottom / center | `⌃⌘↓` / `⌃⌘↑` | while open |
-| Switch send target | `Ctrl+1`–`Ctrl+9` | |
-| Restart timeline server / Hub server | `⌘R` / `⇧⌘R` | Re-reads changed source |
-| Pin Git summary | `⇧⌘P` | |
+| Move the input field to bottom / center | `⌃⌘↓` / `⌃⌘↑` | While open |
+| Switch send target | `⌃1`–`⌃9` | With none, it's only kept in the log |
+| Search files in the workspace | `@` | Files not excluded by `.gitignore` |
+| Attach files | `+` button / drag & drop / paste | Saved to `<workspace>/.agent-window/uploads/`; the path is passed to the Agent as text |
+
+| Command | Target | Effect | Note |
+| --- | --- | --- | --- |
+| `/restart` |  | Restarts the Agent's pane | |
+| `/idle` |  | Clears the Agent's running indicator | |
+| `/log` |  | Inserts the log's path into the message | |
+| `/skill` |  | Inserts the `agent-send` SKILL reference into the message | |
+| `/openpane` | desktop | Opens the Agent's pane | Opens the terminal pane if none is selected |
+| `/nativelog` | desktop | Reveals the Agent's native log in Finder | |
+| `/terminal <text>` | mobile | Sends text to the terminal pane | |
 
 </details>
 
@@ -145,7 +124,7 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Add / remove Agent | | |
 | Open Terminal | `⌥⌘T` | |
 | Open workspace in Finder | `⌥⌘R` | |
-| Open tmux pane | `⌘T` | |
+| Open tmux terminal pane | `⌘T` | On mobile, operable from `Pane Trace` |
 | Open log in Finder | `⌥⌘L` | |
 | Open timeline in browser | `⌥⌘O` | |
 | Export timeline as HTML / JSONL | | |
@@ -160,6 +139,7 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Jump to top / bottom | `⌘↑` / `⌘↓` | |
 | Previous / next message | `⌥↑` / `⌥↓` | |
 | Previous / next message from the selected targets | `⌃⌥↑` / `⌃⌥↓` | `user` when none is selected |
+| Restart timeline server | `⌘R` | Re-reads changed source |
 
 </details>
 
@@ -177,7 +157,7 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Copy commit hash |  | |
 | Copy commit message |  | |
 | Show commit info | hover | |
-| Switch worktree |  | timeline menu |
+| Switch worktree |  | From the timeline menu |
 | Follow changes |  | ON by default |
 | Pin changes | `⇧⌘P` | |
 
@@ -200,13 +180,14 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 </details>
 
 <details>
-<summary>Appearance menu</summary>
+<summary>UI / UX</summary>
 
 | Action | Key | Note |
 |---|---|---|
 | theme | | System / light / dark |
 | text size | `⌘0` / `⌘+` / `⌘-` | Desktop only. Resizes the window to match |
 | hand | | Mobile only. Optimizes for the right / left hand |
+| sound | | Mobile only. Just plays a sound in the page when a message arrives; not a native notification. OFF by default |
 
 </details>
 
@@ -233,9 +214,17 @@ Connect to the Hub via Tailscale or similar, and use it as a PWA. Swipe left to 
 
 Claude, Codex, Antigravity, Cursor, Grok.
 
+An Agent can send to another Agent with `agent-send`. It's typed into the target's pane with a prefix like `[From: Claude]`.
+
+```bash
+printf '%s' '<message>' | agent-send <target>
+```
+
+To use it, add `tmux/agent_send/agent-send` to PATH and place `tmux/agent_send/SKILL.md` yourself.
+
 ## Stack
 
-The stack is HTML/CSS/vanilla JavaScript, the Python standard library, and one Objective-C file for the macOS window. There is no Node runtime, npm build, or DB; the following are used directly:
+The stack is HTML/CSS/vanilla JavaScript, the Python standard library, and one Objective-C file for the app. There is no Node runtime, npm build, or DB; the following are used directly:
 
 - **browser primitive** — DOM, `fetch` / `EventSource`
 - **native OS API** — FSEvents / kqueue, AppKit / Objective-C
@@ -243,7 +232,7 @@ The stack is HTML/CSS/vanilla JavaScript, the Python standard library, and one O
 
 ## Footprint
 
-No telemetry. The only network dependencies besides the Agent CLIs are `marked`, `DOMPurify`, `katex`, and (when a syntax theme is configured) `highlight.js` from `cdn.jsdelivr.net`. URLs and SRI hashes are pinned in `server/cdn.py`. Vendor them yourself if you want it fully local.
+The app is under 200 KB. No telemetry. The only network dependencies besides the Agent CLIs are `marked`, `DOMPurify`, `katex`, and (when a syntax theme is configured) `highlight.js` from `cdn.jsdelivr.net`. Vendor them yourself if you want it fully local.
 
 The Hub occupies the port in the `server/hub/port` file (default `8788`); edit the file to change it. Each timeline occupies a fixed port derived from its workspace's path.
 

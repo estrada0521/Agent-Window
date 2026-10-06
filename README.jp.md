@@ -35,11 +35,14 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
 ./macos/build
 ```
 
-Appをbuildし、`/Applications/Agent Window.app` に保存して起動する。
+Appは 1s でbuildされ、`/Applications/Agent Window.app` に保存・起動される。
 
 ## timeline
 
 `New Timeline` でworkspaceを選び、そこでtmux sessionを始める。
+
+`Add / Remove Agent` でAgentを追加・削除する。同じCLIを複数追加すると `Claude-2` のようなinstance名が付く。CLI本体は `tmux pane` から開ける。
+
 
 <details>
 <summary>状態操作</summary>
@@ -47,48 +50,13 @@ Appをbuildし、`/Applications/Agent Window.app` に保存して起動する。
 | 操作 | 内容 | 備考 |
 |---|---|---|
 | Archive | tmux sessionを終了する | logは残る |
-| Revive | 保存したworkspaceとAgent構成でtmux sessionを作り直す | 会話の再開はCLIの `/resume` |
+| Revive | 保存したworkspaceとAgent構成でtmux sessionを作り直す | 各CLIのresume機能を利用する |
 | Delete | timelineの保存物を完全に削除する | Archive中のみ |
 | Rename | timelineの名前を変える | |
 | Change Workspace | workspaceを変える | Archive中のみ |
 | Reset Agents | 保存したAgent構成を消す | Revive用のもの |
 
 </details>
-
-## Agent
-
-`Add / Remove Agent` でAgentを追加・削除する。同じCLIを複数追加すると `Claude-2` のようなinstance名が付く。
-
-CLI本体は `tmux pane` から開ける。
-
-## Send
-
-`O` ボタンを押したら入力欄が開く。
-
-`@` でworkspace内のfileを検索する。添付fileは `<workspace>/.agent-window/uploads/` に保存され、そのpathがtextとしてAgentに渡る。
-
-<details>
-<summary>入力欄のcommand</summary>
-
-| Command | 対象 | 内容 | 備考 |
-| --- | --- | --- | --- |
-| `/restart` |  | Agentのpaneを再起動する | |
-| `/idle` |  | Agentのrunning表示を解除する | |
-| `/log` |  | logのpathをmessageに挿入する | |
-| `/skill` |  | `agent-send` SKILLへの参照をmessageに挿入する | |
-| `/openpane` | desktop | Agentのpaneを開く | 未選択ならterminal paneを開く |
-| `/nativelog` | desktop | Agentのnative logをFinderで表示する | |
-| `/terminal <text>` | mobile | terminal paneに文字列を送る | |
-
-</details>
-
-AgentはAgentに `agent-send` で送れる。宛先のpaneに `[From: Claude]` のようなprefix付きで入力される。
-
-```bash
-printf '%s' '<message>' | agent-send <target>
-```
-
-使う場合は、`tmux/agent_send/agent-send` へのPATHと、`tmux/agent_send/SKILL.md` を、自分で置く。
 
 ## workspace
 
@@ -118,22 +86,33 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | New Timeline | `⌘N` | |
 | active timelineの切り替え | `⌘1`–`⌘9` | |
 | ブラウザでHubを開く | `⇧⌥⌘O` |  |
+| Hub serverの再起動 | `⇧⌘R` | 変更後のsourceを読み直す |
 | workspaceのpathをコピー | | 右クリックmenu |
 | timelineの統計表示 | hover |  |
 
 </details>
 
 <details>
-<summary>Control</summary>
+<summary>Composer</summary>
 
 | 操作 | キー | 備考 |
 |---|---|---|
-| 入力欄を開く | `Enter` / ホイール押し込み | |
+| 入力欄を開く | `Enter` / ホイール押し込み | `O` ボタンでも開く |
 | 入力欄を閉じる | `Esc` | |
 | 入力欄を下部／中央へ移動 | `⌃⌘↓` / `⌃⌘↑` | 入力欄を開いている時 |
-| 送信先の切り替え | `Ctrl+1`–`Ctrl+9` | |
-| timeline server / Hub serverの再起動 | `⌘R` / `⇧⌘R` | 変更後のsourceを読み直す |
-| Git summaryのpin | `⇧⌘P` | |
+| 送信先の切り替え | `⌃1`–`⌃9` | 未指定はlogにのみ残る |
+| workspace内のfileを検索 | `@` | `.gitignore`対象外のfile |
+| fileを添付 | `+`ボタン / drag & drop / paste | `<workspace>/.agent-window/uploads/` に保存され、そのpathがtextとしてAgentに渡る |
+
+| Command | 対象 | 内容 | 備考 |
+| --- | --- | --- | --- |
+| `/restart` |  | Agentのpaneを再起動する | |
+| `/idle` |  | Agentのrunning表示を解除する | |
+| `/log` |  | logのpathをmessageに挿入する | |
+| `/skill` |  | `agent-send` SKILLへの参照をmessageに挿入する | |
+| `/openpane` | desktop | Agentのpaneを開く | 未選択ならterminal paneを開く |
+| `/nativelog` | desktop | Agentのnative logをFinderで表示する | |
+| `/terminal <text>` | mobile | terminal paneに文字列を送る | |
 
 </details>
 
@@ -145,7 +124,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | Agentの追加 / 削除 | | |
 | Terminalを開く | `⌥⌘T` | |
 | Finderでworkspaceを開く | `⌥⌘R` | |
-| tmux paneを開く | `⌘T` | |
+| tmux terminal paneを開く | `⌘T` | mobileの`Pane Trace`から操作可能 |
 | FinderでLogを開く | `⌥⌘L` |  |
 | ブラウザでtimelineを開く | `⌥⌘O` |  |
 | timelineをHTML / JSONLとしてExport | | |
@@ -160,6 +139,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | 先頭 / 末尾へ移動 | `⌘↑` / `⌘↓` | |
 | 前 / 次のmessage | `⌥↑` / `⌥↓` | |
 | 選択中の宛先の前 / 次のmessage | `⌃⌥↑` / `⌃⌥↓` | 無選択ならuser |
+| timeline serverの再起動 | `⌘R` | 変更後のsourceを読み直す |
 
 </details>
 
@@ -200,13 +180,14 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 </details>
 
 <details>
-<summary>Appearance menu</summary>
+<summary>UI・UX</summary>
 
 | 操作 | キー | 備考 |
 |---|---|---|
 | theme | | System/light/dark |
 | text size | `⌘0` / `⌘+` / `⌘-` | desktopのみ。windowも相似にresize |
 | hand | | mobileのみ。右手/左手に最適化 |
+| sound | | mobileのみ。message着信時にページ内で音を鳴らすだけで、native通知ではない。既定OFF |
 
 </details>
 
@@ -233,6 +214,14 @@ Tailscale等でHubに接続し、PWAとして使う。gitやfile treeへ繋が�
 
 Claude、Codex、Antigravity、Cursor、Grok。
 
+AgentはAgentに `agent-send` で送れる。宛先のpaneに `[From: Claude]` のようなprefix付きで入力される。
+
+```bash
+printf '%s' '<message>' | agent-send <target>
+```
+
+使う場合は、`tmux/agent_send/agent-send` へのPATHと、`tmux/agent_send/SKILL.md` を、自分で置く。
+
 ## Stack
 
 HTML/CSS/vanilla JavaScript、Python標準libraryと、app用のObjective-Cが1 file。Node、npm build、DBなどは使わず、次を直接叩く。
@@ -243,7 +232,7 @@ HTML/CSS/vanilla JavaScript、Python標準libraryと、app用のObjective-Cが1 
 
 ## Footprint
 
-telemetryなし。Agent CLI以外のネットワーク依存は `cdn.jsdelivr.net` の `marked`・`DOMPurify`・`katex`・構文配色設定時の `highlight.js` のみ。URLとSRIハッシュは `server/cdn.py` に固定。local完結させたいなら、自分でvendorする。
+appサイズは under 200 KB。telemetryなし。Agent CLI以外のネットワーク依存は `cdn.jsdelivr.net` の `marked`・`DOMPurify`・`katex`・構文配色設定時のみ `highlight.js` 。local完結させる場合は自分でvendorする。
 
 Hubの port は `server/hub/port` fileの値(既定 `8788`)を専有する。fileを書き換えれば変わる。timelineごとのport はworkspaceのpathから決まる固定値を専有する。
 

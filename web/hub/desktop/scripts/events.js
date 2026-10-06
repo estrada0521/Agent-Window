@@ -411,13 +411,20 @@
       });
       _deskSideBarToggle?.addEventListener("pointerleave", () => { hovered = false; hideHint(); });
       _deskSideBarToggle?.addEventListener("click", hideHint);
-      window.addEventListener("keydown", (event) => {
-        if (hovered && event.key === "Alt") { altHeld = true; updateHint(); }
+      const trackAltKey = (target) => {
+        target.addEventListener("keydown", (event) => {
+          if (hovered && event.key === "Alt") { altHeld = true; updateHint(); }
+        });
+        target.addEventListener("keyup", (event) => {
+          if (hovered && event.key === "Alt") { altHeld = false; updateHint(); }
+        });
+      };
+      trackAltKey(window);
+      _deskTimelineFrame.addEventListener("load", () => trackAltKey(_deskTimelineFrame.contentWindow));
+      window.addEventListener("message", (event) => {
+        if (event.data?.type === "side-bar-state" && event.source === _deskTimelineFrame.contentWindow) updateHint();
       });
-      window.addEventListener("keyup", (event) => {
-        if (hovered && event.key === "Alt") { altHeld = false; updateHint(); }
-      });
-      window.addEventListener("blur", () => { hovered = false; hideHint(); });
+      window.addEventListener("blur", () => { altHeld = false; updateHint(); });
       window.addEventListener("resize", updateHint);
     }
     syncDeskWindowCornerRadius();
