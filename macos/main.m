@@ -368,7 +368,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     return nil;
 }
 
-- (NSString *)scaleFromTopCenter:(double)scale {
+- (NSString *)scaleFromTopCenter:(double)scale cornerRadius:(double)radius {
     if (!isfinite(scale) || scale <= 0) return @"window scale must be a positive finite number";
     NSRect frame = self.window.frame;
     CGFloat width = frame.size.width * scale, height = frame.size.height * scale;
@@ -382,13 +382,10 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         context.duration = [self.window animationResizeTime:frame];
         [self.window.animator setFrame:frame display:YES];
     }];
-    return nil;
-}
-
-- (NSString *)setWindowCornerRadius:(double)radius {
-    if (!isfinite(radius) || radius <= 0) return @"window corner radius must be a positive finite number";
-    self.glassCornerRadius = round(radius);
-    [self applyGlass];
+    if (isfinite(radius) && radius > 0) {
+        self.glassCornerRadius = MIN(MAX(round(radius), 4), 80);
+        [self applyGlass];
+    }
     return nil;
 }
 
@@ -472,8 +469,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         return [self setWindowHeight:[a[@"height"] doubleValue] compactWidthScale:compact];
     }
     if ([cmd isEqualToString:@"resize_window_from_edge"]) return [self resizeFromEdge:a[@"edge"] delta:[a[@"delta"] doubleValue]];
-    if ([cmd isEqualToString:@"scale_window_from_top_center"]) return [self scaleFromTopCenter:[a[@"scale"] doubleValue]];
-    if ([cmd isEqualToString:@"set_window_corner_radius"]) return [self setWindowCornerRadius:[a[@"radius"] doubleValue]];
+    if ([cmd isEqualToString:@"scale_window_from_top_center"]) return [self scaleFromTopCenter:[a[@"scale"] doubleValue] cornerRadius:[a[@"cornerRadius"] doubleValue]];
     if ([cmd isEqualToString:@"move_window_top"]) { [self moveTo:@"top"]; return nil; }
     if ([cmd isEqualToString:@"move_window_top_left"]) { [self moveTo:@"left"]; return nil; }
     if ([cmd isEqualToString:@"move_window_top_right"]) { [self moveTo:@"right"]; return nil; }
@@ -788,7 +784,7 @@ static BOOL HubReady(NSInteger port) {
     self.glass = [[NSGlassEffectView alloc] initWithFrame:content.bounds];
     self.glass.style = NSGlassEffectViewStyleClear;
     self.glass.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    self.glassCornerRadius = 22;
+    self.glassCornerRadius = 26;
     [content addSubview:self.glass];
 
     WKWebViewConfiguration *config = [WKWebViewConfiguration new];

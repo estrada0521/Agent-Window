@@ -427,7 +427,6 @@
       window.addEventListener("blur", () => { altHeld = false; updateHint(); });
       window.addEventListener("resize", updateHint);
     }
-    syncDeskWindowCornerRadius();
     (function armDeskWindowTraffic() {
       const invoke = getNativeInvoke();
       if (!_deskWindowTraffic || !invoke) return;
