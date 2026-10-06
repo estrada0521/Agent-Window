@@ -128,10 +128,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
         preview_text_size = MOBILE_TEXT_SIZE
         requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
         if requested_text_size:
-            try:
-                preview_text_size = int(requested_text_size)
-            except ValueError:
-                pass
+            preview_text_size = int(requested_text_size)
         page = render_file_view(
             ctx["files"],
             rel,
@@ -177,13 +174,7 @@ def _get_files_dir(handler, parsed, ctx) -> None:
 def _get_files_search(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     query = (qs.get("q", [""])[0] or "").strip()
-    limit_raw = (qs.get("limit", [""])[0] or "").strip()
-    limit = 60
-    if limit_raw:
-        try:
-            limit = int(limit_raw)
-        except ValueError:
-            limit = 60
+    limit = int(qs["limit"][0])
     try:
         files = ctx["files"].search_files(query, limit=limit)
         body = json.dumps(files, ensure_ascii=True).encode("utf-8")

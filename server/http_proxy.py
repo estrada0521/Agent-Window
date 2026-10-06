@@ -57,10 +57,7 @@ def read_upstream(
     try:
         resp_body = resp.read()
     finally:
-        try:
-            resp.close()
-        except Exception:
-            pass
+        resp.close()
     return {"status": status, "headers": resp_headers, "body": resp_body}
 
 
@@ -108,7 +105,4 @@ def relay_stream(handler, status: int, resp_headers, resp, *, chunk_size: int = 
             except (BrokenPipeError, ConnectionResetError):
                 break
     finally:
-        try:
-            resp.close()
-        except Exception:
-            pass
+        resp.close()

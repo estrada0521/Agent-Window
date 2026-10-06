@@ -418,10 +418,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send_html(503, error_page(msg))
 
     def _read_form(self):
-        try:
-            length = int(self.headers.get("Content-Length", "0"))
-        except ValueError:
-            length = 0
+        length = int(self.headers["Content-Length"])
         raw = self.rfile.read(length).decode("utf-8", errors="replace")
         return {key: values[-1] for key, values in parse_qs(raw).items() if values}
 

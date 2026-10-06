@@ -98,15 +98,8 @@ def _gray_rgb_string(level: int) -> str:
     return f"rgb({value},{value},{value})"
 
 
-def resolve_theme_fg_level(theme: str = "dark") -> int:
-    theme = str(theme or "dark").strip().lower()
-    return 0 if theme == "light" else 180
-
-
 def resolve_theme_palette(theme: str = "dark") -> dict[str, object]:
-    theme = str(theme or "dark").strip().lower()
-    theme = "light" if theme == "light" else "dark"
-    fg_level = resolve_theme_fg_level(theme)
+    fg_level = 0 if theme == "light" else 180
     if theme == "light":
         color_scheme = "light"
         surface_level = 250

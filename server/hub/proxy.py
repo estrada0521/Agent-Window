@@ -39,10 +39,7 @@ def format_timeline_url(timeline_port: int, path: str) -> str:
 def _read_body(handler, method: str) -> bytes | None:
     if method != "POST":
         return None
-    try:
-        length = int(handler.headers.get("Content-Length", "0"))
-    except ValueError:
-        length = 0
+    length = int(handler.headers["Content-Length"])
     return handler.rfile.read(length)
 
 

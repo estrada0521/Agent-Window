@@ -91,7 +91,7 @@ def render_file_view(
     embed: bool = False,
     base_path: str = "",
     preview_base_theme: str = "",
-    agent_text_size: int | None = None,
+    agent_text_size: int,
     force_progressive_text: bool = False,
 ) -> str:
     full = files.resolve_path(rel)
@@ -103,11 +103,7 @@ def render_file_view(
     prefix = (base_path or "").rstrip("/")
     raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
     size = os.path.getsize(full)
-    try:
-        resolved_text_size = int(agent_text_size or 13)
-    except (TypeError, ValueError):
-        resolved_text_size = 13
-    resolved_line_height = text_line_height_px(resolved_text_size)
+    resolved_line_height = text_line_height_px(agent_text_size)
     requested_base_theme = str(preview_base_theme or "").strip().lower()
     if requested_base_theme in ("dark", "light"):
         theme_palette = resolve_theme_palette(requested_base_theme)
@@ -118,7 +114,7 @@ def render_file_view(
     embed_bg = "transparent" if embed else pane_bg
     pane_fg = str(theme_palette["light_fg"])
     pane_fg_channels = str(theme_palette["light_fg_channels"])
-    is_light_theme = str(theme_palette.get("theme") or "").lower() == "light"
+    is_light_theme = theme_palette["theme"] == "light"
     pane_ln_color = f"rgb({TEXT_MUTED_LIGHT_CHANNELS if is_light_theme else TEXT_MUTED_DARK_CHANNELS})"
     pane_line = f"rgba({pane_fg_channels},0.08)"
     pane_gutter_bg = f"rgba({pane_fg_channels},0.06)"
@@ -145,7 +141,7 @@ def render_file_view(
     code_top_offset = f"calc({preview_top_gap} + {preview_top_offset})" if embed else "0px"
     preview_bottom_offset = "calc(20px + env(safe-area-inset-bottom) + env(safe-area-inset-bottom))" if embed else "0px"
     base_css = (
-        f':root{{color-scheme: {"light" if is_light_theme else "dark"};--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--file-preview-code-font:{FILE_PREVIEW_CODE_FONT};--file-preview-code-weight:{FILE_PREVIEW_LIGHT_CODE_WEIGHT if is_light_theme else FILE_PREVIEW_DARK_CODE_WEIGHT};--text-size:{resolved_text_size}px;--text-line-height:{resolved_line_height}px;--file-preview-code-size:{FILE_PREVIEW_CODE_TEXT_SIZE}px;--file-preview-code-line-height:{FILE_PREVIEW_CODE_TEXT_SIZE * FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO:g}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--code-tpad:{code_top_offset};--bpad:{preview_bottom_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
+        f':root{{color-scheme: {"light" if is_light_theme else "dark"};--font-main:{MESSAGE_FONT};--font-code:{CODE_FONT};--file-preview-code-font:{FILE_PREVIEW_CODE_FONT};--file-preview-code-weight:{FILE_PREVIEW_LIGHT_CODE_WEIGHT if is_light_theme else FILE_PREVIEW_DARK_CODE_WEIGHT};--text-size:{agent_text_size}px;--text-line-height:{resolved_line_height}px;--file-preview-code-size:{FILE_PREVIEW_CODE_TEXT_SIZE}px;--file-preview-code-line-height:{FILE_PREVIEW_CODE_TEXT_SIZE * FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO:g}px;--body-weight:{"430" if is_light_theme else "300"};--tpad:{preview_top_offset};--code-tpad:{code_top_offset};--bpad:{preview_bottom_offset};--preview-gutter-bg:{pane_gutter_bg};--preview-gutter-divider:{pane_gutter_divider};}}'
         f"{font_face_css}"
         f"*{{box-sizing:border-box}}"
         f".view-container,.preview-text-wrap{{--text-size:var(--file-preview-code-size);--text-line-height:var(--file-preview-code-line-height)}}"
@@ -430,7 +426,7 @@ def render_file_view(
         dark_preview_diff_delete = f"rgb({TEXT_DIFF_DELETE_DARK_CHANNELS})"
         light_preview_diff_delete = f"rgb({TEXT_DIFF_DELETE_LIGHT_CHANNELS})"
         markdown_theme_css = (
-            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{str(dark_theme_palette.get("dark_bg_channels") or "0, 0, 0")};--bg:{str(dark_theme_palette["dark_bg"])};--fg:{dark_preview_fg};--fg-bold:{dark_preview_fg_bold};--muted:{dark_preview_muted};--icon-fg:{dark_preview_fg};--icon-muted:{dark_preview_muted};--icon-hover:{MOBILE_DARK_ICON_HOVER};--file-link-fg:rgb({TEXT_FILE_LINK_DARK_CHANNELS});--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:rgb({TEXT_EXTERNAL_LINK_DARK_CHANNELS});--git-ins-green:{dark_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_DARK_CHANNELS};--git-del-red:{dark_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_DARK_CHANNELS};--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);}}'
+            f':root[data-preview-theme="dark"]{{color-scheme:dark;--bg-rgb:{dark_theme_palette["dark_bg_channels"]};--bg:{str(dark_theme_palette["dark_bg"])};--fg:{dark_preview_fg};--fg-bold:{dark_preview_fg_bold};--muted:{dark_preview_muted};--icon-fg:{dark_preview_fg};--icon-muted:{dark_preview_muted};--icon-hover:{MOBILE_DARK_ICON_HOVER};--file-link-fg:rgb({TEXT_FILE_LINK_DARK_CHANNELS});--code-copy-bg:transparent;--code-copy-hover-bg:rgba({dark_preview_fg_channels},0.09);--external-link-fg:rgb({TEXT_EXTERNAL_LINK_DARK_CHANNELS});--git-ins-green:{dark_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_DARK_CHANNELS};--git-del-red:{dark_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_DARK_CHANNELS};--line:rgba({dark_preview_fg_channels},0.07);--line-strong:rgba({dark_preview_fg_channels},0.12);}}'
             f'html[data-preview-theme="light"]{{color-scheme:light;--bg-rgb:{light_preview_bg_channels};--bg:{light_preview_bg};--fg:{light_preview_fg};--fg-bold:{light_preview_fg_bold};--muted:{light_preview_muted};--icon-fg:{light_preview_fg};--icon-muted:{light_preview_muted};--icon-hover:{MOBILE_LIGHT_ICON_HOVER};--file-link-fg:rgb({TEXT_FILE_LINK_LIGHT_CHANNELS});--code-copy-bg:transparent;--code-copy-hover-bg:rgba(0,0,0,0.08);--external-link-fg:{light_preview_external_link};--git-ins-green:{light_preview_diff_insert};--git-ins-green-channels:{TEXT_DIFF_INSERT_LIGHT_CHANNELS};--git-del-red:{light_preview_diff_delete};--git-del-red-channels:{TEXT_DIFF_DELETE_LIGHT_CHANNELS};--line:rgba(0,0,0,0.10);--line-strong:rgba(0,0,0,0.18);}}'
             'html,body{background:transparent;color:var(--fg)}'
             '.md-preview-shell{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;background:transparent;scrollbar-gutter:auto;padding-top:0}'
@@ -466,7 +462,7 @@ const __mdRel = {rel_json};
 const __fileBase = {prefix_json};
 const __previewEmbed = {json.dumps(embed)};
 const __previewBasePath = {prefix_json};
-const __previewAgentTextSize = {json.dumps(resolved_text_size)};
+const __previewAgentTextSize = {json.dumps(agent_text_size)};
 const __rawBase = `${{__fileBase}}/file-raw?path=`;
 const __root = document.documentElement;
 const KATEX_CSS = window.cdnResources.katex_css;

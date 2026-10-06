@@ -18,10 +18,7 @@ _MAX_UPLOAD_BYTES = 100 * 1024 * 1024
 
 
 def _read_json_body(handler):
-    try:
-        length = int(handler.headers.get("Content-Length", "0"))
-    except ValueError:
-        length = 0
+    length = int(handler.headers["Content-Length"])
     raw = handler.rfile.read(length)
     try:
         return json.loads(raw.decode("utf-8") or "{}"), None
@@ -107,10 +104,7 @@ def _post_upload(handler, _parsed, ctx) -> None:
     content_type = handler.headers.get("Content-Type", "application/octet-stream")
     raw_name = handler.headers.get("X-Filename", "upload.bin") or "upload.bin"
     filename = url_unquote(raw_name)
-    try:
-        length = int(handler.headers.get("Content-Length", "0"))
-    except ValueError:
-        length = 0
+    length = int(handler.headers["Content-Length"])
     if length > _MAX_UPLOAD_BYTES:
         handler._send_json(413, {"ok": False, "error": f"upload exceeds {_MAX_UPLOAD_BYTES // (1024 * 1024)}MB limit"})
         return

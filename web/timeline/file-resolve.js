@@ -15,13 +15,12 @@
       }
       return { path, size };
     };
-    const loadFileSearchMatches = async (rawQuery, limit = 30) => {
+    const loadFileSearchMatches = async (rawQuery, limit) => {
       const query = String(rawQuery || "").trim();
-      const normalizedLimit = Math.max(1, Math.min(120, Number(limit) || 30));
       try {
         const params = new URLSearchParams();
         if (query) params.set("q", query);
-        params.set("limit", String(normalizedLimit));
+        params.set("limit", String(limit));
         const response = await fetchWithTimeout(`/files-search?${params.toString()}`, {}, 2500);
         if (response.ok) {
           const raw = await response.json();

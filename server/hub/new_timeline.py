@@ -53,10 +53,7 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
     if not shutil.which("osascript"):
         handler._send_json(501, {"ok": False, "error": "native workspace picker is unavailable on this device"})
         return
-    try:
-        length = int(handler.headers.get("Content-Length", "0"))
-    except ValueError:
-        length = 0
+    length = int(handler.headers["Content-Length"])
     raw = handler.rfile.read(length)
     try:
         data = json.loads(raw.decode("utf-8") or "{}")
@@ -116,10 +113,7 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
 
 
 def post_start_timeline_draft(handler, _parsed, ctx) -> None:
-    try:
-        length = int(handler.headers.get("Content-Length", "0"))
-    except ValueError:
-        length = 0
+    length = int(handler.headers["Content-Length"])
     raw = handler.rfile.read(length)
     try:
         data = json.loads(raw.decode("utf-8") or "{}")

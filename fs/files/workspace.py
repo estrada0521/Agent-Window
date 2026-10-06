@@ -14,7 +14,6 @@ class _WorkspaceNotAGitRepo(Exception):
 
 class WorkspaceFiles:
     RAW_STREAM_CHUNK_BYTES = 64 * 1024
-    FILE_SEARCH_MAX_LIMIT = 200
     MIME_TYPES = {
         ".png": "image/png",
         ".jpg": "image/jpeg",
@@ -406,7 +405,7 @@ class WorkspaceFiles:
             result[query] = self.resolve_file_reference(query)
         return result
 
-    def search_files(self, query: str = "", limit: int = 60):
+    def search_files(self, query: str, limit: int):
         def hydrate_size(entry: dict) -> dict:
             result = dict(entry)
             if result.get("size") is not None:
@@ -448,11 +447,6 @@ class WorkspaceFiles:
                     penalty += 1
             return penalty
 
-        try:
-            normalized_limit = int(limit)
-        except (TypeError, ValueError):
-            normalized_limit = 60
-        normalized_limit = max(1, min(self.FILE_SEARCH_MAX_LIMIT, normalized_limit))
         entries = self.list_files()
         needle = str(query or "").strip().lower()
         if not needle:
@@ -469,7 +463,7 @@ class WorkspaceFiles:
                     str(entry.get("path") or "").lower(),
                 ),
             )
-            return [hydrate_size(entry) for entry in ranked_default[:normalized_limit]]
+            return [hydrate_size(entry) for entry in ranked_default[:limit]]
 
         ranked: list[tuple[tuple[int, int, int, int, str], dict]] = []
         for entry in entries:
@@ -496,7 +490,7 @@ class WorkspaceFiles:
                 ranked.append((score, entry))
 
         ranked.sort(key=lambda item: item[0])
-        return [hydrate_size(item[1]) for item in ranked[:normalized_limit]]
+        return [hydrate_size(item[1]) for item in ranked[:limit]]
 
     def list_dir(self, rel: str = ""):
         normalized_rel = str(rel or "").strip("/")
