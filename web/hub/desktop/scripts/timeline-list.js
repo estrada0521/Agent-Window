@@ -1,5 +1,5 @@
 
-    const DESK_KILL_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
+    const DESK_KILL_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8"></path><rect x="1" y="3" width="22" height="5" rx="1.5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>`;
     const DESK_REVIVE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>`;
     const DESK_TIMELINE_ACTION_TITLE = {
       kill: "Archive — Kill tmux session; keep log",

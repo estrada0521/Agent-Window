@@ -63,6 +63,10 @@
       transform: translateX(-50%);
     }
 
+    .pane-viewer-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
     .pane-viewer-tab-indicator {
       position: absolute;
       top: 2px;
@@ -231,6 +235,10 @@
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
       scroll-behavior: smooth;
+    }
+
+    .pane-viewer-carousel::-webkit-scrollbar {
+      display: none;
     }
 
     .pane-viewer-slide {

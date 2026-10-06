@@ -784,8 +784,8 @@
       const ACT_GAP = 8;
       const TRAY_INSET = 10;
       const THRESH = 36;
-      const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
-      const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="18.55 8.44 18.55 20 5.46 20 5.46 8.44"/><rect x="4" y="4" width="16" height="4.44"/><line x1="10.55" y1="12" x2="13.45" y2="12"/></svg>`;
+      const trashSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-.86 12.14A2 2 0 0 1 16.15 20H7.85a2 2 0 0 1-1.99-1.86L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M9 6V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/></svg>`;
+      const killSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5.46 8.44V18a2 2 0 0 0 2 2h9.09a2 2 0 0 0 2-2V8.44"/><rect x="4" y="4" width="16" height="4.44" rx="1.2"/><line x1="10.55" y1="12" x2="13.45" y2="12"/></svg>`;
       const reviveSvg = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="2.22 4.89 2.22 10.22 7.56 10.22"/><path d="M4.45 14.67a8 8 0 1 0 1.89-8.32L2.22 10.22"/></svg>`;
       const SWIPE_ACTIONS = {
         kill: {

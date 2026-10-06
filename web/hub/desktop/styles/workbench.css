@@ -228,10 +228,10 @@
     html:not([data-auto-window-height="1"]) #deskAppSidebarToggle.is-unread::after {
       content: "";
       position: absolute;
-      top: 0;
-      right: 0;
-      width: 0.38em;
-      height: 0.38em;
+      top: var(--desk-chrome-dot-top);
+      right: -0.15em;
+      width: var(--desk-chrome-dot-size);
+      height: var(--desk-chrome-dot-size);
       border-radius: 50%;
       background: var(--fg);
       pointer-events: none;

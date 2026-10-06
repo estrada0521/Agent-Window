@@ -179,7 +179,6 @@
       overflow-x: auto;
       overflow-y: hidden;
       scrollbar-width: none;
-      -ms-overflow-style: none;
       margin: 0;
       padding: calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 20 / 13) calc(var(--text-size, 13px) * 4 / 13) calc(var(--text-size, 13px) * 10 / 13);
       align-self: center;

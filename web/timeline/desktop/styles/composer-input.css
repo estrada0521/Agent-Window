@@ -141,7 +141,6 @@
       overflow-x: auto;
       overflow-y: hidden;
       scrollbar-width: none;
-      -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
       --attach-preview-fade-left: 0px;

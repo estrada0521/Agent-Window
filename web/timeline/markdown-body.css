@@ -5,6 +5,7 @@
       --code-block-padding-start: round(nearest, calc(var(--text-size, 13px) * 16 / 13), 1px);
       --code-block-padding-end: round(nearest, calc(var(--text-size, 13px) * 36 / 13), 1px);
       --table-cell-padding-inline: round(nearest, calc(var(--text-size, 13px) * 12 / 13), 1px);
+      --table-radius: round(nearest, calc(var(--text-size, 13px) * 10 / 13), 1px);
       flex: 1;
       min-width: 0;
       font-family: var(--font-main);
@@ -417,7 +418,8 @@
       border-spacing: 0;
       width: 100%;
       font: inherit;
-      border-bottom: var(--table-line-width) solid var(--table-line);
+      border: var(--table-line-width) solid var(--table-line);
+      border-radius: var(--table-radius);
     }
 
     .md-body th,
@@ -425,9 +427,13 @@
       white-space: normal;
       vertical-align: top;
       border: none;
-      padding: 0.38em var(--table-cell-padding-inline);
+      padding: 0.48em var(--table-cell-padding-inline);
       text-align: left;
       font: inherit;
+    }
+
+    .md-body :is(th, td):not(:last-child) {
+      border-right: var(--table-line-width) solid var(--table-line);
     }
 
     .md-body table.measuring-columns {
@@ -447,8 +453,6 @@
       vertical-align: bottom;
       font-size: 0.85em;
       font-weight: var(--md-heading-weight);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
       color: var(--fg);
       border-bottom: var(--table-line-width) solid var(--table-line);
     }

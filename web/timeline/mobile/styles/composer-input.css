@@ -112,12 +112,17 @@
       overflow-y: hidden;
       overscroll-behavior-x: contain;
       touch-action: pan-x;
+      scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
       box-sizing: border-box;
       --attach-preview-fade-left: 0px;
       --attach-preview-fade-right: 0px;
       mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - var(--attach-preview-fade-right)), transparent 100%);
       -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - var(--attach-preview-fade-right)), transparent 100%);
+    }
+
+    .attach-preview-row::-webkit-scrollbar {
+      display: none;
     }
 
     body:not(.composer-overlay-open) > .attach-preview-row {

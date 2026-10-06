@@ -9,6 +9,8 @@
       --desk-chrome-hover-rgb: 0, 0, 0;
       --desk-chrome-hover-a: 0.8;
       --desk-chrome-hover-bg: rgba(var(--desk-chrome-hover-rgb), var(--desk-chrome-hover-a));
+      --desk-chrome-dot-top: 0.23em;
+      --desk-chrome-dot-size: 0.38em;
     }
     html[data-theme="light"] {
       --desk-chrome-hover-rgb: 255, 255, 255;
@@ -31,10 +33,10 @@
     .timeline-tree-label.is-following::after {
       content: "";
       position: absolute;
-      top: 0.23em;
+      top: var(--desk-chrome-dot-top);
       right: 0.23em;
-      width: 0.38em;
-      height: 0.38em;
+      width: var(--desk-chrome-dot-size);
+      height: var(--desk-chrome-dot-size);
       border-radius: 50%;
       background: var(--fg);
       pointer-events: none;

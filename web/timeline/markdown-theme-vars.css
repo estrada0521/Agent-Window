@@ -5,7 +5,7 @@
       --inline-code-fg: rgb(__TEXT_INLINE_CODE_MOBILE_LIGHT_CHANNELS__);
       --blockquote-bg: rgba(0, 0, 0, 0.03);
       --blockquote-border: rgba(0, 0, 0, 0.45);
-      --table-line: rgba(0, 0, 0, 0.2);
+      --table-line: rgba(0, 0, 0, 0.12);
       --table-line-width: 1px;
     }
     html[data-mobile-timeline][data-theme="dark"] {
@@ -25,7 +25,7 @@
       --inline-code-fg: rgb(__TEXT_INLINE_CODE_DESKTOP_LIGHT_CHANNELS__);
       --blockquote-bg: rgba(0, 0, 0, 0.03);
       --blockquote-border: rgba(0, 0, 0, 0.45);
-      --table-line: rgba(0, 0, 0, 0.22);
+      --table-line: rgba(0, 0, 0, 0.12);
       --table-line-width: 1px;
     }
     html[data-desktop-timeline][data-theme="dark"] {
