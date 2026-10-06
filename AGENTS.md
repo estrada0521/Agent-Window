@@ -21,6 +21,8 @@
 
 - **AWの固有名詞を発明してはならない**。安易な抽象名は実体を隠し、本来は大したことのないものに大げさな意味論と空虚なブランドをぶら下げる。
 
+- 凝った見た目は美しさではない。「凝っている」と思える時点でそれは非自明性の裏返しであり、大抵短命である。重要なのは美しく**あり続けられる**ことだ。**自明で、何も感じない**美しさを目指せ。例えば、アニメーションがないと違和感があるとする。この場合、アニメーションは必要である。ただし、使用時にそのアニメーションの存在が意識に上ってはいけない。自明とはそういう意味である。
+
 ## 1. Prefer the intended path
 
 - Do not replace a broken input, a broken progress record, or an unreadable source with an empty stand-in, a zero, or a skipped step just to let the rest of the work continue.

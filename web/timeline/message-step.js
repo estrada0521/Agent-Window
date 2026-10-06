@@ -15,7 +15,7 @@
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;
       _stickyToBottom = true;
-      scrollConversationToBottom("smooth");
+      scrollConversationToBottom(document.documentElement.dataset.mobile === "1" ? "smooth" : "auto");
     };
     const jumpConversationToTop = () => {
       if (document.documentElement.dataset.autoWindowHeight === "1" && typeof fitStepToFirst === "function") {
