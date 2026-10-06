@@ -34,3 +34,9 @@
       width: 28px;
       height: 28px;
     }
+
+    .table-scroll {
+      --table-scroll-indicator-space: 6px;
+      padding-bottom: var(--table-scroll-indicator-space);
+      margin-bottom: calc(1em - var(--table-scroll-indicator-space));
+    }
