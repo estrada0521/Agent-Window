@@ -784,7 +784,7 @@ static BOOL HubReady(NSInteger port) {
     self.glass = [[NSGlassEffectView alloc] initWithFrame:content.bounds];
     self.glass.style = NSGlassEffectViewStyleClear;
     self.glass.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    self.glassCornerRadius = 26;
+    self.glassCornerRadius = 16;
     [content addSubview:self.glass];
 
     WKWebViewConfiguration *config = [WKWebViewConfiguration new];

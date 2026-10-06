@@ -93,7 +93,7 @@
       _deskTimelineFrame?.contentWindow?.postMessage({ type: "hub-text-size-changed", textSize: clamped }, "*");
       if (scalesWindow) {
         _deskLastFitTarget *= clamped / previous;
-        invoke("scale_window_from_top_center", { scale: clamped / previous, cornerRadius: clamped * 2 }).catch((err) => {
+        invoke("scale_window_from_top_center", { scale: clamped / previous, cornerRadius: clamped * 16 / 13 }).catch((err) => {
           setError("Resize failed", err);
         });
       }

@@ -62,7 +62,7 @@
     body { padding: 0; }
     __HUB_HEADER_CSS__
     :root {
-      --desk-inner-radius: calc(var(--text-size, 13px) * 2 + 1px - var(--native-window-edge-inset));
+      --desk-inner-radius: calc(var(--text-size, 13px) * 16 / 13 + 1px - var(--native-window-edge-inset));
       --fit-chrome-mark-height: 0.38em;
     }
     .page-header {
