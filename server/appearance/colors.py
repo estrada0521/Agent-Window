@@ -190,62 +190,9 @@ def apply_color_tokens(
     theme: str = "dark",
     mobile_theme_default: str = "system",
 ) -> str:
-    palette = resolve_theme_palette(theme)
-    dark_bg = str(palette["dark_bg"])
-    dark_bg_channels = str(palette["dark_bg_channels"])
-    desktop_hub_light_bg = str(palette["desktop_hub_light_bg"])
-    desktop_hub_light_bg_fill = str(palette["desktop_hub_light_bg_fill"])
-    desktop_hub_dark_bg = str(palette["desktop_hub_dark_bg"])
-    desktop_hub_dark_bg_fill = str(palette["desktop_hub_dark_bg_fill"])
-    desktop_timeline_light_bg_channels = str(palette["desktop_timeline_light_bg_channels"])
-    desktop_timeline_light_bg_fill = str(palette["desktop_timeline_light_bg_fill"])
-    desktop_timeline_dark_bg_channels = str(palette["desktop_timeline_dark_bg_channels"])
-    desktop_timeline_dark_bg_fill = str(palette["desktop_timeline_dark_bg_fill"])
-    mobile_hub_light_bg = str(palette["mobile_hub_light_bg"])
-    mobile_hub_light_bg_channels = str(palette["mobile_hub_light_bg_channels"])
-    mobile_hub_dark_bg = str(palette["mobile_hub_dark_bg"])
-    mobile_hub_dark_bg_channels = str(palette["mobile_hub_dark_bg_channels"])
-    mobile_timeline_light_bg_channels = str(palette["mobile_timeline_light_bg_channels"])
-    mobile_timeline_dark_bg_channels = str(palette["mobile_timeline_dark_bg_channels"])
-    mobile_timeline_bg_channels = str(palette["mobile_timeline_bg_channels"])
-    light_fg = str(palette["light_fg"])
-    gray_surface = str(palette["gray_surface"])
-    gray_inline_border = str(palette["gray_inline_border"])
-    gray_muted = str(palette["gray_muted"])
-    icon_fg = str(palette["icon_fg"])
-    icon_muted = str(palette["icon_muted"])
-    icon_hover = str(palette["icon_hover"])
-    chip_color = str(palette["chip_color"])
-
     replacements: tuple[tuple[str, str], ...] = (
-        ("__THEME__", str(palette["theme"])),
         ("__THEME_MOBILE_DEFAULT__", mobile_theme_default),
-        ("__COLOR_SCHEME__", str(palette["color_scheme"])),
-        ("__DARK_BG__", dark_bg),
-        ("__DARK_BG_CHANNELS__", dark_bg_channels),
-        ("__DESKTOP_HUB_LIGHT_BG__", desktop_hub_light_bg),
-        ("__DESKTOP_HUB_LIGHT_BG_FILL__", desktop_hub_light_bg_fill),
-        ("__DESKTOP_HUB_DARK_BG__", desktop_hub_dark_bg),
-        ("__DESKTOP_HUB_DARK_BG_FILL__", desktop_hub_dark_bg_fill),
-        ("__DESKTOP_TIMELINE_LIGHT_BG_CHANNELS__", desktop_timeline_light_bg_channels),
-        ("__DESKTOP_TIMELINE_LIGHT_BG_FILL__", desktop_timeline_light_bg_fill),
-        ("__DESKTOP_TIMELINE_DARK_BG_CHANNELS__", desktop_timeline_dark_bg_channels),
-        ("__DESKTOP_TIMELINE_DARK_BG_FILL__", desktop_timeline_dark_bg_fill),
-        ("__MOBILE_HUB_LIGHT_BG__", mobile_hub_light_bg),
-        ("__MOBILE_HUB_LIGHT_BG_CHANNELS__", mobile_hub_light_bg_channels),
-        ("__MOBILE_HUB_DARK_BG__", mobile_hub_dark_bg),
-        ("__MOBILE_HUB_DARK_BG_CHANNELS__", mobile_hub_dark_bg_channels),
-        ("__MOBILE_TIMELINE_LIGHT_BG_CHANNELS__", mobile_timeline_light_bg_channels),
-        ("__MOBILE_TIMELINE_DARK_BG_CHANNELS__", mobile_timeline_dark_bg_channels),
-        ("__MOBILE_TIMELINE_BG_CHANNELS__", mobile_timeline_bg_channels),
-        ("__LIGHT_FG__", light_fg),
-        ("__GRAY_SURFACE__", gray_surface),
-        ("__GRAY_INLINE_BORDER__", gray_inline_border),
-        ("__GRAY_MUTED__", gray_muted),
-        ("__ICON_FG__", icon_fg),
-        ("__ICON_MUTED__", icon_muted),
-        ("__ICON_HOVER__", icon_hover),
-        ("__CHIP_COLOR__", chip_color),
+        *((f"__{key.upper()}__", str(value)) for key, value in resolve_theme_palette(theme).items()),
         ("__DESKTOP_LIGHT_ICON_HOVER__", DESKTOP_LIGHT_ICON_HOVER),
         ("__DESKTOP_DARK_ICON_HOVER__", DESKTOP_DARK_ICON_HOVER),
         ("__MOBILE_LIGHT_ICON_HOVER__", MOBILE_LIGHT_ICON_HOVER),
@@ -256,15 +203,6 @@ def apply_color_tokens(
         ("__DESKTOP_RESIZER_ACTIVE_LIGHT__", DESKTOP_RESIZER_ACTIVE_LIGHT),
         ("__DESKTOP_RESIZER_ACTIVE_DARK__", DESKTOP_RESIZER_ACTIVE_DARK),
         *_text_color_token_replacements(),
-        ("__LINE__", str(palette["line"])),
-        ("__LINE_STRONG__", str(palette["line_strong"])),
-        ("__CODE_COPY_HOVER_BG__", str(palette["code_copy_hover_bg"])),
-        ("__TIMELINE_HOVER_BG__", str(palette["timeline_hover_bg"])),
-        ("__TIMELINE_SELECTED_BG__", str(palette["timeline_selected_bg"])),
-        ("__PANEL_ROW_BG__", str(palette["panel_row_bg"])),
-        ("__PANEL_ROW_BORDER__", str(palette["panel_row_border"])),
-        ("__PANEL_ROW_HOVER_BG__", str(palette["panel_row_hover_bg"])),
-        ("__PANEL_ROW_ACTIVE_BG__", str(palette["panel_row_active_bg"])),
     )
     resolved = text
     for old, new in replacements:
