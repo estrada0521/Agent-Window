@@ -88,62 +88,6 @@
       animation: none;
     }
 
-    .message-row.animate-in.user .user-message-divider {
-      animation: userDividerReveal 760ms cubic-bezier(0.2, 0.9, 0.28, 1) both;
-    }
-
-    .message-row.animate-in.user .user-message-divider::after {
-      content: "";
-      position: absolute;
-      inset: 0 auto 0 0;
-      width: 34%;
-      min-width: 28px;
-      background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.92) 52%, rgba(255, 255, 255, 0) 100%);
-      opacity: 0;
-      transform: translateX(-165%);
-      animation: userDividerSweep 760ms cubic-bezier(0.2, 0.9, 0.28, 1) both;
-      pointer-events: none;
-      will-change: transform, opacity;
-    }
-
-    @keyframes userDividerReveal {
-      0% {
-        opacity: 0.18;
-        transform: scaleX(0.08);
-      }
-
-      38% {
-        opacity: 0.95;
-        transform: scaleX(1);
-      }
-
-      100% {
-        opacity: 0.7;
-        transform: scaleX(1);
-      }
-    }
-
-    @keyframes userDividerSweep {
-      0% {
-        opacity: 0;
-        transform: translateX(-165%);
-      }
-
-      22% {
-        opacity: 0.95;
-      }
-
-      70% {
-        opacity: 0.78;
-        transform: translateX(320%);
-      }
-
-      100% {
-        opacity: 0;
-        transform: translateX(360%);
-      }
-    }
-
     @keyframes streamReveal {
       to {
         opacity: 1;
@@ -162,10 +106,6 @@
         opacity: 1;
       }
 
-      .message-row.animate-in.user .user-message-divider,
-      .message-row.animate-in.user .user-message-divider::after {
-        animation: none;
-      }
     }
 
     .message-row.user {
@@ -189,6 +129,7 @@
     }
 
     .message.user {
+      --user-bubble-bg: var(--fg);
       background: transparent;
       border-color: transparent;
       box-shadow: none;
@@ -230,6 +171,14 @@
 
     .message.user .message-body-row {
       display: block;
+      padding: 0.65em 0.9em;
+      border-radius: 1.5em;
+      --fg: var(--bg);
+      --fg-bold: var(--bg);
+      --muted: color-mix(in srgb, var(--bg) 65%, transparent);
+      --icon-fg: var(--bg);
+      color: var(--fg);
+      background: var(--user-bubble-bg);
       width: 100%;
       max-width: 100%;
       margin-left: 0;
@@ -360,18 +309,6 @@
       justify-content: flex-start;
     }
 
-    .message.user .user-message-divider {
-      position: relative;
-      width: 100%;
-      height: clamp(0.5px, 0.0769em, 1px);
-      background: var(--user-message-divider);
-      opacity: 1;
-      margin-top: 0;
-      max-width: 100%;
-      overflow: hidden;
-      transform-origin: left center;
-    }
-
     .message-row.user .message {
       order: 1;
       flex-direction: column;
@@ -414,6 +351,16 @@
       align-items: center;
       justify-content: flex-end;
       pointer-events: none;
+    }
+
+    .message.user .message-body-row > .message-hover-copy-zone {
+      right: calc(0.9em + 1.31em / 2 - 14px);
+      bottom: calc(0.65em + 0.23em + 1.31em / 2 - 14px);
+    }
+
+    .message.user .message-collapse-toggle {
+      left: 0.9em;
+      bottom: calc(0.65em + 10px);
     }
 
     .message-body-row > .message-hover-copy-zone .message-time {

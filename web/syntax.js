@@ -31,7 +31,9 @@
           if (!selector.includes(".hljs")) throw new Error("Expected highlight.js theme selectors");
           const hasBase = /\.hljs(?![\w-])/.test(selector);
           selector = selector.replace(/\.hljs(?![\w-])/g, ".aw-syntax");
-          return `:root[data-syntax-theme="${mode}"] ${hasBase ? "" : ".aw-syntax "}${selector}`;
+          const codeSelector = `${hasBase ? "" : ".aw-syntax "}${selector}`;
+          const opposite = mode === "light" ? "dark" : "light";
+          return `:root[data-syntax-theme="${mode}"] ${codeSelector}, :root[data-syntax-theme="${opposite}"] .message.user .message-body-row ${codeSelector}`;
         });
         output.push(`${selectors.join(",")} { color: ${color}; }`);
       }

@@ -75,7 +75,6 @@ __INCLUDE:../../markdown-theme-vars.css__
       color-scheme: light;
       --bg-rgb: __MOBILE_TIMELINE_LIGHT_BG_CHANNELS__;
       --fg: rgb(var(--light-fg-rgb));
-      --user-message-divider: var(--fg);
       --fg-bold: rgb(__TEXT_STRONG_MOBILE_LIGHT_CHANNELS__);
       --muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
       --icon-fg: rgb(var(--light-fg-rgb));
@@ -119,7 +118,6 @@ __INCLUDE:../../markdown-theme-vars.css__
       --bg-rgb: __MOBILE_TIMELINE_DARK_BG_CHANNELS__;
       --bg: rgb(var(--bg-rgb));
       --fg: rgb(var(--dark-fg-rgb));
-      --user-message-divider: rgba(255, 255, 255, 0.55);
       --fg-bold: rgb(__TEXT_STRONG_MOBILE_DARK_CHANNELS__);
       --muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
       --icon-fg: rgb(var(--dark-fg-rgb));

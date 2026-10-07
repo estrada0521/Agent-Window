@@ -103,7 +103,8 @@ def body_typography_css() -> str:
       --md-strong-weight: {DESKTOP_DARK_STRONG_WEIGHT};
       --md-heading-weight: {MD_HEADING_DARK_WEIGHT};
     }}
-    html:not([data-mobile="1"])[data-theme="light"] {{
+    html:not([data-mobile="1"])[data-theme="light"],
+    html:not([data-mobile="1"])[data-theme="dark"] .message.user .message-body-row {{
       --body-weight: {DESKTOP_LIGHT_BODY_WEIGHT};
       --code-weight: {DESKTOP_LIGHT_CODE_WEIGHT};
       --inline-code-weight: var(--code-weight);
@@ -111,7 +112,8 @@ def body_typography_css() -> str:
       --md-strong-weight: {DESKTOP_LIGHT_STRONG_WEIGHT};
       --md-heading-weight: {MD_HEADING_LIGHT_WEIGHT};
     }}
-    html[data-mobile="1"][data-theme="light"] {{
+    html[data-mobile="1"][data-theme="light"],
+    html[data-mobile="1"][data-theme="dark"] .message.user .message-body-row {{
       --body-weight: {MOBILE_LIGHT_BODY_WEIGHT};
       --code-weight: {MOBILE_LIGHT_CODE_WEIGHT};
       --inline-code-weight: var(--code-weight);

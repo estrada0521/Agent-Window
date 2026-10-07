@@ -1,4 +1,5 @@
-    html[data-mobile-timeline][data-theme="light"] {
+    html[data-mobile-timeline][data-theme="light"],
+    html[data-mobile-timeline][data-theme="dark"] .message.user .message-body-row {
       --code-bg: rgba(0, 0, 0, 0.05);
       --inline-code-bg: rgba(0, 0, 0, 0.05);
       --inline-code-fg: rgb(__TEXT_INLINE_CODE_MOBILE_LIGHT_CHANNELS__);
@@ -7,7 +8,8 @@
       --table-line: rgba(0, 0, 0, 0.12);
       --table-line-width: 1px;
     }
-    html[data-mobile-timeline][data-theme="dark"] {
+    html[data-mobile-timeline][data-theme="dark"],
+    html[data-mobile-timeline][data-theme="light"] .message.user .message-body-row {
       --code-bg: rgba(255, 255, 255, 0.032);
       --inline-code-bg: rgba(255, 255, 255, 0.00);
       --inline-code-fg: rgb(__TEXT_INLINE_CODE_MOBILE_DARK_CHANNELS__);
@@ -16,7 +18,8 @@
       --table-line: rgba(255, 255, 255, 0.085);
       --table-line-width: 1px;
     }
-    html[data-desktop-timeline][data-theme="light"] {
+    html[data-desktop-timeline][data-theme="light"],
+    html[data-desktop-timeline][data-theme="dark"] .message.user .message-body-row {
       --code-bg: rgba(0, 0, 0, 0.05);
       --inline-code-bg: rgba(0, 0, 0, 0.05);
       --inline-code-fg: rgb(__TEXT_INLINE_CODE_DESKTOP_LIGHT_CHANNELS__);
@@ -25,7 +28,8 @@
       --table-line: rgba(0, 0, 0, 0.12);
       --table-line-width: 1px;
     }
-    html[data-desktop-timeline][data-theme="dark"] {
+    html[data-desktop-timeline][data-theme="dark"],
+    html[data-desktop-timeline][data-theme="light"] .message.user .message-body-row {
       --code-bg: rgba(180, 180, 180, 0.05);
       --inline-code-bg: rgba(180, 180, 180, 0.00);
       --inline-code-fg: rgb(__TEXT_INLINE_CODE_DESKTOP_DARK_CHANNELS__);
@@ -33,4 +37,26 @@
       --blockquote-border: rgba(180, 180, 180, 0.45);
       --table-line: rgba(180, 180, 180, 0.22);
       --table-line-width: 0.5px;
+    }
+
+    html[data-theme="dark"] .message.user .message-body-row {
+      --file-link-fg: rgb(__TEXT_FILE_LINK_LIGHT_CHANNELS__);
+      --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_LIGHT_CHANNELS__);
+    }
+    html[data-theme="light"] .message.user .message-body-row {
+      --file-link-fg: rgb(__TEXT_FILE_LINK_DARK_CHANNELS__);
+      --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_DARK_CHANNELS__);
+    }
+    .message.user .message-body-row {
+      --icon-muted: var(--muted);
+      --line: color-mix(in srgb, var(--fg) 15%, transparent);
+      --scrollbar-thumb: color-mix(in srgb, var(--fg) 35%, transparent);
+    }
+    html[data-theme="light"] .message.user .md-body a[href]:not(.inline-file-link):not(.local-file-link) {
+      text-decoration: underline;
+      text-decoration-thickness: clamp(0.5px, 0.0769em, 1px);
+      text-decoration-color: color-mix(in srgb, var(--fg) 65%, transparent);
+    }
+    html[data-theme="dark"] .message.user .md-body a[href]:not(.inline-file-link):not(.local-file-link) {
+      text-decoration: none;
     }

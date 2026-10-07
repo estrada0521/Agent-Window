@@ -68,7 +68,6 @@ __INCLUDE:messages-data.js__
           ${isCollapsibleMessage ? `<button class="message-collapse-toggle" type="button" hidden>More</button>` : ""}
           ${copyZoneHtml}
         </div>
-        ${isUser ? `<div class="user-message-divider" aria-hidden="true"></div>` : ``}
         </div>
       </article>`;
     };
@@ -101,15 +100,6 @@ __INCLUDE:messages-data.js__
         messageEl.addEventListener("animationend", (event) => {
           if (event.target !== messageEl) return;
           if (!isUserRow || event.animationName !== "userMsgReveal") return;
-          const divider = row.querySelector(".user-message-divider");
-          if (!divider) finishAnimateIn();
-        }, { once: true });
-      }
-      if (isUserRow) {
-        const dividerEl = row.querySelector(".user-message-divider");
-        dividerEl?.addEventListener("animationend", (event) => {
-          if (event.target !== dividerEl) return;
-          if (event.animationName !== "userDividerReveal") return;
           finishAnimateIn();
         }, { once: true });
       }

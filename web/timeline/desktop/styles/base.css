@@ -51,7 +51,6 @@ __INCLUDE:../../markdown-theme-vars.css__
       color-scheme: light;
       --bg-rgb: __DESKTOP_TIMELINE_LIGHT_BG_CHANNELS__;
       --fg: rgb(__TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS__);
-      --user-message-divider: var(--fg);
       --muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
       --icon-fg: rgb(__TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS__);
       --icon-muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
@@ -88,7 +87,6 @@ __INCLUDE:../../markdown-theme-vars.css__
       color-scheme: dark;
       --bg-rgb: __DESKTOP_TIMELINE_DARK_BG_CHANNELS__;
       --fg: rgb(__TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__);
-      --user-message-divider: rgba(180, 180, 180, 0.55);
       --muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
       --icon-fg: rgb(__TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__);
       --icon-muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
