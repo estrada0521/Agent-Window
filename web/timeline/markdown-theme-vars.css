@@ -11,7 +11,7 @@
       --code-bg: rgba(255, 255, 255, 0.032);
       --inline-code-bg: rgba(255, 255, 255, 0.00);
       --inline-code-fg: rgb(__TEXT_INLINE_CODE_MOBILE_DARK_CHANNELS__);
-      --blockquote-bg: rgba(255, 255, 255, 0.045);
+      --blockquote-bg: rgba(255, 255, 255, 0.032);
       --blockquote-border: rgba(255, 255, 255, 0.45);
       --table-line: rgba(255, 255, 255, 0.085);
       --table-line-width: 1px;

@@ -377,7 +377,7 @@
     }
 
     .md-body blockquote {
-      border-left: 3px solid var(--blockquote-border);
+      border-left: 2px solid var(--blockquote-border);
       background: var(--blockquote-bg);
       margin: 0.75em 0;
       padding: 0.4em 0.8em;
