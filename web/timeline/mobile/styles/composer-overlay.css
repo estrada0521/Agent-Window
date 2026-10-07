@@ -24,7 +24,7 @@
     .composer-overlay.visible {
       opacity: 1;
       pointer-events: auto;
-      background: rgba(var(--bg-rgb), 0.16);
+      background: rgba(var(--bg-rgb), 0.55);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
     }
@@ -34,7 +34,7 @@
     }
 
     .composer-overlay.visible.composer-attach-drag {
-      background: rgba(var(--bg-rgb), 0.22);
+      background: rgba(var(--bg-rgb), 0.62);
     }
 
     html[data-hub-iframe-timeline="1"] .composer-overlay.visible {
