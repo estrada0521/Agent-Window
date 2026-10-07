@@ -339,7 +339,7 @@
     }
 
     .md-body .code-block-wrap > .code-copy-btn {
-      top: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
+      top: round(nearest, calc(var(--text-size, 13px) * 2 / 13), 1px);
       right: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
     }
 
