@@ -143,6 +143,10 @@
       color: var(--fg);
     }
 
+    html[data-theme="dark"] .message.user {
+      --user-bubble-bg: color-mix(in srgb, rgb(__TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__) 80%, rgb(__DESKTOP_TIMELINE_LIGHT_BG_CHANNELS__));
+    }
+
     .message.user .md-body {
       display: block;
       width: 100%;
@@ -188,6 +192,13 @@
       max-width: calc(100% + 2 * var(--user-bubble-side-space));
       margin-left: calc(-1 * var(--user-bubble-side-space));
       margin-right: auto;
+    }
+
+    html[data-theme="dark"] .message.user .message-body-row {
+      --fg: rgb(__TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS__);
+      --fg-bold: var(--fg);
+      --muted: color-mix(in srgb, var(--fg) 65%, transparent);
+      --icon-fg: var(--fg);
     }
 
     .message.user .message-body-row {

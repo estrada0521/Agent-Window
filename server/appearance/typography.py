@@ -20,6 +20,7 @@ MESSAGE_MAX_WIDTH_EM = 49.2
 
 DESKTOP_LIGHT_BODY_WEIGHT = 400
 DESKTOP_DARK_BODY_WEIGHT = 300
+DESKTOP_DARK_USER_BODY_WEIGHT = 420
 MOBILE_LIGHT_BODY_WEIGHT = 420
 MOBILE_DARK_BODY_WEIGHT = 300
 
@@ -112,6 +113,9 @@ def body_typography_css() -> str:
       --link-weight: {DESKTOP_LIGHT_LINK_WEIGHT};
       --md-strong-weight: {DESKTOP_LIGHT_STRONG_WEIGHT};
       --md-heading-weight: {MD_HEADING_LIGHT_WEIGHT};
+    }}
+    html:not([data-mobile="1"])[data-theme="dark"] .message.user .message-body-row {{
+      --body-weight: {DESKTOP_DARK_USER_BODY_WEIGHT};
     }}
     html[data-mobile="1"][data-theme="light"],
     html[data-mobile="1"][data-theme="dark"] .message.user .message-body-row {{
