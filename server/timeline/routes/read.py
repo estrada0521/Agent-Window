@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import parse_qs
 
 from server.appearance.typography import MOBILE_TEXT_SIZE
-from fs.log.jsonl import log_slice, date_message_offset, message_window, search_messages
+from fs.log.jsonl import log_slice, date_message_offset, message_window, search_messages, iter_log_entries_reversed
 from git import repo as workspace_git
 from server.request import request_base_path
 from server.timeline.file_view import render_file_view, validate_file_preview
@@ -94,6 +94,27 @@ def _get_messages_search(handler, parsed, ctx) -> None:
         return
     data = {"cursors": search_messages(ctx["state"].log_path, query)}
     _send_bytes(handler, 200, json.dumps(data, ensure_ascii=True).encode(), content_type="application/json")
+
+
+def _get_native_log_entry(handler, parsed, ctx) -> None:
+    context_hash = parse_qs(parsed.query).get("message", [""])[0]
+    if not context_hash:
+        _send_bytes(handler, 400, b'{"error":"No message"}', content_type="application/json")
+        return
+    entry = next((entry for entry in iter_log_entries_reversed(ctx["state"].log_path)
+                  if entry.get("context_hash") == context_hash), None)
+    if not entry or not entry.get("native_log_path") or entry.get("native_log_offset") is None:
+        _send_bytes(handler, 404, b'{"error":"Native log unavailable"}', content_type="application/json")
+        return
+    try:
+        with Path(entry["native_log_path"]).open("rb") as handle:
+            handle.seek(entry["native_log_offset"])
+            raw = handle.readline().decode("utf-8")
+        json.loads(raw)
+    except (OSError, ValueError):
+        _send_bytes(handler, 404, b'{"error":"Native log unavailable"}', content_type="application/json")
+        return
+    _send_bytes(handler, 200, raw.encode("utf-8"), content_type="text/plain; charset=utf-8")
 
 
 DEFAULT_TRACE_TAIL_LINES = 160
@@ -339,6 +360,7 @@ def _get_slash_commands(handler, _parsed, ctx) -> None:
 _GET_ROUTES = {
     "/messages": _get_messages,
     "/messages-search": _get_messages_search,
+    "/native-log-entry": _get_native_log_entry,
     "/log-slice": _get_log_slice,
     "/trace": _get_trace,
     "/file-raw": _get_file_raw,

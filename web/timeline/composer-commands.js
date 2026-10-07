@@ -374,14 +374,34 @@
       if (row) revealMobileCopy(row);
     });
     if (document.documentElement.dataset.mobile !== "1") {
-      messagesEl.addEventListener("mousedown", (e) => {
+      let selectionBeforeRightClick = null;
+      messagesEl.addEventListener("pointerdown", (e) => {
+        selectionBeforeRightClick = e.button === 2 ? !!window.getSelection()?.toString() : null;
         if (e.button !== 2) return;
-        if (!e.target.closest("a[href]")) return;
+        const agentRow = e.target.closest("article.message-row:not(.user)");
+        if (!e.target.closest("a[href]") && !(agentRow && !selectionBeforeRightClick && !e.target.closest("button, input, textarea, select"))) return;
         e.preventDefault();
       }, true);
+      messagesEl.addEventListener("mousedown", (e) => {
+        if (e.button === 2 && (e.target.closest("a[href]") || (selectionBeforeRightClick === false && e.target.closest("article.message-row:not(.user)") && !e.target.closest("button, input, textarea, select")))) e.preventDefault();
+      }, true);
       messagesEl.addEventListener("contextmenu", (e) => {
+        const hadSelection = selectionBeforeRightClick ?? !!window.getSelection()?.toString();
+        selectionBeforeRightClick = null;
         const anyLink = e.target.closest("a[href]");
-        if (!anyLink) return;
+        if (!anyLink) {
+          const row = e.target.closest("article.message-row:not(.user)");
+          if (!row || hadSelection || e.target.closest("button, input, textarea, select")) return;
+          e.preventDefault();
+          e.stopPropagation();
+          window.getSelection()?.removeAllRanges();
+          const entry = displayEntriesForData(latestPayloadData).find((entry) => entry.context_hash === row.dataset.contextHash);
+          window.parent.postMessage({ type: "show-message-context-menu", payload: {
+            x: e.clientX, y: e.clientY, contextHash: row.dataset.contextHash,
+            nativeLogAvailable: !!entry?.native_log_path && entry.native_log_offset != null,
+          } }, "*");
+          return;
+        }
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();

@@ -89,6 +89,24 @@
     };
     const handleTimelineMenuAction = async (payload) => {
       const data = payload || {};
+      if (data.action === "copyMessage" || data.action === "copyNativeLogEntry") {
+        try {
+          let text;
+          if (data.action === "copyMessage") {
+            const row = messagesEl.querySelector(`[data-context-hash="${CSS.escape(data.contextHash)}"] .message`);
+            text = row.dataset.raw;
+          } else {
+            const response = await fetch(`/native-log-entry?message=${encodeURIComponent(data.contextHash)}`);
+            if (!response.ok) throw new Error("Native log unavailable");
+            text = await response.text();
+          }
+          await doCopyText(text);
+          setStatus(data.action === "copyMessage" ? "Copied" : "Copied native log entry");
+        } catch (error) {
+          setError(data.action === "copyMessage" ? "Copy failed" : "Native log unavailable", error);
+        }
+        return;
+      }
       if (data.action === "copyLinkURL") {
         try {
           await doCopyText(data.url);

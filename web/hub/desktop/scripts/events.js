@@ -50,6 +50,19 @@
         }).catch((err) => setError("Menu failed", err));
         return;
       }
+      if (event.data && event.data.type === "show-message-context-menu" && event.source === _deskTimelineFrame?.contentWindow) {
+        const invoke = getNativeInvoke();
+        const payload = event.data.payload;
+        const frameRect = _deskTimelineFrame.getBoundingClientRect();
+        if (typeof invoke !== "function") {
+          setError("Menu unavailable");
+          return;
+        }
+        invoke("show_message_context_menu", { payload: {
+          ...payload, x: payload.x + frameRect.left, y: payload.y + frameRect.top,
+        } }).catch((error) => setError("Menu failed", error));
+        return;
+      }
       if (event.data && event.data.type === "show-link-context-menu" && event.source === _deskTimelineFrame?.contentWindow) {
         const invoke = getNativeInvoke();
         const payload = event.data.payload;

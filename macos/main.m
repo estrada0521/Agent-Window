@@ -467,6 +467,13 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         [self popUp:@[[self item:@"Copy URL" payload:@{ @"action": @"copyLinkURL", @"url": p[@"url"] } key:nil mods:0]] at:p];
         return nil;
     }
+    if ([cmd isEqualToString:@"show_message_context_menu"]) {
+        NSMenuItem *copy = [self item:@"Copy" payload:@{ @"action": @"copyMessage", @"contextHash": p[@"contextHash"] } key:nil mods:0];
+        NSMenuItem *native = [self item:@"Copy Native Log Entry" payload:@{ @"action": @"copyNativeLogEntry", @"contextHash": p[@"contextHash"] } key:nil mods:0];
+        native.enabled = [p[@"nativeLogAvailable"] boolValue];
+        [self popUp:@[copy, native] at:p];
+        return nil;
+    }
     if ([cmd isEqualToString:@"show_commit_context_menu"]) { [self showCommitContextMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_timeline_context_menu"]) { [self showTimelineContextMenu:p]; return nil; }
     if ([cmd isEqualToString:@"reset_window_geometry"]) return [self placeCentered:kDefaultWindowSize height:kDefaultWindowSize scale:[a[@"scale"] doubleValue]];
