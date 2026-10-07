@@ -118,10 +118,11 @@
         if (!items.length) return;
         menuSelect.innerHTML = '<option value="">Menu</option>' + items.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
         const rect = menuBtn.getBoundingClientRect();
+        const headerRect = rightMenuBtn.getBoundingClientRect();
         menuSelect.style.left = `${Math.round(rect.left)}px`;
-        menuSelect.style.top = `${Math.round(rect.top)}px`;
+        menuSelect.style.top = `${Math.round(headerRect.top)}px`;
         menuSelect.style.width = `${Math.round(rect.width)}px`;
-        menuSelect.style.height = `${Math.round(rect.height)}px`;
+        menuSelect.style.height = `${Math.round(headerRect.height)}px`;
         menuSelect.value = "";
         cancelPendingPathCopy();
         const copy = { path: mobileSheet._previewPath };
