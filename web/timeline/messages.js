@@ -30,7 +30,7 @@ __INCLUDE:messages-data.js__
           const systemTitle = systemMessage.replaceAll('"', "&quot;").replace(/<[^>]+>/g, "");
           const contextHash = escapeHtml(safeEntry.context_hash);
           const icon = safeEntry.commit_hash ? commitIcon : "";
-          return `<div class="sysmsg-row" data-context-hash="${contextHash}" data-sender="system"><span class="sysmsg-text" title="${systemTitle}">${icon}${systemMessage}</span></div>`;
+          return `<div class="sysmsg-row" data-context-hash="${contextHash}" data-sender="system"${safeEntry.commit_hash ? ` data-commit-hash="${escapeHtml(safeEntry.commit_hash)}"` : ""}><span class="sysmsg-text" title="${systemTitle}">${icon}${systemMessage}</span></div>`;
         }
         const cls = roleClass(safeEntry.sender);
         const entryTargets = Array.isArray(safeEntry.targets) ? safeEntry.targets : [];

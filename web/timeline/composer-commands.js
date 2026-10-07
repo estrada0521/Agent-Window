@@ -378,23 +378,27 @@
       messagesEl.addEventListener("pointerdown", (e) => {
         selectionBeforeRightClick = e.button === 2 ? !!window.getSelection()?.toString() : null;
         if (e.button !== 2) return;
-        const agentRow = e.target.closest("article.message-row:not(.user)");
-        if (!e.target.closest("a[href]") && !(agentRow && !selectionBeforeRightClick && !e.target.closest("button, input, textarea, select"))) return;
+        const messageRow = e.target.closest("article.message-row:not(.user), .sysmsg-row[data-commit-hash]");
+        if (!e.target.closest("a[href]") && !(messageRow && !selectionBeforeRightClick && !e.target.closest("button, input, textarea, select"))) return;
         e.preventDefault();
       }, true);
       messagesEl.addEventListener("mousedown", (e) => {
-        if (e.button === 2 && (e.target.closest("a[href]") || (selectionBeforeRightClick === false && e.target.closest("article.message-row:not(.user)") && !e.target.closest("button, input, textarea, select")))) e.preventDefault();
+        if (e.button === 2 && (e.target.closest("a[href]") || (selectionBeforeRightClick === false && e.target.closest("article.message-row:not(.user), .sysmsg-row[data-commit-hash]") && !e.target.closest("button, input, textarea, select")))) e.preventDefault();
       }, true);
       messagesEl.addEventListener("contextmenu", (e) => {
         const hadSelection = selectionBeforeRightClick ?? !!window.getSelection()?.toString();
         selectionBeforeRightClick = null;
         const anyLink = e.target.closest("a[href]");
         if (!anyLink) {
-          const row = e.target.closest("article.message-row:not(.user)");
+          const row = e.target.closest("article.message-row:not(.user), .sysmsg-row[data-commit-hash]");
           if (!row || hadSelection || e.target.closest("button, input, textarea, select")) return;
           e.preventDefault();
           e.stopPropagation();
           window.getSelection()?.removeAllRanges();
+          if (row.dataset.commitHash) {
+            openCommitContextMenu(row.dataset.commitHash, e);
+            return;
+          }
           const entry = displayEntriesForData(latestPayloadData).find((entry) => entry.context_hash === row.dataset.contextHash);
           window.parent.postMessage({ type: "show-message-context-menu", payload: {
             x: e.clientX, y: e.clientY, contextHash: row.dataset.contextHash,
