@@ -106,6 +106,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 | Command | 対象 | 内容 | 備考 |
 | --- | --- | --- | --- |
+| `/jump YYYY-MM[-DD [HH[:MM[:SS]]]]` |  | 指定した月・日・時刻の最初のmessageへ移動 | |
 | `/restart` |  | Agentのpaneを再起動する | |
 | `/idle` |  | Agentのrunning表示を解除する | |
 | `/log` |  | logのpathをmessageに挿入する | |
@@ -127,7 +128,9 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | tmux terminal paneを開く | `⌘T` | mobileの`Pane Trace`から操作可能 |
 | FinderでLogを開く | `⌥⌘L` |  |
 | ブラウザでtimelineを開く | `⌥⌘O` |  |
+| timelineの全文検索 | Search... | `⇧`併用で10件ずつ飛び |
 | timelineをHTML / JSONLとしてExport | | |
+| timeline serverの再起動 | `⌘R` | 変更後のsourceを読み直す |
 
 </details>
 
@@ -139,7 +142,10 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | 先頭 / 末尾へ移動 | `⌘↑` / `⌘↓` | |
 | 前 / 次のmessage | `⌥↑` / `⌥↓` | |
 | 選択中の宛先の前 / 次のmessage | `⌃⌥↑` / `⌃⌥↓` | 無選択ならuser |
-| timeline serverの再起動 | `⌘R` | 変更後のsourceを読み直す |
+| Copy | 右クリック / hover | |
+| Copy Log Entry | | AW logのJSON row |
+| Copy Native Log Entry | | native logのJSON row |
+| URLをcopy | | |
 
 </details>
 
@@ -159,7 +165,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | commitのinfo表示 | hover |  |
 | worktreeの切り替え |  | timeline menuから |
 | Follow changes |  | 既定でON |
-| Pin changes | `⇧⌘P` | |
+| Pin changes | `⇧⌘P` / pinボタン | |
 
 </details>
 

@@ -106,6 +106,7 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 
 | Command | Target | Effect | Note |
 | --- | --- | --- | --- |
+| `/jump YYYY-MM[-DD [HH[:MM[:SS]]]]` |  | Jumps to the first message in the specified month / day / time | |
 | `/restart` |  | Restarts the Agent's pane | |
 | `/idle` |  | Clears the Agent's running indicator | |
 | `/log` |  | Inserts the log's path into the message | |
@@ -127,7 +128,9 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Open tmux terminal pane | `⌘T` | On mobile, operable from `Pane Trace` |
 | Open log in Finder | `⌥⌘L` | |
 | Open timeline in browser | `⌥⌘O` | |
+| Search the full timeline | Search... | Hold `⇧` to jump 10 matches at a time |
 | Export timeline as HTML / JSONL | | |
+| Restart timeline server | `⌘R` | Re-reads changed source |
 
 </details>
 
@@ -139,7 +142,10 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Jump to top / bottom | `⌘↑` / `⌘↓` | |
 | Previous / next message | `⌥↑` / `⌥↓` | |
 | Previous / next message from the selected targets | `⌃⌥↑` / `⌃⌥↓` | `user` when none is selected |
-| Restart timeline server | `⌘R` | Re-reads changed source |
+| Copy | right-click / hover | |
+| Copy Log Entry | | AW log JSON row |
+| Copy Native Log Entry | | Native log JSON row |
+| Copy URL | | |
 
 </details>
 
@@ -159,7 +165,7 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Show commit info | hover | |
 | Switch worktree |  | From the timeline menu |
 | Follow changes |  | ON by default |
-| Pin changes | `⇧⌘P` | |
+| Pin changes | `⇧⌘P` / pin button | |
 
 </details>
 
