@@ -300,6 +300,7 @@
     }
 
     .message.user .user-message-meta {
+      padding-left: 0.5em;
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
