@@ -1,0 +1,46 @@
+    .search-hud input {
+      width: 7em;
+      min-width: 0;
+      padding: 0 0.3em;
+      font: inherit;
+      color: var(--fg);
+      border: 0;
+      outline: none;
+      background: transparent;
+    }
+    .search-hud input::placeholder {
+      color: var(--muted);
+    }
+    .search-hud [role="status"] {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      padding-inline: 0.3em;
+    }
+    .search-hud button {
+      background: transparent;
+      color: var(--fg);
+    }
+    .search-hud button:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+    .search-hud svg {
+      width: calc(var(--pill-row-height) * 0.6);
+      height: calc(var(--pill-row-height) * 0.6);
+    }
+    ::highlight(timeline-search) {
+      background-color: rgba(255, 196, 0, 0.55);
+      color: inherit;
+    }
+    .search-hud input::-webkit-search-cancel-button {
+      display: none;
+    }
+    .search-arrows {
+      display: flex;
+      flex-direction: column;
+      height: var(--pill-row-height);
+    }
+    .search-arrows button {
+      height: 50%;
+      min-height: 0;
+    }

@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import parse_qs
 
 from server.appearance.typography import MOBILE_TEXT_SIZE
-from fs.log.jsonl import log_slice, date_message_offset, message_window
+from fs.log.jsonl import log_slice, date_message_offset, message_window, search_messages
 from git import repo as workspace_git
 from server.request import request_base_path
 from server.timeline.file_view import render_file_view, validate_file_preview
@@ -84,6 +84,16 @@ def _get_messages(handler, parsed, ctx) -> None:
         offset=int(qs.get("offset", ["0"])[0]),
     )
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
+
+
+def _get_messages_search(handler, parsed, ctx) -> None:
+    qs = parse_qs(parsed.query)
+    query = qs.get("q", [""])[0].strip()
+    if not query:
+        _send_bytes(handler, 400, b'{"error":"Invalid search"}', content_type="application/json")
+        return
+    data = {"cursors": search_messages(ctx["state"].log_path, query)}
+    _send_bytes(handler, 200, json.dumps(data, ensure_ascii=True).encode(), content_type="application/json")
 
 
 DEFAULT_TRACE_TAIL_LINES = 160
@@ -328,6 +338,7 @@ def _get_slash_commands(handler, _parsed, ctx) -> None:
 
 _GET_ROUTES = {
     "/messages": _get_messages,
+    "/messages-search": _get_messages_search,
     "/log-slice": _get_log_slice,
     "/trace": _get_trace,
     "/file-raw": _get_file_raw,

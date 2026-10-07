@@ -7,6 +7,7 @@ __INCLUDE:styles/composer-input.css__
 __INCLUDE:../../hud.css__
 __INCLUDE:styles/transcript.css__
 __INCLUDE:../export.css__
+__INCLUDE:styles/search.css__
     .copy-btn {
       display: inline-flex;
       align-items: center;

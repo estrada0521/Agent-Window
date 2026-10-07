@@ -75,6 +75,9 @@ __INCLUDE:transcript-refresh.js__
       const res = await fetchWithTimeout(messagesFetchUrl({ at: date }), {}, 15000);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      showHistoryWindow(data);
+    };
+    const showHistoryWindow = (data) => {
       refreshEpoch += 1;
       historyWindow = data;
       historyLoading = true;

@@ -38,7 +38,7 @@ def append_jsonl_entry(path: Path | str, entry: dict) -> dict:
 _REVERSE_READ_BLOCK = 64 * 1024
 
 
-def iter_log_lines_reversed(path: Path, *, end_offset: int | None = None):
+def iter_log_lines_reversed(path: Path, *, end_offset: int | None = None, with_offsets: bool = False):
     with path.open("rb") as handle:
         if end_offset is None:
             handle.seek(0, os.SEEK_END)
@@ -63,16 +63,18 @@ def iter_log_lines_reversed(path: Path, *, end_offset: int | None = None):
                 if split == -1:
                     carry = chunk
                     continue
-                carry, body = chunk[:split], chunk[split + 1:]
+                carry, body = chunk[:split + 1], chunk[split + 1:]
+                body_offset = pos + split + 1
             else:
                 carry, body = b"", chunk
+                body_offset = pos
             end = len(body)
             while end > 0:
                 start = body.rfind(b"\n", 0, end - 1) + 1
                 raw = body[start:end]
                 end = start
                 if raw:
-                    yield raw
+                    yield (body_offset + start, raw) if with_offsets else raw
 
 
 def iter_log_entries_reversed(path: Path):
@@ -157,3 +159,9 @@ def message_window(path: Path, *, cursor: int, limit: int, before: bool = False)
         after = handle.tell()
         has_newer = handle.readline().endswith(b"\n")
     return {"entries": entries, "before": cursor, "after": after, "has_older": cursor > 0, "has_newer": has_newer}
+
+
+def search_messages(path: Path, query: str) -> list[int]:
+    pattern = re.compile(re.escape(query), re.IGNORECASE)
+    return [offset for offset, raw in iter_log_lines_reversed(path, with_offsets=True)
+            if pattern.search(json.loads(raw)["message"])]

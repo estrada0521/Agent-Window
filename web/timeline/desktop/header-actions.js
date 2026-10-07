@@ -198,7 +198,12 @@
         }
         return;
       }
+      if (action === "search") {
+        beginSearch();
+        return;
+      }
       if (action === "exportHtml" || action === "exportJsonl") {
+        if (searchOpen) endSearch();
         beginExportRange(action === "exportJsonl" ? "jsonl" : "html");
         return;
       }

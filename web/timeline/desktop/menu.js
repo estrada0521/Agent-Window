@@ -38,6 +38,7 @@
         { value: "openShell", label: "Terminal" },
         { value: "openFinder", label: "Finder" },
         { value: "revealLog", label: "Reveal Log" },
+        { value: "search", label: "Search…" },
         { value: "exportHtml", label: "Export as HTML…" },
         { value: "exportJsonl", label: "Export as JSONL…" },
       ], (action) => {
