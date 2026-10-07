@@ -178,6 +178,21 @@
       while (panel.firstChild) existing.appendChild(panel.firstChild);
       if (existing.childNodes.length) contentEl.appendChild(existing);
       sheetPanel.appendChild(contentEl);
+      const outline = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      outline.classList.add("mobile-sheet-outline");
+      const edge = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      outline.append(edge);
+      sheetPanel.append(outline);
+      new ResizeObserver(() => {
+        const width = sheetPanel.offsetWidth;
+        const height = sheetPanel.offsetHeight;
+        if (!width || !height) return;
+        const radius = parseFloat(getComputedStyle(sheetPanel).getPropertyValue("--mobile-sheet-corner-radius"));
+        const path = smoothCornerPath(width, height, radius, 0.6, false);
+        sheetPanel.style.clipPath = `path("${path}")`;
+        outline.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        edge.setAttribute("d", path);
+      }).observe(sheetPanel);
       sheet.appendChild(sheetPanel);
       afterBuild?.({ sheetPanel, contentEl });
       panel.appendChild(sheet);

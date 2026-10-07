@@ -1,3 +1,4 @@
+__INCLUDE:../../smooth-corners.js__
 __INCLUDE:../base.js__
 __INCLUDE:../link-presentation.js__
     document.documentElement.dataset.mobile = "1";
