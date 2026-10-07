@@ -44,7 +44,7 @@
     function failDeskOpen(message) {
       clearDeskTimelineFrame();
       console.error("Timeline open failed", message);
-      setResidentError("timeline-open", message === "Conversation unavailable" || message === "Revive failed" ? message : "Open failed");
+      setResidentError("timeline-open", message === "Conversation unavailable · Reset Agents" || message === "Revive failed" ? message : "Open failed");
       showDeskHubList({ open: true });
     }
 

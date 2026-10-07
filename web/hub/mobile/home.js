@@ -221,7 +221,7 @@ __INCLUDE:../../smooth-corners.js__
     }
     function failHubReadyWait(message) {
       stopHubReadyWait();
-      setError(message === "Conversation unavailable" || message === "Revive failed" ? message : "Open failed", message);
+      setError(message === "Conversation unavailable · Reset Agents" || message === "Revive failed" ? message : "Open failed", message);
     }
     function startHubReadyTimeout() {
       if (_hubReadyTimeoutTimer) return;

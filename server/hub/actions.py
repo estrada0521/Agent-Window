@@ -113,7 +113,7 @@ def get_revive_timeline(handler, parsed, ctx) -> None:
         if detail == "Workspace not found":
             _fail(handler, ctx, fmt, 404, detail)
         else:
-            message = "Conversation unavailable" if detail == "Conversation unavailable" else "Revive failed"
+            message = "Conversation unavailable · Reset Agents" if detail == "Conversation unavailable · Reset Agents" else "Revive failed"
             _fail(handler, ctx, fmt, 500, message, detail=f"{timeline_name}: {detail}")
         return
     ctx["hub"].publish_timeline_messages_changed()
