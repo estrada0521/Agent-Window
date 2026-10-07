@@ -89,21 +89,22 @@
     };
     const handleTimelineMenuAction = async (payload) => {
       const data = payload || {};
-      if (data.action === "copyMessage" || data.action === "copyNativeLogEntry") {
+      if (["copyMessage", "copyLogEntry", "copyNativeLogEntry"].includes(data.action)) {
         try {
           let text;
-          if (data.action === "copyMessage") {
-            const row = messagesEl.querySelector(`[data-context-hash="${CSS.escape(data.contextHash)}"] .message`);
-            text = row.dataset.raw;
+          if (data.action !== "copyNativeLogEntry") {
+            const entry = displayEntriesForData(latestPayloadData).find((entry) => entry.context_hash === data.contextHash);
+            if (!entry) throw new Error("Message unavailable");
+            text = data.action === "copyLogEntry" ? JSON.stringify(entry) : stripSenderPrefix(entry.message);
           } else {
             const response = await fetch(`/native-log-entry?message=${encodeURIComponent(data.contextHash)}`);
             if (!response.ok) throw new Error("Native log unavailable");
             text = await response.text();
           }
           await doCopyText(text);
-          setStatus(data.action === "copyMessage" ? "Copied" : "Copied native log entry");
+          setStatus(data.action === "copyMessage" ? "Copied" : data.action === "copyLogEntry" ? "Copied log entry" : "Copied native log entry");
         } catch (error) {
-          setError(data.action === "copyMessage" ? "Copy failed" : "Native log unavailable", error);
+          setError(data.action === "copyNativeLogEntry" ? "Native log unavailable" : "Copy failed", error);
         }
         return;
       }

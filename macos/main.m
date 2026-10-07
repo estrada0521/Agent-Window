@@ -296,10 +296,12 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 }
 
 - (void)showCommitContextMenu:(NSDictionary *)p {
-    [self popUp:@[
+    NSMutableArray *items = [NSMutableArray arrayWithArray:@[
         [self action:@"copyCommitHash" title:@"Copy Commit Hash" key:nil mods:0],
         [self action:@"copyCommitMessage" title:@"Copy Commit Message" key:nil mods:0],
-    ] at:p];
+    ]];
+    if ([p[@"contextHash"] length]) [items addObject:[self item:@"Copy Log Entry" payload:@{ @"action": @"copyLogEntry", @"contextHash": p[@"contextHash"] } key:nil mods:0]];
+    [self popUp:items at:p];
 }
 
 - (void)showTimelineContextMenu:(NSDictionary *)p {
@@ -469,9 +471,14 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     }
     if ([cmd isEqualToString:@"show_message_context_menu"]) {
         NSMenuItem *copy = [self item:@"Copy" payload:@{ @"action": @"copyMessage", @"contextHash": p[@"contextHash"] } key:nil mods:0];
-        NSMenuItem *native = [self item:@"Copy Native Log Entry" payload:@{ @"action": @"copyNativeLogEntry", @"contextHash": p[@"contextHash"] } key:nil mods:0];
-        native.enabled = [p[@"nativeLogAvailable"] boolValue];
-        [self popUp:@[copy, native] at:p];
+        NSMenuItem *log = [self item:@"Copy Log Entry" payload:@{ @"action": @"copyLogEntry", @"contextHash": p[@"contextHash"] } key:nil mods:0];
+        NSMutableArray *items = [NSMutableArray arrayWithArray:@[copy, log]];
+        if ([p[@"agent"] boolValue]) {
+            NSMenuItem *native = [self item:@"Copy Native Log Entry" payload:@{ @"action": @"copyNativeLogEntry", @"contextHash": p[@"contextHash"] } key:nil mods:0];
+            native.enabled = [p[@"nativeLogAvailable"] boolValue];
+            [items addObject:native];
+        }
+        [self popUp:items at:p];
         return nil;
     }
     if ([cmd isEqualToString:@"show_commit_context_menu"]) { [self showCommitContextMenu:p]; return nil; }

@@ -129,6 +129,7 @@
         }
         invoke("show_commit_context_menu", {
           payload: {
+            contextHash: childPayload.contextHash,
             x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
             y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
           },

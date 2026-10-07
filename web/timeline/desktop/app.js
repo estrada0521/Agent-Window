@@ -659,13 +659,13 @@ __INCLUDE:git-panel/events.js__
       }, "*");
     };
     let commitContextHash = "";
-    const openCommitContextMenu = (hash, event) => {
+    const openCommitContextMenu = (hash, event, contextHash = "") => {
       event.preventDefault();
       event.stopPropagation();
       commitContextHash = hash;
       window.parent?.postMessage({
         type: "show-commit-context-menu",
-        payload: { x: Math.round(Number(event.clientX) || 0), y: Math.round(Number(event.clientY) || 0) },
+        payload: { x: Math.round(Number(event.clientX) || 0), y: Math.round(Number(event.clientY) || 0), contextHash },
       }, "*");
     };
     const loadWorkspaceRoot = async () => {
