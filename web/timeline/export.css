@@ -45,15 +45,10 @@
       height: calc(var(--pill-row-height) * 0.6);
     }
     .export-hud-guide {
-      max-width: 12em;
-      margin-inline: 0 0.3em;
-      overflow: hidden;
-      transition: max-width 0.3s ease, margin 0.3s ease, opacity 0.3s ease;
+      margin-inline-end: 0.3em;
     }
     .export-hud.is-picked .export-hud-guide {
-      max-width: 0;
-      margin-inline: -0.1em;
-      opacity: 0;
+      display: none;
     }
     .export-hud .export-hud-export {
       padding-inline: 0.6em;

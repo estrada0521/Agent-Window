@@ -213,7 +213,7 @@ ${katex}<style>${css}</style>
         link.download = file.name;
         link.click();
         endExportRange();
-        setStatus("Exported");
+        setStatus(document.documentElement.dataset.nativeApp === "1" ? "Exported to ~/Downloads" : "Exported");
       } catch (err) {
         if (err?.name !== "AbortError") setError("Export failed", err);
       }
