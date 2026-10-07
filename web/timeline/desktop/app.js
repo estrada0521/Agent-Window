@@ -685,7 +685,7 @@ __INCLUDE:git-panel/events.js__
         return path.startsWith(`${workspaceRoot}/`) ? path.slice(workspaceRoot.length + 1) : path;
       }).map((path) => `\`${path}\``).join("\n");
       await doCopyText(text);
-      setStatus("Copied path");
+      setStatus(absolute ? "Copied absolute path" : "Copied relative path");
     };
     const copyFiles = async (paths) => {
       const normalized = paths.map(normalizeWorkspaceFilePath).filter(Boolean);

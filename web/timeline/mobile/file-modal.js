@@ -4,6 +4,11 @@
     let repoPreviewControlsWired = false;
     let filePreviewLoadSeq = 0;
     let cancelFilePreviewLoading = () => {};
+    let pendingPathCopy = null;
+    const cancelPendingPathCopy = () => {
+      pendingPathCopy?.reject(new DOMException("Cancelled", "AbortError"));
+      pendingPathCopy = null;
+    };
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
     const hasPreviewModes = (ext) => ext === "html" || ext === "htm" || ext === "md";
     const defaultPreviewMode = (ext) => ext === "md" ? "web" : "text";
@@ -25,12 +30,14 @@
       if (hasPreviewModes(repoPreviewExt())) {
         items.push(["mode", repoPreviewMode === "text" ? "Show Rendered" : "Show Source"]);
       }
+      items.push(["copyAbsolutePath", "Copy Absolute Path"], ["copyRelativePath", "Copy Relative Path"]);
       return items;
     };
     const repoPreviewSharesText = () => hasPreviewModes(repoPreviewExt())
       ? repoPreviewMode === "text"
       : !!sheetPreviewFrameEl()?.contentDocument?.querySelector(".code-table");
     const resetRepoPreviewControls = () => {
+      cancelPendingPathCopy();
       repoPreviewBaseTheme = currentFileModalBaseTheme();
       repoPreviewMode = defaultPreviewMode(repoPreviewExt());
       syncRepoPreviewControls();
@@ -116,11 +123,48 @@
         menuSelect.style.width = `${Math.round(rect.width)}px`;
         menuSelect.style.height = `${Math.round(rect.height)}px`;
         menuSelect.value = "";
+        cancelPendingPathCopy();
+        const copy = { path: mobileSheet._previewPath };
+        const content = new Promise((resolve, reject) => {
+          copy.resolve = resolve;
+          copy.reject = reject;
+        });
+        pendingPathCopy = copy;
+        try {
+          copy.result = navigator.clipboard.write([new ClipboardItem({ "text/plain": content })])
+            .then(() => null, (error) => error);
+        } catch (error) {
+          copy.result = Promise.resolve(error);
+          content.catch(() => {});
+        }
         openNativeSelect(menuSelect);
       });
-      menuSelect.addEventListener("change", () => {
+      menuSelect.addEventListener("change", async () => {
         const action = menuSelect.value;
         menuSelect.value = "";
+        if (action === "copyAbsolutePath" || action === "copyRelativePath") {
+          const copy = pendingPathCopy;
+          pendingPathCopy = null;
+          try {
+            const response = await fetchWithTimeout("/timeline-state", {}, 4000);
+            if (!response.ok) throw new Error("Failed to read workspace path");
+            const state = await response.json();
+            const root = state.workspace.replace(/\/+$/, "");
+            const path = copy.path;
+            const text = action === "copyAbsolutePath"
+              ? (path.startsWith("/") ? path : `${root}/${path}`)
+              : (path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path);
+            copy.resolve(new Blob([`\`${text}\``], { type: "text/plain" }));
+            const error = await copy.result;
+            if (error) throw error;
+            setStatus(action === "copyAbsolutePath" ? "Copied absolute path" : "Copied relative path");
+          } catch (error) {
+            copy.reject(error);
+            setError("Copy failed", error);
+          }
+          return;
+        }
+        cancelPendingPathCopy();
         if (action === "mode") {
           repoPreviewMode = repoPreviewMode === "text" ? "web" : "text";
           syncRepoPreviewControls();
