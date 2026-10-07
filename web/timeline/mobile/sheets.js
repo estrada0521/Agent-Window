@@ -530,9 +530,17 @@
         : String(rawPath || "").trim();
       const normalizedExt = String(ext || fileExtForPath(path) || "").toLowerCase();
       if (!path || !mobileSheet) return;
-      const [exists] = await Promise.all([fileExistsOnDisk(path), ensureFileIconTheme()]);
-      if (!exists) {
-        setError("File not found");
+      const checkUrl = new URL(fileViewHrefForPath(path), window.location.href);
+      checkUrl.searchParams.set("check", "1");
+      let check;
+      try {
+        [check] = await Promise.all([fetch(checkUrl), ensureFileIconTheme()]);
+      } catch (_) {
+        setError("Failed to open file");
+        return;
+      }
+      if (!check.ok) {
+        setError(check.status === 415 ? "Cannot preview this file" : check.status === 404 ? "File not found" : "Failed to open file");
         return;
       }
       ensureSheetDom();

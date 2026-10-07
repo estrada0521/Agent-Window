@@ -9,7 +9,7 @@ from server.appearance.typography import MOBILE_TEXT_SIZE
 from fs.log.jsonl import log_slice
 from git import repo as workspace_git
 from server.request import request_base_path
-from server.timeline.file_view import render_file_view
+from server.timeline.file_view import render_file_view, validate_file_preview
 from server.timeline.syntax import add_syntax_highlighting
 from server.timeline.state import ENTRY_WINDOW_LIMIT
 from server.timeline.slash_commands import public_slash_command_dicts
@@ -125,6 +125,10 @@ def _get_file_view(handler, parsed, ctx) -> None:
     embed = qs.get("embed", [""])[0] == "1"
     force_progressive_text = qs.get("progressive", [""])[0] == "1"
     try:
+        if qs.get("check", [""])[0] == "1":
+            validate_file_preview(ctx["files"], rel)
+            _send_bytes(handler, 200, b'{}', content_type="application/json")
+            return
         preview_text_size = MOBILE_TEXT_SIZE
         requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
         if requested_text_size:
@@ -138,6 +142,9 @@ def _get_file_view(handler, parsed, ctx) -> None:
             agent_text_size=preview_text_size,
             force_progressive_text=force_progressive_text,
         )
+    except ValueError as exc:
+        _send_bytes(handler, 415, json.dumps({"error": str(exc)}).encode("utf-8"), content_type="application/json")
+        return
     except PermissionError:
         handler.send_error(403)
         return

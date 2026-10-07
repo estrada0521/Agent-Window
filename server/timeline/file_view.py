@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import codecs
 import os
 from pathlib import Path
 from html import escape as html_escape
@@ -84,6 +85,23 @@ def _timeline_markdown_render_js() -> str:
     return (_REPO_ROOT / "web/timeline/markdown-render.js").read_text(encoding="utf-8")
 
 
+def validate_file_preview(files, rel: str) -> None:
+    full = files.resolve_path(rel)
+    if not os.path.isfile(full):
+        raise FileNotFoundError(full)
+    ext = os.path.splitext(rel)[1].lower()
+    if any(ext in formats for formats in (files.IMAGE_EXTS, files.PDF_EXTS, files.VIDEO_EXTS, files.AUDIO_EXTS)):
+        return
+    with open(full, "rb") as handle:
+        sample = handle.read(4096)
+    if any(byte < 32 and byte not in (9, 10, 13) for byte in sample):
+        raise ValueError("Cannot preview this file")
+    try:
+        codecs.getincrementaldecoder("utf-8")().decode(sample, final=False)
+    except UnicodeDecodeError:
+        raise ValueError("Cannot preview this file") from None
+
+
 def render_file_view(
     files,
     rel: str,
@@ -94,6 +112,7 @@ def render_file_view(
     agent_text_size: int,
     force_progressive_text: bool = False,
 ) -> str:
+    validate_file_preview(files, rel)
     full = files.resolve_path(rel)
     if not os.path.exists(full):
         raise FileNotFoundError(full)
