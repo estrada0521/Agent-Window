@@ -33,6 +33,7 @@ from server.appearance.typography import (
     FILE_PREVIEW_CODE_FONT,
     FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO,
     FILE_PREVIEW_CODE_TEXT_SIZE,
+    FILE_PREVIEW_LINE_NUMBER_LIGHT_CHANNELS,
     MESSAGE_FONT,
     MOBILE_DARK_FILE_PREVIEW_CODE_WEIGHT,
     MOBILE_LIGHT_FILE_PREVIEW_CODE_WEIGHT,
@@ -134,7 +135,7 @@ def render_file_view(
     pane_fg = str(theme_palette["light_fg"])
     pane_fg_channels = str(theme_palette["light_fg_channels"])
     is_light_theme = theme_palette["theme"] == "light"
-    pane_ln_color = f"rgb({TEXT_MUTED_LIGHT_CHANNELS if is_light_theme else TEXT_MUTED_DARK_CHANNELS})"
+    pane_ln_color = f"rgb({FILE_PREVIEW_LINE_NUMBER_LIGHT_CHANNELS if is_light_theme else TEXT_MUTED_DARK_CHANNELS})"
     pane_line = f"rgba({pane_fg_channels},0.08)"
     pane_gutter_bg = f"rgba({pane_fg_channels},0.06)"
     pane_gutter_divider = f"rgba({pane_fg_channels},0.16)"
