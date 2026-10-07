@@ -171,17 +171,18 @@
 
     .message.user .message-body-row {
       display: block;
-      padding: 0.65em 0.9em;
-      border-radius: 1.5em;
+      --user-bubble-side-space: 0.3em;
+      padding: 0.65em calc(0.9em + var(--user-bubble-side-space));
+      border-radius: 1.9em;
       --fg: var(--bg);
       --fg-bold: var(--bg);
       --muted: color-mix(in srgb, var(--bg) 65%, transparent);
       --icon-fg: var(--bg);
       color: var(--fg);
       background: var(--user-bubble-bg);
-      width: 100%;
-      max-width: 100%;
-      margin-left: 0;
+      width: calc(100% + 2 * var(--user-bubble-side-space));
+      max-width: calc(100% + 2 * var(--user-bubble-side-space));
+      margin-left: calc(-1 * var(--user-bubble-side-space));
       margin-right: auto;
     }
 
