@@ -106,6 +106,11 @@
       margin: 0 0 var(--prose-rhythm);
     }
 
+    .md-body ol > li::marker {
+      font-weight: var(--md-strong-weight);
+      color: var(--fg-bold, var(--fg));
+    }
+
     .md-body li p {
       margin: 0;
     }
