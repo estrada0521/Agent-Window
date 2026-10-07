@@ -37,7 +37,10 @@
           setResidentError("server-restarted", "Server restarted; reload");
         }
         latestPayloadData = data;
-        if (!olderEntries.length) {
+        if (historyWindow) {
+          historyWindow.has_newer = historyWindow.entries.at(-1)?.context_hash !== data.entries.at(-1)?.context_hash;
+          olderHasMore = historyWindow.has_older;
+        } else if (!olderEntries.length) {
           olderHasMore = !!data?.has_older;
         }
         render(data, refreshOptions);

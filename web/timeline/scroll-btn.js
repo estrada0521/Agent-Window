@@ -8,19 +8,22 @@
     let _olderAutoloadPolling = false;
     const olderAutoloadThreshold = () => Math.max(OLDER_AUTOLOAD_MIN_THRESHOLD, messagesEl.clientHeight * 1.25);
     const olderAutoloadCheck = () => {
-      if (olderLoading || !olderHasMore || messagesEl.scrollTop > olderAutoloadThreshold()) return false;
+      if (historyLoading || olderLoading || !olderHasMore || messagesEl.scrollTop > olderAutoloadThreshold()) return false;
       void loadOlderMessages();
       return true;
     };
     const olderAutoloadTick = () => {
-      if (olderAutoloadCheck() || olderLoading || !olderHasMore || messagesEl.scrollTop > olderAutoloadThreshold() * 3) {
+      if (olderAutoloadCheck() || historyLoading || olderLoading || !olderHasMore || messagesEl.scrollTop > olderAutoloadThreshold() * 3) {
         _olderAutoloadPolling = false;
         return;
       }
       requestAnimationFrame(olderAutoloadTick);
     };
     messagesEl.addEventListener("scroll", () => {
-      if (olderAutoloadCheck() || _olderAutoloadPolling || olderLoading || !olderHasMore) return;
+      if (historyWindow?.has_newer && !historyLoading && !_programmaticScroll && isNearBottom()) {
+        void loadHistoryPage(false);
+      }
+      if (olderAutoloadCheck() || historyLoading || _olderAutoloadPolling || olderLoading || !olderHasMore) return;
       _olderAutoloadPolling = true;
       requestAnimationFrame(olderAutoloadTick);
     }, { passive: true });
@@ -32,7 +35,7 @@
       }
       const overlayOpen = isComposerOverlayOpen();
       const emptyPlaceholder = !!document.querySelector("#messages .conversation-empty");
-      const showComposerFab = emptyPlaceholder || isInComposerFabRange();
+      const showComposerFab = !historyWindow && (emptyPlaceholder || isInComposerFabRange());
       scrollToBottomBtn.classList.toggle("visible", !showComposerFab && !overlayOpen);
       composerFabBtn?.classList.toggle("visible", showComposerFab && !overlayOpen);
     };

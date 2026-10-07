@@ -1,6 +1,7 @@
     const mergeEntriesById = (...groups) => groups.flatMap((group) => group || []);
     const entryRenderKey = (entry) => entry.context_hash;
     const displayEntriesForData = (data) => {
+      if (historyWindow) return historyWindow.entries;
       const baseEntries = Array.isArray(data?.entries) ? data.entries : [];
       const merged = mergeEntriesById(olderEntries, baseEntries);
       return olderEntries.length ? merged : merged.slice(-INITIAL_MESSAGE_WINDOW);

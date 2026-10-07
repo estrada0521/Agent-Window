@@ -8,6 +8,16 @@
       messagesEl.scrollTo({ top, behavior });
     };
     const jumpConversationToBottom = () => {
+      if (historyWindow) {
+        refreshEpoch += 1;
+        historyWindow = null;
+        historyLoading = false;
+        olderEntries = [];
+        olderHasMore = !!latestPayloadData?.has_older;
+        render(latestPayloadData, { forceScroll: true, forceFullRender: true, suppressEntryAnimation: true });
+        void refresh();
+        return;
+      }
       if (document.documentElement.dataset.autoWindowHeight === "1" && typeof fitStepToLatest === "function") {
         fitStepToLatest();
         return;

@@ -8,7 +8,7 @@
     } = {}) => {
       try {
         lastRenderPrepended = false;
-        const shouldStick = forceScroll || _stickyToBottom || isNearBottom();
+        const shouldStick = forceScroll || (!historyWindow && (_stickyToBottom || isNearBottom()));
         const displayEntries = displayEntriesForData(data);
         const metaHiddenIds = computeMetaHiddenIds(displayEntries);
         const previousRenderedIds = new Set(_renderedIds);
@@ -100,8 +100,8 @@
             });
             const row = tmpl.content.firstElementChild;
             if (row) {
-              row.classList.add("animate-in");
-              const stream = entryQualifiesForStreamReveal(entry);
+              const stream = shouldMarkNewRowsAnimated && entryQualifiesForStreamReveal(entry);
+              if (shouldMarkNewRowsAnimated) row.classList.add("animate-in");
               if (stream) row.classList.add("streaming-body-reveal");
               pendingRowCleanup.push({ row, stream });
             }
@@ -112,7 +112,7 @@
           for (const { row } of pendingRowCleanup) {
             if (row.isConnected) postRenderScope(row);
           }
-          pendingStreamRowCleanups = pendingRowCleanup;
+          pendingStreamRowCleanups = shouldMarkNewRowsAnimated ? pendingRowCleanup : [];
         } else if (canIncrementallyPrepend) {
           const heightBefore = messagesEl.scrollHeight;
           const topBefore = messagesEl.scrollTop;

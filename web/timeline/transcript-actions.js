@@ -1,4 +1,8 @@
     const loadOlderMessages = async ({ limit = MESSAGE_BATCH } = {}) => {
+      if (historyWindow) {
+        await loadHistoryPage(true, limit);
+        return;
+      }
       if (olderLoading || !latestPayloadData) return;
       const loadedCount = displayEntriesForData(latestPayloadData).length;
       if (!loadedCount) {
@@ -7,21 +11,24 @@
         return;
       }
       olderLoading = true;
+      const epoch = refreshEpoch;
       const prevHeight = messagesEl.scrollHeight;
       const prevTop = messagesEl.scrollTop;
       try {
         const res = await fetchWithTimeout(messagesFetchUrl({ offset: loadedCount, limit }));
         if (!res.ok) throw new Error("older messages unavailable");
         const data = await res.json();
+        if (epoch !== refreshEpoch) return;
         const olderBatch = Array.isArray(data?.entries) ? data.entries : [];
         olderHasMore = !!data?.has_older;
         if (olderBatch.length) {
           olderEntries = mergeEntriesById(olderBatch, olderEntries);
         }
       } catch (err) {
-        setError("History unavailable", err);
+        if (epoch === refreshEpoch) setError("History unavailable", err);
       } finally {
         olderLoading = false;
+        if (epoch !== refreshEpoch) return;
         render(latestPayloadData, { suppressEntryAnimation: true });
         if (!lastRenderPrepended) {
           const delta = messagesEl.scrollHeight - prevHeight;
@@ -34,6 +41,56 @@
       }
     };
 __INCLUDE:transcript-refresh.js__
+    const loadHistoryPage = async (before, limit = MESSAGE_BATCH) => {
+      if (!historyWindow || historyLoading) return;
+      historyLoading = true;
+      const current = historyWindow;
+      const top = messagesEl.scrollTop;
+      const height = messagesEl.scrollHeight;
+      try {
+        const res = await fetchWithTimeout(messagesFetchUrl({ cursor: before ? current.before : current.after, direction: before ? "before" : "after", limit }));
+        if (!res.ok) throw new Error("History unavailable");
+        const data = await res.json();
+        if (historyWindow !== current) return;
+        current.entries = before ? [...data.entries, ...current.entries] : [...current.entries, ...data.entries];
+        if (before) {
+          current.before = data.before;
+          current.has_older = data.has_older;
+          olderHasMore = data.has_older;
+        } else {
+          current.after = data.after;
+          current.has_newer = data.has_newer;
+        }
+        _stickyToBottom = false;
+        render(latestPayloadData, { suppressEntryAnimation: true });
+        if (!before || !lastRenderPrepended) messagesEl.scrollTop = top + (before ? messagesEl.scrollHeight - height : 0);
+      } catch (error) {
+        if (historyWindow === current) setError("History unavailable", error);
+      } finally {
+        if (historyWindow === current) historyLoading = false;
+      }
+    };
+    const jumpToDate = async (date) => {
+      if (!date) throw new Error("Invalid date");
+      const res = await fetchWithTimeout(messagesFetchUrl({ at: date }), {}, 15000);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      refreshEpoch += 1;
+      historyWindow = data;
+      historyLoading = true;
+      olderEntries = [];
+      olderHasMore = data.has_older;
+      clearPollScrollLock();
+      _stickyToBottom = false;
+      render(latestPayloadData, { forceFullRender: true, suppressEntryAnimation: true });
+      clearPollScrollLock();
+      requestAnimationFrame(() => {
+        const row = messagesEl.querySelector("[data-context-hash]");
+        if (row) positionConversationRowAtStepTop(row, "auto");
+        historyLoading = false;
+        updateScrollBtn();
+      });
+    };
     let _slashCommandsCache = null;
     const loadSlashCommandsOnce = async () => {
       if (_slashCommandsCache) return _slashCommandsCache;
@@ -170,6 +227,19 @@ __INCLUDE:transcript-refresh.js__
         }
         const parsed = parseSlashCommandInput(commandInput, list);
         if (parsed) {
+          if (parsed.id === "jump") {
+            try {
+              await jumpToDate(parsed.arg);
+              clearComposerDraft();
+              blurComposerOnMobile(message);
+              closeComposerOverlay();
+            } catch (error) {
+              setError(error.message === "Invalid date" || error.message === "No earlier messages" ? error.message : "Jump failed", error);
+            } finally {
+              sendLocked = false;
+            }
+            return false;
+          }
           if (parsed.insert) {
             message.value = parsed.insert + " ";
             updateSendBtnVisibility();

@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import parse_qs
 
 from server.appearance.typography import MOBILE_TEXT_SIZE
-from fs.log.jsonl import log_slice
+from fs.log.jsonl import log_slice, date_message_offset, message_window
 from git import repo as workspace_git
 from server.request import request_base_path
 from server.timeline.file_view import render_file_view, validate_file_preview
@@ -60,6 +60,25 @@ def _send_bytes(
 
 def _get_messages(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
+    if "at" in qs or "cursor" in qs:
+        try:
+            cursor = date_message_offset(ctx["state"].log_path, qs["at"][0]) if "at" in qs else int(qs["cursor"][0])
+            if cursor < 0 or cursor > ctx["state"].log_path.stat().st_size:
+                raise ValueError("Invalid cursor")
+            data = message_window(
+                ctx["state"].log_path, cursor=cursor,
+                limit=max(1, min(ENTRY_WINDOW_LIMIT, int(qs.get("limit", ["50"])[0]))),
+                before=qs.get("direction", [""])[0] == "before",
+            )
+            data["server_instance"] = ctx["state"].server_instance
+        except (ValueError, KeyError, OverflowError):
+            _send_bytes(handler, 400, b'{"error":"Invalid date"}', content_type="application/json")
+            return
+        except LookupError:
+            _send_bytes(handler, 404, b'{"error":"No earlier messages"}', content_type="application/json")
+            return
+        _send_bytes(handler, 200, json.dumps(data, ensure_ascii=True).encode(), content_type="application/json")
+        return
     body = ctx["payload_fn"](
         limit=min(ENTRY_WINDOW_LIMIT, int(qs.get("limit", [ENTRY_WINDOW_LIMIT])[0])),
         offset=int(qs.get("offset", ["0"])[0]),

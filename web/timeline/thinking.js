@@ -248,7 +248,7 @@
         removeThinkingFloatingIcons();
         return;
       }
-      const runningAgents = Object.keys(currentAgentStatuses).filter((agent) => currentAgentStatuses[agent] === "running");
+      const runningAgents = historyWindow ? [] : Object.keys(currentAgentStatuses).filter((agent) => currentAgentStatuses[agent] === "running");
       const hasRunningRunning = runningAgents.length > 0;
       document.body?.classList.toggle("agent-running", hasRunningRunning);
       const existingContainer = root.querySelector(".message-thinking-container");

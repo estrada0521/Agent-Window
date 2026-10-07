@@ -8,6 +8,8 @@
     const INITIAL_MESSAGE_WINDOW = 50;
     let latestPayloadData = null;
     let olderEntries = [];
+    let historyWindow = null;
+    let historyLoading = false;
     let olderHasMore = false;
     let olderLoading = false;
     let hasInitialRefreshHydrated = false;

@@ -16,6 +16,7 @@ class SlashCommandSpec:
 
 
 SLASH_COMMANDS = (
+    SlashCommandSpec(id="jump", slash="/jump", desc="Jump to date: YYYY-MM[-DD [HH:MM]]", has_arg=True, path=""),
     SlashCommandSpec(id="restart", slash="/restart", desc="Restart agent pane", has_arg=False, path="/restart-agent"),
     SlashCommandSpec(id="idle", slash="/idle", desc="Show as idle (display only)", has_arg=False, path="/mark-idle"),
     SlashCommandSpec(
