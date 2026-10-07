@@ -340,12 +340,15 @@
       --message-side-padding: calc(var(--text-size, 13px) * 1.54);
       --timeline-scrollbar-layout-width: 2px;
     }
+    html:not([data-auto-window-height="1"]) main {
+      --timeline-edge-mask: linear-gradient(to bottom, transparent 0, rgba(0,0,0,0.156) calc(var(--timeline-edge-fade) * 0.25), rgba(0,0,0,0.5) calc(var(--timeline-edge-fade) * 0.5), rgba(0,0,0,0.844) calc(var(--timeline-edge-fade) * 0.75), black var(--timeline-edge-fade), black calc(100% - var(--timeline-edge-fade)), rgba(0,0,0,0.844) calc(100% - var(--timeline-edge-fade) * 0.75), rgba(0,0,0,0.5) calc(100% - var(--timeline-edge-fade) * 0.5), rgba(0,0,0,0.156) calc(100% - var(--timeline-edge-fade) * 0.25), transparent 100%);
+    }
     main {
       --message-step-top-gap: calc(var(--text-size, 13px) * 20 / 13 + var(--timeline-band-h));
       --timeline-edge-fade: var(--message-step-top-gap);
-      --timeline-edge-fade-hard: calc(var(--timeline-edge-fade) * 0.45);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--timeline-edge-fade-hard), #000 var(--timeline-edge-fade), #000 calc(100% - var(--timeline-edge-fade)), transparent calc(100% - var(--timeline-edge-fade-hard)), transparent 100%);
-      mask-image: linear-gradient(to bottom, transparent 0, transparent var(--timeline-edge-fade-hard), #000 var(--timeline-edge-fade), #000 calc(100% - var(--timeline-edge-fade)), transparent calc(100% - var(--timeline-edge-fade-hard)), transparent 100%);
+      --timeline-edge-mask: linear-gradient(to bottom, transparent 0, transparent calc(var(--timeline-edge-fade) * 0.45), #000 var(--timeline-edge-fade), #000 calc(100% - var(--timeline-edge-fade)), transparent calc(100% - var(--timeline-edge-fade) * 0.45), transparent 100%);
+      -webkit-mask-image: var(--timeline-edge-mask);
+      mask-image: var(--timeline-edge-mask);
       scroll-padding-top: var(--message-step-top-gap);
       font-size: var(--text-size, 13px);
       position: absolute;
