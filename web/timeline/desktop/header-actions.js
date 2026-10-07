@@ -89,6 +89,15 @@
     };
     const handleTimelineMenuAction = async (payload) => {
       const data = payload || {};
+      if (data.action === "copyLinkURL") {
+        try {
+          await doCopyText(data.url);
+          setStatus("Copied URL");
+        } catch (error) {
+          setError("Copy failed", error);
+        }
+        return;
+      }
       if (handleDesktopFileContextMenuAction(data) || handleDesktopCommitContextMenuAction(data)) return;
       if (data.action === "agent") {
         const mode = String(data.mode || "");

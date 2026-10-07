@@ -462,6 +462,10 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     if ([cmd isEqualToString:@"show_appearance_menu"]) { [self showAppearanceMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_timeline_switcher_menu"]) { [self showListMenu:p action:@"switchTimeline" checks:YES]; return nil; }
     if ([cmd isEqualToString:@"show_file_context_menu"]) { [self showFileContextMenu:p]; return nil; }
+    if ([cmd isEqualToString:@"show_link_context_menu"]) {
+        [self popUp:@[[self item:@"Copy URL" payload:@{ @"action": @"copyLinkURL", @"url": p[@"url"] } key:nil mods:0]] at:p];
+        return nil;
+    }
     if ([cmd isEqualToString:@"show_commit_context_menu"]) { [self showCommitContextMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_timeline_context_menu"]) { [self showTimelineContextMenu:p]; return nil; }
     if ([cmd isEqualToString:@"reset_window_geometry"]) return [self placeCentered:kDefaultWindowSize height:kDefaultWindowSize scale:[a[@"scale"] doubleValue]];

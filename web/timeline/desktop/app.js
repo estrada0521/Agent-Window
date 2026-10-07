@@ -1063,6 +1063,10 @@ __INCLUDE:git-panel/events.js__
         setError("File menu failed", event.data.message);
         return;
       }
+      if (event.data.type === "link-context-menu-error") {
+        setError("Link menu failed");
+        return;
+      }
       if (event.data.type === "file-copy-result") {
         event.data.error ? setError("Copy failed", event.data.error) : setStatus("Copied file");
         return;

@@ -50,6 +50,19 @@
         }).catch((err) => setError("Menu failed", err));
         return;
       }
+      if (event.data && event.data.type === "show-link-context-menu" && event.source === _deskTimelineFrame?.contentWindow) {
+        const invoke = getNativeInvoke();
+        const payload = event.data.payload;
+        const frameRect = _deskTimelineFrame.getBoundingClientRect();
+        if (typeof invoke !== "function") {
+          event.source.postMessage({ type: "link-context-menu-error" }, "*");
+          return;
+        }
+        invoke("show_link_context_menu", {
+          payload: { x: payload.x + frameRect.left, y: payload.y + frameRect.top, url: payload.url },
+        }).catch(() => event.source.postMessage({ type: "link-context-menu-error" }, "*"));
+        return;
+      }
       if (event.data && event.data.type === "show-file-context-menu" && event.source === _deskTimelineFrame?.contentWindow) {
         const invoke = getNativeInvoke();
         const childPayload = event.data.payload || {};

@@ -396,7 +396,7 @@
     if (document.documentElement.dataset.mobile !== "1") {
       messagesEl.addEventListener("mousedown", (e) => {
         if (e.button !== 2) return;
-        if (!e.target.closest("a.inline-file-link, a.local-file-link")) return;
+        if (!e.target.closest("a[href]")) return;
         e.preventDefault();
       }, true);
       messagesEl.addEventListener("contextmenu", (e) => {
@@ -405,8 +405,16 @@
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        if (!anyLink.classList.contains("inline-file-link") && !anyLink.classList.contains("local-file-link")) return;
         window.getSelection()?.removeAllRanges();
+        if (!anyLink.classList.contains("inline-file-link") && !anyLink.classList.contains("local-file-link")) {
+          if (isExternalHref(anyLink.getAttribute("href"))) {
+            window.parent.postMessage({
+              type: "show-link-context-menu",
+              payload: { x: e.clientX, y: e.clientY, url: anyLink.href },
+            }, "*");
+          }
+          return;
+        }
         const path = filePathFromLinkAnchor(anyLink);
         if (path) void openFileContextMenu(path, e);
       }, true);
