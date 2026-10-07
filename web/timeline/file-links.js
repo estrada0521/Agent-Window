@@ -184,26 +184,6 @@ __INCLUDE:file-autocomplete.js__
         requestAnimationFrame(() => selectFile(path));
       });
     });
-    if (isMobileComposer) {
-      const clearFilePressed = () => {
-        _dropItems().forEach((node) => node.classList.remove("is-pressed"));
-      };
-      fileDrop.addEventListener("pointerdown", (e) => {
-        if (e.button !== 0) return;
-        const item = e.target.closest(".file-item");
-        if (!item) return;
-        clearFilePressed();
-        item.classList.add("is-pressed");
-      });
-      fileDrop.addEventListener("pointerout", (e) => {
-        const item = e.target.closest(".file-item");
-        if (!item) return;
-        const next = e.relatedTarget;
-        if (!next || item.contains(next)) return;
-        item.classList.remove("is-pressed");
-      });
-      document.addEventListener("pointercancel", clearFilePressed, true);
-    }
     fileDrop.addEventListener("mousedown", (e) => {
       if (e.target.closest(".file-item")) e.preventDefault();
     });
@@ -402,6 +382,26 @@ __INCLUDE:file-autocomplete.js__
 
     const cmdDrop = document.getElementById("cmdDropdown");
     [fileDrop, cmdDrop].forEach((menu) => {
+      if (isMobileComposer) {
+        let press = null;
+        const clearPress = () => {
+          press?.item.classList.remove("is-pressed");
+          press = null;
+        };
+        menu.addEventListener("pointerdown", (e) => {
+          clearPress();
+          const item = e.target.closest(".file-item");
+          if (e.button !== 0 || !item) return;
+          press = { item, x: e.clientX, y: e.clientY };
+          item.classList.add("is-pressed");
+        });
+        menu.addEventListener("pointermove", (e) => {
+          if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) clearPress();
+        });
+        menu.addEventListener("scroll", clearPress, { passive: true });
+        document.addEventListener("pointerup", clearPress, true);
+        document.addEventListener("pointercancel", clearPress, true);
+      }
       const syncFade = () => {
         const atTop = menu.scrollTop <= 1;
         const atBottom = menu.scrollTop + menu.clientHeight >= menu.scrollHeight - 1;

@@ -85,10 +85,6 @@
       border-radius: 0.77em;
     }
 
-    .has-hover .file-item:hover {
-      background-color: var(--composer-menu-row-hover-bg);
-    }
-
     .file-item.active,
     .file-item.is-pressed {
       background-color: var(--composer-menu-row-active-bg);

@@ -29,6 +29,10 @@
       -webkit-backdrop-filter: blur(8px);
     }
 
+    body.composer-overlay-open #timelineHud:has(.git-worktree-button) {
+      z-index: 279;
+    }
+
     .composer-overlay.visible.composer-attach-drag {
       background: rgba(var(--bg-rgb), 0.22);
     }
