@@ -98,8 +98,3 @@
     const isNearBottom = () => {
       return messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < STICKY_THRESHOLD;
     };
-    const isInComposerFabRange = () => {
-      const play = parseFloat(getComputedStyle(messagesEl).getPropertyValue("--main-spacer-height"));
-      const slack = Number.isFinite(play) && play > 0 ? play : STICKY_THRESHOLD;
-      return messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < slack;
-    };
