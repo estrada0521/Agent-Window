@@ -76,7 +76,7 @@
     @keyframes userMsgReveal {
       0% {
         opacity: 0;
-        transform: translateY(-8px);
+        transform: translateY(8px);
       }
 
       100% {

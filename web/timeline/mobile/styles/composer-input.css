@@ -208,7 +208,12 @@
       outline-offset: 3px;
     }
 
+    .attach-card {
+      transition: transform var(--liquid-glass-press-out);
+    }
+
     .attach-card:active {
+      transition: transform var(--liquid-glass-press-in);
       transform: scale(0.95);
     }
 
