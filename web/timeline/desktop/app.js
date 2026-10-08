@@ -328,6 +328,12 @@ __INCLUDE:../agent-status.js__
 __INCLUDE:../pointer-capability.js__
     const sideBar = document.getElementById("sideBar");
     const sideBarResizer = document.getElementById("sideBarResizer");
+    sideBar.addEventListener("scroll", (event) => {
+      const scroll = event.target;
+      if (scroll.matches(".repo-browser-scroll, .git-commit-scroll, .git-commit-detail-body > .git-commit-file-wrap")) {
+        scroll.style.setProperty("--side-bar-scroll-top", `${Math.max(0, scroll.scrollTop)}px`);
+      }
+    }, { capture: true, passive: true });
     const splitPanel = document.getElementById("splitPanel");
     const splitDivider = document.getElementById("splitDivider");
     const repoContent = document.getElementById("repoContent");

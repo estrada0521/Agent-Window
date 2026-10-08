@@ -369,6 +369,17 @@
       padding: 0;
       line-height: 1.35;
     }
+    :is(.repo-browser-scroll, .git-commit-scroll, .git-commit-detail-body > .git-commit-file-wrap) {
+      --side-bar-top-fade: min(1.7em, var(--side-bar-scroll-top, 0px));
+      --side-bar-top-mask: linear-gradient(to bottom,
+        transparent 0,
+        rgba(0, 0, 0, 0.156) calc(var(--side-bar-top-fade) * 0.25),
+        rgba(0, 0, 0, 0.5) calc(var(--side-bar-top-fade) * 0.5),
+        rgba(0, 0, 0, 0.844) calc(var(--side-bar-top-fade) * 0.75),
+        black var(--side-bar-top-fade));
+      mask-image: var(--side-bar-top-mask);
+      -webkit-mask-image: var(--side-bar-top-mask);
+    }
     .repo-browser-scroll {
       flex: 1 1 auto;
       min-height: 0;
