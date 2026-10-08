@@ -209,7 +209,7 @@
             gutterStyle = frameDoc.createElement("style");
             gutterStyle.id = "mobile-gutter-style";
             frameDoc.head.appendChild(gutterStyle);
-            gutterStyle.textContent = `.code-gutter,.preview-text-gutter{position:absolute;left:14px;top:20px;bottom:calc(var(--mobile-sheet-footer-bottom) + var(--mobile-sheet-floating-height) + 8px);width:var(--preview-gutter-width);min-width:0;z-index:2;border:0.5px solid var(--preview-gutter-divider);border-radius:999px;background:linear-gradient(var(--preview-gutter-bg),var(--preview-gutter-bg)),rgba(var(--bg-rgb),0.97);padding:0}.code-gutter-inner,.preview-text-gutter-inner{position:relative;top:calc(var(--code-tpad) - 20.5px)}.code-gutter .code-gutter-table .ln,.preview-text-gutter .preview-text-gutter-table .ln{width:100%;min-width:0;padding-left:4px;padding-right:4px}.code-scroll,.preview-text-scroll{margin-left:0;padding-left:calc(var(--preview-gutter-width) + 14px);mask-image:linear-gradient(to right,transparent calc(var(--preview-gutter-width) + 14px),black calc(var(--preview-gutter-width) + 28px));-webkit-mask-image:linear-gradient(to right,transparent calc(var(--preview-gutter-width) + 14px),black calc(var(--preview-gutter-width) + 28px))}`;
+            gutterStyle.textContent = `.view-container,.preview-text-wrap{--preview-gutter-width:var(--mobile-sheet-floating-height)}.code-gutter,.preview-text-gutter{box-sizing:border-box;position:absolute;left:14px;top:20px;bottom:calc(var(--mobile-sheet-footer-bottom) + var(--mobile-sheet-floating-height) + 8px);width:var(--preview-gutter-width);min-width:0;z-index:2;border:0.5px solid var(--preview-gutter-divider);border-radius:999px;background:linear-gradient(var(--preview-gutter-bg),var(--preview-gutter-bg)),rgba(var(--bg-rgb),0.97);padding:0}.code-gutter-inner,.preview-text-gutter-inner{position:relative;top:calc(var(--code-tpad) - 20.5px)}.code-gutter .code-gutter-table .ln,.preview-text-gutter .preview-text-gutter-table .ln{width:100%;min-width:0;padding-left:4px;padding-right:4px}.code-scroll,.preview-text-scroll{margin-left:0;padding-left:calc(var(--preview-gutter-width) + 14px);mask-image:linear-gradient(to right,transparent calc(var(--preview-gutter-width) + 14px),black calc(var(--preview-gutter-width) + 28px));-webkit-mask-image:linear-gradient(to right,transparent calc(var(--preview-gutter-width) + 14px),black calc(var(--preview-gutter-width) + 28px))}`;
           }
         }
         const bgRgb = rootStyle.getPropertyValue("--bg-rgb").trim();
@@ -242,7 +242,7 @@
         const darkMutedRgb = rootFgStyle.getPropertyValue("--dark-muted-rgb").trim() || "150, 150, 150";
         const fgRgb = isLight ? lightFgRgb : darkFgRgb;
         const fg = `rgb(${fgRgb})`;
-        const lnFg = isLight ? `rgba(${lightFgRgb},0.8)` : `rgb(${darkMutedRgb})`;
+        const lnFg = isLight ? `rgba(${lightFgRgb},0.8)` : `color-mix(in srgb, rgb(${darkMutedRgb}) 88%, white)`;
         const scheme = isLight ? "light" : "dark";
         frameDoc.documentElement.setAttribute("data-preview-base-theme", scheme);
         let style = frameDoc.getElementById("base-theme-style");
@@ -251,7 +251,7 @@
           style.id = "base-theme-style";
           frameDoc.head?.appendChild(style);
         }
-        style.textContent = `:root{--body-weight:${bodyWeight};--file-preview-code-weight:${codeWeight};--preview-gutter-bg:rgba(${fgRgb},${isLight ? 0.04 : 0.06});--preview-gutter-divider:rgba(${fgRgb},${isLight ? 0.34 : 0.22})}.html-preview-web-glass{--preview-glass-rgb:${bgRgb};--preview-glass-line:rgba(${fgRgb},0.08)}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.preview-text-gutter-table .ln{color:${lnFg}}.code-table,.preview-text-table,pre{color:${fg}}`;
+        style.textContent = `:root{--body-weight:${bodyWeight};--file-preview-code-weight:${codeWeight};--preview-gutter-bg:rgba(${fgRgb},${isLight ? 0.04 : 0.09});--preview-gutter-divider:rgba(${fgRgb},${isLight ? 0.34 : 0.22})}.html-preview-web-glass{--preview-glass-rgb:${bgRgb};--preview-glass-line:rgba(${fgRgb},0.08)}html,body{color-scheme:${scheme};background:${bg};color:${fg}}.view-container,.html-preview-shell,.wrap{background:${bg}}.fn{color:${fg}}.code-gutter-table .ln,.preview-text-gutter-table .ln{color:${lnFg}}.code-table,.preview-text-table,pre{color:${fg}}`;
         return true;
       } catch (_) { }
       return false;
