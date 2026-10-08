@@ -143,6 +143,10 @@
       color: var(--fg);
     }
 
+    html[data-theme="light"] .message.user {
+      --user-bubble-bg: rgb(__DESKTOP_TIMELINE_DARK_BG_CHANNELS__);
+    }
+
     html[data-theme="dark"] .message.user {
       --user-bubble-bg: color-mix(in srgb, rgb(__TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__) 80%, rgb(__DESKTOP_TIMELINE_LIGHT_BG_CHANNELS__));
     }
