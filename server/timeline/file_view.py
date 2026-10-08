@@ -138,7 +138,7 @@ def render_file_view(
     pane_ln_color = f"rgb({FILE_PREVIEW_LINE_NUMBER_LIGHT_CHANNELS if is_light_theme else TEXT_MUTED_DARK_CHANNELS})"
     pane_line = f"rgba({pane_fg_channels},0.08)"
     pane_gutter_bg = f"rgba({pane_fg_channels},0.06)"
-    pane_gutter_divider = f"rgba({pane_fg_channels},0.16)"
+    pane_gutter_divider = f"rgba({pane_fg_channels},{0.34 if is_light_theme else 0.16})"
     gutter_padding_left = 1
     gutter_padding_right = 5
     code_cell_padding_left = 12
