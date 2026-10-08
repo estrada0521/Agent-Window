@@ -299,10 +299,19 @@
       line-height: var(--code-block-line-height);
     }
 
-    .md-body :is(.code-block-wrap, blockquote) {
+    .md-body :is(.code-block-wrap, .table-copy-wrap, blockquote) {
       --code-copy-button-size: round(nearest, calc(var(--text-size, 13px) * 28 / 13), 1px);
       --code-copy-icon-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
       --code-copy-radius: round(nearest, calc(var(--text-size, 13px) * 8 / 13), 1px);
+    }
+
+    .md-body .table-copy-wrap {
+      position: relative;
+      margin: 0.5em 0 1em;
+    }
+
+    .md-body .table-copy-wrap > .table-scroll {
+      margin: 0;
     }
 
     .md-body .code-block-wrap {
@@ -322,7 +331,8 @@
       margin: 0;
     }
 
-    .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn {
+    .md-body :is(.code-block-wrap, .table-copy-wrap, blockquote) > .code-copy-btn {
+      -webkit-tap-highlight-color: transparent;
       position: absolute;
       top: 0;
       right: 0;
@@ -348,18 +358,18 @@
       right: round(nearest, calc(var(--text-size, 13px) * 4 / 13), 1px);
     }
 
-    .has-hover .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn:hover,
-    .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn:active,
-    .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn.copied {
+    .has-hover .md-body :is(.code-block-wrap, .table-copy-wrap, blockquote) > .code-copy-btn:hover,
+    .md-body :is(.code-block-wrap, .table-copy-wrap, blockquote) > .code-copy-btn:active,
+    .md-body :is(.code-block-wrap, .table-copy-wrap, blockquote) > .code-copy-btn.copied {
       color: var(--fg);
     }
 
-    .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn svg {
+    .md-body :is(.code-block-wrap, .table-copy-wrap, blockquote) > .code-copy-btn svg {
       width: var(--code-copy-icon-size);
       height: var(--code-copy-icon-size);
     }
 
-    .md-body :is(.code-block-wrap, blockquote) > .code-copy-btn svg * {
+    .md-body :is(.code-block-wrap, .table-copy-wrap, blockquote) > .code-copy-btn svg * {
       stroke: currentColor;
       stroke-width: 1.45;
     }

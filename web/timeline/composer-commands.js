@@ -367,9 +367,7 @@
       }
       const codeCopyBtn = e.target.closest(".code-copy-btn");
       if (codeCopyBtn) {
-        const wrap = codeCopyBtn.closest(".code-block-wrap, blockquote");
-        if (!wrap) return;
-        const text = wrap.matches("blockquote") ? wrap.innerText.trimEnd() : (wrap.querySelector("code") || wrap.querySelector("pre")).textContent;
+        const text = blockCopyText(codeCopyBtn);
         doCopyText(text).then(() => {
           markCopied(codeCopyBtn);
         }).catch((err) => setError("Copy failed", err));

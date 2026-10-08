@@ -93,7 +93,17 @@
         return block ? block.content : "";
       });
 
-      let html = marked.parse(processedText, { breaks: true, gfm: true });
+      const escapeAttr = (typeof escapeHtml === "function" ? escapeHtml : markdownEscapeHtml);
+      const renderer = new marked.Renderer();
+      renderer.table = function (token) {
+        let raw = token.raw;
+        for (const block of mathBlocks) {
+          raw = raw.replaceAll(`<span class="MATH_SAFE_BLOCK" data-id="${block.id}"></span>`, block.content);
+        }
+        return marked.Renderer.prototype.table.call(this, token)
+          .replace("<table>", `<table data-copy-text="${escapeAttr(raw).replaceAll('"', "&quot;")}">`);
+      };
+      let html = marked.parse(processedText, { breaks: true, gfm: true, renderer });
       if (typeof rewriteMarkdownHtml === "function") {
         html = rewriteMarkdownHtml(html);
       }
@@ -122,13 +132,12 @@
       }
       const copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
       const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-      const escapeAttr = (typeof escapeHtml === "function" ? escapeHtml : markdownEscapeHtml);
       const copyButtonHtml = `<button class="code-copy-btn" type="button" title="Copy" aria-label="Copy" data-copy-icon="${escapeAttr(copySvg).replaceAll('"', "&quot;")}" data-check-icon="${escapeAttr(checkSvg).replaceAll('"', "&quot;")}">${copySvg}</button>`;
-      tempDiv.querySelectorAll("pre").forEach((pre) => {
+      tempDiv.querySelectorAll("pre, table").forEach((block) => {
         const wrap = document.createElement("div");
-        wrap.className = "code-block-wrap";
-        pre.parentNode.insertBefore(wrap, pre);
-        wrap.appendChild(pre);
+        wrap.className = block.matches("table") ? "table-copy-wrap" : "code-block-wrap";
+        block.parentNode.insertBefore(wrap, block);
+        wrap.appendChild(block);
         wrap.insertAdjacentHTML("beforeend", copyButtonHtml);
       });
       tempDiv.querySelectorAll("blockquote").forEach((quote) => {
@@ -140,4 +149,13 @@
 
       const out = tempDiv.innerHTML;
       return typeof injectFileCards === "function" ? injectFileCards(out) : out;
+    };
+    const blockCopyText = (button) => {
+      const wrap = button.closest(".code-block-wrap, .table-copy-wrap, blockquote");
+      if (wrap.matches(".table-copy-wrap")) {
+        const table = wrap.querySelector("table");
+        if (table.hasAttribute("data-copy-text")) return table.dataset.copyText;
+        return table.outerHTML;
+      }
+      return wrap.matches("blockquote") ? wrap.innerText.trimEnd() : (wrap.querySelector("code") || wrap.querySelector("pre")).textContent;
     };
