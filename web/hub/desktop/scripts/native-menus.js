@@ -154,6 +154,10 @@
         void toggleDeskAutoWindowHeight();
         return;
       }
+      if (detail.action === "increaseFitMessages" || detail.action === "decreaseFitMessages") {
+        changeDeskFitMessageCount(detail.action === "increaseFitMessages" ? 1 : -1);
+        return;
+      }
       if (detail.action === "toggleFitCollapsed") {
         toggleDeskFitCollapsed();
         return;

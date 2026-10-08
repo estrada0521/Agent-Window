@@ -70,7 +70,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 ## Fit Window to Message
 
-`⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。
+`⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘[` / `⌥⌘]` で表示するmessage数を減らす／増やす。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。
 
 <p align="center">
   <img src="media/agent-window-fit.gif" width="100%" alt="Fit Window to Message demo">
@@ -181,6 +181,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | 画面端へ移動 | `⌥⌘↑` `←` `→` `↓` | `↓` は中央 |
 | 最前面に固定 | `⌃⌘T` | |
 | Fit Window to Message | `⌥⌘H` | |
+| Fitの表示message数を減らす／増やす | `⌥⌘[` / `⌥⌘]` | Fit中のみ |
 | Collapse Window | `⌥⌘M` | 新しいmessageで復帰。Fit Window to Message中のみ |
 
 </details>

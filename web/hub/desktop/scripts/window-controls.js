@@ -19,6 +19,7 @@
     let _deskLastFitTarget = 0;
     let _deskFitWidthSnapPending = false;
     let _deskFitCollapsed = false;
+    let _deskFitMessageCount = 1;
     const DESK_COLLAPSED_FIT_HEIGHT = 48;
     function setDeskFitCollapsed(on) {
       const next = !!on;
@@ -49,9 +50,15 @@
     }
     function pushDeskAutoWindowHeight() {
       _deskTimelineFrame?.contentWindow?.postMessage(
-        { type: "hub-auto-window-height", on: _deskAutoWindowHeight },
+        { type: "hub-auto-window-height", on: _deskAutoWindowHeight, messageCount: _deskFitMessageCount },
         "*",
       );
+    }
+    function changeDeskFitMessageCount(delta) {
+      if (!_deskAutoWindowHeight) return;
+      _deskFitMessageCount = Math.max(1, _deskFitMessageCount + delta);
+      pushDeskAutoWindowHeight();
+      setStatus(`Fit · ${_deskFitMessageCount} message${_deskFitMessageCount === 1 ? "" : "s"}`);
     }
     function applyDeskFitHeightMin() {
       const invoke = getNativeInvoke();
@@ -224,6 +231,12 @@
         return;
       }
       if (event.metaKey && event.altKey) {
+        if (!event.ctrlKey && !event.shiftKey && _deskAutoWindowHeight
+          && (event.code === "BracketLeft" || event.code === "BracketRight")) {
+          event.preventDefault();
+          changeDeskFitMessageCount(event.code === "BracketRight" ? 1 : -1);
+          return;
+        }
         if (event.code === "KeyB") {
           event.preventDefault();
           toggleDeskHubOutward();
@@ -402,8 +415,8 @@
         { value: "actual", label: "Actual Size", disabled: currentDeskTextSizePx() === DESK_TEXT_SIZE_DEFAULT },
         { value: "increase", label: "Zoom In" },
         { value: "decrease", label: "Zoom Out" },
-        { value: "sidePanels", label: "Side Panels" },
         { value: "timeline", label: "Timeline" },
+        { value: "sidePanels", label: "Side Panels" },
       ], (value) => {
         if (!submenus[value]) {
           run({ action: "textSize", mode: value });
@@ -435,6 +448,7 @@
             alwaysOnTop: _deskAlwaysOnTop,
             autoWindowHeight: _deskAutoWindowHeight,
             fitCollapsed: _deskFitCollapsed,
+            fitMessageCount: _deskFitMessageCount,
             sideBarAvailable: deskSideBarAvailable(),
           },
         });

@@ -2,6 +2,7 @@ __INCLUDE:../base.js__
 __INCLUDE:../link-presentation.js__
     let _scrollbarLayoutSyncFrame = 0;
     let _fitTargetRow = null;
+    let _fitMessageCount = 1;
     let _fitCollapsed = false;
     const syncTimelineScrollbarLayoutWidth = () => {
       const mainEl = document.querySelector("main");
@@ -141,6 +142,9 @@ __INCLUDE:../conversation-state.js__
         ? _fitTargetRow
         : null;
       if (_fitTargetRow && !fitTarget) _fitTargetRow = null;
+      const messageRows = fitMessageRows();
+      const endIndex = fitTarget ? messageRows.indexOf(fitTarget) : messageRows.length - 1;
+      const firstRow = messageRows[Math.max(0, endIndex - _fitMessageCount + 1)];
       let contentHeight;
       const textSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--text-size"));
       const sidebarMinimumContentHeight = sidebarOpen
@@ -153,11 +157,10 @@ __INCLUDE:../conversation-state.js__
         const aboveInputHeight = aboveInput.offsetHeight ? -aboveInput.offsetTop : 0;
         contentHeight = Math.ceil(textSize * FIT_COMPOSER_BASE_HEIGHT + Math.max(0, aboveInputHeight - inputSpareHeight));
       } else if (fitTarget) {
-        const r = fitTarget.getBoundingClientRect();
-        contentHeight = Math.ceil(r.bottom - r.top + messageStepTopGap()) + messageStepTopGap();
+        contentHeight = Math.ceil(fitTarget.getBoundingClientRect().bottom
+          - firstRow.getBoundingClientRect().top + 2 * messageStepTopGap());
       } else if (rows?.length) {
-        const lastRow = rows[rows.length - 1];
-        const lastTopWithin = lastRow.getBoundingClientRect().top
+        const lastTopWithin = (firstRow || rows[0]).getBoundingClientRect().top
           - scroller.getBoundingClientRect().top + scroller.scrollTop;
         contentHeight = Math.ceil(scroller.scrollHeight - lastTopWithin) + messageStepTopGap();
       } else {
@@ -168,7 +171,7 @@ __INCLUDE:../conversation-state.js__
         if (!preservePosition && !fromComposer && fitTarget) {
           _stickyToBottom = false;
           _programmaticScroll = true;
-          positionConversationRowAtStepTop(fitTarget, "auto");
+          positionConversationRowAtStepTop(firstRow, "auto");
           requestAnimationFrame(() => { _programmaticScroll = false; });
         } else if (!preservePosition && !fromComposer) {
           _stickyToBottom = true;
@@ -188,14 +191,14 @@ __INCLUDE:../conversation-state.js__
     const fitStepToFirst = () => {
       const rows = fitMessageRows();
       if (!rows.length) return;
-      _fitTargetRow = rows[0];
+      _fitTargetRow = rows[Math.min(_fitMessageCount, rows.length) - 1];
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;
       _stickyToBottom = false;
       reportFitHeight();
     };
     const fitStepToMessage = async (down, senders = null) => {
-      const anchor = _fitTargetRow?.isConnected ? _fitTargetRow : null;
+      const anchor = _fitTargetRow?.isConnected ? _fitTargetRow : fitMessageRows().at(-1);
       let next = findStepTarget(stepRows(senders), down, anchor);
       if (down) {
         if (!next && senders) return;
@@ -1045,7 +1048,8 @@ __INCLUDE:git-panel/events.js__
         return;
       }
       if (event.data.type === "hub-auto-window-height") {
-        _fitTargetRow = null;
+        if (!!event.data.on !== (document.documentElement.dataset.autoWindowHeight === "1")) _fitTargetRow = null;
+        _fitMessageCount = event.data.messageCount;
         const enteringFitMode = !!event.data.on && document.documentElement.dataset.autoWindowHeight !== "1";
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
         if (enteringFitMode && gitSummaryPinned) toggleGitSummaryPinned();
@@ -1132,6 +1136,12 @@ __INCLUDE:git-panel/events.js__
           return;
         }
         if (event.metaKey && event.altKey) {
+          if (!event.ctrlKey && !event.shiftKey && document.documentElement.dataset.autoWindowHeight === "1"
+            && (event.code === "BracketLeft" || event.code === "BracketRight")) {
+            event.preventDefault();
+            window.parent.postMessage({ type: "fit-message-count-shortcut", delta: event.code === "BracketRight" ? 1 : -1 }, "*");
+            return;
+          }
           if (event.code === "KeyB") {
             event.preventDefault();
             window.parent?.postMessage({ type: "toggle-hub-outward" }, "*");

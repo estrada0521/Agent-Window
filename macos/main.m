@@ -214,9 +214,13 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSMenuItem *alwaysOnTop = [self action:@"toggleAlwaysOnTop" title:@"Always on Top" key:@"t" mods:cmd | NSEventModifierFlagControl];
     alwaysOnTop.state = [p[@"alwaysOnTop"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     BOOL fit = [p[@"autoWindowHeight"] boolValue];
-    NSMenuItem *fitHeight = [self action:@"toggleAutoWindowHeight" title:@"Fit Window to Message" key:@"h" mods:cmd | opt];
+    NSMenuItem *fitHeight = [self action:@"toggleAutoWindowHeight" title:@"Enabled" key:@"h" mods:cmd | opt];
+    NSMenuItem *moreFitMessages = [self action:@"increaseFitMessages" title:@"Show More Messages" key:@"]" mods:cmd | opt];
+    moreFitMessages.enabled = fit;
+    NSMenuItem *fewerFitMessages = [self action:@"decreaseFitMessages" title:@"Show Fewer Messages" key:@"[" mods:cmd | opt];
+    fewerFitMessages.enabled = fit && [p[@"fitMessageCount"] integerValue] > 1;
     fitHeight.state = fit ? NSControlStateValueOn : NSControlStateValueOff;
-    NSMenuItem *fitCollapsed = [self action:@"toggleFitCollapsed" title:@"Collapse Window" key:@"m" mods:cmd | opt];
+    NSMenuItem *fitCollapsed = [self action:@"toggleFitCollapsed" title:@"Collapse" key:@"m" mods:cmd | opt];
     fitCollapsed.state = [p[@"fitCollapsed"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     fitCollapsed.enabled = fit;
     NSMenuItem *selectedTargetLabel = [[NSMenuItem alloc] initWithTitle:@"For the selected target" action:nil keyEquivalent:@""];
@@ -229,6 +233,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         [self item:@"Zoom In" payload:@{ @"action": @"textSize", @"mode": @"increase" } key:@"=" mods:cmd],
         [self item:@"Zoom Out" payload:@{ @"action": @"textSize", @"mode": @"decrease" } key:@"-" mods:cmd],
         NSMenuItem.separatorItem,
+        alwaysOnTop,
         [self submenu:@"Window Presets" items:@[
             [self action:@"resetWindow" title:@"Default Window" key:@"0" mods:cmd | opt],
             [self action:@"compactWindow" title:@"Compact Window" key:@"9" mods:cmd | opt],
@@ -240,14 +245,6 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
             [self action:@"moveWindowTopRight" title:@"Move to Right" key:ArrowKey(NSRightArrowFunctionKey) mods:cmd | opt],
             [self action:@"moveWindowCenter" title:@"Move to Center" key:ArrowKey(NSDownArrowFunctionKey) mods:cmd | opt],
         ]],
-        [self submenu:@"Side Panels" items:@[
-            [self action:@"toggleHub" title:@"Toggle Hub" key:@"b" mods:cmd],
-            sideBarItem,
-            [self action:@"toggleHubOutward" title:@"Toggle Hub Outward" key:@"b" mods:cmd | opt],
-            sideBarOutward,
-            swapSideBarPosition,
-            swapGitRepoPosition,
-        ]],
         [self submenu:@"Timeline" items:@[
             [self action:@"messagePrevious" title:@"Previous Message" key:ArrowKey(NSUpArrowFunctionKey) mods:opt],
             [self action:@"messageNext" title:@"Next Message" key:ArrowKey(NSDownArrowFunctionKey) mods:opt],
@@ -258,7 +255,15 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
             [self action:@"targetMessagePrevious" title:@"Previous Message" key:ArrowKey(NSUpArrowFunctionKey) mods:opt | NSEventModifierFlagControl],
             [self action:@"targetMessageNext" title:@"Next Message" key:ArrowKey(NSDownArrowFunctionKey) mods:opt | NSEventModifierFlagControl],
         ]],
-        alwaysOnTop, fitHeight, fitCollapsed,
+        [self submenu:@"Side Panels" items:@[
+            [self action:@"toggleHub" title:@"Toggle Hub" key:@"b" mods:cmd],
+            sideBarItem,
+            [self action:@"toggleHubOutward" title:@"Toggle Hub Outward" key:@"b" mods:cmd | opt],
+            sideBarOutward,
+            swapSideBarPosition,
+            swapGitRepoPosition,
+        ]],
+        [self submenu:@"Fit Window" items:@[fitHeight, fewerFitMessages, moreFitMessages, fitCollapsed]],
         NSMenuItem.separatorItem,
         [self action:@"openHubInBrowser" title:@"Open in Browser" key:@"o" mods:cmd | opt | shift],
     ] at:p];

@@ -224,6 +224,10 @@
         void toggleDeskAutoWindowHeight();
         return;
       }
+      if (event.data && event.data.type === "fit-message-count-shortcut" && event.source === _deskTimelineFrame?.contentWindow) {
+        changeDeskFitMessageCount(event.data.delta);
+        return;
+      }
       if (event.data && event.data.type === "fit-collapse-shortcut") {
         toggleDeskFitCollapsed();
         return;

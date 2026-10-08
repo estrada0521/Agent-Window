@@ -70,7 +70,7 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 
 ## Fit Window to Message
 
-`⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘M` collapses the window to its minimum; a new message restores it.
+`⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘[` / `⌥⌘]` decrease / increase the number of messages shown. `⌥⌘M` collapses the window to its minimum; a new message restores it.
 
 <p align="center">
   <img src="media/agent-window-fit.gif" width="100%" alt="Fit Window to Message demo">
@@ -181,6 +181,7 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Move to screen edge | `⌥⌘↑` `←` `→` `↓` | `↓` centers |
 | Keep above other windows | `⌃⌘T` | |
 | Fit Window to Message | `⌥⌘H` | |
+| Show fewer / more messages in Fit | `⌥⌘[` / `⌥⌘]` | Fit only |
 | Collapse Window | `⌥⌘M` | Restores on a new message. Fit Window to Message only |
 
 </details>
