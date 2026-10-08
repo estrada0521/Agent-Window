@@ -386,3 +386,20 @@
         display: none;
       }
     }
+
+    html[data-empty-start="1"] .desk-workbench { display:block; }
+    html[data-empty-start="1"] .desk-workbench .desk-hub {
+      width:100%; height:100%; opacity:1; pointer-events:auto;
+      border-radius:var(--desk-inner-top-radius) var(--desk-inner-top-radius) var(--desk-inner-radius) var(--desk-inner-radius);
+    }
+    html[data-empty-start="1"] .desk-hub-timelines { display:flex; align-items:center; justify-content:center; }
+    html[data-empty-start="1"] .desk-timeline-list { flex:0 1 260px; }
+    html[data-empty-start="1"] .desk-new-timeline-section { padding-top:0; }
+    html[data-empty-start="1"] .desk-new-timeline-toggle { --kbd-slot:0px; }
+    html[data-empty-start="1"] .desk-new-timeline-toggle .desk-row-main { justify-content:center; }
+    html[data-empty-start="1"] .desk-new-timeline-toggle .desk-row-stack { flex:0 1 auto; mask-image:none; -webkit-mask-image:none; }
+    html[data-empty-start="1"] .desk-new-timeline-toggle .desk-row-kbd { display:none; }
+    html[data-empty-start="1"] .desk-workbench :is(.desk-main,.desk-hub-resizer,.desk-hub-tagline,.desk-hub-footer-credit,.desk-floating-controls) { display:none; }
+    html[data-empty-start="1"] .desk-top-right-controls { display:none!important; }
+    html[data-empty-start="1"] .desk-hub-shell { border-radius:inherit; }
+    html[data-empty-start="1"] .desk-hub-shell::after { display:none; }

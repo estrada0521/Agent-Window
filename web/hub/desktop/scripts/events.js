@@ -383,6 +383,7 @@
 
     _deskNewTimelineToggle && _deskNewTimelineToggle.addEventListener("click", (event) => {
       event.preventDefault();
+      event.stopPropagation();
       startDeskNewTimelineFlow();
     });
     _deskNewTimelineToggle && _deskNewTimelineToggle.addEventListener("keydown", (event) => {
@@ -394,6 +395,7 @@
       }
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
+      event.stopPropagation();
       startDeskNewTimelineFlow();
     });
     _deskTimelineMenuBtn && _deskTimelineMenuBtn.addEventListener("click", (event) => {

@@ -52,7 +52,7 @@
     const _deskTimelineStatsCache = new Map();
     function attachDeskTimelineStatsHover(container) {
       container.addEventListener("mouseover", async (event) => {
-        const row = event.target.closest(".desk-timeline-row");
+        const row = event.target.closest(".desk-action-timeline-row");
         if (!row || row.contains(event.relatedTarget)) return;
         const name = row.dataset.timelineName;
         const key = `${name}\n${row.dataset.revision}`;
@@ -547,6 +547,17 @@
             window._lastHubRenderSig = signature;
             renderDesktopTimelines(active, archived);
           }
+          if (!_deskTimelinesRenderedOnce && isNativeApp()) {
+            const empty = !active.length && !archived.length;
+            if (empty) {
+              document.documentElement.dataset.emptyStart = "1";
+              _deskWorkbench.append(document.getElementById("hubHud"));
+              setDeskHubOpen(true);
+            }
+            getNativeInvoke()("present_hub", {
+              empty, scale:currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT,
+            }).catch((err) => setError("Open failed", err));
+          }
           _deskTimelinesRenderedOnce = true;
         }
         if (!skipRestore) maybeRestoreDeskSelection();
@@ -558,5 +569,6 @@
           _deskTimelineList.innerHTML = `<div class="desk-empty-list">Failed to load timelines</div>`;
           if (newTimelineSection) _deskTimelineList.prepend(newTimelineSection);
         }
+        getNativeInvoke()?.("present_hub", { empty:false }).catch((err) => setError("Open failed", err));
       }
     }

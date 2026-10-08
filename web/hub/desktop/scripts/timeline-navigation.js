@@ -82,6 +82,13 @@
 
     function openTimelineInDesk(url, name) {
       if (!_deskTimelineFrame) return;
+      if (document.documentElement.dataset.emptyStart === "1") {
+        delete document.documentElement.dataset.emptyStart;
+        _deskTimelineShell.append(document.getElementById("hubHud"));
+        setDeskHubOpen(false);
+        getNativeInvoke()("compact_window_geometry", { scale:currentDeskTextSizePx() / DESK_TEXT_SIZE_DEFAULT })
+          .catch((err) => setError("Resize failed", err));
+      }
       _deskSelectedTimelineName = name || "";
       _deskUnreadTimelines.delete(_deskSelectedTimelineName);
       updateDeskWindowTitle(_deskSelectedTimelineName);

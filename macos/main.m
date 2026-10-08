@@ -503,6 +503,16 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     }
     if ([cmd isEqualToString:@"show_commit_context_menu"]) { [self showCommitContextMenu:p]; return nil; }
     if ([cmd isEqualToString:@"show_timeline_context_menu"]) { [self showTimelineContextMenu:p]; return nil; }
+    if ([cmd isEqualToString:@"present_hub"]) {
+        if ([a[@"empty"] boolValue]) {
+            NSString *error = [self placeCentered:360 height:120 scale:[a[@"scale"] doubleValue]];
+            if (error) return error;
+        }
+        [self.window makeKeyAndOrderFront:nil];
+        [self.window makeFirstResponder:self.webView];
+        [NSApp activate];
+        return nil;
+    }
     if ([cmd isEqualToString:@"reset_window_geometry"]) return [self placeCentered:kDefaultWindowSize height:kDefaultWindowSize scale:[a[@"scale"] doubleValue]];
     if ([cmd isEqualToString:@"compact_window_geometry"]) return [self placeCentered:kCompactWindowWidth height:kDefaultWindowSize scale:[a[@"scale"] doubleValue]];
     if ([cmd isEqualToString:@"mini_window_geometry"]) return [self placeCentered:kMiniWindowWidth height:kMiniWindowHeight scale:[a[@"scale"] doubleValue]];
@@ -759,7 +769,6 @@ static BOOL HubReady(NSInteger port) {
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%ld/", (long)port]];
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
-        [self.window makeKeyAndOrderFront:nil];
     });
 }
 
@@ -909,9 +918,7 @@ static BOOL HubReady(NSInteger port) {
 
     [self applyGlass];
     [self.window addObserver:self forKeyPath:@"effectiveAppearance" options:0 context:NULL];
-    [self.window makeKeyAndOrderFront:nil];
     [self.window makeFirstResponder:self.webView];
-    [NSApp activate];
 
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{ [self startHub]; });
 }
