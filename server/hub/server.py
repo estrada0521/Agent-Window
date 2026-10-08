@@ -34,10 +34,10 @@ from server.hub.new_timeline import (
     post_start_timeline_draft as _post_start_timeline_draft_action,
 )
 from server.hub.actions import (
-    get_delete_archived_timeline as _get_delete_archived_timeline_action,
-    get_archive_timeline as _get_archive_timeline_action,
-    get_open_timeline as _get_open_timeline_action,
-    get_revive_timeline as _get_revive_timeline_action,
+    post_delete_archived_timeline as _post_delete_archived_timeline_action,
+    post_archive_timeline as _post_archive_timeline_action,
+    post_open_timeline as _post_open_timeline_action,
+    post_revive_timeline as _post_revive_timeline_action,
     get_timeline_workspace as _get_timeline_workspace_action,
     get_timeline_stats as _get_timeline_stats_action,
     post_change_timeline_workspace as _post_change_timeline_workspace_action,
@@ -367,10 +367,6 @@ _GET_ROUTE_HANDLERS = {
     "/hub-launch-shell.html": "_get_hub_launch_shell",
     "/timelines": "_get_timelines",
     "/timeline-messages-events": "_get_timeline_messages_events",
-    "/open-timeline": _get_open_timeline_action,
-    "/revive-timeline": _get_revive_timeline_action,
-    "/archive-timeline": _get_archive_timeline_action,
-    "/delete-archived-timeline": _get_delete_archived_timeline_action,
     "/timeline-workspace": _get_timeline_workspace_action,
     "/timeline-stats": _get_timeline_stats_action,
     "/": "_get_home",
@@ -378,6 +374,10 @@ _GET_ROUTE_HANDLERS = {
 }
 
 _POST_ROUTE_HANDLERS = {
+    "/open-timeline": _post_open_timeline_action,
+    "/revive-timeline": _post_revive_timeline_action,
+    "/archive-timeline": _post_archive_timeline_action,
+    "/delete-archived-timeline": _post_delete_archived_timeline_action,
     "/restart-hub": _post_restart_hub_action,
     "/rename-timeline": _post_rename_timeline_action,
     "/change-timeline-workspace": _post_change_timeline_workspace_action,

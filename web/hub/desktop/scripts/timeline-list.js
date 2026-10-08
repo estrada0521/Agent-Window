@@ -111,7 +111,7 @@
       try {
         const response = await fetch(
           `${route}?timeline=${encodeURIComponent(timelineName)}&format=json&ts=${Date.now()}`,
-          { cache: "no-store" }
+          { method: "POST", cache: "no-store" }
         );
         const data = await response.json();
         if (!response.ok || !data.ok) {

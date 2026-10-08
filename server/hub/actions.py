@@ -81,7 +81,7 @@ def _back_to_hub(handler, fmt: str, timeline_name: str, action: str) -> None:
         handler._redirect("/")
 
 
-def get_open_timeline(handler, parsed, ctx) -> None:
+def post_open_timeline(handler, parsed, ctx) -> None:
     timeline_name, fmt = _timeline_query(parsed)
     if not timeline_name:
         _fail(handler, ctx, fmt, 404, "That timeline is not available in this repo.")
@@ -99,7 +99,7 @@ def get_open_timeline(handler, parsed, ctx) -> None:
     _open_timeline(handler, ctx, fmt, resolved["timeline_port"])
 
 
-def get_revive_timeline(handler, parsed, ctx) -> None:
+def post_revive_timeline(handler, parsed, ctx) -> None:
     timeline_name, fmt = _timeline_query(parsed)
     if not timeline_name:
         _fail(handler, ctx, fmt, 404, "That archived timeline is not available in this repo.")
@@ -125,7 +125,7 @@ def get_revive_timeline(handler, parsed, ctx) -> None:
     _open_timeline(handler, ctx, fmt, timeline_port)
 
 
-def get_archive_timeline(handler, parsed, ctx) -> None:
+def post_archive_timeline(handler, parsed, ctx) -> None:
     timeline_name, fmt = _timeline_query(parsed)
     if not timeline_name:
         _fail(handler, ctx, fmt, 404, "That active timeline is not available in this repo.")
@@ -142,7 +142,7 @@ def get_archive_timeline(handler, parsed, ctx) -> None:
     _back_to_hub(handler, fmt, timeline_name, "killed")
 
 
-def get_delete_archived_timeline(handler, parsed, ctx) -> None:
+def post_delete_archived_timeline(handler, parsed, ctx) -> None:
     timeline_name, fmt = _timeline_query(parsed)
     if not timeline_name:
         _fail(handler, ctx, fmt, 404, "That archived timeline is not available in this repo.")

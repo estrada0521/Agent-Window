@@ -815,13 +815,15 @@ __INCLUDE:../../smooth-corners.js__
             if (n) openTimelineFrame(`/revive-timeline?timeline=${encodeURIComponent(n)}`, n);
             return;
           }
-          if (action === "delete-archived") {
-            if (confirm("Delete archived logs for " + n + "? This cannot be undone.")) {
-              window.location.href = `/delete-archived-timeline?timeline=${encodeURIComponent(n)}`;
-            }
-            return;
-          }
-          if (confirm("Archive " + n + "?")) window.location.href = `/archive-timeline?timeline=${encodeURIComponent(n)}`;
+          const isDelete = action === "delete-archived";
+          if (!confirm(isDelete
+            ? "Delete archived logs for " + n + "? This cannot be undone."
+            : "Archive " + n + "?")) return;
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = `${isDelete ? "/delete-archived-timeline" : "/archive-timeline"}?timeline=${encodeURIComponent(n)}`;
+          document.body.appendChild(form);
+          form.submit();
         };
         const ensureActs = () => {
           if (!acts.length || sr.querySelector(".swipe-act-tray")) return;

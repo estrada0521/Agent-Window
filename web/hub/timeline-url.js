@@ -63,7 +63,7 @@
         const existing = !force && key ? inflight.get(key) : null;
         if (existing) return existing;
         const url = openHref + (openHref.includes("?") ? "&" : "?") + "format=json";
-        const request = fetch(url, { cache: "no-store" })
+        const request = fetch(url, { method: "POST", cache: "no-store" })
           .then(async (response) => {
             const data = await response.json();
             const timelineUrl = String((data && data.timeline_url) || "").trim();

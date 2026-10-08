@@ -14,7 +14,7 @@ from server.timeline.control import (
 )
 from fs.log.paths import (
     port_is_bindable,
-    log_dir,
+    agent_window_log_root,
     workspace_timeline_port,
     workspace_log_link_path,
 )
@@ -155,12 +155,13 @@ def delete_archived_timeline(hub, timeline_name: str) -> tuple[bool, str]:
     live = live_timelines_query(hub)
     if live.state == "unhealthy":
         raise TmuxUnhealthy(live.detail)
-    if timeline_name in live.workspaces:
+    directory = next((
+        entry for entry in agent_window_log_root().iterdir()
+        if entry.is_dir() and entry.name == timeline_name and entry.name not in live.workspaces
+    ), None)
+    if directory is None:
         return False, "That archived timeline is not available in this repo."
-    try:
-        workspace = read_log_meta(timeline_name)["workspace"]
-    except FileNotFoundError:
-        return False, "That archived timeline is not available in this repo."
+    workspace = read_log_meta(directory.name)["workspace"]
     stop_ok, stop_detail = stop_timeline_server(workspace)
     if not stop_ok:
         return False, stop_detail
@@ -171,7 +172,7 @@ def delete_archived_timeline(hub, timeline_name: str) -> tuple[bool, str]:
         except OSError as exc:
             return False, str(exc)
     try:
-        shutil.rmtree(log_dir(timeline_name))
+        shutil.rmtree(directory)
     except OSError as exc:
         return False, str(exc)
     return True, ""
