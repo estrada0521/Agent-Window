@@ -10,6 +10,17 @@
     const searchStatus = searchHud.querySelector("[role=status]");
     const searchOlder = searchHud.querySelector(".search-older");
     const searchNewer = searchHud.querySelector(".search-newer");
+    const searchMobileNavigation = document.documentElement.dataset.mobile === "1" ? document.createElement("div") : null;
+    if (searchMobileNavigation) {
+      searchMobileNavigation.className = "mobile-bottom-sheet search-mobile-navigation";
+      searchMobileNavigation.hidden = true;
+      searchOlder.classList.add("mobile-bottom-sheet-button");
+      searchNewer.classList.add("mobile-bottom-sheet-button");
+      searchOlder.querySelector("path").setAttribute("d", "M12 19V5m-6 6 6-6 6 6");
+      searchNewer.querySelector("path").setAttribute("d", "M12 5v14m-6-6 6 6 6-6");
+      searchMobileNavigation.append(searchHud.querySelector(".search-arrows"));
+      document.body.append(searchMobileNavigation);
+    }
     const syncSearchNavigation = () => {
       searchStatus.textContent = `${searchIndex < 0 ? 0 : searchCursors.length - searchIndex}/${searchCursors.length}`;
       searchOlder.disabled = searchIndex < 0 || searchIndex >= searchCursors.length - 1;
@@ -52,16 +63,20 @@
       }
     };
     const endSearch = () => {
+      searchInput.blur();
       searchOpen = false;
+      if (searchMobileNavigation) searchMobileNavigation.hidden = true;
       clearSearchHighlight();
       searchRequest?.abort();
       setHudOverlay(null);
     };
     const beginSearch = () => {
       if (exportRange) endExportRange();
+      if (isMobileComposer) closeComposerOverlay();
       searchOpen = true;
+      if (searchMobileNavigation) searchMobileNavigation.hidden = false;
       setHudOverlay(searchHud);
-      searchInput.focus({ preventScroll: true });
+      if (!isMobileComposer) searchInput.focus({ preventScroll: true });
     };
     const jumpToSearchResult = async (index, request) => {
       const [data, preceding] = await Promise.all([
@@ -122,6 +137,7 @@
     searchHud.querySelector(".export-hud-cancel").addEventListener("click", endSearch);
     searchHud.addEventListener("submit", (event) => {
       event.preventDefault();
+      if (isMobileComposer) searchInput.blur();
       if (searchInput.value.trim() !== searchQuery || searchIndex < 0) void runSearch();
       else if (!searchOlder.disabled) void stepSearch(1);
     });

@@ -230,6 +230,12 @@ __INCLUDE:transcript-refresh.js__
         }
         const parsed = parseSlashCommandInput(commandInput, list);
         if (parsed) {
+          if (parsed.id === "search") {
+            clearComposerDraft();
+            beginSearch();
+            sendLocked = false;
+            return false;
+          }
           if (parsed.id === "jump") {
             try {
               await jumpToDate(parsed.arg);

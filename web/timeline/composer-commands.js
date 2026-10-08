@@ -33,6 +33,13 @@
     const selectCmd = (idx) => {
       const item = _lastCmdItemsData[idx];
       if (!item) return;
+      if (item.id === "search") {
+        beginSearch();
+        messageInput.value = "";
+        clearStoredComposerDraft();
+        updateSendBtnVisibility();
+        return;
+      }
       if (item.insert) {
         const start = Number(item.replaceStart);
         const end = Number(item.replaceEnd);
@@ -157,6 +164,10 @@
       const item = e.target.closest(".file-item");
       if (!item) return;
       const idx = parseInt(item.dataset.idx, 10);
+      if (_lastCmdItemsData[idx]?.id === "search") {
+        selectCmd(idx);
+        return;
+      }
       _cmdItems().forEach((node) => node.classList.remove("active"));
       item.classList.add("active");
       _cmdActiveIdx = idx;
