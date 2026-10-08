@@ -164,6 +164,7 @@
             });
           }
           postRenderScope(root);
+          if (exportRange) beginExportRange(exportRange.format);
           pendingStreamRowCleanups = pendingFullRowCleanup;
         }
 
