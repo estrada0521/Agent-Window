@@ -314,6 +314,7 @@ __INCLUDE:../search.js__
 __INCLUDE:../composer.js__
 __INCLUDE:../file-links.js__
 __INCLUDE:../composer-commands.js__
+__INCLUDE:message-copy-menu.js__
 __INCLUDE:../thinking.js__
 __INCLUDE:../agent-status.js__
 __INCLUDE:../pointer-capability.js__

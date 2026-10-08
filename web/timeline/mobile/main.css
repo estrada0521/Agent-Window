@@ -24,6 +24,9 @@ __INCLUDE:../search.css__
 __INCLUDE:styles/transcript.css__
 __INCLUDE:styles/thinking.css__
     .copy-btn {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
       display: inline-flex;
       align-items: center;
       justify-content: center;

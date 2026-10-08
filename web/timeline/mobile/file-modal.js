@@ -116,7 +116,7 @@
         event.stopPropagation();
         const items = repoPreviewMenuItems();
         if (!items.length) return;
-        menuSelect.innerHTML = '<option value="">Menu</option>' + items.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+        menuSelect.innerHTML = '<option value="" disabled selected>Menu</option>' + items.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
         const rect = menuBtn.getBoundingClientRect();
         const headerRect = rightMenuBtn.getBoundingClientRect();
         menuSelect.style.left = `${Math.round(rect.left)}px`;

@@ -91,16 +91,7 @@
       const data = payload || {};
       if (["copyMessage", "copyLogEntry", "copyNativeLogEntry"].includes(data.action)) {
         try {
-          let text;
-          if (data.action !== "copyNativeLogEntry") {
-            const entry = displayEntriesForData(latestPayloadData).find((entry) => entry.context_hash === data.contextHash);
-            if (!entry) throw new Error("Message unavailable");
-            text = data.action === "copyLogEntry" ? JSON.stringify(entry) : stripSenderPrefix(entry.message);
-          } else {
-            const response = await fetch(`/native-log-entry?message=${encodeURIComponent(data.contextHash)}`);
-            if (!response.ok) throw new Error("Native log unavailable");
-            text = await response.text();
-          }
+          const text = await messageCopyText(data.contextHash, data.action);
           await doCopyText(text);
           setStatus(data.action === "copyMessage" ? "Copied" : data.action === "copyLogEntry" ? "Copied log entry" : "Copied native log entry");
         } catch (error) {

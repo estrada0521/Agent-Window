@@ -1,4 +1,14 @@
     let _cmdActiveIdx = -1;
+    const messageCopyText = async (contextHash, action) => {
+      if (action === "copyNativeLogEntry") {
+        const response = await fetch(`/native-log-entry?message=${encodeURIComponent(contextHash)}`);
+        if (!response.ok) throw new Error("Native log unavailable");
+        return response.text();
+      }
+      const entry = displayEntriesForData(latestPayloadData).find((entry) => entry.context_hash === contextHash);
+      if (!entry) throw new Error("Message unavailable");
+      return action === "copyLogEntry" ? JSON.stringify(entry) : stripSenderPrefix(entry.message);
+    };
     let _lastCmdItemsData = [];
     let cancelCmdAutocompleteLoading = () => {};
     const _cmdItems = () => cmdDrop.querySelectorAll(".file-item");
