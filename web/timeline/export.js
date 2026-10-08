@@ -103,9 +103,15 @@
       parts.push(text.slice(start).trim());
       return parts;
     };
-    const exportThemeCss = (rules) => [...rules].map((rule) => {
-      if (rule instanceof CSSFontFaceRule) return "";
-      if (rule instanceof CSSMediaRule) return `@media ${rule.conditionText}{${exportThemeCss(rule.cssRules)}}`;
+    const exportThemeCss = async (rules, cache) => (await Promise.all([...rules].map(async (rule) => {
+      if (rule instanceof CSSFontFaceRule) {
+        const src = rule.style.getPropertyValue("src");
+        const urls = [...new Set([...src.matchAll(/url\(["']?([^"')]+)["']?\)/g)].map((match) => match[1]))];
+        const embedded = await Promise.all(urls.map(async (url) =>
+          `url("${isSameOriginUrl(url) ? await exportAssetDataUri(url, cache) : url}")`));
+        return rule.cssText.replace(src, embedded.join(", "));
+      }
+      if (rule instanceof CSSMediaRule) return `@media ${rule.conditionText}{${await exportThemeCss(rule.cssRules, cache)}}`;
       if (!(rule instanceof CSSStyleRule)) return rule.cssText;
       const byTheme = { "": [], light: [], dark: [] };
       for (const selector of splitSelectorList(rule.selectorText)) {
@@ -118,7 +124,7 @@
         ...["light", "dark"].filter((theme) => byTheme[theme].length)
           .map((theme) => `@media (prefers-color-scheme: ${theme}){${byTheme[theme].join(",")}${body}}`),
       ].join("");
-    }).join("\n");
+    }))).join("\n");
     const exportRootAttrs = () => ["desktopTimeline", "mobile", "mobileTimeline"]
       .filter((key) => document.documentElement.dataset[key])
       .map((key) => ` data-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}="${document.documentElement.dataset[key]}"`)
@@ -159,7 +165,7 @@
         }
         node.setAttribute("style", style);
       }));
-      const css = [...document.querySelectorAll("style")].map((node) => exportThemeCss(node.sheet.cssRules)).join("\n");
+      const css = (await Promise.all([...document.querySelectorAll("style")].map((node) => exportThemeCss(node.sheet.cssRules, cache)))).join("\n");
       const katex = host.querySelector(".katex") ? `<link rel="stylesheet" href="${KATEX_CSS.url}" integrity="${KATEX_CSS.integrity}" crossorigin="anonymous">` : "";
       const title = escapeHtml(document.title);
       return `<!DOCTYPE html>
