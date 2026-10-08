@@ -86,9 +86,10 @@
         }
         invoke("show_file_context_menu", {
           payload: {
-            x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
-            y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
+            x: Math.round(Number(childPayload.x || 0) + (childPayload.sidebarWindow ? 0 : Number(frameRect.left || 0))),
+            y: Math.round(Number(childPayload.y || 0) + (childPayload.sidebarWindow ? 0 : Number(frameRect.top || 0))),
             openFile: !!childPayload.openFile,
+            sidebarWindow: !!childPayload.sidebarWindow,
           },
         }).catch((err) => {
           event.source?.postMessage({ type: "file-context-menu-error", message: String(err || "File menu failed") }, "*");
@@ -130,8 +131,9 @@
         invoke("show_commit_context_menu", {
           payload: {
             contextHash: childPayload.contextHash,
-            x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
-            y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
+            sidebarWindow: !!childPayload.sidebarWindow,
+            x: Math.round(Number(childPayload.x || 0) + (childPayload.sidebarWindow ? 0 : Number(frameRect.left || 0))),
+            y: Math.round(Number(childPayload.y || 0) + (childPayload.sidebarWindow ? 0 : Number(frameRect.top || 0))),
           },
         }).catch((err) => {
           event.source?.postMessage({ type: "file-context-menu-error", message: String(err || "Failed to open commit menu.") }, "*");
@@ -408,11 +410,7 @@
       event.preventDefault();
       event.stopPropagation();
       if (event.altKey && !_deskAutoWindowHeight && getNativeInvoke()) { toggleDeskSideBarOutward(); return; }
-      if (_deskSideBarActiveMode) {
-        sendDeskSideBarCommand("close");
-        return;
-      }
-      sendDeskSideBarCommand("repo");
+      sendDeskSideBarCommand("");
     });
     {
       const hint = document.getElementById("deskPaneDirectionHint");
@@ -420,7 +418,7 @@
       let altHeld = false;
       const hideHint = () => { if (hint) hint.hidden = true; };
       const updateHint = () => {
-        if (!hint || !hovered || !_deskTimelineFrameLoadedUrl || _deskSideBarActiveMode) { hideHint(); return; }
+        if (!hint || !hovered || !_deskTimelineFrameLoadedUrl || _deskSideBarActiveMode || _deskAutoWindowHeight) { hideHint(); return; }
         const side = document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right";
         const outward = altHeld && !_deskAutoWindowHeight && !!getNativeInvoke();
         hint.dataset.direction = side === "left" ? outward ? "left" : "right" : outward ? "right" : "left";

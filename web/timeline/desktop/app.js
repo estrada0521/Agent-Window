@@ -136,7 +136,7 @@ __INCLUDE:../conversation-state.js__
         ? scroller.querySelectorAll(":scope > article.message-row, :scope > .sysmsg-row")
         : null;
       const composerOpen = isComposerOverlayOpen();
-      const sidebarOpen = document.body.classList.contains("side-bar-open");
+      const sidebarOpen = document.body.classList.contains("side-bar-open") && !sideBarWindow;
       if ((!rows || !rows.length) && !composerOpen && !sidebarOpen) return;
       const fitTarget = _fitTargetRow?.isConnected && _fitTargetRow.parentElement === scroller
         ? _fitTargetRow
@@ -473,8 +473,83 @@ __INCLUDE:../pointer-capability.js__
     const currentSideBarWidthPx = () => scaleSideBarWidth(
       clampSideBarWidthAtDefaultTextSize(sideBarWidthAtDefaultTextSize),
     );
+    let sideBarWindow = null;
+    const sideBarHome = document.createTextNode("");
+    sideBar.before(sideBarHome);
+    let sideBarWindowObserver = null;
+    const restoreSideBarWindow = () => {
+      if (!sideBarWindow) return;
+      const popup = sideBarWindow;
+      sideBarWindow = null;
+      sideBarWindowObserver.disconnect();
+      sideBarHome.after(sideBar);
+      popup.close();
+    };
+    const syncSideBarWindow = () => {
+      const detached = sideBarOpen && document.documentElement.dataset.autoWindowHeight === "1"
+        && document.documentElement.dataset.nativeApp === "1";
+      if (!detached) {
+        restoreSideBarWindow();
+        applySideBarWidth();
+        return;
+      }
+      if (sideBarWindow) return;
+      const popup = window.open("about:blank", "", `popup,width=${currentSideBarWidthPx()},height=${560 * currentTextSizePx() / TEXT_SIZE_DEFAULT}`);
+      if (!popup) throw new Error("Sidebar window unavailable");
+      sideBarWindow = popup;
+      const doc = popup.document;
+      const base = doc.createElement("base");
+      base.href = document.baseURI;
+      doc.head.append(base);
+      document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => doc.head.append(node.cloneNode(true)));
+      const syncWindowAttributes = () => {
+        for (const attr of [...doc.documentElement.attributes]) {
+          if (!document.documentElement.hasAttribute(attr.name)) doc.documentElement.removeAttribute(attr.name);
+        }
+        for (const attr of document.documentElement.attributes) doc.documentElement.setAttribute(attr.name, attr.value);
+        doc.documentElement.dataset.sideBarPosition = "right";
+        doc.documentElement.dataset.autoWindowHeight = "0";
+      };
+      syncWindowAttributes();
+      sideBarWindowObserver = new MutationObserver(syncWindowAttributes);
+      sideBarWindowObserver.observe(document.documentElement, { attributes: true });
+      const style = doc.createElement("style");
+      style.textContent = `
+        html,body { background:transparent!important; }
+        html[data-theme="light"] .side-bar { background: __DESKTOP_TIMELINE_LIGHT_BG_FILL__; }
+        html[data-theme="dark"] .side-bar { background: __DESKTOP_TIMELINE_DARK_BG_FILL__; }
+        .side-bar {
+          inset:calc(var(--text-size,13px) * 4 / 13)!important;
+          width:auto!important;
+          border-radius:calc(var(--text-size,13px) * 2 - 3px);
+          overflow:hidden;
+          backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+        }
+        .side-bar .side-bar-card { padding-inline:var(--side-bar-edge-inset); }
+        .side-bar-resizer,.side-bar-swap-btn { display:none!important; }
+      `;
+      doc.head.append(style);
+      doc.body.className = document.body.className;
+      doc.body.append(sideBar);
+      popup.addEventListener("pagehide", () => {
+        if (sideBarWindow !== popup) return;
+        restoreSideBarWindow();
+        closeSideBar();
+        applySideBarWidth();
+      });
+      doc.addEventListener("keydown", (event) => {
+        if (event.target.closest?.("input,textarea,[contenteditable]")) return;
+        const forwarded = new KeyboardEvent("keydown", {
+          key: event.key, code: event.code, metaKey: event.metaKey, ctrlKey: event.ctrlKey,
+          altKey: event.altKey, shiftKey: event.shiftKey, bubbles: true, cancelable: true,
+        });
+        if (!document.dispatchEvent(forwarded)) event.preventDefault();
+      });
+      applySideBarWidth();
+    };
+    window.addEventListener("pagehide", restoreSideBarWindow);
     const applySideBarWidth = () => {
-      const panelWidth = sideBarOpen ? currentSideBarWidthPx() : 0;
+      const panelWidth = sideBarOpen && !sideBarWindow ? currentSideBarWidthPx() : 0;
       document.documentElement.style.setProperty("--side-bar-width", `${panelWidth}px`);
       document.documentElement.style.setProperty("--side-bar-reserved-width", `${panelWidth > 0 ? panelWidth + SIDE_BAR_GAP : 0}px`);
     };
@@ -533,6 +608,7 @@ __INCLUDE:git-panel/events.js__
       sideBar.hidden = false;
       sideBar.classList.add("open");
       document.body.classList.add("side-bar-open");
+      syncSideBarWindow();
       reportSideBarFitHeight();
       syncSplitGitHeightForMode();
       const loadP = loadSideBarView({ reset, animateRepo: false });
@@ -544,6 +620,8 @@ __INCLUDE:git-panel/events.js__
       const wasAtBottom = _atBottomAtAnchorWidth || messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight <= 2;
       stopSideBarResize();
       sideBarOpen = false;
+      restoreSideBarWindow();
+      applySideBarWidth();
       if (gitPanel.hasShell()) closeGitDetail();
       sideBar.classList.remove("open");
       sideBar.hidden = true;
@@ -664,6 +742,7 @@ __INCLUDE:git-panel/events.js__
           x: Math.round(Number(event.clientX) || 0),
           y: Math.round(Number(event.clientY) || 0),
           openFile,
+          sidebarWindow: event.target.ownerDocument !== document,
         },
       }, "*");
     };
@@ -674,7 +753,7 @@ __INCLUDE:git-panel/events.js__
       commitContextHash = hash;
       window.parent?.postMessage({
         type: "show-commit-context-menu",
-        payload: { x: Math.round(Number(event.clientX) || 0), y: Math.round(Number(event.clientY) || 0), contextHash },
+        payload: { x: Math.round(Number(event.clientX) || 0), y: Math.round(Number(event.clientY) || 0), contextHash, sidebarWindow: event.target.ownerDocument !== document },
       }, "*");
     };
     const loadWorkspaceRoot = async () => {
@@ -1053,6 +1132,7 @@ __INCLUDE:git-panel/events.js__
         const enteringFitMode = !!event.data.on && document.documentElement.dataset.autoWindowHeight !== "1";
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
         if (enteringFitMode && gitSummaryPinned) toggleGitSummaryPinned();
+        syncSideBarWindow();
         if (sideBarOpen) syncSplitGitHeightForMode();
         if (isComposerOverlayOpen()) autoResizeTextarea();
         syncMainAfterHeight();
@@ -1126,7 +1206,7 @@ __INCLUDE:git-panel/events.js__
       } else {
         toggleSideBar();
       }
-      window.focus();
+      if (!sideBarWindow) window.focus();
     });
     (() => {
       window.addEventListener("keydown", (event) => {

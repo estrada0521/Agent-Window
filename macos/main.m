@@ -12,6 +12,8 @@ static const CGFloat kMiniWindowWidth = 384;
 static const CGFloat kMiniWindowHeight = 600;
 static const CGFloat kMenuIconSize = 18;
 
+static const CGFloat kDefaultGlassCornerRadius = 26;
+
 @interface AWPreviewItem : NSObject <QLPreviewItem>
 @property (strong) NSURL *previewItemURL;
 @end
@@ -39,6 +41,9 @@ static const CGFloat kMenuIconSize = 18;
 @property (strong) WKWebView *webView;
 @property (strong) NSGlassEffectView *glass;
 @property CGFloat glassCornerRadius;
+@property (strong) AWWindow *sidebarWindow;
+@property (strong) WKWebView *sidebarWebView;
+@property (strong) NSGlassEffectView *sidebarGlass;
 @end
 
 static NSString *AgentBaseName(NSString *name) {
@@ -108,7 +113,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSMenu *menu = [[NSMenu alloc] initWithTitle:@""];
     menu.autoenablesItems = NO;
     for (NSMenuItem *item in items) [menu addItem:item];
-    NSView *view = self.window.contentView;
+    NSView *view = [payload[@"sidebarWindow"] boolValue] ? self.sidebarWindow.contentView : self.window.contentView;
     CGFloat x = [payload[@"x"] doubleValue];
     CGFloat y = [payload[@"y"] doubleValue];
     [menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(x, view.frame.size.height - y) inView:view];
@@ -386,9 +391,18 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     frame.origin.x -= (width - frame.size.width) / 2;
     frame.origin.y -= height - frame.size.height;
     frame.size = NSMakeSize(width, height);
+    NSRect sidebarFrame = self.sidebarWindow.frame;
+    NSRect parentFrame = self.window.frame;
+    sidebarFrame.origin.x = frame.origin.x + (sidebarFrame.origin.x - parentFrame.origin.x) * scale;
+    sidebarFrame.origin.y = NSMaxY(frame) - (NSMaxY(parentFrame) - NSMaxY(sidebarFrame)) * scale - sidebarFrame.size.height * scale;
+    sidebarFrame.size.width *= scale;
+    sidebarFrame.size.height *= scale;
+    NSSize sidebarMinimum = self.sidebarWindow.contentMinSize;
+    self.sidebarWindow.contentMinSize = NSMakeSize(sidebarMinimum.width * scale, sidebarMinimum.height * scale);
     [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
         context.duration = [self.window animationResizeTime:frame];
         [self.window.animator setFrame:frame display:YES];
+        [self.sidebarWindow.animator setFrame:sidebarFrame display:YES];
     }];
     return nil;
 }
@@ -451,7 +465,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         [items addObject:item];
     }
     if (items.count == 0) return @"File not found";
-    self.window.previewItems = items;
+    AWWindow *window = NSApp.mainWindow == self.sidebarWindow ? self.sidebarWindow : self.window;
+    window.previewItems = items;
     QLPreviewPanel *panel = QLPreviewPanel.sharedPreviewPanel;
     [panel updateController];
     [panel reloadData];
@@ -502,7 +517,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     if ([cmd isEqualToString:@"move_window_top_left"]) { [self moveTo:@"left"]; return nil; }
     if ([cmd isEqualToString:@"move_window_top_right"]) { [self moveTo:@"right"]; return nil; }
     if ([cmd isEqualToString:@"move_window_center"]) { [self moveTo:@"center"]; return nil; }
-    if ([cmd isEqualToString:@"set_always_on_top"]) { self.window.level = [a[@"on"] boolValue] ? NSFloatingWindowLevel : NSNormalWindowLevel; return nil; }
+    if ([cmd isEqualToString:@"set_always_on_top"]) { self.window.level = [a[@"on"] boolValue] ? NSFloatingWindowLevel : NSNormalWindowLevel; self.sidebarWindow.level = self.window.level; return nil; }
     if ([cmd isEqualToString:@"set_fit_height_min"]) {
         self.window.contentMinSize = NSMakeSize(kMinWindowWidth, [a[@"enabled"] boolValue] ? kFitWindowMinHeight : kMinWindowHeight);
         return nil;
@@ -572,10 +587,62 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     [self.window makeKeyAndOrderFront:nil];
 }
 
+- (WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration
+    forNavigationAction:(WKNavigationAction *)action windowFeatures:(WKWindowFeatures *)features {
+    NSString *host = action.sourceFrame.securityOrigin.host;
+    if (![action.request.URL.absoluteString isEqualToString:@"about:blank"] ||
+        !([host isEqualToString:@"127.0.0.1"] || [host isEqualToString:@"localhost"])) return nil;
+    CGFloat width = features.width.doubleValue;
+    CGFloat height = features.height.doubleValue;
+    NSRect parent = self.window.frame;
+    NSRect screen = self.window.screen.visibleFrame;
+    CGFloat x = MIN(NSMaxX(parent) + 8, NSMaxX(screen) - width);
+    CGFloat y = MAX(NSMinY(screen), NSMaxY(parent) - height);
+    self.sidebarWindow = [[AWWindow alloc] initWithContentRect:NSMakeRect(x, y, width, height)
+        styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView
+        backing:NSBackingStoreBuffered defer:NO];
+    self.sidebarWindow.level = self.window.level;
+    self.sidebarWindow.title = @"Sidebar";
+    self.sidebarWindow.titleVisibility = NSWindowTitleHidden;
+    self.sidebarWindow.titlebarAppearsTransparent = YES;
+    self.sidebarWindow.opaque = NO;
+    self.sidebarWindow.backgroundColor = NSColor.clearColor;
+    self.sidebarWindow.releasedWhenClosed = NO;
+    self.sidebarWindow.delegate = self;
+    CGFloat textScale = self.glassCornerRadius / kDefaultGlassCornerRadius;
+    self.sidebarWindow.contentMinSize = NSMakeSize(180 * textScale, 180 * textScale);
+    for (NSNumber *kind in @[ @(NSWindowCloseButton), @(NSWindowMiniaturizeButton), @(NSWindowZoomButton) ])
+        [self.sidebarWindow standardWindowButton:kind.integerValue].hidden = YES;
+    NSView *content = self.sidebarWindow.contentView;
+    self.sidebarGlass = [[NSGlassEffectView alloc] initWithFrame:content.bounds];
+    self.sidebarGlass.style = NSGlassEffectViewStyleClear;
+    self.sidebarGlass.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    [content addSubview:self.sidebarGlass];
+    self.sidebarWebView = [[WKWebView alloc] initWithFrame:content.bounds configuration:configuration];
+    self.sidebarWebView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    self.sidebarWebView.UIDelegate = self;
+    [self.sidebarWebView setValue:@NO forKey:@"drawsBackground"];
+    self.sidebarWebView.underPageBackgroundColor = NSColor.clearColor;
+    [content addSubview:self.sidebarWebView];
+    [self applyGlass];
+    [self.sidebarWindow orderWindow:NSWindowAbove relativeTo:self.window.windowNumber];
+    return self.sidebarWebView;
+}
+
+- (void)webViewDidClose:(WKWebView *)webView {
+    if (webView != self.sidebarWebView) return;
+    [self.sidebarWindow close];
+    self.sidebarWebView = nil;
+    self.sidebarWindow = nil;
+    self.sidebarGlass = nil;
+}
+
 #pragma mark Glass
 
 - (void)applyGlass {
     BOOL light = [self.window.effectiveAppearance bestMatchFromAppearancesWithNames:@[ NSAppearanceNameAqua, NSAppearanceNameDarkAqua ]] == NSAppearanceNameAqua;
+    self.sidebarGlass.tintColor = light ? nil : [NSColor colorWithRed:0 green:0 blue:0 alpha:97.0 / 255.0];
+    self.sidebarGlass.cornerRadius = self.glassCornerRadius;
     self.glass.cornerRadius = self.glassCornerRadius;
     self.glass.tintColor = light ? nil : [NSColor colorWithRed:0 green:0 blue:0 alpha:97.0 / 255.0];
 }
@@ -702,6 +769,10 @@ static BOOL HubReady(NSInteger port) {
 }
 
 - (BOOL)windowShouldClose:(NSWindow *)sender {
+    if (sender == self.sidebarWindow) {
+        [self.sidebarWebView evaluateJavaScript:@"window.dispatchEvent(new Event('pagehide'))" completionHandler:nil];
+        return NO;
+    }
     [self hideApp];
     return NO;
 }
@@ -812,10 +883,11 @@ static BOOL HubReady(NSInteger port) {
     self.glass = [[NSGlassEffectView alloc] initWithFrame:content.bounds];
     self.glass.style = NSGlassEffectViewStyleClear;
     self.glass.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-    self.glassCornerRadius = 26;
+    self.glassCornerRadius = kDefaultGlassCornerRadius;
     [content addSubview:self.glass];
 
     WKWebViewConfiguration *config = [WKWebViewConfiguration new];
+    config.preferences.javaScriptCanOpenWindowsAutomatically = YES;
     [config.preferences setValue:@YES forKey:@"developerExtrasEnabled"];
     NSString *inject = [NSString stringWithContentsOfURL:[NSBundle.mainBundle URLForResource:@"inject" withExtension:@"js"]
                                                 encoding:NSUTF8StringEncoding error:nil];
