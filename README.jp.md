@@ -143,9 +143,9 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | 前 / 次のmessage | `⌥↑` / `⌥↓` | |
 | 選択中の宛先の前 / 次のmessage | `⌃⌥↑` / `⌃⌥↓` | 無選択ならuser |
 | Copy | 右クリック / hover | |
-| Copy Log Entry | | AW logのJSON row |
-| Copy Native Log Entry | | native logのJSON row |
-| URLをcopy | | |
+| Copy Log Entry | 右クリック | AW logのJSON row / mobileではcopy長押しから |
+| Copy Native Log Entry | 右クリック | native logのJSON row |
+| URLをcopy | 外部linkを右click | |
 
 </details>
 

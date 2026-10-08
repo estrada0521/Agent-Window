@@ -143,9 +143,9 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Previous / next message | `⌥↑` / `⌥↓` | |
 | Previous / next message from the selected targets | `⌃⌥↑` / `⌃⌥↓` | `user` when none is selected |
 | Copy | right-click / hover | |
-| Copy Log Entry | | AW log JSON row |
-| Copy Native Log Entry | | Native log JSON row |
-| Copy URL | | |
+| Copy Log Entry | right-click | AW log JSON row / on mobile, long-press Copy |
+| Copy Native Log Entry | right-click | Native log JSON row |
+| Copy URL | right-click an external link | |
 
 </details>
 
