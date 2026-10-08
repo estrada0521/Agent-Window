@@ -625,6 +625,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     self.sidebarWebView.underPageBackgroundColor = NSColor.clearColor;
     [content addSubview:self.sidebarWebView];
     [self applyGlass];
+    self.sidebarWindow.initialFirstResponder = self.sidebarWebView;
+    [self.sidebarWindow makeFirstResponder:self.sidebarWebView];
     [self.sidebarWindow orderWindow:NSWindowAbove relativeTo:self.window.windowNumber];
     return self.sidebarWebView;
 }

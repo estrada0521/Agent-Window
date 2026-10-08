@@ -531,6 +531,8 @@ __INCLUDE:../pointer-capability.js__
       doc.head.append(style);
       doc.body.className = document.body.className;
       doc.body.append(sideBar);
+      doc.body.tabIndex = -1;
+      doc.body.focus({ preventScroll:true });
       popup.addEventListener("pagehide", () => {
         if (sideBarWindow !== popup) return;
         restoreSideBarWindow();
