@@ -356,7 +356,7 @@
           frame.contentDocument,
           () => sheetPreviewOpen(),
           () => popSheetPreview(),
-          { ignore: ".table-scroll, .katex-display, pre, .code-scroll, .preview-text-scroll" },
+          { ignore: ".image-surface, .table-scroll, .katex-display, pre, .code-scroll, .preview-text-scroll" },
         );
         repoPreviewBaseTheme = currentFileModalBaseTheme();
         postPreviewThemeToFrame(frame, normalizedExt, repoPreviewBaseTheme);

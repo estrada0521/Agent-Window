@@ -238,15 +238,17 @@ def render_file_view(
     )
 
     if ext in files.IMAGE_EXTS:
+        image_viewer_js = (_REPO_ROOT / "web/timeline/mobile/image-viewer.js").read_text(encoding="utf-8")
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
             f'<title>{html_escape(filename)}</title>'
             f'<style>{base_css}'
-            f'.wrap{{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:16px;background:{embed_bg};padding-top:calc(16px + var(--tpad,0px));padding-bottom:calc(16px + var(--bpad,0px))}}'
+            f'.wrap{{flex:1;min-height:0;overflow:hidden;display:flex;padding:16px;background:{embed_bg};padding-top:calc(16px + var(--tpad,0px));padding-bottom:calc(16px + var(--bpad,0px))}}'
             f'@media (max-width: 480px) {{.wrap{{padding-left:0;padding-right:0}}}}'
-            f'img{{max-width:100%;max-height:100%;object-fit:contain}}</style></head>'
-            f'<body><div class="wrap"><img src="{raw_url}" alt="{html_escape(filename)}"></div></body></html>'
+            '.image-surface{flex:1;min-width:0;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none}'
+            'img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}</style></head>'
+            f'<body><div class="wrap"><div class="image-surface"><img draggable="false" src="{raw_url}" alt="{html_escape(filename)}"></div></div><script>{image_viewer_js}</script></body></html>'
         )
     if ext in files.PDF_EXTS:
         return (
