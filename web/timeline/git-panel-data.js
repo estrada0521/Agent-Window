@@ -189,9 +189,9 @@
       const isUntracked = !!entry?.untracked;
       if (isUntracked) {
         row.dataset.untracked = "1";
-        return;
+      } else {
+        delete row.dataset.untracked;
       }
-      delete row.dataset.untracked;
       const nextIns = Math.max(0, parseInt(entry?.ins) || 0);
       const nextDels = Math.max(0, parseInt(entry?.dels) || 0);
       const countEls = Array.from(row.querySelectorAll(".git-commit-file-meta .git-summary-count"));

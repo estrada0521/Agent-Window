@@ -51,7 +51,7 @@
       const pathHtml = dirPath
         ? `<span class="git-commit-file-name">${escapeHtml(fileName)}</span><span class="git-commit-file-dir">${escapeHtml(dirPath)}</span>`
         : `<span class="git-commit-file-name">${escapeHtml(fileName)}</span>`;
-      const fileMetaHtml = isUntracked ? "" : `<div class="git-commit-file-meta">${gitCountsHtml(ins, dels)}</div>`;
+      const fileMetaHtml = `<div class="git-commit-file-meta">${gitCountsHtml(ins, dels)}</div>`;
       const actionsHtml = fileMetaHtml ? `<div class="git-commit-file-actions">${fileMetaHtml}</div>` : "";
       const animClass = animate ? " new-file-slide" : "";
       const untrackedAttr = isUntracked ? ' data-untracked="1"' : "";

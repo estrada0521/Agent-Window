@@ -758,6 +758,9 @@
       color: rgba(var(--git-ins-green-channels), 0.95);
     }
 
+    .git-commit-file-row[data-untracked="1"] .git-summary-count.del {
+      display: none;
+    }
     .git-summary-count.del {
       color: rgba(var(--git-del-red-channels), 0.9);
     }

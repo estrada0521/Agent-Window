@@ -361,14 +361,12 @@ def git_diff_files(workspace: str, *, commit_hash: str = "", scope: str = ""):
         for path in paths:
             if path in seen:
                 continue
-            merged.append({
-                "path": path,
-                "ins": 0,
-                "dels": 0,
-                "changed": 0,
-                "binary": False,
-                "untracked": True,
-            })
+            res = _run("diff", "--no-index", "--numstat", "-z", "--", "/dev/null", path)
+            if res.returncode not in (0, 1):
+                raise RuntimeError((res.stderr or res.stdout or "git diff failed").strip())
+            stats, _, _ = _parse_numstat(res.stdout or "")
+            entry = stats[0] if stats else {"ins": 0, "dels": 0, "changed": 0, "binary": False}
+            merged.append({"path": path, "ins": entry["ins"], "dels": 0, "changed": entry["ins"], "binary": entry["binary"], "untracked": True})
             seen.add(path)
         return merged
 
@@ -394,6 +392,8 @@ def git_diff_files(workspace: str, *, commit_hash: str = "", scope: str = ""):
     files, total_ins, total_dels = _parse_numstat(out)
     if include_untracked:
         files = _append_untracked(files, _untracked_paths())
+        total_ins = sum(item["ins"] for item in files)
+        total_dels = sum(item["dels"] for item in files)
     return {
         "hash": commit_hash,
         "scope": scope,
