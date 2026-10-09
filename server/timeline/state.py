@@ -86,10 +86,12 @@ class TimelineState:
             {"timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), **entry},
         )
 
-    def append_user_entry(self, message: str, *, targets: list[str], client: str | None = None) -> dict:
+    def append_user_entry(self, message: str, *, targets: list[str], client: str | None = None, location: dict | None = None) -> dict:
         entry = {"sender": "user", "targets": list(targets), "message": message}
         if client in ("desktop", "mobile"):
             entry["client"] = client
+        if location is not None:
+            entry["location"] = location
         return self._append_entry(entry)
 
     def append_system_entry(self, message: str, *, agent: str = "", **extra) -> dict:

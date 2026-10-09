@@ -104,15 +104,16 @@ def _send_or_enqueue_message(
     target: str,
     message: str,
     client: str | None = None,
+    location: dict | None = None,
 ) -> tuple[int, dict]:
     normalized_message = str(message or "")
     if not normalized_message.strip():
         return 400, {"ok": False, "error": "message is required"}
     resolved_targets = [item.strip() for item in str(target or "").split(",") if item.strip()]
     if not resolved_targets:
-        entry = state.append_user_entry(normalized_message, targets=["user"], client=client)
+        entry = state.append_user_entry(normalized_message, targets=["user"], client=client, **({"location": location} if location is not None else {}))
         return 200, {"ok": True, "mode": "note", "entry": entry}
-    entry = state.append_user_entry(normalized_message, targets=resolved_targets, client=client)
+    entry = state.append_user_entry(normalized_message, targets=resolved_targets, client=client, **({"location": location} if location is not None else {}))
     send_queue.put(
         {
             "target": ",".join(resolved_targets),

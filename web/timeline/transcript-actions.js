@@ -344,6 +344,7 @@ __INCLUDE:transcript-refresh.js__
             target,
             message: messageBody,
             client: document.documentElement.dataset.mobile === "1" ? "mobile" : "desktop",
+            ...(composerLocation ? { location: composerLocation } : {}),
           }),
         });
         const data = await res.json();

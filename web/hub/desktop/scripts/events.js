@@ -140,6 +140,14 @@
         });
         return;
       }
+      if (event.data?.type === "request-composer-location" && event.source === _deskTimelineFrame?.contentWindow) {
+        getNativeInvoke()("get_location").then((location) => {
+          event.source.postMessage({ type: "composer-location", location }, event.origin);
+        }).catch((error) => {
+          event.source.postMessage({ type: "composer-location", error: String(error) }, event.origin);
+        });
+        return;
+      }
       if (event.data === "hub_close_timeline") {
         showDeskHubList({ open: true });
         return;
