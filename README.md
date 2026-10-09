@@ -68,6 +68,11 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 
 **Follow changes** automatically switches Git to the worktree whose change was detected last.
 
+<p align="center">
+  <img src="media/agent-window-hero-3.png" width="100%" alt="Agent Window workspace, light theme">
+  <img src="media/agent-window-hero-4.png" width="100%" alt="Agent Window workspace, dark theme">
+</p>
+
 ## Fit Window to Message
 
 `⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘[` / `⌥⌘]` decrease / increase the number of messages shown. `⌥⌘M` collapses the window to its minimum; a new message restores it.

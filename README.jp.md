@@ -68,6 +68,11 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 **Follow changes**では、最後に変更を検知したworktreeへGit表示が自動で切り替わる。
 
+<p align="center">
+  <img src="media/agent-window-hero-3.png" width="100%" alt="Agent Window workspace, light theme">
+  <img src="media/agent-window-hero-4.png" width="100%" alt="Agent Window workspace, dark theme">
+</p>
+
 ## Fit Window to Message
 
 `⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘[` / `⌥⌘]` で表示するmessage数を減らす／増やす。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。
