@@ -77,9 +77,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 `⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘[` / `⌥⌘]` で表示するmessage数を減らす／増やす。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。
 
-<p align="center">
-  <img src="media/agent-window-fit.gif" width="100%" alt="Fit Window to Message demo">
-</p>
+https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 
 ## Shortcut
 
@@ -94,6 +92,10 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | Hub serverの再起動 | `⇧⌘R` | 変更後のsourceを読み直す |
 | workspaceのpathをコピー | | 右クリックmenu |
 | timelineの統計表示 | hover |  |
+
+<p align="center">
+  <img src="media/agent-window-hub-menu.png" width="100%" alt="Hub menu">
+</p>
 
 </details>
 
@@ -120,6 +122,8 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | `/nativelog` | desktop | Agentのnative logをFinderで表示する | |
 | `/terminal <text>` | mobile | terminal paneに文字列を送る | |
 
+https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
+
 </details>
 
 <details>
@@ -136,6 +140,10 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | timelineの全文検索 | Search... | `⇧`併用で10件ずつ飛び |
 | timelineをHTML / JSONLとしてExport | | |
 | timeline serverの再起動 | `⌘R` | 変更後のsourceを読み直す |
+
+<p align="center">
+  <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
+</p>
 
 </details>
 
@@ -172,6 +180,8 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | Follow changes |  | 既定でON |
 | Pin changes | `⇧⌘P` / pinボタン | |
 
+https://github.com/user-attachments/assets/7adeae0e-3384-4e55-af63-bf9220fc5f6c
+
 </details>
 
 <details>
@@ -188,6 +198,8 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 | Fit Window to Message | `⌥⌘H` | |
 | Fitの表示message数を減らす／増やす | `⌥⌘[` / `⌥⌘]` | Fit中のみ |
 | Collapse Window | `⌥⌘M` | 新しいmessageで復帰。Fit Window to Message中のみ |
+
+https://github.com/user-attachments/assets/08a26dd6-e640-49dd-91a8-87f953e8c181
 
 </details>
 

@@ -77,9 +77,7 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 
 `⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘[` / `⌥⌘]` decrease / increase the number of messages shown. `⌥⌘M` collapses the window to its minimum; a new message restores it.
 
-<p align="center">
-  <img src="media/agent-window-fit.gif" width="100%" alt="Fit Window to Message demo">
-</p>
+https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 
 ## Shortcuts
 
@@ -94,6 +92,10 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Restart Hub server | `⇧⌘R` | Re-reads changed source |
 | Copy workspace path | | right-click menu |
 | Show timeline stats | hover | |
+
+<p align="center">
+  <img src="media/agent-window-hub-menu.png" width="100%" alt="Hub menu">
+</p>
 
 </details>
 
@@ -120,6 +122,8 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | `/nativelog` | desktop | Reveals the Agent's native log in Finder | |
 | `/terminal <text>` | mobile | Sends text to the terminal pane | |
 
+https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
+
 </details>
 
 <details>
@@ -136,6 +140,10 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Search the full timeline | Search... | Hold `⇧` to jump 10 matches at a time |
 | Export timeline as HTML / JSONL | | |
 | Restart timeline server | `⌘R` | Re-reads changed source |
+
+<p align="center">
+  <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
+</p>
 
 </details>
 
@@ -172,6 +180,8 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Follow changes |  | ON by default |
 | Pin changes | `⇧⌘P` / pin button | |
 
+https://github.com/user-attachments/assets/7adeae0e-3384-4e55-af63-bf9220fc5f6c
+
 </details>
 
 <details>
@@ -188,6 +198,8 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
 | Fit Window to Message | `⌥⌘H` | |
 | Show fewer / more messages in Fit | `⌥⌘[` / `⌥⌘]` | Fit only |
 | Collapse Window | `⌥⌘M` | Restores on a new message. Fit Window to Message only |
+
+https://github.com/user-attachments/assets/08a26dd6-e640-49dd-91a8-87f953e8c181
 
 </details>
 
