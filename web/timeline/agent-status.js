@@ -95,6 +95,7 @@
       setResidentError("thread-stopped", data.stopped_threads.length ? "Agent watcher stopped" : "");
       if (document.documentElement.dataset.mobile !== "1" && typeof data.timeline === "string" && data.timeline) {
         onTimelineSummaryPinReload();
+        restoreTimelineSideBar();
       }
     };
     const refreshTimelineState = async () => {
