@@ -221,26 +221,6 @@
       return contentEl;
     };
     const createMobileSheetController = (panel, activeClass, { onOpened = () => { }, onClosed = () => { } } = {}) => {
-      let scrollY = 0;
-      let scrollLocked = false;
-      const lockScroll = () => {
-        if (scrollLocked) return;
-        scrollLocked = true;
-        setHudCovered(true);
-        scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-        document.documentElement.classList.add(activeClass);
-        document.body.classList.add(activeClass);
-        document.body.style.top = `-${scrollY}px`;
-      };
-      const unlockScroll = () => {
-        if (!scrollLocked) return;
-        scrollLocked = false;
-        setHudCovered(false);
-        document.documentElement.classList.remove(activeClass);
-        document.body.classList.remove(activeClass);
-        document.body.style.top = "";
-        try { window.scrollTo(0, scrollY || 0); } catch (_) { }
-      };
       const close = ({ immediate = false } = {}) => {
         if (!panel || panel.hidden) return;
         const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
@@ -255,7 +235,8 @@
           }
           panel.classList.remove("open", "sheet-closing");
           panel.hidden = true;
-          unlockScroll();
+          setHudCovered(false);
+          document.body.classList.remove(activeClass);
           onClosed();
           syncHeaderMenuFocus();
         };
@@ -286,14 +267,15 @@
       };
       const open = (afterOpen = () => { }) => {
         if (!panel) return;
-        lockScroll();
+        setHudCovered(true);
+        document.body.classList.add(activeClass);
         showBottomSheet(panel, () => {
           syncHeaderMenuFocus();
           onOpened();
           afterOpen();
         });
       };
-      return { open, close, lockScroll, unlockScroll };
+      return { open, close };
     };
     const workspaceSheet = createMobileSheetController(mobileSheet, MOBILE_SHEET_ACTIVE_CLASS, {
       onClosed: () => {
