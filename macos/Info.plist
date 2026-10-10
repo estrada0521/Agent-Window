@@ -22,8 +22,6 @@
   <string>0.0.0</string>
   <key>LSMinimumSystemVersion</key>
   <string>26.0</string>
-  <key>NSLocationUsageDescription</key>
-  <string>Record your location with messages you send.</string>
   <key>NSHighResolutionCapable</key>
   <true/>
 </dict>

@@ -1,34 +1,3 @@
-    let composerLocation = null;
-    let composerLocationPending = false;
-    const receiveComposerLocation = (location, error) => {
-      composerLocationPending = false;
-      if (error) setError("Location unavailable", error);
-      else composerLocation = location;
-    };
-    window.addEventListener("message", (event) => {
-      if (event.source === window.parent && event.data?.type === "composer-location") {
-        receiveComposerLocation(event.data.location, event.data.error);
-      }
-    });
-    const locateComposer = () => {
-      if (composerLocationPending) return;
-      composerLocation = null;
-      composerLocationPending = true;
-      if (document.documentElement.dataset.nativeApp === "1") {
-        window.parent.postMessage({ type: "request-composer-location" }, location.origin);
-        return;
-      }
-      if (!navigator.geolocation) {
-        receiveComposerLocation(null, "Geolocation unavailable");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition((position) => receiveComposerLocation({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy,
-        timestamp: position.timestamp,
-      }), (error) => receiveComposerLocation(null, error.message), { timeout: 10000 });
-    };
     const composerFabBtn = document.getElementById("composerFabBtn");
     const composerOverlay = document.getElementById("composerOverlay");
     const composerForm = document.getElementById("composer");
@@ -109,7 +78,6 @@
         if (canFocus) focusComposerTextarea();
         return;
       }
-      locateComposer();
       requestHubParentLayout();
       if (document.documentElement.dataset.mobile === "1") bumpHubIframeLayoutLock();
       composerOverlay.hidden = false;

@@ -591,7 +591,6 @@ def _post_send(handler, _parsed, ctx) -> None:
         data.get("target", ""),
         data.get("message", ""),
         data.get("client"),
-        data.get("location"),
     )
     handler._send_json(status, body)
 

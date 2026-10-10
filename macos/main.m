@@ -1,7 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import <QuickLookUI/QuickLookUI.h>
 #import <WebKit/WebKit.h>
-#import <CoreLocation/CoreLocation.h>
 #include <sys/stat.h>
 
 static const CGFloat kDefaultWindowSize = 896;
@@ -37,9 +36,7 @@ static const CGFloat kDefaultGlassCornerRadius = 26;
 }
 @end
 
-@interface AWApp : NSObject <NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandlerWithReply, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate, CLLocationManagerDelegate>
-@property (strong) CLLocationManager *locationManager;
-@property (strong) NSMutableArray *locationReplies;
+@interface AWApp : NSObject <NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandlerWithReply, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate>
 @property (strong) AWWindow *window;
 @property (strong) WKWebView *webView;
 @property (strong) NSGlassEffectView *glass;
@@ -550,47 +547,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         return;
     }
     NSDictionary *body = message.body;
-    if ([body[@"cmd"] isEqualToString:@"get_location"]) {
-        if (!self.locationManager) {
-            self.locationManager = [CLLocationManager new];
-            self.locationManager.delegate = self;
-            self.locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters;
-            self.locationReplies = [NSMutableArray new];
-        }
-        [self.locationReplies addObject:[replyHandler copy]];
-        [self requestLocation];
-        return;
-    }
     replyHandler(nil, [self run:body[@"cmd"] args:body[@"args"] ?: @{}]);
-}
-
-- (void)finishLocation:(CLLocation *)location error:(NSString *)error {
-    NSDictionary *value = location ? @{
-        @"latitude": @(location.coordinate.latitude),
-        @"longitude": @(location.coordinate.longitude),
-        @"accuracy": @(location.horizontalAccuracy),
-        @"timestamp": @(location.timestamp.timeIntervalSince1970 * 1000),
-    } : nil;
-    NSArray *replies = [self.locationReplies copy];
-    [self.locationReplies removeAllObjects];
-    for (void (^reply)(id, NSString *) in replies) reply(value, error);
-}
-
-- (void)requestLocation {
-    if (!self.locationReplies.count) return;
-    CLAuthorizationStatus status = self.locationManager.authorizationStatus;
-    if (status == kCLAuthorizationStatusNotDetermined) [self.locationManager requestWhenInUseAuthorization];
-    else if (status == kCLAuthorizationStatusDenied || status == kCLAuthorizationStatusRestricted)
-        [self finishLocation:nil error:@"Location access denied"];
-    else [self.locationManager requestLocation];
-}
-
-- (void)locationManagerDidChangeAuthorization:(CLLocationManager *)manager { [self requestLocation]; }
-- (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray<CLLocation *> *)locations {
-    [self finishLocation:locations.lastObject error:nil];
-}
-- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
-    [self finishLocation:nil error:error.localizedDescription];
 }
 
 #pragma mark Web view
