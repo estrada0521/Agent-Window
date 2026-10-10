@@ -1,3 +1,4 @@
+__INCLUDE:../../mobile-edge-swipe.js__
 __INCLUDE:../../smooth-corners.js__
 __INCLUDE:../base.js__
 __INCLUDE:../link-presentation.js__

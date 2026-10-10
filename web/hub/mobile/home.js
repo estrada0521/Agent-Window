@@ -76,12 +76,7 @@ __INCLUDE:../../smooth-corners.js__
     let _awaitingTimelineRenderReady = false;
     let _hubReadyTimeoutTimer = 0;
     let _timelineOverlayCloseTimer = 0;
-    document.addEventListener("touchstart", (event) => {
-      const touch = event.touches?.[0];
-      if (!touch) return;
-      const width = window.innerWidth || 0;
-      if (touch.clientX < 24 || touch.clientX > width - 24) event.preventDefault();
-    }, { capture: true, passive: false });
+__INCLUDE:../../mobile-edge-swipe.js__
     let refreshMobTimelines = null;
     const HUB_TIMELINE_FRAME_KEY = "hub_timeline_frame";
     const HUB_LAST_TIMELINE_KEY = "agent_window_hub_last_timeline_name";
