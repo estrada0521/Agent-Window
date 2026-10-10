@@ -129,7 +129,8 @@ def _get_trace(handler, parsed, ctx) -> None:
         try:
             tail_lines = max(1, min(int(tail_raw), 10_000))
         except ValueError:
-            pass
+            _send_bytes(handler, 400, b'{"error":"Invalid lines"}', content_type="application/json")
+            return
     try:
         content_str = ctx["state"].trace_content(agent, tail_lines=tail_lines)
     except Exception as exc:

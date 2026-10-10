@@ -69,8 +69,9 @@ def _log_watcher() -> None:
                         state.publish_event("messages")
                         try:
                             notify_hub_timeline_messages_changed(hub_port)
-                        except (OSError, RuntimeError):
-                            pass
+                        except (OSError, RuntimeError) as exc:
+                            print(f"Hub update failed: {exc}", file=sys.stderr, flush=True)
+                            state.publish_event("hud-error", json.dumps("Hub update failed"))
                     if event.fflags & (select.KQ_NOTE_RENAME | select.KQ_NOTE_DELETE):
                         rebuilt = True
                         break

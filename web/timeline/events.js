@@ -19,6 +19,7 @@
     timelineEvents.addEventListener("git", (event) => {
       if (JSON.parse(event.data) === gitTree()) handleWorkspaceGitChanged();
     });
+    timelineEvents.addEventListener("hud-error", (event) => { setError(JSON.parse(event.data)); });
     timelineEvents.addEventListener("failure", (event) => { setError("Update failed", JSON.parse(event.data)); });
     timelineEvents.onopen = () => {
       setResidentError("disconnected", "");

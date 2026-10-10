@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 from urllib.parse import unquote as url_unquote
 
@@ -277,15 +278,15 @@ def _open_pane(handler, ctx, agent: str) -> None:
                 timeout=1.5,
                 check=False,
             )
-            if size_result.returncode == 0:
-                parts = (size_result.stdout or "").strip().split()
-                if len(parts) == 2:
-                    parsed_cols = int(parts[0])
-                    parsed_rows = int(parts[1])
-                    if parsed_cols > 0 and parsed_rows > 0:
-                        cols, rows = parsed_cols, parsed_rows
-        except Exception:
-            pass
+            if size_result.returncode != 0:
+                raise RuntimeError(size_result.stderr.strip() or "tmux size query failed")
+            parsed_cols, parsed_rows = map(int, size_result.stdout.split())
+            if parsed_cols <= 0 or parsed_rows <= 0:
+                raise ValueError("Invalid tmux window dimensions")
+            cols, rows = parsed_cols, parsed_rows
+        except (OSError, subprocess.TimeoutExpired, RuntimeError, ValueError) as exc:
+            print(f"Terminal size unavailable: {exc}", file=sys.stderr, flush=True)
+            state.publish_event("hud-error", json.dumps("Terminal size unavailable"))
         attach_cmd = (
             f"env -u TMUX -u TMUX_PANE tmux -L {TMUX_SOCKET_NAME} "
             f"attach-session -t {shlex.quote(tmux_name)}"
