@@ -430,15 +430,16 @@ __INCLUDE:../hud.js__
       if (reloadInFlight) return;
       reloadInFlight = true;
       if (document.body.classList.contains("side-bar-open")) closeSideBar();
-      setReloadStage("1");
-      const minimumDisplay = document.documentElement.hasAttribute("data-mobile-timeline")
-        ? waitForLaunchStage() : Promise.resolve();
+      setReloadStage("rendering");
+      let minimumDisplay = Promise.resolve();
       let error = "";
       try {
         const stateResponse = await fetch("/timeline-state", { cache: "no-store" });
         if (!stateResponse.ok) throw new Error(`HTTP ${stateResponse.status}`);
         const current = await stateResponse.json();
         if (current.server_instance === SERVER_INSTANCE_SEED) {
+          setReloadStage("1");
+          if (document.documentElement.hasAttribute("data-mobile-timeline")) minimumDisplay = waitForLaunchStage();
           const response = await fetch("/reload-timeline", { method: "POST", cache: "no-store" });
           if (!response.ok) {
             error = response.headers.get("Content-Type")?.includes("json")
