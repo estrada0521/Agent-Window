@@ -73,6 +73,8 @@ Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax
   <img src="media/agent-window-hero-4.png" width="100%" alt="Agent Window workspace, dark theme">
 </p>
 
+*In Fit Window mode, described next, git and workspace live in a window independent of the timeline, at any position and size you choose.*
+
 ## Fit Window to Message
 
 `⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘[` / `⌥⌘]` decrease / increase the number of messages shown. `⌥⌘M` collapses the window to its minimum; a new message restores it.
@@ -123,6 +125,8 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 | `/terminal <text>` | mobile | Sends text to the terminal pane | |
 
 https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
+
+*The prompt box appears only when needed. It takes no space away from the timeline.*
 
 </details>
 
@@ -200,6 +204,8 @@ https://github.com/user-attachments/assets/7adeae0e-3384-4e55-af63-bf9220fc5f6c
 | Collapse Window | `⌥⌘M` | Restores on a new message. Fit Window to Message only |
 
 https://github.com/user-attachments/assets/08a26dd6-e640-49dd-91a8-87f953e8c181
+
+*Scaling preserves the proportions of the entire window. Adjust its size and position to keep the application out of your way.*
 
 </details>
 

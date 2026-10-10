@@ -73,6 +73,8 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
   <img src="media/agent-window-hero-4.png" width="100%" alt="Agent Window workspace, dark theme">
 </p>
 
+*次のFit Window中では、git・workspaceをtimelineとは独立したwindowとして、好きな位置・大きさで保持できる。*
+
 ## Fit Window to Message
 
 `⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘[` / `⌥⌘]` で表示するmessage数を減らす／増やす。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。
@@ -123,6 +125,8 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 | `/terminal <text>` | mobile | terminal paneに文字列を送る | |
 
 https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
+
+*prompt boxは必要な時だけ現れる。timelineのための面積を占有しない。*
 
 </details>
 
@@ -200,6 +204,8 @@ https://github.com/user-attachments/assets/7adeae0e-3384-4e55-af63-bf9220fc5f6c
 | Collapse Window | `⌥⌘M` | 新しいmessageで復帰。Fit Window to Message中のみ |
 
 https://github.com/user-attachments/assets/08a26dd6-e640-49dd-91a8-87f953e8c181
+
+*拡大・縮小はwindow全体の相似を保つ。sizeと位置を変えて、アプリケーションを作業の邪魔にならない場所へ。*
 
 </details>
 
