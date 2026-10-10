@@ -602,8 +602,10 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSString *host = action.sourceFrame.securityOrigin.host;
     if (![action.request.URL.absoluteString isEqualToString:@"about:blank"] ||
         !([host isEqualToString:@"127.0.0.1"] || [host isEqualToString:@"localhost"])) return nil;
-    CGFloat width = features.width.doubleValue;
-    CGFloat height = features.height.doubleValue;
+    CGFloat textScale = self.glassCornerRadius / kDefaultGlassCornerRadius;
+    NSSize minimum = NSMakeSize(180 * textScale, 180 * textScale);
+    CGFloat width = MAX(features.width.doubleValue, minimum.width);
+    CGFloat height = MAX(features.height.doubleValue, minimum.height);
     NSRect parent = self.window.frame;
     NSRect screen = self.window.screen.visibleFrame;
     CGFloat x = MIN(NSMaxX(parent) + 8, NSMaxX(screen) - width);
@@ -619,8 +621,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     self.sidebarWindow.backgroundColor = NSColor.clearColor;
     self.sidebarWindow.releasedWhenClosed = NO;
     self.sidebarWindow.delegate = self;
-    CGFloat textScale = self.glassCornerRadius / kDefaultGlassCornerRadius;
-    self.sidebarWindow.contentMinSize = NSMakeSize(180 * textScale, 180 * textScale);
+    self.sidebarWindow.contentMinSize = minimum;
     for (NSNumber *kind in @[ @(NSWindowCloseButton), @(NSWindowMiniaturizeButton), @(NSWindowZoomButton) ])
         [self.sidebarWindow standardWindowButton:kind.integerValue].hidden = YES;
     NSView *content = self.sidebarWindow.contentView;
