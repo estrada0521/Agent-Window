@@ -260,9 +260,15 @@ __INCLUDE:../../mobile-edge-swipe.js__
       _awaitingTimelineRenderReady = false;
       finishHubReadyWaitIfComplete();
     }
+    if (window.location.pathname === "/hub-launch-shell.html") {
+      const params = new URLSearchParams(window.location.search);
+      params.delete("target");
+      params.set(HUB_LAUNCH_SHELL_PARAM, "1");
+      window.history.replaceState(window.history.state, "", `/?${params}`);
+    }
     const _launchShellParams = new URLSearchParams(window.location.search || "");
     _hubLaunchShellPending = _launchShellParams.get(HUB_LAUNCH_SHELL_PARAM) === "1";
-    const _restoreLatestTimelineOnLaunch = _hubLaunchShellPending || window.matchMedia("(display-mode: standalone)").matches;
+    const _restoreLatestTimelineOnLaunch = _hubLaunchShellPending;
     const restartingHub = _launchShellParams.get("restart") === "1";
     _hubLaunchShellPending = true;
     showLaunchShell();
