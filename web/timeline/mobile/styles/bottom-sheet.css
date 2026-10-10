@@ -52,15 +52,16 @@
     }
 
     .mobile-bottom-sheet > .mobile-bottom-sheet-panel {
-      width: 100%;
-      height: min(var(--mobile-sheet-panel-height), calc(100dvh - 8px));
+      width: calc(100% - 2 * var(--sheet-inset, 10px));
+      margin: 0 var(--sheet-inset, 10px) var(--sheet-inset, 10px);
+      height: min(50dvh, var(--mobile-sheet-panel-height));
       max-height: var(--mobile-sheet-panel-height);
       display: flex;
       flex-direction: column;
       position: relative;
       transform: translateY(100%);
       opacity: 1;
-      transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1), height 260ms cubic-bezier(0.22, 1, 0.36, 1), width 260ms cubic-bezier(0.22, 1, 0.36, 1), margin 260ms cubic-bezier(0.22, 1, 0.36, 1);
       overflow: hidden;
       pointer-events: auto;
       border-radius: 0;
@@ -104,6 +105,7 @@
       align-items: center;
       background: transparent;
       cursor: grab;
+      touch-action: none;
       pointer-events: none;
       transform: translateZ(0);
     }

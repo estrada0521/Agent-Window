@@ -60,6 +60,8 @@
       if (sheetPanel) {
         sheetPanel.style.transition = "";
         sheetPanel.style.transform = "";
+        sheetPanel.style.height = "";
+        sheetPanel.style.removeProperty("--sheet-inset");
         if (sheetPanel._sheetSlideEnd) {
           sheetPanel.removeEventListener("transitionend", sheetPanel._sheetSlideEnd);
           sheetPanel._sheetSlideEnd = null;
@@ -76,32 +78,51 @@
     };
     const wireMobileSheetNavDrag = (sheetNav, activeSheetRef, onClose) => {
       let startY = 0;
+      let startHeight = 0;
+      let height = 0;
+      let minHeight = 0;
+      let maxHeight = 0;
       let dragY = 0;
       let dragging = false;
+      const setHeight = (panel, value) => {
+        panel.style.height = `${value}px`;
+        panel.style.setProperty("--sheet-inset", `${10 * (maxHeight - value) / (maxHeight - minHeight)}px`);
+      };
       sheetNav.addEventListener("touchstart", (event) => {
-        const touch = event.touches?.[0];
-        if (!touch) return;
+        const touch = event.touches[0];
+        const panel = activeSheetRef.panel;
+        if (!touch || !panel || event.touches.length !== 1) return;
         startY = touch.clientY;
+        startHeight = height = panel.getBoundingClientRect().height;
+        maxHeight = parseFloat(getComputedStyle(panel).maxHeight);
+        minHeight = Math.min(panel.closest('.mobile-sheet-overlay').getBoundingClientRect().height / 2, maxHeight);
         dragY = 0;
         dragging = true;
-        if (activeSheetRef.panel) activeSheetRef.panel.style.transition = "none";
+        panel.style.transition = "none";
       }, { passive: true });
       sheetNav.addEventListener("touchmove", (event) => {
         if (!dragging) return;
-        const touch = event.touches?.[0];
+        const touch = event.touches[0];
         if (!touch) return;
-        dragY = Math.max(0, touch.clientY - startY);
-        if (activeSheetRef.panel) activeSheetRef.panel.style.transform = `translateY(${dragY}px)`;
-      }, { passive: true });
-      const finishDrag = () => {
+        event.preventDefault();
+        const requested = startHeight + startY - touch.clientY;
+        height = Math.max(minHeight, Math.min(maxHeight, requested));
+        dragY = Math.max(0, minHeight - requested);
+        setHeight(activeSheetRef.panel, height);
+        activeSheetRef.panel.style.transform = `translateY(${dragY}px)`;
+      }, { passive: false });
+      const finishDrag = (event) => {
         if (!dragging) return;
         dragging = false;
-        if (activeSheetRef.panel) activeSheetRef.panel.style.transition = "";
-        if (dragY > 80) {
+        const panel = activeSheetRef.panel;
+        panel.style.transition = "";
+        if (event.type !== "touchcancel" && dragY > 80) {
           onClose();
           return;
         }
-        if (activeSheetRef.panel) activeSheetRef.panel.style.transform = "";
+        const finalHeight = event.type === "touchcancel" ? startHeight : height > (minHeight + maxHeight) / 2 ? maxHeight : minHeight;
+        setHeight(panel, finalHeight);
+        panel.style.transform = "";
       };
       sheetNav.addEventListener("touchend", finishDrag, { passive: true });
       sheetNav.addEventListener("touchcancel", finishDrag, { passive: true });
@@ -187,8 +208,9 @@
         const width = sheetPanel.offsetWidth;
         const height = sheetPanel.offsetHeight;
         if (!width || !height) return;
+        const inset = parseFloat(getComputedStyle(sheetPanel).marginBottom);
         const radius = parseFloat(getComputedStyle(sheetPanel).getPropertyValue("--mobile-sheet-corner-radius"));
-        const path = smoothCornerPath(width, height, radius, 0.6, false);
+        const path = smoothCornerPath(width, height, radius, 0.6, inset > 0);
         sheetPanel.style.clipPath = `path("${path}")`;
         outline.setAttribute("viewBox", `0 0 ${width} ${height}`);
         edge.setAttribute("d", path);
