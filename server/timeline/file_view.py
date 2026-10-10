@@ -245,7 +245,7 @@ def render_file_view(
             f'<title>{html_escape(filename)}</title>'
             f'<style>{base_css}'
             f'.wrap{{flex:1;min-height:0;overflow:hidden;display:flex;padding:16px;background:{embed_bg};padding-top:calc(16px + var(--tpad,0px));padding-bottom:calc(16px + var(--bpad,0px))}}'
-            f'@media (max-width: 480px) {{.wrap{{padding-left:0;padding-right:0}}}}'
+            f'@media (max-width: 480px) {{.wrap{{padding-left:0;padding-right:0;padding-bottom:0}}}}'
             '.image-surface{flex:1;min-width:0;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none}'
             'img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}</style></head>'
             f'<body><div class="wrap"><div class="image-surface"><img draggable="false" src="{raw_url}" alt="{html_escape(filename)}"></div></div><script>{image_viewer_js}</script></body></html>'
