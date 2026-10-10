@@ -60,6 +60,7 @@ __INCLUDE:../../smooth-corners.js__
       if (agentSoundEnabled) localStorage.setItem(AGENT_SOUND_KEY, "1");
       else localStorage.removeItem(AGENT_SOUND_KEY);
       syncAgentSoundMenu();
+      setStatus(`Sound: ${agentSoundEnabled ? "On" : "Off"}`);
       unlockAgentSound();
     };
     let _hubTimelineParentLayoutMax = 0;
