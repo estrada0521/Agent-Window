@@ -36,6 +36,10 @@
       display: none;
     }
 
+    #mobileSheet.sheet-mode-preview :is(.git-host, .repo-stack) {
+      visibility: hidden;
+    }
+
     #mobileSheet[data-kind="repo"] :is(.git-worktree-button, .git-tree-switch, .git-more-button),
     #mobileSheet.sheet-mode-preview :is(.git-worktree-button, .git-tree-switch, .git-more-button) {
       display: none;
@@ -146,11 +150,6 @@
 
     #mobileSheet.sheet-mode-preview .sheet-preview-view {
       display: block;
-    }
-
-    html[data-theme="light"] #mobileSheet .sheet-preview-view,
-    html[data-theme="dark"] #mobileSheet .sheet-preview-view {
-      background: var(--bg);
     }
 
     .sheet-preview-frame {

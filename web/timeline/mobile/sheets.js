@@ -209,6 +209,7 @@
         const height = sheetPanel.offsetHeight;
         if (!width || !height) return;
         const inset = parseFloat(getComputedStyle(sheetPanel).marginBottom);
+        sheetPanel.style.setProperty("--sheet-glass-strength", `${inset / 10}`);
         const radius = parseFloat(getComputedStyle(sheetPanel).getPropertyValue("--mobile-sheet-corner-radius"));
         const path = smoothCornerPath(width, height, radius, 0.6, inset > 0);
         sheetPanel.style.clipPath = `path("${path}")`;

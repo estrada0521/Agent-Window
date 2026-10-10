@@ -54,10 +54,28 @@
       pointer-events: auto;
       border-radius: 0;
       border: none;
-      background: var(--bg);
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
+      background: rgba(var(--bg-rgb), calc(1 - 0.12 * var(--sheet-glass-strength, 1)));
+      backdrop-filter: blur(calc(28px * var(--sheet-glass-strength, 1))) saturate(calc(100% + 120% * var(--sheet-glass-strength, 1))) contrast(calc(100% + 14% * var(--sheet-glass-strength, 1)));
+      -webkit-backdrop-filter: blur(calc(28px * var(--sheet-glass-strength, 1))) saturate(calc(100% + 120% * var(--sheet-glass-strength, 1))) contrast(calc(100% + 14% * var(--sheet-glass-strength, 1)));
       box-shadow: none;
+    }
+
+    .mobile-bottom-sheet > .mobile-bottom-sheet-panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--liquid-glass-lg-tint);
+      box-shadow: var(--liquid-glass-lg-shadow);
+      opacity: var(--sheet-glass-strength, 1);
+      pointer-events: none;
+    }
+
+    html[data-theme="dark"] .mobile-bottom-sheet > .mobile-bottom-sheet-panel::after {
+      background: transparent;
+    }
+
+    html[data-theme="dark"] .mobile-bottom-sheet > .mobile-bottom-sheet-panel {
+      background: rgba(var(--bg-rgb), calc(1 - 0.03 * var(--sheet-glass-strength, 1)));
     }
 
     .mobile-bottom-sheet > .mobile-bottom-sheet-panel::before {
