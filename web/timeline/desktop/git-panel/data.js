@@ -11,10 +11,15 @@
     const bootstrapPinnedGitSummary = async () => {
       if (!gitSummaryPinned) return;
       const tree = gitTree();
-      const data = await fetchGitOverview({ offset: 0, summary: true });
-      if (tree !== gitTree() || !gitSummaryPinned) return;
-      gitHeaderSummaryState = buildSummaryState(data);
-      applyGitOverviewHeader();
+      try {
+        if (!(await fetchWorkspaceState()).git) return;
+        const data = await fetchGitOverview({ offset: 0, summary: true });
+        if (tree !== gitTree() || !gitSummaryPinned) return;
+        gitHeaderSummaryState = buildSummaryState(data);
+        applyGitOverviewHeader();
+      } catch (error) {
+        setError("Git unavailable", error);
+      }
     };
     let unpinnedGitSummaryRequest = 0;
     let unpinnedGitSummaryShown = "";
@@ -27,6 +32,7 @@
       const relevant = () => request === unpinnedGitSummaryRequest &&
         timeline === currentTimelineName && tree === gitTree() && !gitSummaryPinned && !sideBarOpen;
       try {
+        if (!(await fetchWorkspaceState()).git) return;
         const data = await fetchGitOverview({ summary: true });
         if (!relevant()) return;
         const row = document.createElement("div");
@@ -70,7 +76,7 @@
         if (gitContent) gitContent.innerHTML = html;
       },
       loadingHtml: '<div class="empty-state inline-loading-row"></div>',
-      errorHtml: (message) => `<div class="empty-state error">${escapeHtml(message)}</div>`,
+      onError: (error) => setError("Git unavailable", error),
       emptyCommitsHtml: '<div class="empty-state" data-git-empty="1">No commits</div>',
       worktreeDetailClass: true,
       detailHeadHtml: ({ isWorktree, rowHtml }) => {
@@ -95,5 +101,10 @@
     const closeGitDetail = (opts) => gitPanel.closeDetail(opts);
     const disconnectGitObserver = () => gitPanel.disconnectObserver();
     const refreshGitOverview = async () => {
-      await gitPanel.refresh();
+      try {
+        if (!(await fetchWorkspaceState()).git) return;
+        await gitPanel.refresh();
+      } catch (error) {
+        setError("Git unavailable", error);
+      }
     };

@@ -243,6 +243,24 @@ def _get_files_search(handler, parsed, ctx) -> None:
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 
 
+def _get_workspace_state(handler, _parsed, ctx) -> None:
+    workspace = ctx["workspace"]
+    if not workspace or not Path(workspace).is_dir():
+        _send_bytes(handler, 200, b'{"workspace":false,"git":false}', content_type="application/json")
+        return
+    try:
+        workspace_git.git_worktrees(workspace)
+        is_git = True
+    except workspace_git.NotGitRepository:
+        is_git = False
+    except Exception as exc:
+        body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode()
+        _send_bytes(handler, 500, body, content_type="application/json")
+        return
+    body = json.dumps({"workspace": True, "git": is_git}).encode()
+    _send_bytes(handler, 200, body, content_type="application/json")
+
+
 def _get_timeline_state(handler, _parsed, ctx) -> None:
     try:
         body = json.dumps(ctx["state"].timeline_state_payload(), ensure_ascii=True).encode("utf-8")
@@ -368,6 +386,7 @@ _GET_ROUTES = {
     "/file-view": _get_file_view,
     "/files-search": _get_files_search,
     "/files-dir": _get_files_dir,
+    "/workspace-state": _get_workspace_state,
     "/timeline-state": _get_timeline_state,
     "/events": _get_events,
     "/git-overview": _get_git_overview,

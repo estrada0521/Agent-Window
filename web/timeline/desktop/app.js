@@ -594,12 +594,32 @@ __INCLUDE:git-panel/events.js__
       if (!sideBarOpen) return Promise.resolve();
       const hasGitShell = gitPanel.hasShell();
       if (reset && hasGitShell) closeGitDetail();
-      const gitP = hasGitShell ? refreshGitOverview() : loadGitPage({ reset: true });
+      const gitP = gitContent.hidden ? Promise.resolve() : hasGitShell ? refreshGitOverview() : loadGitPage({ reset: true });
       loadRepoDir(repoBrowserPath || "", { animate: animateRepo });
       return Promise.resolve(gitP);
     };
-    const openSideBar = ({ view = null, reset = false } = {}) => {
-      if (!sideBar) return Promise.resolve();
+    const fetchWorkspaceState = async () => {
+      const response = await fetchWithTimeout("/workspace-state", { cache: "no-store" }, 12000);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      return data;
+    };
+    const updateSideBarWorkspace = async () => {
+      const data = await fetchWorkspaceState();
+      if (!data.workspace) throw new Error("Workspace unavailable");
+      gitContent.hidden = !data.git;
+      splitDivider.hidden = !data.git;
+      splitPanel.classList.toggle("workspace-only", !data.git);
+      if (!data.git) setSideBarView("repo");
+    };
+    const openSideBar = async ({ view = null, reset = false } = {}) => {
+      if (!sideBar) return;
+      try {
+        await updateSideBarWorkspace();
+      } catch (error) {
+        setError(error.message === "Workspace unavailable" ? "Workspace unavailable" : "Sidebar unavailable", error);
+        return;
+      }
       if (view) setSideBarView(view);
       sideBarOpen = true;
       localStorage.setItem(sideBarOpenStorageKey(), "1");
@@ -938,7 +958,7 @@ __INCLUDE:git-panel/events.js__
     };
     const repoEntriesStructureSignature = (entries) =>
       (entries || []).map((entry) => `${entry.kind}:${entry.path}`).join("\n");
-    const renderRepoPanel = (rawPath, entries, { loading = false, error = "", direction = "none" } = {}) => {
+    const renderRepoPanel = (rawPath, entries, { loading = false, direction = "none" } = {}) => {
       if (!repoContent) return;
       const path = normalizePath(rawPath);
       const pathParts = path.split("/").filter(Boolean);
@@ -949,19 +969,12 @@ __INCLUDE:git-panel/events.js__
         ? repoContent.querySelector(".repo-browser-scroll")?.scrollTop || 0
         : 0;
       const rowKey = (el) => el.title || "";
-      const firstRects = direction === "none" && !loading && !error
+      const firstRects = direction === "none" && !loading
         ? captureListRowRects(repoContent, ".repo-browser-item", rowKey)
         : null;
       repoBrowserPath = path;
       if (!isSamePath) repoSel.clear();
       repoContent.innerHTML = "";
-      if (error) {
-        const node = document.createElement("div");
-        node.className = "empty-state error";
-        node.textContent = error;
-        repoContent.appendChild(node);
-        return;
-      }
       const stack = document.createElement("div");
       stack.className = `repo-browser-stack repo-browser-nav-${direction}`;
       const pathWrap = document.createElement("div");
@@ -1069,7 +1082,8 @@ __INCLUDE:git-panel/events.js__
       } catch (err) {
         cancelDpRepoLoading();
         if (repoLoadCancelled()) return;
-        renderRepoPanel(path, [], { error: err?.message || "Failed to load directory", direction });
+        repoContent.querySelector(".inline-loading-row")?.remove();
+        setError("Workspace unavailable", err);
       }
     };
     const refreshRepoDir = async (rawPath) => {
@@ -1087,7 +1101,9 @@ __INCLUDE:git-panel/events.js__
         }));
         if (repoEntriesStructureSignature(currentEntries) === repoEntriesStructureSignature(entries)) return;
         renderRepoPanel(path, entries, { direction: "none" });
-      } catch (_) {}
+      } catch (error) {
+        setError("Workspace unavailable", error);
+      }
     };
     window.addEventListener("message", (event) => {
       if (!event.data) return;
@@ -1435,13 +1451,29 @@ __INCLUDE:git-panel/events.js__
         }
       }, true);
     })();
+    const restoreSideBarGit = async () => {
+      try {
+        await updateSideBarWorkspace();
+        if (sideBarOpen && !gitContent.hidden) {
+          syncSplitGitHeightForMode();
+          await loadGitPage({ reset: true });
+        }
+      } catch (error) {
+        setError("Workspace unavailable", error);
+      }
+    };
     const handleWorkspaceFilesChanged = () => {
+      if (sideBarOpen && gitContent.hidden) void restoreSideBarGit();
       if (sideBarOpen && activeSideBarView === "repo") {
         void refreshRepoDir(repoBrowserPath || "");
       }
     };
     const handleWorkspaceGitChanged = () => {
       gitPanel.invalidateFingerprint();
+      if (sideBarOpen && gitContent.hidden) {
+        void restoreSideBarGit();
+        return;
+      }
       if (!sideBarOpen && !gitSummaryPinned) {
         void notifyUnpinnedGitSummary();
         return;

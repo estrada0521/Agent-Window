@@ -58,7 +58,7 @@
       const updateLoadMoreUi = () => {
         const btn = loadMoreEl();
         if (!btn) return;
-        btn.hidden = !state.loadError;
+        btn.hidden = !!host.onError || !state.loadError;
         btn.disabled = state.pageLoading;
         btn.textContent = state.loadError ? "Retry loading commits" : "";
       };
@@ -268,8 +268,13 @@
             kind: state.detailContext.kind,
             isWorktree,
           });
-        } catch (_) {
-          wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty error">Failed to load file stats</div>';
+        } catch (error) {
+          if (host.onError) {
+            host.onError(error);
+            wrapEl.replaceChildren();
+          } else {
+            wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty error">Failed to load file stats</div>';
+          }
           if (holdFiles) wrapEl.hidden = false;
           host.onDetailFilesReady?.({
             wrapEl,
@@ -309,8 +314,9 @@
           applyPage(data, { reset });
         } catch (err) {
           if (loadSeq !== state.loadSeq) return;
+          host.onError?.(err);
           if (reset) {
-            host.setBodyHtml(host.errorHtml(err?.message || "Failed to load git overview"));
+            host.setBodyHtml(host.onError ? "" : host.errorHtml(err?.message || "Failed to load git overview"));
           } else {
             state.loadError = err?.message || "Failed to load more commits";
           }
@@ -363,6 +369,9 @@
             await runRefresh();
             if (!state.refreshQueued) break;
           }
+        } catch (error) {
+          if (!host.onError) throw error;
+          host.onError(error);
         } finally {
           state.refreshInFlight = false;
           if (state.refreshQueued) {
