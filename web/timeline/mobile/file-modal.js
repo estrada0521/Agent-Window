@@ -201,6 +201,7 @@
         const frameDoc = frame.contentDocument || frameWindow?.document || null;
         const rootStyle = getComputedStyle(document.documentElement);
         if (frameDoc?.documentElement) {
+          frameDoc.documentElement.style.colorScheme = resolvedBaseTheme;
           for (const name of ["--bg-rgb", "--mobile-sheet-footer-bottom", "--mobile-sheet-floating-height"]) {
             frameDoc.documentElement.style.setProperty(name, rootStyle.getPropertyValue(name).trim());
           }
@@ -251,7 +252,7 @@
           style.id = "base-theme-style";
           frameDoc.head?.appendChild(style);
         }
-        style.textContent = `:root{--body-weight:${bodyWeight};--file-preview-code-weight:${codeWeight};--preview-gutter-bg:rgba(${fgRgb},${isLight ? 0.04 : 0.09});--preview-gutter-divider:rgba(${fgRgb},${isLight ? 0.34 : 0.22})}.html-preview-web-glass{--preview-glass-rgb:${bgRgb};--preview-glass-line:rgba(${fgRgb},0.08)}html,body{color-scheme:${scheme};background:transparent;color:${fg}}.view-container,.html-preview-shell,.wrap{background:transparent}.fn{color:${fg}}.code-gutter-table .ln,.preview-text-gutter-table .ln{color:${lnFg}}.code-table,.preview-text-table,pre{color:${fg}}`;
+        style.textContent = `:root{--body-weight:${bodyWeight};--file-preview-code-weight:${codeWeight};--preview-gutter-bg:rgba(${fgRgb},${isLight ? 0.04 : 0.09});--preview-gutter-divider:rgba(${fgRgb},${isLight ? 0.34 : 0.22})}.html-preview-web-glass{--preview-glass-rgb:${bgRgb};--preview-glass-line:rgba(${fgRgb},0.08)}html,body{background:transparent;color:${fg}}.view-container,.html-preview-shell,.wrap{background:transparent}.fn{color:${fg}}.code-gutter-table .ln,.preview-text-gutter-table .ln{color:${lnFg}}.code-table,.preview-text-table,pre{color:${fg}}`;
         return true;
       } catch (_) { }
       return false;
