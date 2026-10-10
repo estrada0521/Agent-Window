@@ -36,17 +36,27 @@
           clear();
           const node = pressable(event.target);
           const point = event.touches?.[0];
-          if (!node || !point) return;
+          if (!node || !point || event.touches.length !== 1) return;
           node.style.setProperty("--liquid-glass-press-scale", Math.min(1.06, 1 + 6 / node.getBoundingClientRect().width));
           node.classList.add("is-pressed");
-          touch = { node, x: point.clientX, y: point.clientY };
+          touch = { node, x: point.clientX, y: point.clientY, started: performance.now() };
         }, { passive: true });
         root.addEventListener("touchmove", (event) => {
           if (!touch) return;
           const point = event.touches?.[0];
           if (point && (point.clientX - touch.x) ** 2 + (point.clientY - touch.y) ** 2 > 100) clear();
         }, { passive: true });
-        root.addEventListener("touchend", clear, { passive: true });
+        root.addEventListener("touchend", (event) => {
+          const press = touch;
+          clear();
+          if (!press || performance.now() - press.started < 450 || !externalLink(press.node)) return;
+          const action = new doc.defaultView.CustomEvent("agent-link-menu", {
+            bubbles: true, cancelable: true, detail: { url: press.node.href },
+          });
+          if (press.node.dispatchEvent(action)) return;
+          event.preventDefault();
+          event.stopPropagation();
+        }, { passive: false });
         root.addEventListener("touchcancel", clear, { passive: true });
         root.addEventListener("contextmenu", (event) => {
           if (pressable(event.target)) event.preventDefault();

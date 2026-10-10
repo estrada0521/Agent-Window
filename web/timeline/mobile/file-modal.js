@@ -310,6 +310,7 @@
         frame.style.transition = "opacity 200ms ease-out";
         frame.style.opacity = "1";
         if (normalizedExt === "md") {
+          wireLinkCopyMenu(frame.contentDocument);
           frame.contentDocument.addEventListener("click", (event) => {
             const anchor = event.target.closest?.("a[href]");
             if (!anchor || anchor.classList.contains("local-file-link") || anchor.classList.contains("inline-file-link")) return;
@@ -337,6 +338,7 @@
               const doc = renderedFrame.contentDocument;
               if (!doc || doc === linkedDocument) return;
               linkedDocument = doc;
+              wireLinkCopyMenu(doc);
               doc.addEventListener("click", (event) => {
                 const anchor = event.target.closest?.("a[href]");
                 const rawHref = anchor?.getAttribute("href")?.trim() || "";
