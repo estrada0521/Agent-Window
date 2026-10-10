@@ -273,7 +273,3 @@ appサイズは under 200 KB。telemetryなし。Agent CLI以外のネットワ�
 Hubの port は `server/hub/port` fileの値(既定 `8788`)を専有する。fileを書き換えれば変わる。timelineごとのport はworkspaceのpathから決まる固定値を専有する。
 
 Agent Window自身がfilesystemへ保存するdataは `~/.agent-window/` と、workspace内の `.agent-window/` だけ。
-
-## License
-
-[MIT](LICENSE)。画像内のfile iconはMaterial Icon ThemeとVS Code Modern Iconsのもの。

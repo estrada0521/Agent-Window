@@ -273,7 +273,3 @@ The app is under 200 KB. No telemetry. The only network dependencies besides the
 The Hub occupies the port in the `server/hub/port` file (default `8788`); edit the file to change it. Each timeline occupies a fixed port derived from its workspace's path.
 
 Agent Window itself writes filesystem data only under `~/.agent-window/` and `<workspace>/.agent-window/`.
-
-## License
-
-[MIT](LICENSE). The file icons in the screenshots are from Material Icon Theme and VS Code Modern Icons.
