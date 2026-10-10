@@ -6,6 +6,8 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
 
 [設計哲学](DESIGN.jp.md) · [English](README.md)
 
+https://okadaharuto.com/agent-window/
+
 </div>
 
 <p align="center">
