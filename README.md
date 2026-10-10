@@ -27,6 +27,10 @@ A UNIX-philosophy Agent application for macOS.
   <img src="media/agent-window-running.gif" width="392" alt="Claude's running tool calls in Agent Window">
 </p>
 
+https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
+
+*Open the CLI itself whenever needed.*
+
 ## Setup
 
 Requires `python3`, `tmux`, Xcode Command Line Tools. Install and authenticate the Agent CLIs you'll use yourself.

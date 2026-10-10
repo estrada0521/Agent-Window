@@ -27,6 +27,10 @@ UNIX哲学で作られた、macOS向けのAgentアプリケーション。
   <img src="media/agent-window-running.gif" width="392" alt="Claudeの実行中のtool call表示">
 </p>
 
+https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
+
+*必要な時には、いつでもCLI本体を呼び出せる。*
+
 ## Setup
 
 `python3`、`tmux`、Xcode Command Line Toolsが必要。使うAgent CLIは各自installして認証しておく。
