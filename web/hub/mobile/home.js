@@ -321,7 +321,14 @@ __INCLUDE:../../mobile-edge-swipe.js__
     function hubFrameSrcMatches(url) {
       const current = normalizeComparableUrl(_timelineFrame.src);
       const next = normalizeComparableUrl(url);
-      return !!current && !!next && current === next;
+      if (!current || !next) return false;
+      const urls = [current, next].map((value) => {
+        const parsed = new URL(value);
+        parsed.searchParams.delete("theme");
+        parsed.searchParams.delete("theme_mobile");
+        return parsed.toString();
+      });
+      return urls[0] === urls[1];
     }
     function cacheTimelineUrl(name, url) {
       hubTimelineUrls.write(name, url);
