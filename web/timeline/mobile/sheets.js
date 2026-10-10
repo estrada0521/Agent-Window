@@ -208,10 +208,10 @@
         const width = sheetPanel.offsetWidth;
         const height = sheetPanel.offsetHeight;
         if (!width || !height) return;
-        const inset = parseFloat(getComputedStyle(sheetPanel).marginBottom);
+        const inset = parseFloat(getComputedStyle(sheetPanel).marginLeft);
         sheetPanel.style.setProperty("--sheet-glass-strength", `${inset / 10}`);
         const radius = parseFloat(getComputedStyle(sheetPanel).getPropertyValue("--mobile-sheet-corner-radius"));
-        const path = smoothCornerPath(width, height, radius, 0.6, inset > 0);
+        const path = smoothCornerPath(width, height, radius, 0.6, false);
         sheetPanel.style.clipPath = `path("${path}")`;
         outline.setAttribute("viewBox", `0 0 ${width} ${height}`);
         edge.setAttribute("d", path);

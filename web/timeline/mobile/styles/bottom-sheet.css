@@ -41,7 +41,7 @@
 
     .mobile-bottom-sheet > .mobile-bottom-sheet-panel {
       width: calc(100% - 2 * var(--sheet-inset, 10px));
-      margin: 0 var(--sheet-inset, 10px) var(--sheet-inset, 10px);
+      margin: 0 var(--sheet-inset, 10px);
       height: min(50dvh, var(--mobile-sheet-panel-height));
       max-height: var(--mobile-sheet-panel-height);
       display: flex;
@@ -72,6 +72,7 @@
 
     html[data-theme="dark"] .mobile-bottom-sheet > .mobile-bottom-sheet-panel::after {
       background: transparent;
+      box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.3);
     }
 
     html[data-theme="dark"] .mobile-bottom-sheet > .mobile-bottom-sheet-panel {
