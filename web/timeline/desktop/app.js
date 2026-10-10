@@ -1237,6 +1237,11 @@ __INCLUDE:git-panel/events.js__
     });
     (() => {
       window.addEventListener("keydown", (event) => {
+        if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyF") {
+          event.preventDefault();
+          beginSearch();
+          return;
+        }
         if (event.metaKey && event.ctrlKey && !event.altKey && !event.shiftKey && event.code === "KeyT") {
           event.preventDefault();
           window.parent?.postMessage({ type: "always-on-top-shortcut" }, "*");

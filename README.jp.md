@@ -147,7 +147,7 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | tmux terminal paneを開く | `⌘T` | mobileの`Pane Trace`から操作可能 |
 | FinderでLogを開く | `⌥⌘L` |  |
 | ブラウザでtimelineを開く | `⌥⌘O` |  |
-| timelineの全文検索 | Search... | `⇧`併用で10件ずつ飛び |
+| timelineの全文検索 | `⌘F` / Search... | `⇧`併用で10件ずつ飛び |
 | timelineをHTML / JSONLとしてExport | | |
 | timeline serverの再起動 | `⌘R` | 変更後のsourceを読み直す |
 

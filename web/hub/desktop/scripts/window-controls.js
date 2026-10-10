@@ -345,6 +345,11 @@
         dispatchDeskNativeMenuAction({ action: "openPane" });
         return;
       }
+      if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyF") {
+        event.preventDefault();
+        sendDeskTimelineAction("search");
+        return;
+      }
       if (event.metaKey && !event.altKey && !event.ctrlKey && event.code === "KeyR") {
         event.preventDefault();
         if (event.shiftKey) triggerDeskHubReload();
