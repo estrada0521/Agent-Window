@@ -34,14 +34,6 @@ function shouldHandle(url) {
   );
 }
 
-function isHubLaunchNavigation(request, url) {
-  if (!isHubScope) return false;
-  if (request.mode !== "navigate") return false;
-  const path = url.pathname || "/";
-  if (!prefix) return path === "/" || path === "/index.html";
-  return path === `${prefix}/` || path === `${prefix}/index.html`;
-}
-
 async function putIfOk(cache, request, response) {
   if (response && response.ok) {
     await cache.put(request, response.clone());
@@ -80,11 +72,6 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
-
-  if (isHubLaunchNavigation(request, url)) {
-    event.respondWith(fetch(`${prefix}/hub-launch-shell.html`, { cache: "no-store" }));
-    return;
-  }
 
   if (!shouldHandle(url)) return;
 

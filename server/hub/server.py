@@ -450,7 +450,7 @@ class Handler(BaseHTTPRequestHandler):
             "display": "standalone",
             "background_color": bg,
             "theme_color": bg,
-            "start_url": "/hub-launch-shell.html?target=%2F%3Flaunch_shell%3D1",
+            "start_url": "/?launch_shell=1",
             "scope": "/",
             "icons": pwa_icon_entries(),
         }, ensure_ascii=True).encode("utf-8")
@@ -463,6 +463,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def _get_hub_launch_shell(self, _parsed):
         variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
+        if variant == "mobile":
+            self._get_home(_parsed)
+            return
         page = (
             HUB_LAUNCH_SHELL_HTML
             .replace("__THEME_DESKTOP__", DESKTOP_THEME_DEFAULT)

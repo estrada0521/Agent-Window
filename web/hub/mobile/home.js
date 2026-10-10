@@ -262,10 +262,17 @@ __INCLUDE:../../mobile-edge-swipe.js__
     }
     const _launchShellParams = new URLSearchParams(window.location.search || "");
     _hubLaunchShellPending = _launchShellParams.get(HUB_LAUNCH_SHELL_PARAM) === "1";
-    const _restoreLatestTimelineOnLaunch = _hubLaunchShellPending;
-    if (_hubLaunchShellPending) {
-      showLaunchShell();
-      startHubReadyTimeout();
+    const _restoreLatestTimelineOnLaunch = _hubLaunchShellPending || window.matchMedia("(display-mode: standalone)").matches;
+    const restartingHub = _launchShellParams.get("restart") === "1";
+    _hubLaunchShellPending = true;
+    showLaunchShell();
+    startHubReadyTimeout();
+    if (restartingHub) {
+      _launchShell.dataset.reloadStage = "1";
+      fetch("/restart-hub", { method: "POST" }).then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        location.replace("/?view=mobile&launch_shell=1");
+      }).catch((error) => failHubReadyWait(error.message));
     }
     function rememberLastTimeline(name) {
       const normalized = String(name || "").trim();
@@ -492,6 +499,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
       }
       rememberLastTimeline(name);
       if (_hubLaunchShellPending) showLaunchShell();
+      _launchShell.dataset.reloadStage = "rendering";
       startTimelineRenderWait();
       const normalizedName = String(name || "").trim();
       const normalizedUrl = hubFrameTimelineUrl(url, normalizedName);
@@ -731,7 +739,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
       clearPersistedTimelineFrameState();
       failHubReadyWait(pendingHubErrorMessage);
     }
-    const savedTimelineFrame = sessionStorage.getItem(HUB_TIMELINE_FRAME_KEY);
+    const savedTimelineFrame = restartingHub ? null : sessionStorage.getItem(HUB_TIMELINE_FRAME_KEY);
     if (savedTimelineFrame && !pendingHubErrorMessage) {
       const { url, name } = JSON.parse(savedTimelineFrame);
       openTimelineInFrame(url, name);
@@ -980,6 +988,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
         _mobPreviewRevisions = nextRevisions;
       };
       const refresh = async (force) => {
+        if (restartingHub) return;
         const requestSeq = ++_mobTimelinesRequestSeq;
         try {
           const res = await fetch(`/timelines?ts=${Date.now()}`, { cache: "no-store" });
@@ -1027,7 +1036,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
         }
       };
       refreshMobTimelines = refresh;
-      startHubTimelineMessagesEvents(() => refresh(true));
+      if (!restartingHub) startHubTimelineMessagesEvents(() => refresh(true));
       refresh();
     })();
 

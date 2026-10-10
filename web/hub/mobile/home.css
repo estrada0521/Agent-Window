@@ -640,6 +640,10 @@ __INCLUDE:../../mobile-launch-status.css__
     }
 
     .launch-shell-card {
+      position: fixed;
+      top: 50lvh;
+      left: 50%;
+      transform: translate(-50%, -50%);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -661,6 +665,7 @@ __INCLUDE:../../mobile-launch-status.css__
       letter-spacing: -0.04em;
       line-height: 1;
       white-space: nowrap;
+      padding: 0 12px;
     }
 
     #timelineOverlay {
