@@ -1005,15 +1005,10 @@
     }
     .git-summary-counts.clean {
       color: var(--muted);
-    }
-    .git-summary-count.ins {
-      color: rgba(var(--git-ins-green-channels), 0.95);
-    }
+    }__INCLUDE:../../git-count.css__
+
     .git-commit-file-row[data-untracked="1"] .git-summary-count.del {
       display: none;
-    }
-    .git-summary-count.del {
-      color: rgba(var(--git-del-red-channels), 0.9);
     }
     #timelineHud .git-summary-meta-text,
     #timelineHud .git-summary-counts {
@@ -1024,40 +1019,6 @@
       padding-inline: var(--hud-inline-padding);
       overflow: hidden;
       pointer-events: none;
-    }
-    .git-summary-count.is-rolling {
-      display: inline-flex;
-      vertical-align: baseline;
-    }
-    .git-count-roll {
-      display: inline-flex;
-      align-items: center;
-      line-height: 1.2;
-    }
-    .git-count-roll-prefix {
-      flex: 0 0 auto;
-    }
-    .git-count-roll-digits {
-      display: inline-flex;
-      align-items: center;
-    }
-    .git-count-roll-digit {
-      height: 1.2em;
-      overflow: hidden;
-      display: inline-block;
-      vertical-align: top;
-    }
-    .git-count-roll-strip {
-      display: flex;
-      flex-direction: column;
-      will-change: transform;
-    }
-    .git-count-roll-item {
-      height: 1.2em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1.2;
     }
     .git-commit-chevron {
       width: var(--side-bar-chevron-size);
