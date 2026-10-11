@@ -26,7 +26,7 @@
         if (!(rule instanceof CSSStyleRule)) throw new Error("Syntax themes must contain plain CSS style rules");
         const color = rule.style.getPropertyValue("color");
         if (!color) continue;
-        const selectors = rule.selectorText.split(",").map((selector) => {
+        const selectors = rule.selectorText.split(",").filter((selector) => !selector.includes("::selection")).map((selector) => {
           selector = selector.trim();
           if (!selector.includes(".hljs")) throw new Error("Expected highlight.js theme selectors");
           const hasBase = /\.hljs(?![\w-])/.test(selector);
@@ -35,7 +35,7 @@
           const opposite = mode === "light" ? "dark" : "light";
           return `:root[data-syntax-theme="${mode}"] ${codeSelector}, :root[data-syntax-theme="${opposite}"] .message.user .message-body-row ${codeSelector}`;
         });
-        output.push(`${selectors.join(",")} { color: ${color}; }`);
+        if (selectors.length) output.push(`${selectors.join(",")} { color: ${color}; }`);
       }
     }
     const style = document.createElement("style");
