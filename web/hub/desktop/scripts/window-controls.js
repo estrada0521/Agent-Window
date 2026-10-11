@@ -163,23 +163,39 @@
       }
     }
 
-    async function resizeDeskWindowAroundPane({ edge, delta, apply, rollback, label, applyAfterResize = false }) {
-      if (_deskOutwardResizeInFlight || _deskAutoWindowHeight) return;
+    async function resizeDeskWindowAroundPane({ edge, delta, timelineDelta = delta, apply, rollback }) {
       const invoke = getNativeInvoke();
-      if (typeof invoke !== "function") return;
-      _deskOutwardResizeInFlight = true;
+      const previousWidth = _deskTimelineFrame.clientWidth;
+      _deskTimelineFrame.style.width = `${previousWidth}px`;
+      const root = document.documentElement;
+      const previousViewportWidth = root.getBoundingClientRect().width;
+      const previousLeft = parseFloat(root.style.left);
       let applied = false;
+      const waitForWidth = async (width) => {
+        if (Math.abs(root.getBoundingClientRect().width - width) < 1) return;
+        await new Promise((resolve) => {
+          const observer = new ResizeObserver(() => {
+            if (Math.abs(root.getBoundingClientRect().width - width) >= 1) return;
+            observer.disconnect();
+            resolve();
+          });
+          observer.observe(document.documentElement);
+        });
+      };
       try {
-        const resizing = invoke("resize_window_from_edge", { edge, delta });
-        if (applyAfterResize) await resizing;
-        apply();
+        root.style.width = `${previousViewportWidth + delta}px`;
+        if (edge === "left") root.style.left = `${previousLeft - delta}px`;
+        _deskTimelineFrame.style.width = `${previousWidth + timelineDelta}px`;
         applied = true;
-        if (!applyAfterResize) await resizing;
-      } catch (err) {
+        apply();
+        await waitForWidth(await invoke("resize_window_from_edge", { edge, delta }));
+      } catch (error) {
+        root.style.width = `${previousViewportWidth}px`;
+        root.style.left = `${previousLeft}px`;
         if (applied) rollback();
-        setError(`${label} failed`, err);
+        throw error;
       } finally {
-        _deskOutwardResizeInFlight = false;
+        _deskTimelineFrame.style.removeProperty("width");
       }
     }
 
@@ -192,70 +208,35 @@
       sendDeskSideBarCommand("");
     }
 
-    function toggleDeskHubOutward() {
-      if (_deskAutoWindowHeight) return;
+    async function toggleDeskHubOutward() {
+      if (_deskAutoWindowHeight || _deskOutwardResizeInFlight || !getNativeInvoke()) return;
       const opening = !isDeskHubOpen();
       const width = currentDeskHubWidthPx();
-      void resizeDeskWindowAroundPane({
-        edge: "left",
-        delta: opening ? width : -width,
-        apply: () => setDeskHubOpen(opening),
-        rollback: () => setDeskHubOpen(!opening),
-        label: "Toggle Hub outward",
-      });
+      _deskOutwardResizeInFlight = true;
+      try {
+        await resizeDeskWindowAroundPane({
+          edge: "left", delta: opening ? width : -width, timelineDelta: 0,
+          apply: () => setDeskHubOpen(opening),
+          rollback: () => setDeskHubOpen(!opening),
+        });
+      } catch (error) {
+        setError("Toggle Hub outward failed", error);
+      } finally {
+        _deskOutwardResizeInFlight = false;
+      }
     }
 
     function deskSideBarAvailable() {
       return !!_deskTimelineFrameLoadedUrl && _deskSideBarWidth > 0;
     }
 
-    function toggleDeskSideBarOutward() {
-      if (_deskAutoWindowHeight || !deskSideBarAvailable()) return;
-      const opening = !_deskSideBarActiveMode;
-      const width = _deskSideBarWidth;
+    async function toggleDeskSideBarOutward() {
+      if (_deskAutoWindowHeight || !deskSideBarAvailable() || _deskOutwardResizeInFlight || !getNativeInvoke()) return;
       const edge = document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right";
-      if (edge === "right") {
-        void toggleDeskSideBarOutwardRight();
-        return;
-      }
-      void resizeDeskWindowAroundPane({
-        edge,
-        delta: opening ? width : -width,
-        applyAfterResize: !opening,
-        apply: () => sendDeskSideBarCommand(""),
-        rollback: () => sendDeskSideBarCommand(""),
-        label: "Toggle side bar outward",
-      });
-    }
-
-    async function toggleDeskSideBarOutwardRight() {
-      if (_deskOutwardResizeInFlight) return;
-      const invoke = getNativeInvoke();
-      if (!invoke) return;
       _deskOutwardResizeInFlight = true;
       try {
-        await _deskTimelineFrame.contentWindow.toggleSideBarOutwardRight(async (delta, apply, rollback) => {
-          _deskTimelineFrame.style.width = `${_deskTimelineFrame.clientWidth + delta}px`;
-          apply();
-          try {
-            const width = await invoke("resize_window_from_edge", { edge: "right", delta });
-            if (Math.abs(document.documentElement.clientWidth - width) >= 1) {
-              await new Promise((resolve) => {
-                const observer = new ResizeObserver(() => {
-                  if (Math.abs(document.documentElement.clientWidth - width) >= 1) return;
-                  observer.disconnect();
-                  resolve();
-                });
-                observer.observe(document.documentElement);
-              });
-            }
-          } catch (error) {
-            rollback();
-            throw error;
-          } finally {
-            _deskTimelineFrame.style.removeProperty("width");
-          }
-        });
+        await _deskTimelineFrame.contentWindow.toggleSideBarOutward((delta, apply, rollback) =>
+          resizeDeskWindowAroundPane({ edge, delta, apply, rollback }));
       } catch (error) {
         setError("Toggle side bar outward failed", error);
       } finally {

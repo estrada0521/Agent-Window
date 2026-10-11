@@ -399,7 +399,7 @@
     html[data-empty-start="1"] .desk-new-timeline-toggle .desk-row-main { justify-content:center; }
     html[data-empty-start="1"] .desk-new-timeline-toggle .desk-row-stack { flex:0 1 auto; mask-image:none; -webkit-mask-image:none; }
     html[data-empty-start="1"] .desk-new-timeline-toggle .desk-row-kbd { display:none; }
-    html[data-empty-start="1"] .desk-workbench :is(.desk-main,.desk-hub-resizer,.desk-hub-tagline,.desk-hub-footer-credit,.desk-floating-controls) { display:none; }
+    html[data-empty-start="1"] :is(.desk-main,.desk-hub-resizer,.desk-hub-tagline,.desk-hub-footer-credit,.desk-floating-controls) { display:none; }
     html[data-empty-start="1"] .desk-top-right-controls { display:none!important; }
     html[data-empty-start="1"] .desk-hub-shell { border-radius:inherit; }
     html[data-empty-start="1"] .desk-hub-shell::after { display:none; }

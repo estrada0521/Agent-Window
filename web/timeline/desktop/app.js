@@ -668,7 +668,7 @@ __INCLUDE:git-panel/events.js__
       if (sideBarOpen) closeSideBar();
       else openSideBar();
     };
-    window.toggleSideBarOutwardRight = (resizeWindow) => sideBarOpen
+    window.toggleSideBarOutward = (resizeWindow) => sideBarOpen
       ? resizeWindow(-currentSideBarWidthPx(), closeSideBar, () => openSideBar())
       : openSideBar({ resizeWindow });
     const stopSideBarResize = ({ persist = false } = {}) => {

@@ -113,10 +113,10 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSMenu *menu = [[NSMenu alloc] initWithTitle:@""];
     menu.autoenablesItems = NO;
     for (NSMenuItem *item in items) [menu addItem:item];
-    NSView *view = [payload[@"sidebarWindow"] boolValue] ? self.sidebarWindow.contentView : self.window.contentView;
+    NSView *view = [payload[@"sidebarWindow"] boolValue] ? self.sidebarWebView : self.webView;
     CGFloat x = [payload[@"x"] doubleValue];
     CGFloat y = [payload[@"y"] doubleValue];
-    [menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(x, view.frame.size.height - y) inView:view];
+    [menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(x, view.isFlipped ? y : view.bounds.size.height - y) inView:view];
 }
 
 - (void)dispatchMenuAction:(NSDictionary *)payload {
@@ -378,7 +378,12 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     if (!isfinite(delta) || delta == 0) return @"window width delta must be a non-zero finite number";
     NSRect frame = self.window.frame;
     CGFloat next = MAX(kMinWindowWidth, frame.size.width + delta);
-    if ([edge isEqualToString:@"left"]) frame.origin.x -= next - frame.size.width;
+    if ([edge isEqualToString:@"left"]) {
+        NSPoint origin = self.webView.frame.origin;
+        origin.x += next - frame.size.width;
+        [self.webView setFrameOrigin:origin];
+        frame.origin.x -= next - frame.size.width;
+    }
     else if (![edge isEqualToString:@"right"]) return [NSString stringWithFormat:@"unsupported window edge: %@", edge];
     frame.size.width = next;
     [self.window setFrame:frame display:YES];
@@ -552,8 +557,12 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         return;
     }
     NSDictionary *body = message.body;
+    if ([body[@"cmd"] isEqualToString:@"get_window_viewport"]) {
+        replyHandler(@{ @"width": @(self.window.contentView.bounds.size.width), @"left": @(-self.webView.frame.origin.x) }, nil);
+        return;
+    }
     NSString *error = [self run:body[@"cmd"] args:body[@"args"] ?: @{}];
-    NSNumber *width = [body[@"cmd"] isEqualToString:@"resize_window_from_edge"] ? @(self.webView.bounds.size.width) : nil;
+    NSNumber *width = [body[@"cmd"] isEqualToString:@"resize_window_from_edge"] ? @(self.window.contentView.bounds.size.width) : nil;
     replyHandler(width, error);
 }
 
@@ -799,6 +808,12 @@ static BOOL HubReady(NSInteger port) {
     return NO;
 }
 
+- (void)windowDidResize:(NSNotification *)notification {
+    if (notification.object != self.window) return;
+    NSString *script = [NSString stringWithFormat:@"window.dispatchEvent(new CustomEvent('native-window-resize', { detail: { width: %.3f, left: %.3f } }));", self.window.contentView.bounds.size.width, -self.webView.frame.origin.x];
+    [self.webView evaluateJavaScript:script completionHandler:nil];
+}
+
 - (void)windowDidBecomeKey:(NSNotification *)notification {
     [self.glass setNeedsDisplay:YES];
 }
@@ -901,6 +916,8 @@ static BOOL HubReady(NSInteger port) {
 
     NSView *content = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)];
     self.window.contentView = content;
+    content.wantsLayer = YES;
+    content.layer.masksToBounds = YES;
 
     self.glass = [[NSGlassEffectView alloc] initWithFrame:content.bounds];
     self.glass.style = NSGlassEffectViewStyleClear;
@@ -917,8 +934,13 @@ static BOOL HubReady(NSInteger port) {
         injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO]];
     [config.userContentController addScriptMessageHandlerWithReply:self contentWorld:WKContentWorld.pageWorld name:@"agentWindow"];
 
-    self.webView = [[WKWebView alloc] initWithFrame:content.bounds configuration:config];
-    self.webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+    CGFloat reserveWidth = 0;
+    for (NSScreen *display in NSScreen.screens) reserveWidth = MAX(reserveWidth, display.frame.size.width);
+    NSRect webFrame = content.bounds;
+    webFrame.origin.x = -reserveWidth;
+    webFrame.size.width += reserveWidth * 2;
+    self.webView = [[WKWebView alloc] initWithFrame:webFrame configuration:config];
+    self.webView.autoresizingMask = NSViewHeightSizable;
     self.webView.inspectable = YES;
     self.webView.UIDelegate = self;
     self.webView.navigationDelegate = self;
