@@ -447,29 +447,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def _get_timelines(self, _parsed, _ctx):
         live = live_timelines_query(hub)
-        active = [
-            {
-                "name": record["name"],
-                "latest_message_sender": record["latest_message_sender"],
-                "latest_message_preview": record["latest_message_preview"],
-                "latest_message_revision": record["latest_message_revision"],
-            }
-            for record in active_timeline_records(live)
-        ]
-        archived = [
-            {
-                "name": record["name"],
-                "latest_message_sender": record["latest_message_sender"],
-                "latest_message_preview": record["latest_message_preview"],
-                "latest_message_revision": record["latest_message_revision"],
-                "has_agents": bool(record["agents"]),
-            }
-            for record in archived_timeline_records(live)
-        ]
         self._send_json(200, {
             "hub_instance": hub.instance,
-            "active_timelines": active,
-            "archived_timelines": archived,
+            "active_timelines": active_timeline_records(live),
+            "archived_timelines": archived_timeline_records(live),
             "tmux_state": live.state,
             "tmux_detail": live.detail,
         })

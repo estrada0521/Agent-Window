@@ -122,7 +122,7 @@ def archived_timeline_records(live: LiveTimelines) -> list[dict]:
             continue
         meta = read_log_meta_file(entry / META_FILENAME)
         record = build_timeline_record(name=entry.name, workspace=meta["workspace"])
-        record["agents"] = meta["agents"]
+        record["has_agents"] = bool(meta["agents"])
         timelines.append(((entry / LOG_FILENAME).stat().st_mtime, record))
     timelines.sort(key=lambda item: item[0], reverse=True)
     return [record for _mtime, record in timelines]
