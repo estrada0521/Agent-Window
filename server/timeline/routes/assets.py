@@ -6,6 +6,7 @@ from urllib.parse import parse_qs
 from server.appearance.colors import resolve_theme_palette
 from server.pwa import pwa_icon_entries, pwa_url, serve_pwa_file
 from server.timeline.file_icon_theme import file_icon_bytes, load_file_icon_theme_document
+from server.timeline.page import render_timeline_html
 from server.appearance.colors import resolve_server_theme
 from server.appearance.typography import DESKTOP_TEXT_SIZE, MOBILE_TEXT_SIZE, clamp_text_size
 from server import APP_DISPLAY_NAME
@@ -19,10 +20,11 @@ def _get_app_manifest(handler, _parsed, ctx) -> None:
     base_path = request_base_path(headers=handler.headers, query_string=_parsed.query)
     palette = resolve_theme_palette()
     bg = str(palette["dark_bg"])
+    timeline_name = ctx["state"].timeline_name
     body = json.dumps(
         {
-            "name": f"{ctx['timeline_name']} · {APP_DISPLAY_NAME}" if ctx.get("timeline_name") else APP_DISPLAY_NAME,
-            "short_name": ctx["timeline_name"],
+            "name": f"{timeline_name} · {APP_DISPLAY_NAME}",
+            "short_name": timeline_name,
             "display": "standalone",
             "background_color": bg,
             "theme_color": bg,
@@ -115,14 +117,15 @@ def _get_timeline_index(handler, parsed, ctx) -> None:
     except (TypeError, ValueError) as exc:
         handler.send_error(400, str(exc))
         return
-    body = ctx["render_timeline_html_fn"](
+    state = ctx["state"]
+    body = render_timeline_html(
         icon_data_uris=ctx["assets"].icon_data_uris,
-        server_instance=ctx["server_instance"],
-        hub_port=ctx["hub_port"],
-        timeline_port=ctx["timeline_port"],
+        server_instance=state.server_instance,
+        hub_port=state.hub_port,
+        timeline_port=state.port,
         timeline_base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
         variant=variant,
-        timeline_name=ctx["timeline_name"],
+        timeline_name=state.timeline_name,
         theme=theme,
         text_size=text_size,
     )

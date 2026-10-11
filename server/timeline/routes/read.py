@@ -79,7 +79,7 @@ def _get_messages(handler, parsed, ctx) -> None:
             return
         _send_bytes(handler, 200, json.dumps(data, ensure_ascii=True).encode(), content_type="application/json")
         return
-    body = ctx["payload_fn"](
+    body = ctx["state"].payload(
         limit=min(ENTRY_WINDOW_LIMIT, int(qs.get("limit", [ENTRY_WINDOW_LIMIT])[0])),
     )
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
@@ -243,7 +243,7 @@ def _get_files_search(handler, parsed, ctx) -> None:
 
 
 def _get_workspace_state(handler, _parsed, ctx) -> None:
-    workspace = ctx["workspace"]
+    workspace = ctx["state"].workspace
     if not workspace or not Path(workspace).is_dir():
         _send_bytes(handler, 200, b'{"workspace":false,"git":false}', content_type="application/json")
         return
@@ -296,7 +296,7 @@ def _send_git_json(handler, parsed, ctx, read) -> None:
     qs = parse_qs(parsed.query)
     arg = lambda name: (qs.get(name, [""])[0] or "").strip()
     try:
-        body = json.dumps(read(workspace_git.git_tree_root(ctx["workspace"], arg("tree")), arg), ensure_ascii=True).encode("utf-8")
+        body = json.dumps(read(workspace_git.git_tree_root(ctx["state"].workspace, arg("tree")), arg), ensure_ascii=True).encode("utf-8")
     except LookupError as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
         _send_bytes(handler, 404, body, content_type="application/json; charset=utf-8")
@@ -319,7 +319,7 @@ def _get_git_overview(handler, parsed, ctx) -> None:
 
 def _get_git_worktrees(handler, parsed, ctx) -> None:
     def read(_root, _arg):
-        trees = workspace_git.git_worktrees(ctx["workspace"])
+        trees = workspace_git.git_worktrees(ctx["state"].workspace)
         linked = sorted(trees[1:], key=lambda tree: (Path(tree["path"]) / ".git").stat().st_birthtime, reverse=True)
         worktrees = [{"path": "", "branch": trees[0]["branch"]}, *linked]
         follow_tree = ctx["state"].last_changed_git_tree()

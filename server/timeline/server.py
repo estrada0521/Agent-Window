@@ -10,7 +10,6 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 from server.same_origin import reject_cross_origin
-from server.timeline.page import render_timeline_html
 from server.timeline.state import TimelineState
 from server.timeline.process import launch_timeline_server, wait_for_timeline_server
 from server.timeline.routes.assets import dispatch_get_assets_route
@@ -39,8 +38,6 @@ workspace = ""
 hub_port = 0
 _repo_root = Path()
 state = None
-server_instance = ""
-payload = _not_initialized
 send_message = _not_initialized
 files = None
 assets = None
@@ -133,8 +130,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
     global port, workspace, hub_port
     global _repo_root, state
-    global server_instance
-    global payload
     global send_message, assets
     global send_queue, send_queue_thread, files
 
@@ -164,8 +159,6 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
         args.thread.name, f"{args.exc_type.__name__}: {args.exc_value}"
     )
 
-    server_instance = state.server_instance
-    payload = state.payload
     send_message = _send_or_enqueue_message
     files = WorkspaceFiles(workspace=state.workspace)
     start_workspace_fsevents_watcher(
@@ -220,19 +213,11 @@ def release_timeline_restart() -> None:
 
 
 def _route_context() -> dict:
-    current_timeline_name, _current_log_path = state.timeline_binding_snapshot()
     return {
-        "timeline_name": current_timeline_name,
-        "server_instance": server_instance,
         "state": state,
-        "workspace": workspace,
-        "hub_port": hub_port,
-        "timeline_port": port,
-        "payload_fn": payload,
         "send_message_fn": send_message,
         "files": files,
         "assets": assets,
-        "render_timeline_html_fn": render_timeline_html,
         "queue_timeline_restart_fn": queue_timeline_restart,
         "release_timeline_restart_fn": release_timeline_restart,
     }

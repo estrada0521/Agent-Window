@@ -67,7 +67,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         return
     state = ctx["state"]
     try:
-        instance = add_agent(timeline_name=ctx["timeline_name"], agent=agent)
+        instance = add_agent(timeline_name=ctx["state"].timeline_name, agent=agent)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -89,7 +89,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         return
     state = ctx["state"]
     try:
-        instance = remove_agent(timeline_name=ctx["timeline_name"], agent=agent)
+        instance = remove_agent(timeline_name=ctx["state"].timeline_name, agent=agent)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -110,7 +110,7 @@ def _post_upload(handler, _parsed, ctx) -> None:
         handler._send_json(413, {"ok": False, "error": f"upload exceeds {_MAX_UPLOAD_BYTES // (1024 * 1024)}MB limit"})
         return
     data = handler.rfile.read(length)
-    upload_dir = workspace_upload_dir(ctx["workspace"])
+    upload_dir = workspace_upload_dir(ctx["state"].workspace)
     upload_dir.mkdir(parents=True, exist_ok=True)
     stem = Path(filename).stem or "upload"
     ext = Path(filename).suffix
@@ -132,7 +132,7 @@ def _post_upload(handler, _parsed, ctx) -> None:
         save_name = f"{stem}_{counter}{ext}"
         save_path = upload_dir / save_name
     save_path.write_bytes(data)
-    handler._send_json(200, {"ok": True, "path": str(save_path.relative_to(Path(ctx["workspace"])))})
+    handler._send_json(200, {"ok": True, "path": str(save_path.relative_to(Path(ctx["state"].workspace)))})
 
 
 def _post_delete_upload(handler, _parsed, ctx) -> None:
@@ -145,7 +145,7 @@ def _post_delete_upload(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": "path required"})
         return
     try:
-        target = _resolve_upload_path(path_rel, workspace=ctx["workspace"])
+        target = _resolve_upload_path(path_rel, workspace=ctx["state"].workspace)
     except ValueError as exc:
         handler._send_json(400, {"ok": False, "error": str(exc)})
         return
@@ -326,7 +326,7 @@ def _post_open_pane(handler, _parsed, ctx) -> None:
 
 
 def _post_open_finder(handler, _parsed, ctx) -> None:
-    workspace = ctx["workspace"]
+    workspace = ctx["state"].workspace
     try:
         target = Path(workspace).resolve()
         if not target.exists():
@@ -343,7 +343,7 @@ def _post_open_finder(handler, _parsed, ctx) -> None:
 
 
 def _post_open_shell(handler, _parsed, ctx) -> None:
-    workspace = ctx["workspace"]
+    workspace = ctx["state"].workspace
     try:
         target = Path(workspace).resolve()
         if not target.exists():
@@ -481,7 +481,7 @@ def _post_open_diff(handler, _parsed, ctx) -> None:
     _send_workspace_result(
         handler,
         lambda: workspace_git.open_diff_tool(
-            workspace_git.git_tree_root(ctx["workspace"], (data.get("tree") or "").strip()),
+            workspace_git.git_tree_root(ctx["state"].workspace, (data.get("tree") or "").strip()),
             rel, (data.get("hash") or "").strip(), (data.get("old_path") or "").strip()
         ),
     )
