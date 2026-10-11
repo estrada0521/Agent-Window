@@ -217,7 +217,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
     }
     function failHubReadyWait(message) {
       stopHubReadyWait();
-      setError(message === "Conversation unavailable · Reset Agents" || message === "Revive failed" ? message : "Open failed", message);
+      setError(message === "Workspace not found" || message === "Conversation unavailable · Reset Agents" || message === "Revive failed" ? message : "Open failed", message);
     }
     function startHubReadyTimeout() {
       if (_hubReadyTimeoutTimer) return;
@@ -835,6 +835,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
           if (!confirm(isDelete
             ? "Delete archived logs for " + n + "? This cannot be undone."
             : "Archive " + n + "?")) return;
+          if (!isDelete && n === _currentTimelineName) _timelineFrame.contentDocument.documentElement.dataset.archiving = "1";
           const form = document.createElement("form");
           form.method = "POST";
           form.action = `${isDelete ? "/delete-archived-timeline" : "/archive-timeline"}?timeline=${encodeURIComponent(n)}`;

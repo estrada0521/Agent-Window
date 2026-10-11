@@ -129,6 +129,8 @@
       if (!confirmed) return;
       const route = isDelete ? "/delete-archived-timeline" : "/archive-timeline";
       const isSelected = _deskSelectedTimelineName === timelineName;
+      const archivingDocument = !isDelete && isSelected ? _deskTimelineFrame?.contentDocument : null;
+      if (archivingDocument) archivingDocument.documentElement.dataset.archiving = "1";
       try {
         const response = await fetch(
           `${route}?timeline=${encodeURIComponent(timelineName)}&format=json&ts=${Date.now()}`,
@@ -150,6 +152,7 @@
         clearDeskSelection();
         showDeskHubList({ open: true });
       } catch (err) {
+        if (archivingDocument) delete archivingDocument.documentElement.dataset.archiving;
         setError(isDelete ? "Delete failed" : "Archive failed", err);
       }
     }

@@ -44,7 +44,7 @@
     function failDeskOpen(message) {
       clearDeskTimelineFrame();
       console.error("Timeline open failed", message);
-      setResidentError("timeline-open", message === "Conversation unavailable · Reset Agents" || message === "Revive failed" ? message : "Open failed");
+      setResidentError("timeline-open", message === "Workspace not found" || message === "Conversation unavailable · Reset Agents" || message === "Revive failed" ? message : "Open failed");
       showDeskHubList({ open: true });
     }
 
@@ -103,7 +103,7 @@
       const message = sessionStorage.getItem(HUB_PENDING_ERROR_KEY) || "";
       if (!message) return;
       sessionStorage.removeItem(HUB_PENDING_ERROR_KEY);
-      setError("Open failed", message);
+      setError(message === "Workspace not found" ? message : "Open failed", message);
     }
 
     function isPhoneViewport() {

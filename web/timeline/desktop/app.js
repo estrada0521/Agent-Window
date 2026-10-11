@@ -606,7 +606,7 @@ __INCLUDE:git-panel/events.js__
     };
     const updateSideBarWorkspace = async () => {
       const data = await fetchWorkspaceState();
-      if (!data.workspace) throw new Error("Workspace unavailable");
+      if (!data.workspace) throw new Error("Workspace not found");
       gitContent.hidden = !data.git;
       splitDivider.hidden = !data.git;
       splitPanel.classList.toggle("workspace-only", !data.git);
@@ -617,7 +617,7 @@ __INCLUDE:git-panel/events.js__
       try {
         await updateSideBarWorkspace();
       } catch (error) {
-        setError(error.message === "Workspace unavailable" ? "Workspace unavailable" : "Sidebar unavailable", error);
+        setError(error.message === "Workspace not found" ? error.message : "Sidebar unavailable", error);
         return;
       }
       if (view) setSideBarView(view);
@@ -1056,7 +1056,7 @@ __INCLUDE:git-panel/events.js__
         cancelDpRepoLoading();
         if (repoLoadCancelled()) return;
         repoContent.querySelector(".inline-loading-row")?.remove();
-        setError("Workspace unavailable", err);
+        setError(err.message === "Workspace not found" ? err.message : "Workspace unavailable", err);
       }
     };
     const refreshRepoDir = async (rawPath) => {
@@ -1075,7 +1075,7 @@ __INCLUDE:git-panel/events.js__
         if (repoEntriesStructureSignature(currentEntries) === repoEntriesStructureSignature(entries)) return;
         renderRepoPanel(path, entries, { direction: "none" });
       } catch (error) {
-        setError("Workspace unavailable", error);
+        setError(error.message === "Workspace not found" ? error.message : "Workspace unavailable", error);
       }
     };
     window.addEventListener("message", (event) => {
@@ -1437,7 +1437,7 @@ __INCLUDE:git-panel/events.js__
           await loadGitPage({ reset: true });
         }
       } catch (error) {
-        setError("Workspace unavailable", error);
+        setError(error.message === "Workspace not found" ? error.message : "Workspace unavailable", error);
       }
     };
     const handleWorkspaceFilesChanged = () => {
