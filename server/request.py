@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from urllib.parse import parse_qs
 
@@ -59,3 +60,12 @@ def request_view_variant(*, headers, query_string: str = "", default: str = "des
     if any(token in user_agent for token in mobile_tokens):
         return "mobile"
     return default
+
+
+def read_json_body(handler) -> tuple[dict | None, str | None]:
+    raw = handler.rfile.read(int(handler.headers["Content-Length"]))
+    try:
+        data = json.loads(raw.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return None, "invalid json"
+    return (data, None) if isinstance(data, dict) else (None, "invalid json")

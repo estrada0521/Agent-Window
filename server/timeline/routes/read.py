@@ -151,20 +151,19 @@ def _get_file_raw(handler, parsed, ctx) -> None:
     except FileNotFoundError:
         handler.send_error(404)
         return
-    if int(metadata.get("status", 500)) == 416:
+    if metadata["status"] == 416:
         handler.send_response(416)
         handler.send_header("Accept-Ranges", "bytes")
-        handler.send_header("Content-Range", f"bytes */{int(metadata.get('size', 0) or 0)}")
+        handler.send_header("Content-Range", f"bytes */{metadata['size']}")
         handler.end_headers()
         return
-    handler.send_response(int(metadata.get("status", 200)))
-    handler.send_header("Content-Type", str(metadata.get("content_type") or "application/octet-stream"))
+    handler.send_response(metadata["status"])
+    handler.send_header("Content-Type", metadata["content_type"])
     handler.send_header("Cache-Control", "no-store")
     handler.send_header("Accept-Ranges", "bytes")
-    content_range = str(metadata.get("content_range") or "")
-    if content_range:
-        handler.send_header("Content-Range", content_range)
-    handler.send_header("Content-Length", str(int(metadata.get("length", 0) or 0)))
+    if metadata["content_range"]:
+        handler.send_header("Content-Range", metadata["content_range"])
+    handler.send_header("Content-Length", str(metadata["length"]))
     handler.end_headers()
     ctx["files"].stream_raw_response(metadata, handler.wfile.write)
 

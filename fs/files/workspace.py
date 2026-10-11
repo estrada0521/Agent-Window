@@ -170,21 +170,17 @@ class WorkspaceFiles:
 
     @classmethod
     def stream_raw_response(cls, metadata: dict, write):
-        length = int(metadata.get("length", 0) or 0)
-        if length <= 0:
+        remaining = metadata["length"]
+        if remaining <= 0:
             return
-        full_path = str(metadata.get("full_path") or "")
-        start = int(metadata.get("start", 0) or 0)
-        with open(full_path, "rb") as handle:
-            handle.seek(start)
-            remaining = length
+        with open(metadata["full_path"], "rb") as handle:
+            handle.seek(metadata["start"])
             while remaining > 0:
                 chunk = handle.read(min(cls.RAW_STREAM_CHUNK_BYTES, remaining))
                 if not chunk:
                     break
                 remaining -= len(chunk)
-                if write(chunk) is False:
-                    break
+                write(chunk)
 
     @staticmethod
     def is_probably_text_file(full: str) -> bool:
