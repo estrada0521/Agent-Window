@@ -66,7 +66,7 @@ def workspace_upload_dir(workspace: Path | str) -> Path:
 
 
 def workspace_timeline_port(workspace: Path | str) -> int:
-    canonical_workspace = str(Path(workspace).expanduser().resolve())
+    canonical_workspace = normalize_workspace(workspace)
     digest = int(hashlib.md5(canonical_workspace.encode()).hexdigest(), 16)
     return 30000 + (digest % 19000)
 

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from fs.log.meta import find_timeline_name_for_workspace
 from fs.log.paths import (
+    normalize_workspace,
     agent_window_log_root,
     log_jsonl_path,
 )
@@ -13,7 +14,7 @@ from fs.log.paths import (
 class WorkspaceTimelineBinding:
 
     def __init__(self, workspace: Path | str) -> None:
-        self.workspace = str(Path(workspace).expanduser().resolve())
+        self.workspace = normalize_workspace(workspace)
         self._log_root = agent_window_log_root()
         self._lock = threading.RLock()
         self._root_signature: tuple[int, int] | None = None

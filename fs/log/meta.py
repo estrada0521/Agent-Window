@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from fs.log.paths import (
+    normalize_workspace,
     agent_window_log_root,
     ensure_workspace_log_link,
     log_dir,
@@ -48,12 +49,12 @@ def log_workspace_claims(
         if not entry.is_dir() or entry.name == exclude:
             continue
         workspace = log_workspace(entry.name)
-        claims[str(Path(workspace).expanduser().resolve())] = (entry.name, workspace)
+        claims[normalize_workspace(workspace)] = (entry.name, workspace)
     return claims
 
 
 def find_timeline_name_for_workspace(workspace: Path | str, *, exclude_timeline_name: str = "") -> str | None:
-    target = str(Path(workspace).expanduser().resolve())
+    target = normalize_workspace(workspace)
     claim = log_workspace_claims(exclude_timeline_name=exclude_timeline_name).get(target)
     return claim[0] if claim else None
 

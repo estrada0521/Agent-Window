@@ -3,6 +3,8 @@ from __future__ import annotations
 import http.client
 import json
 
+from fs.log.paths import normalize_workspace
+
 
 TIMELINE_PROBE_TIMEOUT_SEC = 1.0
 
@@ -27,3 +29,7 @@ def read_timeline_server_state(timeline_port: int) -> dict | None:
     finally:
         if connection is not None:
             connection.close()
+
+
+def timeline_server_serves(state: dict | None, workspace: str) -> bool:
+    return bool(state) and state.get("workspace") == normalize_workspace(workspace)

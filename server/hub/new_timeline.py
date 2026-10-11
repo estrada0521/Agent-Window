@@ -8,6 +8,7 @@ from pathlib import Path
 
 from fs.log.meta import find_timeline_name_for_workspace
 from fs.log.paths import (
+    normalize_workspace,
     TIMELINE_NAME_MAX_LENGTH,
     port_is_bindable,
     sanitize_timeline_name,
@@ -121,7 +122,7 @@ def post_start_timeline_draft(handler, _parsed, ctx) -> None:
         handler._send_json(400, {"ok": False, "error": "workspace required"})
         return
     try:
-        resolved_workspace = str(Path(workspace).expanduser().resolve())
+        resolved_workspace = normalize_workspace(workspace)
     except Exception as exc:
         handler.log_error("Invalid workspace: %s", exc)
         handler._send_json(400, {"ok": False, "error": "Invalid workspace"})

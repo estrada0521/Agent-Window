@@ -17,7 +17,7 @@ from server.timeline.routes.assets import dispatch_get_assets_route
 from server.timeline.routes.read import dispatch_get_read_route
 from server.timeline.routes.write import dispatch_post_write_route
 from server.timeline.assets import TimelineAssets
-from server.timeline.probe import read_timeline_server_state
+from server.timeline.probe import read_timeline_server_state, timeline_server_serves
 from fs.log.paths import (
     workspace_timeline_port,
 )
@@ -211,17 +211,7 @@ def queue_timeline_restart():
         process = launch_timeline_server(workspace, env=env)
     except OSError as exc:
         return False, str(exc), True
-    expected_workspace = str(Path(workspace).expanduser().resolve())
-
-    def _ready() -> bool:
-        reported = read_timeline_server_state(port)
-        reported_workspace = str((reported or {}).get("workspace") or "").strip()
-        return bool(
-            reported_workspace
-            and str(Path(reported_workspace).expanduser().resolve()) == expected_workspace
-        )
-
-    detail = wait_for_timeline_server(process, _ready)
+    detail = wait_for_timeline_server(process, lambda: timeline_server_serves(read_timeline_server_state(port), workspace))
     return not detail, detail, True
 
 
