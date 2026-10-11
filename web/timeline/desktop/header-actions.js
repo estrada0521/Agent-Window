@@ -253,11 +253,10 @@
         try {
           const res = await fetch("/open-finder", { method: "POST" });
           if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            setError("Finder unavailable", data.error);
+            throw new Error((await res.json()).error);
           }
         } catch (err) {
-          setError("Finder unavailable", err);
+          setError(err.message, err);
         }
         return;
       }

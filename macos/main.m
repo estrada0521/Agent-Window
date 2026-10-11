@@ -175,8 +175,10 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSEventModifierFlags cmd = NSEventModifierFlagCommand, opt = NSEventModifierFlagOption;
     NSMenuItem *follow = [self action:@"gitFollow" title:@"Follow changes" key:nil mods:0];
     follow.state = [p[@"gitFollow"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
+    follow.enabled = trees.count > 0;
     NSMenuItem *pin = [self action:@"gitPin" title:@"Pin changes" key:@"p" mods:cmd | NSEventModifierFlagShift];
     pin.state = [p[@"gitSummaryPinned"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
+    pin.enabled = trees.count > 0;
 
     NSMenuItem *shell = [self action:@"openShell" title:@"Terminal" key:@"t" mods:cmd | opt];
     [self setImage:MenuImage([NSWorkspace.sharedWorkspace iconForFile:@"/System/Applications/Utilities/Terminal.app"]) on:shell];

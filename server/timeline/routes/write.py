@@ -322,7 +322,7 @@ def _post_open_finder(handler, _parsed, ctx) -> None:
     try:
         target = Path(workspace).resolve()
         if not target.exists():
-            handler._send_json(404, {"ok": False, "error": "workspace not found"})
+            handler._send_json(404, {"ok": False, "error": "Workspace not found"})
             return
         subprocess.Popen(
             ["open", str(target)],
