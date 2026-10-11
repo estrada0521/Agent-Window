@@ -32,7 +32,6 @@ class QueuedSendImmediateAckTest(unittest.TestCase):
 
         job = server_module.send_queue.get_nowait()
         self.assertEqual(job["targets"], ["nonexistent-agent"])
-        self.assertEqual(job["target"], "nonexistent-agent")
 
 
 if __name__ == "__main__":

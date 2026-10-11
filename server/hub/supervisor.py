@@ -39,16 +39,6 @@ def timeline_server_state_matches(hub, state: dict | None, *, workspace: str) ->
     return True
 
 
-def timeline_launch_env(hub) -> dict[str, str]:
-    env = os.environ.copy()
-    pythonpath_parts = [str(hub.repo_root)]
-    existing_pythonpath = (env.get("PYTHONPATH") or "").strip()
-    if existing_pythonpath:
-        pythonpath_parts.append(existing_pythonpath)
-    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
-    return env
-
-
 def stop_inactive_timeline_servers(*, keep_workspace: str = "") -> str:
     for _name, workspace in log_workspace_claims().values():
         if workspace == keep_workspace:
@@ -89,9 +79,8 @@ def ensure_timeline_server(
             if stop_detail:
                 return False, timeline_port, stop_detail
 
-        env = timeline_launch_env(hub)
         try:
-            process = launch_timeline_server(resolved_workspace, env=env)
+            process = launch_timeline_server(resolved_workspace, env=os.environ)
         except OSError as exc:
             return False, timeline_port, str(exc)
 

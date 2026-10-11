@@ -116,7 +116,6 @@ def _send_or_enqueue_message(
     entry = state.append_user_entry(normalized_message, targets=resolved_targets, client=client)
     send_queue.put(
         {
-            "target": ",".join(resolved_targets),
             "targets": resolved_targets,
             "message": normalized_message,
         }

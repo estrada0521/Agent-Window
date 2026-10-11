@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from server.pwa import pwa_url
-from agents.registry import agent_names_js_set, agent_names_js_array
+from agents.registry import agent_names_js_array
 from server.timeline.page_scripts import TIMELINE_HEADER_MENU_BUTTON_HTML, TIMELINE_SHEET_PANELS_HTML
 from server.template import load_timeline_template
 from server.appearance.colors import apply_color_tokens
@@ -92,7 +92,6 @@ def _agent_css_selectors() -> dict[str, str]:
         "__AGENT_SEL_MD_BODY__": _sel(" .md-body"),
         "__AGENT_SEL_MD_HEADING__": _cross(["h1", "h2", "h3", "h4"]),
         "__AGENT_SEL_MD_BODY_TEXT__": _cross(["p", "li", "blockquote"]),
-        "__AGENT_ICON_NAMES_JS_SET__": agent_names_js_set(),
         "__ALL_BASE_AGENTS_JS_ARRAY__": agent_names_js_array(),
     }
 

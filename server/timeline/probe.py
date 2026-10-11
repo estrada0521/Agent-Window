@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import http.client
 import json
-import time
 
 
 TIMELINE_PROBE_TIMEOUT_SEC = 1.0
@@ -16,11 +15,7 @@ def read_timeline_server_state(timeline_port: int) -> dict | None:
             int(timeline_port),
             timeout=TIMELINE_PROBE_TIMEOUT_SEC,
         )
-        connection.request(
-            "GET",
-            f"/timeline-state?ts={int(time.time() * 1000)}",
-            headers={"Host": f"127.0.0.1:{int(timeline_port)}"},
-        )
+        connection.request("GET", "/timeline-state")
         response = connection.getresponse()
         body = response.read()
         if not 200 <= response.status < 300:

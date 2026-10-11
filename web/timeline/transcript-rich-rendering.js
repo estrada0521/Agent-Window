@@ -97,8 +97,8 @@ __INCLUDE:markdown-tables.js__
         syncMessageCollapse(document);
       }).catch(() => {});
     }
-    const AGENT_ICON_NAMES = __AGENT_ICON_NAMES_JS_SET__;
     const ALL_BASE_AGENTS = __ALL_BASE_AGENTS_JS_ARRAY__;
+    const AGENT_ICON_NAMES = new Set(ALL_BASE_AGENTS);
     const agentBaseName = (name) => (name || "").toLowerCase().replace(/-\d+$/, "");
     const agentIconInstanceSubDigits = (name) => {
       const m = String(name || "").toLowerCase().match(/-(\d+)$/);

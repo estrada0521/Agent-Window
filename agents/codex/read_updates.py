@@ -89,7 +89,7 @@ def project_codex_native_log(
     if start >= file_size:
         return
 
-    def _append_codex_entry(entry: dict, line_start: int) -> bool:
+    def _append_codex_entry(entry: dict, line_start: int) -> None:
         display = ""
         idle_after = False
         entry_type = entry.get("type", "")
@@ -97,10 +97,10 @@ def project_codex_native_log(
             payload = entry.get("payload", {})
             payload_type = str(payload.get("type") or "").strip().lower()
             if payload_type == "reasoning":
-                return False
+                return
             else:
                 if payload.get("role") != "assistant":
-                    return False
+                    return
                 content = payload.get("content", [])
                 texts = []
                 if isinstance(content, list):
@@ -110,7 +110,7 @@ def project_codex_native_log(
                             if t and str(t).strip():
                                 texts.append(str(t).strip())
                 if not texts:
-                    return False
+                    return
                 display = _without_codex_memory_citation("\n".join(texts))
         elif entry_type == "compacted":
             display = "Context compacted"
@@ -121,19 +121,19 @@ def project_codex_native_log(
                 display = str(payload.get("message") or "").strip()
                 idle_after = True
             elif payload_type == "agent_reasoning":
-                return False
+                return
             elif payload_type == "task_complete":
                 display = _codex_task_error_message(payload)
                 if not display:
-                    return False
+                    return
                 idle_after = True
             else:
-                return False
+                return
         else:
-            return False
+            return
 
         if not display:
-            return False
+            return
 
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         jsonl_entry = {
@@ -147,7 +147,6 @@ def project_codex_native_log(
         append_jsonl_entry(projector.log_path, jsonl_entry)
         if idle_after:
             projector.mark_idle(agent)
-        return True
 
     last_runtime_state_event = ""
     scan = CompleteJsonlScan(resolved_path, start)

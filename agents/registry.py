@@ -69,11 +69,6 @@ def icon_file_map() -> dict[str, Path]:
     return {name: Path(__file__).resolve().parent / name / "icon.svg" for name in AGENTS}
 
 
-def agent_names_js_set() -> str:
-    items = ", ".join(f'"{n}"' for n in ALL_AGENT_NAMES)
-    return f"new Set([{items}])"
-
-
 def agent_names_js_array() -> str:
     items = ", ".join(f'"{n}"' for n in ALL_AGENT_NAMES)
     return f"[{items}]"

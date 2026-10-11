@@ -143,7 +143,6 @@ class ArchivedWorkspaceTests(unittest.TestCase):
                 patch("server.hub.supervisor.port_is_bindable", return_value=True),
                 patch("server.hub.supervisor.read_timeline_server_state", return_value=None),
                 patch("server.hub.supervisor.stop_inactive_timeline_servers", return_value=""),
-                patch("server.hub.supervisor.timeline_launch_env", return_value={}),
                 patch("server.hub.supervisor.launch_timeline_server", return_value=object()) as launch,
                 patch("server.hub.supervisor.wait_for_timeline_server", return_value=""),
             ):

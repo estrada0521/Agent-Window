@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -50,9 +49,6 @@ def _timeline_name_for_workspace(workspace: str) -> tuple[str, str]:
 
 
 def post_pick_workspace(handler, _parsed, _ctx) -> None:
-    if not shutil.which("osascript"):
-        handler._send_json(501, {"ok": False, "error": "native workspace picker is unavailable on this device"})
-        return
     length = int(handler.headers["Content-Length"])
     raw = handler.rfile.read(length)
     try:
