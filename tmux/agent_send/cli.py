@@ -5,7 +5,7 @@ import sys
 
 from agents.registry import ALL_AGENT_NAMES
 from tmux.agent_send.context import describe_timeline, format_context_text
-from tmux.agent_send.send import AgentSendError, AgentSender
+from tmux.agent_send.send import AgentSender
 
 
 def _usage_text() -> str:
@@ -44,15 +44,15 @@ def run(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        sender = AgentSender(env=dict(os.environ))
-    except AgentSendError as exc:
+        sender = AgentSender(dict(os.environ))
+    except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
     if interrupt_terminal:
         try:
             sender.interrupt_terminal()
-        except AgentSendError as exc:
+        except RuntimeError as exc:
             print(str(exc), file=sys.stderr)
             return 1
         return 0
@@ -60,7 +60,7 @@ def run(argv: list[str] | None = None) -> int:
     if args[0] == "--context":
         try:
             timeline_name = sender.resolve_timeline_name()
-        except AgentSendError as exc:
+        except RuntimeError as exc:
             print(str(exc), file=sys.stderr)
             return 1
         print(format_context_text(describe_timeline(timeline_name)))
@@ -81,11 +81,8 @@ def run(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        success = sender.send_message(
-            target_spec=args[0],
-            payload=payload,
-        )
-    except AgentSendError as exc:
+        success = sender.send_message(args[0], payload)
+    except RuntimeError as exc:
         print(str(exc), file=sys.stderr)
         return 1
 

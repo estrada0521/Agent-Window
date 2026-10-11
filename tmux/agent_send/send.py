@@ -2,334 +2,157 @@ from __future__ import annotations
 
 import http.client
 import json
-import os
-import subprocess
 import sys
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from agents import agent_base_name
 from agents.registry import ALL_AGENT_NAMES
 from fs.log.jsonl import append_jsonl_entry
 from fs.log.meta import find_timeline_name_for_workspace
-from tmux.session import AgentPane, parse_agent_topology, terminal_window_pane_id
+from tmux.session import AgentPane, agent_topology, terminal_window_pane_id
 from tmux import TMUX_SOCKET_NAME, run_tmux
 from tmux.send_keys import deliver_text_to_pane
 from fs.log.paths import log_jsonl_path, workspace_timeline_port
 
 
-class AgentSendError(RuntimeError):
-    pass
-
-
-@dataclass(frozen=True)
-class DeliveryTarget:
-    agent_name: str
-    pane_id: str
-
-
-class TmuxClient:
-    def __init__(self, socket_path: str, env: dict[str, str]):
-        self.socket_path = socket_path
-        self.env = env
-
-    def run(self, args: list[str]) -> subprocess.CompletedProcess[str]:
-        cmd = ["tmux", "-S", self.socket_path, *args]
-        try:
-            return run_tmux(args, socket_path=self.socket_path, env=self.env)
-        except OSError as exc:
-            return subprocess.CompletedProcess(cmd, 127, "", str(exc))
-
-
 class AgentSender:
-    def __init__(
-        self,
-        *,
-        env: dict[str, str] | None = None,
-    ) -> None:
-        self.env = dict(os.environ if env is None else env)
-        tmux_context = (self.env.get("TMUX") or "").strip()
+    def __init__(self, env: dict[str, str]) -> None:
+        tmux_context = (env.get("TMUX") or "").strip()
         if not tmux_context:
-            raise AgentSendError("agent-send must run inside an active tmux pane.")
-        socket_path = tmux_context.split(",", 1)[0]
-        if Path(socket_path).name != TMUX_SOCKET_NAME:
-            raise AgentSendError("agent-send must run inside an Agent Window tmux pane.")
-        self.tmux = TmuxClient(socket_path, self.env)
-        self.all_agents = list(ALL_AGENT_NAMES)
-        self._tmux_session_name: str | None = None
-
-    def resolve_tmux_session_name(self) -> str:
-        if self._tmux_session_name is not None:
-            return self._tmux_session_name
-        result = self.tmux.run(["display-message", "-p", "#{session_name}"])
-        resolved = (result.stdout or "").strip()
-        if not resolved:
+            raise RuntimeError("agent-send must run inside an active tmux pane.")
+        if Path(tmux_context.split(",", 1)[0]).name != TMUX_SOCKET_NAME:
+            raise RuntimeError("agent-send must run inside an Agent Window tmux pane.")
+        self.pane_id = (env.get("TMUX_PANE") or "").strip()
+        if not self.pane_id:
+            raise RuntimeError("TMUX_PANE is not set in this pane.")
+        result = run_tmux(["display-message", "-p", "-t", self.pane_id, "#{session_name}\t#{session_path}"])
+        self.session_name, _, self.workspace = result.stdout.strip().partition("\t")
+        if result.returncode != 0 or not self.session_name or not self.workspace:
             detail = (result.stderr or result.stdout or "").strip()
-            raise AgentSendError(detail or "Cannot resolve the current tmux session.")
-        self._tmux_session_name = resolved
-        return resolved
+            raise RuntimeError(detail or "Cannot resolve the current tmux session.")
 
-    def tmux_session_workspace(self) -> str:
-        result = self.tmux.run(
-            ["display-message", "-p", "-t", self.resolve_tmux_session_name(), "#{session_path}"]
-        )
-        workspace = (result.stdout or "").strip()
-        if result.returncode != 0 or not workspace:
-            detail = (result.stderr or result.stdout or "").strip()
-            raise AgentSendError(detail or "Cannot resolve the current tmux session workspace.")
-        return workspace
-
-    def agent_topology(self) -> list[AgentPane]:
-        result = self.tmux.run(
-            [
-                "list-windows",
-                "-t",
-                self.resolve_tmux_session_name(),
-                "-F",
-                "#{window_name}\t#{window_panes}\t#{pane_id}",
-            ]
-        )
-        if result.returncode != 0:
-            detail = (result.stderr or result.stdout or "").strip()
-            raise AgentSendError(detail or "Cannot read the current tmux topology.")
-        try:
-            return parse_agent_topology(result.stdout)
-        except RuntimeError as exc:
-            raise AgentSendError(str(exc)) from exc
-
-    def resolve_timeline_name(self, workspace: str | None = None) -> str:
-        workspace = (workspace or self.tmux_session_workspace()).strip()
-        resolved = find_timeline_name_for_workspace(workspace)
+    def resolve_timeline_name(self) -> str:
+        resolved = find_timeline_name_for_workspace(self.workspace)
         if resolved:
             return resolved
-        raise AgentSendError("No active Agent Window timeline found for this workspace.")
-
-    def resolve_agent_name(self, token: str) -> str | None:
-        lower = (token or "").strip().lower()
-        if not lower:
-            return None
-        base = agent_base_name(lower)
-        if base in self.all_agents:
-            return lower
-        return None
-
-    def resolve_self_agent(self, topology: list[AgentPane] | None = None) -> str | None:
-        current_pane = (self.env.get("TMUX_PANE") or "").strip()
-        if not current_pane:
-            raise AgentSendError("TMUX_PANE is not set in this pane.")
-        for pane in topology if topology is not None else self.agent_topology():
-            if pane.pane_id == current_pane:
-                return pane.name
-        return None
-
-    def active_agent_instances(self, topology: list[AgentPane] | None = None) -> list[str]:
-        current = topology if topology is not None else self.agent_topology()
-        return [pane.name for pane in current]
-
-    def resolve_agent_name_target(self, requested: str, available: list[str] | None = None) -> str:
-        raw = str(requested or "").strip()
-        lowered = raw.lower()
-        if not lowered:
-            raise AgentSendError("Agent target is required.")
-
-        available = available if available is not None else self.active_agent_instances()
-        for instance in available:
-            if instance.lower() == lowered:
-                return instance
-
-        resolved = self.resolve_agent_name(raw)
-        if resolved:
-            base = agent_base_name(resolved)
-            candidates = [
-                instance
-                for instance in available
-                if instance == base or instance.startswith(f"{base}-")
-            ]
-            if len(candidates) == 1:
-                return candidates[0]
-            if len(candidates) > 1:
-                options = ", ".join(candidates)
-                raise AgentSendError(f'Agent target "{raw}" is ambiguous; use one of: {options}')
-
-        raise AgentSendError(f"Agent instance not found: {raw}")
-
-    @staticmethod
-    def normalize_payload(sender: str, payload: str) -> str:
-        return normalize_sender_payload(sender, payload)
-
-    def _build_delivery_targets(
-        self,
-        target_spec: str,
-        sender_role: str | None,
-        topology: list[AgentPane],
-    ) -> list[DeliveryTarget]:
-        targets: list[DeliveryTarget] = []
-        panes_by_target: dict[str, str] = {}
-        panes_by_name = {pane.name: pane.pane_id for pane in topology}
-        active = list(panes_by_name)
-
-        def queue(agent_name: str, pane_id: str) -> None:
-            if not agent_name or not pane_id:
-                return
-            panes_by_target[agent_name] = pane_id
-
-        for raw_target in [item.strip() for item in (target_spec or "").split(",") if item.strip()]:
-            lower_target = raw_target.lower()
-            if lower_target == "others":
-                if not sender_role:
-                    raise AgentSendError("Cannot resolve current sender for target: others")
-                for instance in active:
-                    if instance != sender_role:
-                        queue(instance, panes_by_name[instance])
-                continue
-
-            canonical = self.resolve_agent_name_target(raw_target, active)
-            pane = panes_by_name.get(canonical, "")
-            if not pane:
-                raise AgentSendError(f"Target pane not found: {raw_target}")
-            queue(canonical, pane)
-
-        for name, pane in panes_by_target.items():
-            targets.append(DeliveryTarget(agent_name=name, pane_id=pane))
-        return targets
-
-    def _notify_delivered_agents(self, agents: list[str], workspace: str) -> None:
-        port = workspace_timeline_port(workspace)
-        body = json.dumps({"targets": agents}).encode("utf-8")
-        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
-        try:
-            connection.request(
-                "POST",
-                "/agents-delivered",
-                body=body,
-                headers={
-                    "Content-Type": "application/json",
-                    "Content-Length": str(len(body)),
-                    "Host": f"127.0.0.1:{port}",
-                },
-            )
-            response = connection.getresponse()
-            detail = response.read().decode("utf-8", errors="replace").strip()
-            if not 200 <= response.status < 300:
-                raise AgentSendError(detail or f"timeline server returned {response.status}")
-        except (OSError, http.client.HTTPException, TimeoutError) as exc:
-            raise AgentSendError(f"could not notify timeline server: {exc}") from exc
-        finally:
-            connection.close()
-
-    def send_to_pane(
-        self,
-        pane_id: str,
-        payload: str,
-    ) -> bool:
-        return deliver_text_to_pane(self.tmux.run, pane_id, payload)
-
-    def append_log_entry(
-        self,
-        *,
-        timeline_name: str,
-        sender: str,
-        targets: list[str],
-        payload: str,
-    ) -> None:
-        name = str(timeline_name or "").strip()
-        if not name:
-            raise AgentSendError("timeline name is required")
-        log_path = log_jsonl_path(name)
-        if not log_path.is_file():
-            raise AgentSendError(f"log is unavailable: {log_path}")
-        entry = {
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "sender": sender,
-            "targets": targets,
-            "message": payload,
-        }
-        append_jsonl_entry(log_path, entry)
+        raise RuntimeError("No active Agent Window timeline found for this workspace.")
 
     def terminal_pane_id(self) -> str:
-        pane_id = terminal_window_pane_id(
-            self.resolve_tmux_session_name(), run_tmux=self.tmux.run
-        )
+        pane_id = terminal_window_pane_id(self.session_name)
         if not pane_id:
-            raise AgentSendError("Terminal pane not found.")
+            raise RuntimeError("Terminal pane not found.")
         return pane_id
 
     def interrupt_terminal(self) -> None:
         pane_id = self.terminal_pane_id()
-        state = self.tmux.run(["display-message", "-p", "-t", pane_id, "#{pane_dead}"])
+        state = run_tmux(["display-message", "-p", "-t", pane_id, "#{pane_dead}"])
         if state.returncode != 0:
-            raise AgentSendError(state.stderr.strip() or "Cannot read terminal pane state.")
+            raise RuntimeError(state.stderr.strip() or "Cannot read terminal pane state.")
         if state.stdout.strip() == "1":
-            raise AgentSendError("Terminal pane is dead.")
-        result = self.tmux.run(["send-keys", "-t", pane_id, "C-c"])
+            raise RuntimeError("Terminal pane is dead.")
+        result = run_tmux(["send-keys", "-t", pane_id, "C-c"])
         if result.returncode != 0:
-            raise AgentSendError(result.stderr.strip() or "Failed to deliver C-c to terminal.")
+            raise RuntimeError(result.stderr.strip() or "Failed to deliver C-c to terminal.")
         print("Sent C-c to terminal.")
 
-    def send_message(
-        self,
-        *,
-        target_spec: str,
-        payload: str,
-    ) -> bool:
+    def send_message(self, target_spec: str, payload: str) -> bool:
         if any(target.strip().lower() == "terminal" for target in target_spec.split(",")):
             if target_spec.strip().lower() != "terminal":
-                raise AgentSendError("terminal must be the only target")
-            pane_id = self.terminal_pane_id()
-            if not self.send_to_pane(pane_id, payload):
-                raise AgentSendError("Failed to deliver to terminal.")
+                raise RuntimeError("terminal must be the only target")
+            if not deliver_text_to_pane(run_tmux, self.terminal_pane_id(), payload):
+                raise RuntimeError("Failed to deliver to terminal.")
             print("Sent to terminal.")
             return True
 
-        workspace = self.tmux_session_workspace()
-        timeline_name = self.resolve_timeline_name(workspace)
-        topology = self.agent_topology()
-        sender_role = self.resolve_self_agent(topology)
-        if not sender_role:
-            raise AgentSendError("Cannot resolve current sender.")
-        delivery_payload = self.normalize_payload(sender_role, payload)
-        delivery_targets = self._build_delivery_targets(target_spec, sender_role, topology)
-        if not delivery_targets:
-            raise AgentSendError("No target panes resolved.")
+        timeline_name = self.resolve_timeline_name()
+        topology = agent_topology(self.session_name)
+        sender = next((pane.name for pane in topology if pane.pane_id == self.pane_id), None)
+        if not sender:
+            raise RuntimeError("Cannot resolve current sender.")
+        delivery_payload = sender_payload(sender, payload)
+        panes_by_target = delivery_panes(target_spec, sender, topology)
+        if not panes_by_target:
+            raise RuntimeError("No target panes resolved.")
+        if sender in panes_by_target:
+            raise RuntimeError("cannot send to yourself")
 
-        if any(t.agent_name == sender_role for t in delivery_targets):
-            raise AgentSendError("cannot send to yourself")
-
-        successful_targets: list[str] = []
-        failed_any = False
-        for target in delivery_targets:
-            if self.send_to_pane(target.pane_id, delivery_payload):
-                if target.agent_name not in successful_targets:
-                    successful_targets.append(target.agent_name)
+        delivered: list[str] = []
+        for agent, pane_id in panes_by_target.items():
+            if deliver_text_to_pane(run_tmux, pane_id, delivery_payload):
+                delivered.append(agent)
             else:
-                failed_any = True
-                print(f"Failed to deliver to: {target.agent_name}", file=sys.stderr)
+                print(f"Failed to deliver to: {agent}", file=sys.stderr)
+        if not delivered:
+            raise RuntimeError("Message delivery failed for all targets.")
 
-        if not successful_targets:
-            raise AgentSendError("Message delivery failed for all targets.")
-
-        self.append_log_entry(
-            timeline_name=timeline_name,
-            sender=sender_role,
-            targets=successful_targets,
-            payload=delivery_payload,
+        log_path = log_jsonl_path(timeline_name)
+        if not log_path.is_file():
+            raise RuntimeError(f"log is unavailable: {log_path}")
+        append_jsonl_entry(
+            log_path,
+            {
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "sender": sender,
+                "targets": delivered,
+                "message": delivery_payload,
+            },
         )
         try:
-            self._notify_delivered_agents(successful_targets, workspace)
-        except AgentSendError as exc:
+            notify_delivered_agents(delivered, self.workspace)
+        except (OSError, http.client.HTTPException, RuntimeError) as exc:
             print(f"Delivered, but Agent Window was not notified: {exc}", file=sys.stderr)
 
-        target_names = ", ".join(successful_targets)
         display = delivery_payload if len(delivery_payload) <= 200 else delivery_payload[:200] + "..."
-        print(f"The following was sent to {target_names}:\n{display}")
+        print(f"The following was sent to {', '.join(delivered)}:\n{display}")
+        return len(delivered) == len(panes_by_target)
 
-        return not failed_any
+
+def delivery_panes(target_spec: str, sender: str, topology: list[AgentPane]) -> dict[str, str]:
+    panes_by_name = {pane.name: pane.pane_id for pane in topology}
+    panes_by_target: dict[str, str] = {}
+    for raw_target in [item.strip() for item in target_spec.split(",") if item.strip()]:
+        if raw_target.lower() == "others":
+            panes_by_target.update((name, pane_id) for name, pane_id in panes_by_name.items() if name != sender)
+            continue
+        name = resolve_agent_instance(raw_target, list(panes_by_name))
+        panes_by_target[name] = panes_by_name[name]
+    return panes_by_target
 
 
-def normalize_sender_payload(sender: str, payload: str) -> str:
-    rest = str(payload or "")
-    if not rest:
-        return f"[From: {sender}]\n"
-    if rest.startswith("\n"):
-        rest = rest[1:]
-    return f"[From: {sender}]\n{rest}\n"
+def resolve_agent_instance(requested: str, available: list[str]) -> str:
+    lowered = requested.lower()
+    for instance in available:
+        if instance.lower() == lowered:
+            return instance
+    base = agent_base_name(lowered)
+    if base in ALL_AGENT_NAMES:
+        candidates = [instance for instance in available if instance == base or instance.startswith(f"{base}-")]
+        if len(candidates) == 1:
+            return candidates[0]
+        if len(candidates) > 1:
+            raise RuntimeError(f'Agent target "{requested}" is ambiguous; use one of: {", ".join(candidates)}')
+    raise RuntimeError(f"Agent instance not found: {requested}")
+
+
+def notify_delivered_agents(agents: list[str], workspace: str) -> None:
+    port = workspace_timeline_port(workspace)
+    body = json.dumps({"targets": agents}).encode("utf-8")
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
+    try:
+        connection.request(
+            "POST",
+            "/agents-delivered",
+            body=body,
+            headers={"Content-Type": "application/json", "Content-Length": str(len(body))},
+        )
+        response = connection.getresponse()
+        detail = response.read().decode("utf-8", errors="replace").strip()
+        if not 200 <= response.status < 300:
+            raise RuntimeError(detail or f"timeline server returned {response.status}")
+    finally:
+        connection.close()
+
+
+def sender_payload(sender: str, payload: str) -> str:
+    body = payload[1:] if payload.startswith("\n") else payload
+    return f"[From: {sender}]\n{body}\n"
