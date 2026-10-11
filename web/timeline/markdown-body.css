@@ -324,6 +324,7 @@
       margin: 0.75em 0;
       overflow: hidden;
       border-radius: var(--code-block-radius);
+      background: var(--code-bg);
     }
 
     .md-body li > * + pre,
@@ -333,6 +334,10 @@
 
     .md-body .code-block-wrap pre {
       margin: 0;
+      background: transparent;
+      mask-image:
+        linear-gradient(to bottom, transparent var(--code-copy-button-size), rgb(0, 0, 0) calc(var(--code-copy-button-size) + 0.62em)),
+        linear-gradient(to right, rgb(0, 0, 0) calc(100% - var(--code-copy-button-size) - 1em), transparent calc(100% - var(--code-copy-button-size)));
     }
 
     .md-body :is(.code-block-wrap, .table-copy-wrap, blockquote) > .code-copy-btn {
