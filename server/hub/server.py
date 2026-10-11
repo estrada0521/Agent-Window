@@ -14,7 +14,7 @@ from server.appearance.colors import apply_color_tokens, resolve_theme_palette
 from server.appearance.colors import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from server.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
-from server.hub.proxy import proxy_timeline, split_timeline_proxy_path
+from server.hub.proxy import proxy_timeline
 from server.hub.supervisor import stop_inactive_timeline_servers
 from server.page_header import (
     PAGE_HEADER_CSS,
@@ -524,8 +524,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        if split_timeline_proxy_path(parsed.path) is not None:
-            proxy_timeline(self, "GET")
+        if proxy_timeline(self, "GET", parsed):
             return
         if serve_pwa_file(self, parsed.path, _HUB_PWA_FILES):
             return
@@ -538,8 +537,7 @@ class Handler(BaseHTTPRequestHandler):
         if reject_cross_origin(self):
             return
         parsed = urlparse(self.path)
-        if split_timeline_proxy_path(parsed.path) is not None:
-            proxy_timeline(self, "POST")
+        if proxy_timeline(self, "POST", parsed):
             return
         if self._dispatch_route(parsed, _POST_ROUTE_HANDLERS):
             return
