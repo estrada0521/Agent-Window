@@ -53,7 +53,7 @@ def find_session_for_workspace(
 def tmux_session_workspace(
     session_name: str,
 ) -> str:
-    result = run_tmux(["display-message", "-p", "-t", session_name, "#{session_path}"], timeout=2)
+    result = run_tmux(["display-message", "-p", "-t", f"{session_name}:", "#{session_path}"], timeout=2)
     workspace = (result.stdout or "").strip()
     if result.returncode != 0 or not workspace:
         detail = (result.stderr or result.stdout or "").strip()
