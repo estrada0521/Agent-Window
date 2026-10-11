@@ -564,9 +564,11 @@
       if (!path || !mobileSheet) return;
       const checkUrl = new URL(fileViewHrefForPath(path), window.location.href);
       checkUrl.searchParams.set("check", "1");
-      let check;
+      let check, stateResponse;
       try {
-        [check] = await Promise.all([fetch(checkUrl), ensureFileIconTheme()]);
+        [check, stateResponse] = await Promise.all([fetch(checkUrl), fetch("/timeline-state"), ensureFileIconTheme()]);
+        if (!stateResponse.ok) throw new Error("Failed to read workspace path");
+        mobileSheet._previewWorkspace = (await stateResponse.json()).workspace.replace(/\/+$/, "");
       } catch (_) {
         setError("Failed to open file");
         return;

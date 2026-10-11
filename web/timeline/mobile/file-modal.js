@@ -29,7 +29,10 @@
       if (hasPreviewModes(repoPreviewExt())) {
         items.push(["mode", repoPreviewMode === "text" ? "Show Rendered" : "Show Source"]);
       }
-      items.push(["copyAbsolutePath", "Copy Absolute Path"], ["copyRelativePath", "Copy Relative Path"]);
+      const path = mobileSheet?._previewPath || "";
+      const root = mobileSheet?._previewWorkspace;
+      const outside = path.startsWith("/") && !path.startsWith(`${root}/`);
+      items.push(["copyAbsolutePath", "Copy Absolute Path"], ["copyRelativePath", "Copy Relative Path", outside]);
       return items;
     };
     const repoPreviewSharesText = () => hasPreviewModes(repoPreviewExt())
@@ -115,7 +118,7 @@
         event.stopPropagation();
         const items = repoPreviewMenuItems();
         if (!items.length) return;
-        menuSelect.innerHTML = '<option value="" disabled selected>Menu</option>' + items.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+        menuSelect.innerHTML = '<option value="" disabled selected>Menu</option>' + items.map(([value, label, disabled]) => `<option value="${value}"${disabled ? " disabled" : ""}>${label}</option>`).join("");
         const rect = menuBtn.getBoundingClientRect();
         const headerRect = rightMenuBtn.getBoundingClientRect();
         menuSelect.style.left = `${Math.round(rect.left)}px`;
@@ -146,11 +149,9 @@
           const copy = pendingPathCopy;
           pendingPathCopy = null;
           try {
-            const response = await fetchWithTimeout("/timeline-state", {}, 4000);
-            if (!response.ok) throw new Error("Failed to read workspace path");
-            const state = await response.json();
-            const root = state.workspace.replace(/\/+$/, "");
+            const root = mobileSheet._previewWorkspace;
             const path = copy.path;
+            if (action === "copyRelativePath" && path.startsWith("/") && !path.startsWith(`${root}/`)) throw new Error("File is outside workspace");
             const text = action === "copyAbsolutePath"
               ? (path.startsWith("/") ? path : `${root}/${path}`)
               : (path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path);

@@ -751,13 +751,17 @@ __INCLUDE:git-panel/events.js__
     let fileContextPaths = [];
     let fileContextTriggerPath = "";
     let workspaceRoot = "";
-    const openFileContextMenu = (rawPathOrPaths, event, { openFile = false, triggerPath = "" } = {}) => {
+    const openFileContextMenu = async (rawPathOrPaths, event, { openFile = false, triggerPath = "" } = {}) => {
       const paths = (Array.isArray(rawPathOrPaths) ? rawPathOrPaths : [rawPathOrPaths])
         .map(normalizeWorkspaceFilePath)
         .filter(Boolean);
       if (!paths.length) return;
       event.preventDefault();
       event.stopPropagation();
+      if (paths.some((path) => path.startsWith("/"))) {
+        try { await loadWorkspaceRoot(); }
+        catch (error) { setError("Failed to read workspace path", error); return; }
+      }
       fileContextPaths = paths;
       fileContextTriggerPath = normalizeWorkspaceFilePath(triggerPath) || paths[0];
       window.parent?.postMessage({
@@ -766,6 +770,7 @@ __INCLUDE:git-panel/events.js__
           x: Math.round(Number(event.clientX) || 0),
           y: Math.round(Number(event.clientY) || 0),
           openFile,
+          canCopyRelativePath: paths.every((path) => !path.startsWith("/") || path.startsWith(`${workspaceRoot}/`)),
           sidebarWindow: event.target.ownerDocument !== document,
         },
       }, "*");
@@ -795,6 +800,7 @@ __INCLUDE:git-panel/events.js__
       const text = paths.map((p) => {
         const path = normalizeWorkspaceFilePath(p);
         if (absolute) return path.startsWith("/") ? path : `${workspaceRoot}/${path}`;
+        if (path.startsWith("/") && !path.startsWith(`${workspaceRoot}/`)) throw new Error("File is outside workspace");
         return path.startsWith(`${workspaceRoot}/`) ? path.slice(workspaceRoot.length + 1) : path;
       }).map((path) => `\`${path}\``).join("\n");
       await doCopyText(text);

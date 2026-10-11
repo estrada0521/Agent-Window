@@ -95,6 +95,7 @@
             x: Math.round(Number(childPayload.x || 0) + (childPayload.sidebarWindow ? 0 : Number(frameRect.left || 0))),
             y: Math.round(Number(childPayload.y || 0) + (childPayload.sidebarWindow ? 0 : Number(frameRect.top || 0))),
             openFile: !!childPayload.openFile,
+            canCopyRelativePath: !!childPayload.canCopyRelativePath,
             sidebarWindow: !!childPayload.sidebarWindow,
           },
         }).catch((err) => {

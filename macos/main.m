@@ -295,6 +295,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 - (void)showFileContextMenu:(NSDictionary *)p {
     NSEventModifierFlags cmd = NSEventModifierFlagCommand, opt = NSEventModifierFlagOption, shift = NSEventModifierFlagShift;
     NSMutableArray *items = [NSMutableArray array];
+    NSMenuItem *copyRelative = [self action:@"copyRelativeFilePath" title:@"Copy Relative Path" key:@"c" mods:cmd | opt | shift];
+    copyRelative.enabled = [p[@"canCopyRelativePath"] boolValue];
     if ([p[@"openFile"] boolValue]) [items addObject:[self action:@"openFile" title:@"Open Current File" key:@"o" mods:cmd]];
     [items addObjectsFromArray:@[
         [self action:@"quickLook" title:@"Quick Look" key:@"y" mods:cmd],
@@ -302,7 +304,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         NSMenuItem.separatorItem,
         [self action:@"copyFiles" title:@"Copy" key:@"c" mods:cmd],
         [self action:@"copyAbsoluteFilePath" title:@"Copy Absolute Path" key:@"c" mods:cmd | opt],
-        [self action:@"copyRelativeFilePath" title:@"Copy Relative Path" key:@"c" mods:cmd | opt | shift],
+        copyRelative,
     ]];
     [self popUp:items at:p];
 }
