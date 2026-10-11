@@ -48,10 +48,17 @@
     };
     const fetchRepoDir = async (path) => {
       const res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load directory");
+      if (!res.ok) {
+        const message = (await res.json().catch(() => ({}))).error || "Failed to load directory";
+        if (path && res.status === 404 && message === "Directory not found") {
+          return { ...await fetchRepoDir(""), missingPath: path };
+        }
+        throw new Error(message);
+      }
       const { entries } = await res.json();
-      return entries.sort((a, b) => {
+      entries.sort((a, b) => {
         if (a.kind !== b.kind) return a.kind === "dir" ? -1 : 1;
         return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
       });
+      return { path, entries };
     };

@@ -1038,25 +1038,26 @@ __INCLUDE:git-panel/events.js__
         repoLoadCancelled,
       );
       try {
-        const [entries] = await Promise.all([
+        const [directory] = await Promise.all([
           fetchRepoDir(path),
           ensureFileIconTheme(),
         ]);
         cancelDpRepoLoading();
         if (repoLoadCancelled()) return;
-        renderRepoPanel(path, entries, { direction });
+        renderRepoPanel(directory.path, directory.entries, { direction: directory.missingPath ? "back" : direction });
+        if (directory.missingPath) setError("Folder not found");
       } catch (err) {
         cancelDpRepoLoading();
         if (repoLoadCancelled()) return;
         repoContent.querySelector(".inline-loading-row")?.remove();
-        setError(err.message === "Workspace not found" ? err.message : "Workspace unavailable", err);
+        setError(err.message, err);
       }
     };
     const refreshRepoDir = async (rawPath) => {
       if (!sideBarOpen || !repoContent?.querySelector(".repo-browser-stack")) return;
       const path = normalizePath(rawPath);
       try {
-        const [entries] = await Promise.all([
+        const [directory] = await Promise.all([
           fetchRepoDir(path),
           ensureFileIconTheme(),
         ]);
@@ -1065,10 +1066,12 @@ __INCLUDE:git-panel/events.js__
           kind: item.classList.contains("repo-browser-dir") ? "dir" : "file",
           path: normalizePath(item.title || ""),
         }));
-        if (repoEntriesStructureSignature(currentEntries) === repoEntriesStructureSignature(entries)) return;
-        renderRepoPanel(path, entries, { direction: "none" });
+        if (!directory.missingPath && repoEntriesStructureSignature(currentEntries) === repoEntriesStructureSignature(directory.entries)) return;
+        renderRepoPanel(directory.path, directory.entries, { direction: directory.missingPath ? "back" : "none" });
+        if (directory.missingPath) setError("Folder not found");
       } catch (error) {
-        setError(error.message === "Workspace not found" ? error.message : "Workspace unavailable", error);
+        if (!sideBarOpen || activeSideBarView !== "repo" || normalizePath(repoBrowserPath) !== path) return;
+        setError(error.message, error);
       }
     };
     window.addEventListener("message", (event) => {

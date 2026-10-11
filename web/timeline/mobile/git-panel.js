@@ -277,7 +277,7 @@ __INCLUDE:../git-panel-controller.js__
         if (row.dataset.untracked === "1") params.set("untracked", "1");
         fetchGitJson(`/git-file-diff?${params.toString()}`)
           .then((data) => { block.innerHTML = gitDiffLinesHtml(data?.diff); })
-          .catch((err) => { block.innerHTML = `<div class="git-diff-line is-hunk">${escapeHtml(err?.message || String(err))}</div>`; });
+          .catch((err) => { block.remove(); setError("Failed to load diff", err); });
       });
     };
     const syncGitDiffToggle = () => {
@@ -377,7 +377,6 @@ __INCLUDE:../git-panel-controller.js__
           <div class="git-list-view mobile-sheet-view mobile-sheet-list">
             <div class="mobile-sheet-list-body">
               <div class="git-commit-list"></div>
-              <button type="button" class="page-menu-item git-load-more" hidden></button>
             </div>
           </div>
           <div class="git-detail-view mobile-sheet-view mobile-sheet-list">
@@ -387,7 +386,7 @@ __INCLUDE:../git-panel-controller.js__
       },
       setBodyHtml: setGitPanelBodyHtml,
       loadingHtml: mobileSheetStatusListHtml("", { loading: true }),
-      errorHtml: (message) => mobileSheetStatusListHtml(message, { error: true }),
+      onError: (error) => setError("Git unavailable", error),
       emptyCommitsHtml: '<div class="sheet-list-empty" data-git-empty="1">No commits</div>',
       onLoadReset: () => {
         setGitSheetTitle();

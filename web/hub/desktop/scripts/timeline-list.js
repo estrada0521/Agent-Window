@@ -582,15 +582,11 @@
           _deskTimelinesRenderedOnce = true;
         }
         if (!skipRestore) maybeRestoreDeskSelection();
-      } catch (_) {
+      } catch (err) {
         if (requestSeq !== _deskTimelinesRequestSeq) return;
         finishDeskHubLoad();
         if (_deskTimelinesRenderedOnce || _hubTimelinesCache.active.length || _hubTimelinesCache.archived.length) return;
-        if (_deskTimelineList) {
-          const newTimelineSection = _deskNewTimelineToggle?.closest(".desk-new-timeline-section") || null;
-          _deskTimelineList.innerHTML = `<div class="desk-empty-list">Failed to load timelines</div>`;
-          if (newTimelineSection) _deskTimelineList.prepend(newTimelineSection);
-        }
+        setError("Failed to load timelines", err);
         getNativeInvoke()?.("present_hub", { empty:false }).catch((err) => setError("Open failed", err));
       }
     }

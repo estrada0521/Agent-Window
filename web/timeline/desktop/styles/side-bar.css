@@ -1167,23 +1167,6 @@
       justify-content: center;
     }
     .git-commit-file-row.clickable { cursor: pointer; }
-    .git-load-more {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: var(--text-size, 13px);
-      color: var(--muted);
-      padding: 0.77em 0;
-      border: none;
-      background: transparent;
-    }
-    .git-load-more[hidden] { display: none; }
-    .git-load-more:disabled {
-      cursor: default;
-      color: var(--muted);
-    }
     html[data-desktop-timeline="1"] body.side-bar-open {
       padding-left: var(--side-reserve-left);
       padding-right: var(--side-reserve-right);

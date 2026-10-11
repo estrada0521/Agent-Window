@@ -25,7 +25,6 @@
             <div class="git-summary-wrap"></div>
             <div class="git-commit-scroll">
               <div class="git-commit-list"></div>
-              <button type="button" class="git-load-more" hidden></button>
             </div>
           </div>
           <div class="git-detail-view">

@@ -728,13 +728,12 @@ __INCLUDE:git-panel.js__
 
       const chevronRightIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
 
-      const renderPanel = (rawPath, entriesForPath, { loading = false, error = "", transition = "none" } = {}) => {
+      const renderPanel = (rawPath, entriesForPath, { loading = false, transition = "none" } = {}) => {
         const path = normalizeRepoPath(rawPath);
         const nextRenderSig = JSON.stringify({
           timeline: timelineKey,
           path,
           loading: loading ? 1 : 0,
-          error: String(error || ""),
           entries: entriesForPath,
         });
         if (nextRenderSig === repoPanelRenderSig && repoBrowserMountEl()?.childElementCount) return;
@@ -827,11 +826,6 @@ __INCLUDE:git-panel.js__
           finishChrome();
           return;
         }
-        if (error) {
-          presentMobileSheetStatus(mount, error, { error: true });
-          finishChrome();
-          return;
-        }
         if (!entriesForPath.length) {
           presentMobileSheetStatus(mount, "No files in this directory");
           finishChrome();
@@ -875,31 +869,20 @@ __INCLUDE:git-panel.js__
           );
         }
         try {
-          const [entriesForPath] = await Promise.all([
+          const [directory] = await Promise.all([
             fetchRepoDir(path),
             ensureFileIconTheme(),
           ]);
           cancelRepoLoading();
           if (repoLoadCancelled()) return;
           if (canPreserveCurrent && _repoBrowserPath !== path) return;
-          renderPanel(path, entriesForPath, { transition });
+          renderPanel(directory.path, directory.entries, { transition: directory.missingPath ? "back" : transition });
+          if (directory.missingPath) setError("Folder not found");
         } catch (err) {
           cancelRepoLoading();
           if (repoLoadCancelled()) return;
-          if (canPreserveCurrent) return;
-          const errorText = String(err?.message || "Failed to load directory");
-          if (path) {
-            try {
-              const [rootEntries] = await Promise.all([
-                fetchRepoDir(""),
-                ensureFileIconTheme(),
-              ]);
-              if (updateSeq !== repoPanelUpdateSeq || mobileSheet._repoTimelineKey !== timelineKey) return;
-              renderPanel("", rootEntries, { transition: "back" });
-              return;
-            } catch (_) { }
-          }
-          renderPanel(path, [], { error: errorText, transition });
+          if (!canPreserveCurrent) repoBrowserMountEl()?.replaceChildren();
+          setError(err.message || "Failed to load directory", err);
         }
       };
 

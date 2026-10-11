@@ -155,9 +155,9 @@
         pinnedSel.clear();
         aside.classList.remove("is-expanded");
         expand.dataset.scrollFade = "none";
-        if (!clear) return;
         fetchSeq++;
         refreshPromise = null;
+        if (!clear) return;
         pinnedExpandSections = null;
         expand.innerHTML = "";
       }
@@ -186,10 +186,11 @@
               gitCommitFileListHtml(s.files) +
               `</div>`
             ).join(""));
-          } catch (_) {
+          } catch (err) {
             if (seq !== fetchSeq) return;
             pinnedExpandSections = null;
-            replaceExpandContent(`<div class="git-pinned-expand-empty">Failed to load</div>`);
+            replaceExpandContent("");
+            setError("Failed to load changes", err);
           }
           requestAnimationFrame(updateExpandFade);
         })();
@@ -217,7 +218,7 @@
       }
 
       pinnedExpandRefresh = () => {
-        if (!aside.hidden) void refreshContent();
+        if (!aside.hidden && aside.classList.contains("is-expanded")) void refreshContent();
       };
 
       expand.addEventListener("click", async (event) => {

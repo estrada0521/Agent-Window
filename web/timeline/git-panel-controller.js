@@ -5,7 +5,7 @@
         hasMore: false,
         pageLoading: false,
         cancelLoading: () => {},
-        loadError: "",
+        loadFailed: false,
         loadSeq: 0,
         refreshSeq: 0,
         refreshInFlight: false,
@@ -26,7 +26,6 @@
         else scroller.scrollTop = 0;
       };
       const commitListEl = () => root()?.querySelector(".git-commit-list");
-      const loadMoreEl = () => root()?.querySelector(".git-load-more");
       const disconnectObserver = () => {
         if (!state.observer) return;
         try { state.observer.disconnect(); } catch (_) { }
@@ -55,17 +54,10 @@
         listEl.querySelector("[data-git-empty]")?.remove();
         listEl.insertAdjacentHTML("beforeend", commits.map(rowHtml).join(""));
       };
-      const updateLoadMoreUi = () => {
-        const btn = loadMoreEl();
-        if (!btn) return;
-        btn.hidden = !!host.onError || !state.loadError;
-        btn.disabled = state.pageLoading;
-        btn.textContent = state.loadError ? "Retry loading commits" : "";
-      };
       const ensureObserver = () => {
         disconnectObserver();
         const lastRow = commitListEl()?.lastElementChild;
-        if (!lastRow?.matches(".git-commit-row") || !state.hasMore || state.pageLoading || state.loadError || typeof IntersectionObserver !== "function") return;
+        if (!lastRow?.matches(".git-commit-row") || !state.hasMore || state.pageLoading || state.loadFailed || typeof IntersectionObserver !== "function") return;
         state.observer = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
             if (!entry.isIntersecting) return;
@@ -88,7 +80,6 @@
         } else if (page.pageCommits.length) {
           renderCommitRows(page.pageCommits, { append: true });
         }
-        updateLoadMoreUi();
         ensureObserver();
       };
       const applyPage = (data, { reset = false, newHashes = null } = {}) => {
@@ -176,7 +167,6 @@
         if (head) head.innerHTML = "";
         state.detailContext = null;
         host.onCloseDetail?.({ hadDetail });
-        updateLoadMoreUi();
         ensureObserver();
         const shouldRefresh = !!refreshList;
         state.detailNeedsRefresh = false;
@@ -269,12 +259,8 @@
             isWorktree,
           });
         } catch (error) {
-          if (host.onError) {
-            host.onError(error);
-            wrapEl.replaceChildren();
-          } else {
-            wrapEl.innerHTML = '<div class="git-commit-file-empty sheet-list-empty error">Failed to load file stats</div>';
-          }
+          host.onError(error);
+          wrapEl.replaceChildren();
           if (holdFiles) wrapEl.hidden = false;
           host.onDetailFilesReady?.({
             wrapEl,
@@ -288,10 +274,10 @@
       const loadPage = async ({ reset = false } = {}) => {
         if (host.canLoad && !host.canLoad()) return;
         if (state.pageLoading && !reset) return;
-        if (!reset && !state.hasMore && !state.loadError) return;
+        if (!reset && !state.hasMore && !state.loadFailed) return;
         const loadSeq = ++state.loadSeq;
         state.pageLoading = true;
-        state.loadError = "";
+        state.loadFailed = false;
         disconnectObserver();
         state.cancelLoading();
         if (reset) {
@@ -305,8 +291,6 @@
             if (loadSeq !== state.loadSeq) return;
             host.setBodyHtml(host.loadingHtml);
           });
-        } else {
-          updateLoadMoreUi();
         }
         try {
           const data = await fetchGitOverview({ offset: reset ? 0 : state.nextOffset });
@@ -314,18 +298,17 @@
           applyPage(data, { reset });
         } catch (err) {
           if (loadSeq !== state.loadSeq) return;
-          host.onError?.(err);
+          host.onError(err);
           if (reset) {
-            host.setBodyHtml(host.onError ? "" : host.errorHtml(err?.message || "Failed to load git overview"));
+            host.setBodyHtml("");
           } else {
-            state.loadError = err?.message || "Failed to load more commits";
+            state.loadFailed = true;
           }
         } finally {
           if (loadSeq !== state.loadSeq) return;
           state.cancelLoading();
           state.cancelLoading = () => {};
           state.pageLoading = false;
-          updateLoadMoreUi();
           ensureObserver();
           if (state.refreshQueued) {
             state.refreshQueued = false;
@@ -370,7 +353,6 @@
             if (!state.refreshQueued) break;
           }
         } catch (error) {
-          if (!host.onError) throw error;
           host.onError(error);
         } finally {
           state.refreshInFlight = false;
@@ -395,13 +377,6 @@
           return;
         }
         if (requireOpen && !requireOpen()) return;
-        const loadMoreBtn = event.target.closest(".git-load-more");
-        if (loadMoreBtn) {
-          event.preventDefault();
-          event.stopPropagation();
-          await loadPage();
-          return;
-        }
         if (onFileRow) {
           const fileRow = event.target.closest(".git-commit-file-row");
           if (fileRow) {

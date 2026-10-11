@@ -563,22 +563,7 @@
       gap: var(--sheet-list-item-gap);
     }
 
-    .git-load-more {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: 12px;
-      color: var(--muted);
-      padding: 10px 0;
-    }
-    .git-load-more[hidden] { display: none; }
 
-    .git-load-more:disabled {
-      cursor: default;
-      color: var(--muted);
-    }
 
     .git-worktree-button {
       display: flex;

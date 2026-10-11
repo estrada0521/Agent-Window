@@ -1035,11 +1035,11 @@ __INCLUDE:../../mobile-edge-swipe.js__
           } else {
             releaseHubLaunchShellAfterRender();
           }
-        } catch (_) {
+        } catch (err) {
           if (requestSeq !== _mobTimelinesRequestSeq) return;
           if (_mobTimelinesRenderedOnce || _mobTimelinesCache.active.length || _mobTimelinesCache.archived.length) return;
-          wrap.innerHTML = `<div class="mob-empty">Failed to load timelines</div>`;
-          if (_hubLaunchShellPending) failHubReadyWait("Failed to load timelines");
+          stopHubReadyWait();
+          setError("Failed to load timelines", err);
         }
       };
       refreshMobTimelines = refresh;
