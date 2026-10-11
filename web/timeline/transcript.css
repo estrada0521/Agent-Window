@@ -210,9 +210,9 @@
       position: relative;
     }
 
-.message.user .message-collapse-toggle {
-      left: 0.9em;
-      bottom: calc(0.65em + 10px);
+.message.user .message-body-row > .message-collapse-toggle {
+      left: 0;
+      padding-left: inherit;
     }
 
 .message-row:not(.user) .message::before {
