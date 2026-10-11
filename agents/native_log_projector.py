@@ -18,6 +18,7 @@ from agents.cursor.resolve_path import resolve_cursor_session_jsonl_path
 from agents.grok.read_updates import project_grok_native_log
 from agents.grok.resolve_path import resolve_grok_updates_path
 from agents.native_log_watcher import NativeLogWatcher
+from fs.log.jsonl import append_jsonl_entry
 from tmux.session import pane_field
 
 BIND_INTERVAL_SECONDS = 0.5
@@ -140,6 +141,19 @@ class NativeLogProjector:
         project_fn = _PROJECT_BY_BASE[agent_base_name(agent)]
         with self._project_lock:
             project_fn(self, agent, path, start_at_end=start_at_end)
+
+    def append_reply(self, agent: str, path: str, offset: int, message: str) -> None:
+        append_jsonl_entry(
+            self.log_path,
+            {
+                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "sender": agent,
+                "targets": ["user"],
+                "message": message,
+                "native_log_path": path,
+                "native_log_offset": offset,
+            },
+        )
 
     def bind_after_send(self, agent: str) -> None:
         with self._bind_workers_lock:

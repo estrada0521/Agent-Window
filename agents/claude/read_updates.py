@@ -1,15 +1,10 @@
 from __future__ import annotations
 
 import os
-import time
 
-from agents.read_offset import (
-    advance_read_offset,
-    read_offset_start,
-)
+from agents.read_offset import read_offset_start
 from agents.claude.read_running import iter_tool_calls, running_tool_events
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
-from fs.log.jsonl import append_jsonl_entry
 
 
 def _claude_entry_marks_turn_done(entry: dict) -> bool:
@@ -44,19 +39,18 @@ def _claude_entry_marks_turn_done(entry: dict) -> bool:
 def project_claude_native_log(
     projector,
     agent: str,
-    native_log_path: str | None = None,
+    path: str,
     *,
     start_at_end: bool = False,
 ) -> None:
-    session_path_str = str(native_log_path or "").strip()
-    if not session_path_str or not os.path.exists(session_path_str):
+    if not os.path.exists(path):
         return
 
-    file_size = os.path.getsize(session_path_str)
+    file_size = os.path.getsize(path)
     if start_at_end:
-        advance_read_offset(projector.offsets, session_path_str, file_size)
+        projector.offsets[path] = file_size
         return
-    start = read_offset_start(projector.offsets, session_path_str, file_size)
+    start = read_offset_start(projector.offsets, path, file_size)
     if start >= file_size:
         return
 
@@ -85,18 +79,10 @@ def project_claude_native_log(
             if not texts:
                 return
             display = "\n".join(texts)
-        jsonl_entry = {
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "sender": agent,
-            "targets": ["user"],
-            "message": display,
-            "native_log_path": session_path_str,
-            "native_log_offset": line_start,
-        }
-        append_jsonl_entry(projector.log_path, jsonl_entry)
+        projector.append_reply(agent, path, line_start, display)
 
     turn_done_seen = False
-    scan = CompleteJsonlScan(session_path_str, start)
+    scan = CompleteJsonlScan(path, start)
     for line_start, entry in scan:
         if _claude_entry_marks_turn_done(entry):
             turn_done_seen = True
@@ -107,7 +93,7 @@ def project_claude_native_log(
         if tool_evs:
             projector.push_running_display(agent, tool_evs)
 
-    advance_read_offset(projector.offsets, session_path_str, scan.consumed)
+    projector.offsets[path] = scan.consumed
     report_skipped_lines(projector, agent, scan)
     if turn_done_seen:
         projector.mark_idle(agent)

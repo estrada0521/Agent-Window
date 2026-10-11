@@ -1,43 +1,22 @@
 from __future__ import annotations
 
 import os
-import time
 from pathlib import Path
 
-from agents.read_offset import (
-    advance_read_offset,
-    read_offset_start,
-)
+from agents.read_offset import read_offset_start
 from agents.grok.read_running import (
     iter_tool_calls_from_update,
     running_tool_events,
+    update_payload,
 )
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
-from fs.log.jsonl import append_jsonl_entry
 
 
-def extract_grok_assistant_text(entry: object) -> str:
-    if not isinstance(entry, dict) or entry.get("type") != "assistant":
+def _grok_assistant_text(entry: dict) -> str:
+    if entry.get("type") != "assistant":
         return ""
     content = entry.get("content")
     return content.strip() if isinstance(content, str) else ""
-
-
-def _append_grok_reply(projector, agent: str, history_path: str, line_start: int, entry: dict) -> None:
-    display = extract_grok_assistant_text(entry)
-    if not display:
-        return
-    append_jsonl_entry(
-        projector.log_path,
-        {
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "sender": agent,
-            "targets": ["user"],
-            "message": display,
-            "native_log_path": history_path,
-            "native_log_offset": line_start,
-        },
-    )
 
 
 def _sync_grok_chat_history(projector, agent: str, history_path: str) -> None:
@@ -47,20 +26,17 @@ def _sync_grok_chat_history(projector, agent: str, history_path: str) -> None:
         return
     scan = CompleteJsonlScan(history_path, start)
     for line_start, entry in scan:
-        _append_grok_reply(projector, agent, history_path, line_start, entry)
-    advance_read_offset(projector.offsets, history_path, scan.consumed)
+        display = _grok_assistant_text(entry)
+        if display:
+            projector.append_reply(agent, history_path, line_start, display)
+    projector.offsets[history_path] = scan.consumed
     report_skipped_lines(projector, agent, scan)
 
 
-def _turn_completed(entry: object) -> bool:
-    if not isinstance(entry, dict):
-        return False
-    params = entry.get("params")
-    if not isinstance(params, dict):
-        return False
-    update = params.get("update")
+def _turn_completed(entry: dict) -> bool:
+    update = update_payload(entry)
     return (
-        isinstance(update, dict)
+        update is not None
         and update.get("sessionUpdate") == "turn_completed"
         and update.get("stop_reason") == "end_turn"
     )
@@ -74,12 +50,11 @@ def _chat_history_path(updates_path: str) -> str:
 def project_grok_native_log(
     projector,
     agent: str,
-    native_log_path: str | None = None,
+    updates_path: str,
     *,
     start_at_end: bool = False,
 ) -> None:
-    updates_path = str(native_log_path or "").strip()
-    if not updates_path or not os.path.isfile(updates_path):
+    if not os.path.isfile(updates_path):
         return
     history_path = _chat_history_path(updates_path)
     if not history_path:
@@ -88,8 +63,8 @@ def project_grok_native_log(
     file_size = os.path.getsize(updates_path)
     history_size = os.path.getsize(history_path)
     if start_at_end:
-        advance_read_offset(projector.offsets, updates_path, file_size)
-        advance_read_offset(projector.offsets, history_path, history_size)
+        projector.offsets[updates_path] = file_size
+        projector.offsets[history_path] = history_size
         return
     start = read_offset_start(projector.offsets, updates_path, file_size)
 
@@ -104,7 +79,7 @@ def project_grok_native_log(
                 tool_evs.extend(running_tool_events(name, inp, workspace=workspace))
             if tool_evs:
                 projector.push_running_display(agent, tool_evs)
-        advance_read_offset(projector.offsets, updates_path, scan.consumed)
+        projector.offsets[updates_path] = scan.consumed
         report_skipped_lines(projector, agent, scan)
 
     _sync_grok_chat_history(projector, agent, history_path)

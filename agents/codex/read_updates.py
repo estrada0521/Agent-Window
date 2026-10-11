@@ -3,15 +3,10 @@ from __future__ import annotations
 import json
 import os
 import re
-import time
 
-from agents.read_offset import (
-    advance_read_offset,
-    read_offset_start,
-)
+from agents.read_offset import read_offset_start
 from agents.codex.read_running import iter_tool_calls, running_tool_events
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
-from fs.log.jsonl import append_jsonl_entry
 
 
 _CODEX_MEMORY_CITATION_SUFFIX = re.compile(
@@ -25,9 +20,7 @@ def _without_codex_memory_citation(text: str) -> str:
     return _CODEX_MEMORY_CITATION_SUFFIX.sub("", text).strip()
 
 
-def _codex_runtime_state_event(entry: object) -> str:
-    if not isinstance(entry, dict):
-        return ""
+def _codex_runtime_state_event(entry: dict) -> str:
     entry_type = entry.get("type")
     payload = entry.get("payload")
     if not isinstance(payload, dict):
@@ -73,19 +66,18 @@ def _codex_task_error_message(payload: dict) -> str:
 def project_codex_native_log(
     projector,
     agent: str,
-    native_log_path: str | None = None,
+    path: str,
     *,
     start_at_end: bool = False,
 ) -> None:
-    resolved_path = str(native_log_path or "").strip()
-    if not resolved_path or not os.path.exists(resolved_path):
+    if not os.path.exists(path):
         return
 
-    file_size = os.path.getsize(resolved_path)
+    file_size = os.path.getsize(path)
     if start_at_end:
-        advance_read_offset(projector.offsets, resolved_path, file_size)
+        projector.offsets[path] = file_size
         return
-    start = read_offset_start(projector.offsets, resolved_path, file_size)
+    start = read_offset_start(projector.offsets, path, file_size)
     if start >= file_size:
         return
 
@@ -135,21 +127,12 @@ def project_codex_native_log(
         if not display:
             return
 
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-        jsonl_entry = {
-            "timestamp": timestamp,
-            "sender": agent,
-            "targets": ["user"],
-            "message": display,
-            "native_log_path": resolved_path,
-            "native_log_offset": line_start,
-        }
-        append_jsonl_entry(projector.log_path, jsonl_entry)
+        projector.append_reply(agent, path, line_start, display)
         if idle_after:
             projector.mark_idle(agent)
 
     last_runtime_state_event = ""
-    scan = CompleteJsonlScan(resolved_path, start)
+    scan = CompleteJsonlScan(path, start)
     for line_start, entry in scan:
         _append_codex_entry(entry, line_start)
         runtime_state_event = _codex_runtime_state_event(entry)
@@ -161,7 +144,7 @@ def project_codex_native_log(
         if tool_evs:
             projector.push_running_display(agent, tool_evs)
 
-    advance_read_offset(projector.offsets, resolved_path, scan.consumed)
+    projector.offsets[path] = scan.consumed
     report_skipped_lines(projector, agent, scan)
     if last_runtime_state_event == "completed":
         projector.mark_idle(agent)
