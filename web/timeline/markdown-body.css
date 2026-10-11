@@ -1,3 +1,7 @@
+    .markdown-plain-text {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
     .md-body {
       --prose-rhythm: 0.5em;
       --prose-block-rhythm: 0.5em;

@@ -44,20 +44,20 @@
       });
     };
     const renderMarkdown = (text) => {
-      try {
-        return renderMarkdownContent(text);
-      } catch (err) {
-        console.error("markdown render failed", err);
-        return `<p role="alert">Markdown unavailable: ${markdownEscapeHtml(err.message)}</p>`;
+      let error = typeof marked === "undefined" ? "Failed to load marked CDN"
+        : typeof DOMPurify === "undefined" ? "Failed to load DOMPurify CDN"
+        : !DOMPurify.isSupported ? "DOMPurify is unsupported in this browser" : "";
+      if (!error) {
+        try {
+          return renderMarkdownContent(text);
+        } catch (err) {
+          console.error("markdown render failed", err);
+          error = `Markdown rendering failed: ${err.message}`;
+        }
       }
+      return `<div class="markdown-plain-text" data-markdown-error="${markdownEscapeHtml(error).replaceAll('"', '&quot;')}">${markdownEscapeHtml(text)}</div>`;
     };
     const renderMarkdownContent = (text) => {
-      if (typeof marked === "undefined") {
-        throw new Error("marked is unavailable");
-      }
-      if (typeof DOMPurify === "undefined" || !DOMPurify.isSupported) {
-        throw new Error("DOMPurify is unavailable");
-      }
       let frontmatterHtml = "";
       let bodyText = text;
       const frontmatter = extractFrontmatter(text);

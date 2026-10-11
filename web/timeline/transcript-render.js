@@ -1,5 +1,6 @@
     let lastRenderPrepended = false;
     let renderFailed = false;
+    let lastMarkdownError = "";
     let _firstContentSettleFired = false;
     const render = (data, {
       forceScroll = false,
@@ -23,6 +24,7 @@
         if (!displayEntries.length) {
           _renderedIds.clear();
           root.innerHTML = emptyConversationHTML();
+          lastMarkdownError = "";
           renderThinkingIndicator();
           updateScrollBtn();
           return;
@@ -207,6 +209,9 @@
           _firstContentSettleFired = true;
           document.dispatchEvent(new CustomEvent("timeline-transcript-settled"));
         }
+        const markdownError = root.querySelector(".markdown-plain-text")?.dataset.markdownError || "";
+        if (markdownError && markdownError !== lastMarkdownError) setError(markdownError);
+        lastMarkdownError = markdownError;
         if (renderFailed) {
           renderFailed = false;
           setResidentError("render-failed", "");
