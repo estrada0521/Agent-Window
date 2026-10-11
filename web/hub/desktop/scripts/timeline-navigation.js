@@ -94,7 +94,7 @@
       updateDeskWindowTitle(_deskSelectedTimelineName);
       persistDeskSelection(_deskSelectedTimelineName);
       if (_deskSelectedTimelineName) {
-        cacheDeskTimelineUrl(buildTimelineOpenHref(_deskSelectedTimelineName, false), url);
+        cacheDeskTimelineUrl(buildTimelineOpenHref(_deskSelectedTimelineName), url);
       }
       const frameUrl = buildDeskTimelineFrameUrl(url);
       if (frameUrl) {
@@ -174,8 +174,6 @@
     }
 
     function deskTimelineOpenHref(row) {
-      const name = row?.dataset.timelineName || "";
-
       return row?.dataset.openHref || "";
     }
 
@@ -224,7 +222,7 @@
       if (requested) {
         const match = findTimelineRecord(requested);
         if (match && !match.archived) {
-          openTimelineFrame(buildTimelineOpenHref(requested, false), requested);
+          openTimelineFrame(buildTimelineOpenHref(requested), requested);
           return;
         }
         clearDeskSelection();
@@ -233,7 +231,7 @@
       }
       const active = _hubTimelinesCache.active || [];
       if (active.length) {
-        openTimelineFrame(buildTimelineOpenHref(active[0].name, false), active[0].name);
+        openTimelineFrame(buildTimelineOpenHref(active[0].name), active[0].name);
         return;
       }
       showDeskHubList({ open: true });

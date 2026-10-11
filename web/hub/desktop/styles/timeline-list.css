@@ -447,10 +447,6 @@
       display: inline;
       margin-left: 0.46em;
     }
-    .desk-row-preview.is-empty {
-      opacity: 1;
-      font-style: italic;
-    }
     .desk-empty-list {
       padding: 1.38em 0.92em;
       color: var(--muted);

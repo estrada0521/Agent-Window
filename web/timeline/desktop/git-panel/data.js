@@ -3,9 +3,9 @@
       localStorage.setItem(gitSummaryPinnedStorageKey(), gitSummaryPinned ? "1" : "0");
       if (gitSummaryPinned) {
         if (!gitHeaderSummaryState?.rowHtml) void bootstrapPinnedGitSummary();
-        else syncPinnedSummaryStrip();
+        else applyGitOverviewHeader();
       } else {
-        syncPinnedSummaryStrip();
+        applyGitOverviewHeader();
       }
     };
     const bootstrapPinnedGitSummary = async () => {
@@ -61,7 +61,7 @@
       if (gitSummaryPinned) {
         void bootstrapPinnedGitSummary();
       }
-      syncPinnedSummaryStrip();
+      applyGitOverviewHeader();
       applySideBarWidth();
     };
     const gitPanel = createGitPanelController({

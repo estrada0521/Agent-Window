@@ -8,7 +8,7 @@ __INCLUDE:../../smooth-corners.js__
     const _timelineFrameClip = _timelineOverlay.querySelector(".timeline-frame-clip");
     const _timelineFrame = document.getElementById("timelineFrame");
     const _launchShell = document.getElementById("launchShell");
-    const { setStatus, setError, setResidentStatus, setResidentError } = createHud(document.getElementById("hubHud"));
+    const { setStatus, setError, setResidentError } = createHud(document.getElementById("hubHud"));
     const AGENT_SOUND_KEY = "agent_window_mobile_agent_sound";
     let agentSoundEnabled = localStorage.getItem(AGENT_SOUND_KEY) === "1";
     let agentSoundContext = null;
@@ -268,8 +268,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
       window.history.replaceState(window.history.state, "", `/?${params}`);
     }
     const _launchShellParams = new URLSearchParams(window.location.search || "");
-    _hubLaunchShellPending = _launchShellParams.get(HUB_LAUNCH_SHELL_PARAM) === "1";
-    const _restoreLatestTimelineOnLaunch = _hubLaunchShellPending;
+    const _restoreLatestTimelineOnLaunch = _launchShellParams.get(HUB_LAUNCH_SHELL_PARAM) === "1";
     const restartingHub = _launchShellParams.get("restart") === "1";
     _hubLaunchShellPending = true;
     showLaunchShell();
@@ -509,7 +508,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
       _launchShell.dataset.reloadStage = "rendering";
       startTimelineRenderWait();
       const normalizedName = String(name || "").trim();
-      const normalizedUrl = hubFrameTimelineUrl(url, normalizedName);
+      const normalizedUrl = hubFrameTimelineUrl(url);
       cacheTimelineUrl(normalizedName, normalizedUrl);
       clearPersistedTimelineFrameState();
       _currentTimelineUrl = normalizedUrl;

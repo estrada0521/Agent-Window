@@ -67,6 +67,3 @@
       if (panelWrap) renderGitSummaryRoot(panelWrap, rowHtml, { animateCounts: sideBarOpen });
       applySideBarWidth();
     };
-    const syncPinnedSummaryStrip = () => {
-      applyGitOverviewHeader();
-    };
