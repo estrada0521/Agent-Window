@@ -480,6 +480,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 
 - (NSString *)run:(NSString *)cmd args:(NSDictionary *)a {
     NSDictionary *p = a[@"payload"];
+    if ([cmd isEqualToString:@"show_hub_error"]) { [self showHubError:a[@"message"]]; return nil; }
     if ([cmd isEqualToString:@"open_external_url"]) return [self openExternalURL:a[@"url"]];
     if ([cmd isEqualToString:@"copy_files_to_clipboard"]) return [self copyFiles:a[@"paths"]];
     if ([cmd isEqualToString:@"open_quick_look"]) return [self openQuickLook:a[@"paths"]];
@@ -593,7 +594,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSData *json = [NSJSONSerialization dataWithJSONObject:@[ message ] options:0 error:nil];
     NSString *quoted = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
     NSString *script = [NSString stringWithFormat:
-        @"document.body.style.cssText='background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.9);box-sizing:border-box;height:100%%;display:flex;align-items:center;justify-content:center;padding:40px;font:13px ui-monospace,monospace;white-space:pre-wrap;overflow:auto';document.body.textContent=%@[0];",
+        @"document.body.style.cssText='background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.9);box-sizing:border-box;height:100dvh;display:flex;align-items:center;justify-content:center;padding:40px;font:13px ui-monospace,monospace;white-space:pre-wrap;overflow:auto';document.body.textContent=%@[0];",
         quoted];
     [self.webView evaluateJavaScript:script completionHandler:nil];
     [self.window makeKeyAndOrderFront:nil];

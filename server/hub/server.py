@@ -124,7 +124,7 @@ _HUB_PWA_FILES = {
 }
 
 _HUB_LAUNCH_SHELL_BODY_HTML = (
-    '<div class="launch-shell-card" id="launchShellCard">'
+    '<div class="launch-shell-card">'
     '<span class="launch-shell-title">Agent Window</span>'
     "</div>"
 )
@@ -183,14 +183,6 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
     }}
     body {{ font-family: var(--font-main); }}
     {_HUB_LAUNCH_SHELL_CSS}
-    .launch-shell-card.is-error {{
-      width: auto;
-      height: auto;
-      padding: 24px;
-      font-size: 13px;
-      line-height: 1.5;
-      color: var(--fg);
-    }}
   </style>
 </head>
 <body>
@@ -250,11 +242,13 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
           return false;
         }}
       }};
-      const launchShellCard = document.getElementById("launchShellCard");
       const showLaunchShellError = (message) => {{
-        if (!launchShellCard) return;
-        launchShellCard.classList.add("is-error");
-        launchShellCard.textContent = String(message || "Hub is not responding.");
+        const handler = window.webkit?.messageHandlers?.agentWindow;
+        if (handler) {{
+          return handler.postMessage({{ cmd: "show_hub_error", args: {{ message }} }});
+        }}
+        document.body.style.cssText = "box-sizing:border-box;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:40px;font:13px ui-monospace,monospace;white-space:pre-wrap;overflow:auto";
+        document.body.textContent = message;
       }};
       const attemptLoad = async () => {{
         const response = await fetch(target, {{ cache: "no-store" }});
@@ -269,14 +263,14 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
         if (requestedRestart) {{
           const restarted = await requestHubRestart();
           if (!restarted) {{
-            showLaunchShellError("restart failed");
+            await showLaunchShellError("Hub failed to restart.");
             return;
           }}
         }}
         try {{
           await attemptLoad();
         }} catch (_err) {{
-          showLaunchShellError();
+          await showLaunchShellError("Hub is not responding.");
         }}
       }};
       load();
