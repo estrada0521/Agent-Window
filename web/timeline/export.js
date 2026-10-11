@@ -1,5 +1,6 @@
     const EXPORT_ROW_SELECTOR = "article.message-row, .sysmsg-row";
     let exportRange = null;
+    window.addEventListener("native-download-error", (event) => setError("Download failed", event.detail));
     const exportHud = document.createElement("div");
     exportHud.className = "export-hud";
     exportHud.innerHTML = '<button type="button" class="export-hud-cancel" title="Cancel" aria-label="Cancel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button><span class="export-hud-guide">Click messages</span><button type="button" class="export-hud-export"></button>';

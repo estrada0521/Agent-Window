@@ -577,7 +577,10 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 }
 
 - (void)download:(WKDownload *)download didFailWithError:(NSError *)error resumeData:(NSData *)resumeData {
-    [[NSAlert alertWithError:error] beginSheetModalForWindow:self.window completionHandler:nil];
+    NSData *json = [NSJSONSerialization dataWithJSONObject:@[ error.localizedDescription ] options:0 error:nil];
+    NSString *detail = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
+    NSString *script = [NSString stringWithFormat:@"window.dispatchEvent(new CustomEvent('native-download-error', { detail: %@[0] }));", detail];
+    [download.webView evaluateJavaScript:script inFrame:download.originatingFrame inContentWorld:WKContentWorld.pageWorld completionHandler:nil];
 }
 
 - (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters
