@@ -307,13 +307,6 @@ __INCLUDE:../scroll-btn.js__
 
 __INCLUDE:../messages.js__
 __INCLUDE:../transcript-render.js__
-    if (typeof marked === "undefined" || typeof DOMPurify === "undefined") {
-      const rerenderWhenMarkdownReady = () => {
-        if (typeof marked !== "undefined" && typeof DOMPurify !== "undefined") rerenderCurrentMessages({ suppressEntryAnimation: true });
-      };
-      window.addEventListener("DOMContentLoaded", rerenderWhenMarkdownReady, { once: true });
-      window.addEventListener("load", rerenderWhenMarkdownReady, { once: true });
-    }
 __INCLUDE:../transcript-actions.js__
 __INCLUDE:menu.js__
 __INCLUDE:header-actions.js__

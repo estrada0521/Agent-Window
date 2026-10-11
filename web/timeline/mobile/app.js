@@ -298,13 +298,6 @@ __INCLUDE:../scroll-btn.js__
 __INCLUDE:../messages.js__
 __INCLUDE:../transcript-render.js__
     const initialLaunchMinimum = waitForLaunchStage();
-    if (typeof marked === "undefined" || typeof DOMPurify === "undefined") {
-      const rerenderWhenMarkdownReady = () => {
-        if (typeof marked !== "undefined" && typeof DOMPurify !== "undefined") rerenderCurrentMessages({ suppressEntryAnimation: true });
-      };
-      window.addEventListener("DOMContentLoaded", rerenderWhenMarkdownReady, { once: true });
-      window.addEventListener("load", rerenderWhenMarkdownReady, { once: true });
-    }
 __INCLUDE:../transcript-actions.js__
 __INCLUDE:hub-navigation.js__
     const rightMenuBtn = document.getElementById("pageMenuBtn");

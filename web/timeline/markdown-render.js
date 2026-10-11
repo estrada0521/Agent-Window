@@ -43,7 +43,16 @@
         anchor.removeAttribute("href");
       });
     };
+    let markdownLibrariesSettled = document.readyState === "complete";
+    if (!markdownLibrariesSettled) {
+      window.addEventListener("DOMContentLoaded", () => {
+        markdownLibrariesSettled = true;
+        rerenderCurrentMessages({ suppressEntryAnimation: true });
+      }, { once: true });
+    }
     const renderMarkdown = (text) => {
+      const librariesPending = !markdownLibrariesSettled
+        && (typeof marked === "undefined" || typeof DOMPurify === "undefined");
       let error = typeof marked === "undefined" ? "Failed to load marked CDN"
         : typeof DOMPurify === "undefined" ? "Failed to load DOMPurify CDN"
         : !DOMPurify.isSupported ? "DOMPurify is unsupported in this browser" : "";
@@ -55,7 +64,7 @@
           error = `Markdown rendering failed: ${err.message}`;
         }
       }
-      return `<div class="markdown-plain-text" data-markdown-error="${markdownEscapeHtml(error).replaceAll('"', '&quot;')}">${markdownEscapeHtml(text)}</div>`;
+      return `<div class="markdown-plain-text" data-markdown-error="${markdownEscapeHtml(librariesPending ? "" : error).replaceAll('"', '&quot;')}">${markdownEscapeHtml(text)}</div>`;
     };
     const renderMarkdownContent = (text) => {
       let frontmatterHtml = "";
