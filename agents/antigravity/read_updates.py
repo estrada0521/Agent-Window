@@ -61,7 +61,6 @@ def project_antigravity_native_log(
                 "sender": agent,
                 "targets": ["user"],
                 "message": text,
-                "native_log_kind": "antigravity_checkpoint" if compacted else "antigravity_assistant_response",
                 "native_log_path": session_path_str,
                 "native_log_offset": line_start,
             },
