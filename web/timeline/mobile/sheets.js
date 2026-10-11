@@ -54,14 +54,19 @@
     const hasOpenHeaderMenu = () => !!(mobileSheet?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
     const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const mobileSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
+    const mobileSheetExpandedKey = "aw-mobile-sheet-expanded";
+    const applyMobileSheetSize = (panel) => {
+      const expanded = localStorage.getItem(mobileSheetExpandedKey) === "1";
+      panel.style.height = expanded ? "var(--mobile-sheet-panel-height)" : "";
+      panel.style.setProperty("--sheet-inset", expanded ? "0px" : "10px");
+    };
     const showBottomSheet = (panel, onOpened = () => { }) => {
       if (!panel) return;
       const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
       if (sheetPanel) {
         sheetPanel.style.transition = "";
         sheetPanel.style.transform = "";
-        sheetPanel.style.height = "";
-        sheetPanel.style.removeProperty("--sheet-inset");
+        applyMobileSheetSize(sheetPanel);
         if (sheetPanel._sheetSlideEnd) {
           sheetPanel.removeEventListener("transitionend", sheetPanel._sheetSlideEnd);
           sheetPanel._sheetSlideEnd = null;
@@ -120,8 +125,10 @@
           onClose();
           return;
         }
-        const finalHeight = event.type === "touchcancel" ? startHeight : height > (minHeight + maxHeight) / 2 ? maxHeight : minHeight;
-        setHeight(panel, finalHeight);
+        if (event.type !== "touchcancel") {
+          localStorage.setItem(mobileSheetExpandedKey, height > (minHeight + maxHeight) / 2 ? "1" : "0");
+        }
+        applyMobileSheetSize(panel);
         panel.style.transform = "";
       };
       sheetNav.addEventListener("touchend", finishDrag, { passive: true });
