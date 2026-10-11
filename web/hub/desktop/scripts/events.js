@@ -496,7 +496,7 @@
     if (_deskTimelineList) {
       _deskTimelineList.addEventListener("scroll", updateDeskTimelineListFade, { passive: true });
       window.addEventListener("resize", updateDeskTimelineListFade, { passive: true });
-      _deskTimelineList.addEventListener("contextmenu", (event) => {
+      document.addEventListener("contextmenu", (event) => {
         const row = event.target.closest(".desk-action-timeline-row");
         const invoke = getNativeInvoke();
         const timelineName = row?.dataset.timelineName || "";

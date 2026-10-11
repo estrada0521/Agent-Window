@@ -279,6 +279,7 @@
         .find((candidate) => candidate.dataset.timelineName === timelineName);
       const nameEl = row?.querySelector(".desk-row-name");
       if (!row || !nameEl) return;
+      showDeskHubList({ open: true });
 
       const input = document.createElement("input");
       input.type = "text";
