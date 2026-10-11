@@ -89,7 +89,7 @@
       const errorContent = (message) => {
         const content = document.createElement("span");
         content.className = "hud-text hud-error";
-        content.innerHTML = '<svg class="hud-error-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10" fill="#ff3b30"/><path d="M10 5v6" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="14.5" r="1" fill="white"/></svg>';
+        content.innerHTML = '<svg class="hud-error-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10" fill="rgb(255, 59, 48)"/><path d="M10 5v6" stroke="rgb(255, 255, 255)" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="14.5" r="1" fill="rgb(255, 255, 255)"/></svg>';
         content.append(document.createTextNode(message));
         return content;
       };

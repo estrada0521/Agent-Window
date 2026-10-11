@@ -299,7 +299,7 @@
       z-index: 1300;
     }
     .fit-window-dots i {
-      --desk-window-fill: #ff5f57;
+      --desk-window-fill: rgb(255, 95, 87);
       --desk-window-glyph: 180, 11, 10;
       position: relative;
       width: 1.08em;
@@ -314,11 +314,11 @@
       inset: -0.46em -0.31em;
     }
     .fit-window-dots i:nth-child(2) {
-      --desk-window-fill: #febc2e;
+      --desk-window-fill: rgb(254, 188, 46);
       --desk-window-glyph: 145, 32, 10;
     }
     .fit-window-dots i:nth-child(3) {
-      --desk-window-fill: #28c840;
+      --desk-window-fill: rgb(40, 200, 64);
       --desk-window-glyph: 10, 84, 10;
     }
     .desk-fit-standby { display: none; font-size: var(--text-size, 13px); }

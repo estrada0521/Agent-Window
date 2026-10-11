@@ -60,7 +60,7 @@
       z-index: 6;
       border-radius: var(--desk-inner-top-radius) 0 0 var(--desk-inner-radius);
       isolation: isolate;
-      -webkit-mask-image: -webkit-radial-gradient(white, black);
+      -webkit-mask-image: -webkit-radial-gradient(rgb(255, 255, 255), rgb(0, 0, 0));
       user-select: none;
       -webkit-user-select: none;
     }
@@ -124,7 +124,7 @@
       border-radius: var(--desk-inner-top-radius) 0 0 var(--desk-inner-radius);
       box-shadow: none;
       transition: none;
-      -webkit-mask-image: -webkit-radial-gradient(white, black);
+      -webkit-mask-image: -webkit-radial-gradient(rgb(255, 255, 255), rgb(0, 0, 0));
       color: var(--fg);
     }
     .desk-hub-shell::after {

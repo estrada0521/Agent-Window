@@ -15,7 +15,7 @@
       isolation: isolate;
       border: none;
       border-radius: var(--desk-inner-top-radius) var(--desk-inner-top-radius) var(--desk-inner-radius) var(--desk-inner-radius);
-      -webkit-mask-image: -webkit-radial-gradient(white, black);
+      -webkit-mask-image: -webkit-radial-gradient(rgb(255, 255, 255), rgb(0, 0, 0));
       transition: none;
     }
     .desk-main::before {

@@ -337,7 +337,7 @@ def render_file_view(
             '.html-preview-panel.active{display:flex}'
             '.html-preview-panel-web{min-height:0;flex-direction:column;position:relative}'
             f'.html-preview-web-glass{{--preview-glass-rgb:{theme_palette["dark_bg_channels"]};--preview-glass-line:{pane_line};position:absolute;top:0;left:0;right:0;z-index:1;height:calc(var(--tpad,0px) + 12px);background:rgba(var(--preview-glass-rgb),0.92);border-bottom:1px solid var(--preview-glass-line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);pointer-events:none}}'
-            '.html-preview-panel-web iframe{flex:1;min-height:0;width:100%;border:0;background:white}'
+            '.html-preview-panel-web iframe{flex:1;min-height:0;width:100%;border:0;background:rgb(255, 255, 255)}'
             '.html-preview-panel-text{min-height:0;flex-direction:column}'
             f'{text_panel_css(gutter_width)}'
             '</style></head>'

@@ -117,8 +117,8 @@
       box-sizing: border-box;
       --attach-preview-fade-left: 0px;
       --attach-preview-fade-right: 0px;
-      mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - var(--attach-preview-fade-right)), transparent 100%);
-      -webkit-mask-image: linear-gradient(to right, transparent 0, black var(--attach-preview-fade-left), black calc(100% - var(--attach-preview-fade-right)), transparent 100%);
+      mask-image: linear-gradient(to right, transparent 0, rgb(0, 0, 0) var(--attach-preview-fade-left), rgb(0, 0, 0) calc(100% - var(--attach-preview-fade-right)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0, rgb(0, 0, 0) var(--attach-preview-fade-left), rgb(0, 0, 0) calc(100% - var(--attach-preview-fade-right)), transparent 100%);
     }
 
     .attach-preview-row::-webkit-scrollbar {
@@ -311,8 +311,8 @@
     .composer textarea.is-scrollable {
       overscroll-behavior-y: contain;
       touch-action: pan-y;
-      mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0, rgb(0, 0, 0) 16px, rgb(0, 0, 0) calc(100% - 16px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgb(0, 0, 0) 16px, rgb(0, 0, 0) calc(100% - 16px), transparent 100%);
     }
     .composer textarea:focus {
       outline: none;

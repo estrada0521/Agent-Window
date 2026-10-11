@@ -599,7 +599,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSData *json = [NSJSONSerialization dataWithJSONObject:@[ message ] options:0 error:nil];
     NSString *quoted = [[NSString alloc] initWithData:json encoding:NSUTF8StringEncoding];
     NSString *script = [NSString stringWithFormat:
-        @"document.body.style.cssText='background:transparent;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.9);box-sizing:border-box;height:100dvh;display:flex;align-items:center;justify-content:center;padding:40px;font:13px ui-monospace,monospace;white-space:pre-wrap;overflow:auto';document.body.textContent=%@[0];",
+        @"document.body.style.cssText='background:transparent;color:rgb(255, 255, 255);text-shadow:0 1px 4px rgba(0,0,0,0.9);box-sizing:border-box;height:100dvh;display:flex;align-items:center;justify-content:center;padding:40px;font:13px ui-monospace,monospace;white-space:pre-wrap;overflow:auto';document.body.textContent=%@[0];",
         quoted];
     [self.webView evaluateJavaScript:script completionHandler:nil];
     [self.window makeKeyAndOrderFront:nil];

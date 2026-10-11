@@ -36,8 +36,8 @@
       color: inherit;
     }
     html[data-theme="dark"] ::highlight(timeline-search) {
-      background-color: #ffeb3b;
-      color: #111;
+      background-color: rgb(255, 235, 59);
+      color: rgb(17, 17, 17);
     }
     .search-hud input::-webkit-search-cancel-button {
       display: none;

@@ -227,8 +227,8 @@
       text-align: left;
       -webkit-overflow-scrolling: touch;
       -webkit-mask-image: 
-        linear-gradient(to right, #000, #000),
-        linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+        linear-gradient(to right, rgb(0, 0, 0), rgb(0, 0, 0)),
+        linear-gradient(to right, transparent 0, rgb(0, 0, 0) 16px, rgb(0, 0, 0) calc(100% - 16px), transparent 100%);
       -webkit-mask-size: 
         100% 14px,
         100% 100%;
@@ -238,8 +238,8 @@
       -webkit-mask-repeat: no-repeat;
       
       mask-image: 
-        linear-gradient(to right, #000, #000),
-        linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+        linear-gradient(to right, rgb(0, 0, 0), rgb(0, 0, 0)),
+        linear-gradient(to right, transparent 0, rgb(0, 0, 0) 16px, rgb(0, 0, 0) calc(100% - 16px), transparent 100%);
       mask-size: 
         100% 14px,
         100% 100%;

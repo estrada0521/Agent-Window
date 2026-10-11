@@ -27,16 +27,16 @@
     }
     .desk-hub-hover-list::-webkit-scrollbar { display: none; }
     .desk-hub-hover-list[data-scroll-fade="top"] {
-      mask-image: linear-gradient(to bottom, transparent 0, black var(--hover-fade));
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--hover-fade));
+      mask-image: linear-gradient(to bottom, transparent 0, rgb(0, 0, 0) var(--hover-fade));
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgb(0, 0, 0) var(--hover-fade));
     }
     .desk-hub-hover-list[data-scroll-fade="bottom"] {
-      mask-image: linear-gradient(to bottom, black calc(100% - var(--hover-fade)), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, black calc(100% - var(--hover-fade)), transparent 100%);
+      mask-image: linear-gradient(to bottom, rgb(0, 0, 0) calc(100% - var(--hover-fade)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, rgb(0, 0, 0) calc(100% - var(--hover-fade)), transparent 100%);
     }
     .desk-hub-hover-list[data-scroll-fade="both"] {
-      mask-image: linear-gradient(to bottom, transparent 0, black var(--hover-fade), black calc(100% - var(--hover-fade)), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--hover-fade), black calc(100% - var(--hover-fade)), transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0, rgb(0, 0, 0) var(--hover-fade), rgb(0, 0, 0) calc(100% - var(--hover-fade)), transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgb(0, 0, 0) var(--hover-fade), rgb(0, 0, 0) calc(100% - var(--hover-fade)), transparent 100%);
     }
     .desk-hub-hover-list .desk-section-label {
       padding: 1.4em 1.2em 0.3em;
