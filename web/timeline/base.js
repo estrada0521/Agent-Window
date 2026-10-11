@@ -131,6 +131,7 @@ __INCLUDE:file-icon-theme.js__
       return "";
     };
     const fileViewHrefForPath = (path, { embed = false } = {}) => {
+      if (extFromPath(path) === "pdf") return withTimelineBase(`/file-raw?path=${encodeURIComponent(path)}`);
       const params = new URLSearchParams();
       params.set("path", normalizeWorkspaceFilePath(path) || String(path || "").trim());
       if (embed) {

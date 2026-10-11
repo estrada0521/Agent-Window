@@ -250,16 +250,6 @@ def render_file_view(
             'img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}</style></head>'
             f'<body><div class="wrap"><div class="image-surface"><img draggable="false" src="{raw_url}" alt="{html_escape(filename)}"></div></div><script>{image_viewer_js}</script></body></html>'
         )
-    if ext in files.PDF_EXTS:
-        pdf_viewer_js = (_REPO_ROOT / "web/timeline/mobile/pdf-viewer.js").read_text(encoding="utf-8")
-        return (
-            f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
-            '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
-            f'<style>{base_css}.wrap{{flex:1;min-height:0;overflow:auto;padding-top:var(--tpad,0px);padding-bottom:var(--bpad,0px)}}'
-            '.pdf-page{display:block;width:100%;background:white;margin-bottom:12px}</style></head>'
-            f'<body><div class="wrap" data-pdf-url="{html_escape(raw_url)}"></div>'
-            f'{resource_config_script()}<script type="module">{pdf_viewer_js}</script></body></html>'
-        )
     if ext in files.VIDEO_EXTS:
         return (
             f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'

@@ -556,6 +556,11 @@
         ? normalizeRepoPath(rawPath)
         : String(rawPath || "").trim();
       const normalizedExt = String(ext || fileExtForPath(path) || "").toLowerCase();
+      if (path && normalizedExt === "pdf") {
+        await openExternalLink(new URL(fileViewHrefForPath(path), window.location.href).href)
+          .catch(reportExternalLinkFailure);
+        return;
+      }
       if (!path || !mobileSheet) return;
       const checkUrl = new URL(fileViewHrefForPath(path), window.location.href);
       checkUrl.searchParams.set("check", "1");

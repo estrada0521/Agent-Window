@@ -6,14 +6,6 @@ import json
 KATEX_VERSION = "0.16.11"
 
 RESOURCES = {
-    "pdf": {
-        "url": "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.4.299/build/pdf.mjs",
-        "integrity": "sha384-n0EGU7JQbmHa030diRrGtwVAVwW1LrTrL/zlvPRKbpOB22CU6XNlyMfdCnAvb57R",
-    },
-    "pdf_worker": {
-        "url": "https://cdn.jsdelivr.net/npm/pdfjs-dist@6.4.299/build/pdf.worker.mjs",
-        "integrity": "sha384-ytwpB+gRk9DztxbTtL5f3JCuZw9Q04HOadVLu1jLt1i5sweNfkxHak4DQ8iGDBRz",
-    },
     "marked": {
         "url": "https://cdn.jsdelivr.net/npm/marked@18.0.12/lib/marked.umd.min.js",
         "integrity": "sha384-syBWa4ZH5K40lEf03NSGrpgNa4K6VybtlEru+KpBmLBrPb8l304sb82KiBTjMEJS",
