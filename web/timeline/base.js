@@ -90,12 +90,7 @@ __INCLUDE:file-link-parse.js__
 __INCLUDE:markdown-frontmatter.js__
 __INCLUDE:markdown-render.js__
 __INCLUDE:file-icon-theme.js__
-    const displayAttachmentFilename = (path) => {
-      const filename = String(path || "").split("/").pop() || String(path || "");
-      if (!/(?:^|\/)uploads\//.test(String(path || ""))) return filename;
-      const match = filename.match(/^\d{8}_\d{6}_(.+)$/);
-      return match ? match[1] : filename;
-    };
+    const fileNameFromPath = (path) => path.split("/").pop();
     const normalizeWorkspaceFilePath = (p) => {
       let s = String(p || "").trim();
       if (!s) return "";
@@ -151,7 +146,7 @@ __INCLUDE:file-icon-theme.js__
     const buildInlineFileLinkMarkup = (path, label = "") => {
       const normalizedPath = normalizeWorkspaceFilePath(path);
       if (!normalizedPath) return "";
-      const visible = String(label || displayAttachmentFilename(normalizedPath) || normalizedPath).trim() || normalizedPath;
+      const visible = String(label || fileNameFromPath(normalizedPath) || normalizedPath).trim() || normalizedPath;
       const href = fileViewHrefForPath(normalizedPath);
       const iconHtml = fileIconThemeState.ready
         ? fileIconHtml(normalizedPath, { classNames: "inline-file-link-icon" })

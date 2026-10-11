@@ -8,12 +8,12 @@
     let _olderAutoloadPolling = false;
     const olderAutoloadThreshold = () => Math.max(OLDER_AUTOLOAD_MIN_THRESHOLD, messagesEl.clientHeight * 1.25);
     const olderAutoloadCheck = () => {
-      if (historyLoading || olderLoading || !olderHasMore || messagesEl.scrollTop > olderAutoloadThreshold()) return false;
+      if (historyLoading || !hasOlderMessages() || messagesEl.scrollTop > olderAutoloadThreshold()) return false;
       void loadOlderMessages();
       return true;
     };
     const olderAutoloadTick = () => {
-      if (olderAutoloadCheck() || historyLoading || olderLoading || !olderHasMore || messagesEl.scrollTop > olderAutoloadThreshold() * 3) {
+      if (olderAutoloadCheck() || historyLoading || !hasOlderMessages() || messagesEl.scrollTop > olderAutoloadThreshold() * 3) {
         _olderAutoloadPolling = false;
         return;
       }
@@ -23,7 +23,7 @@
       if (historyWindow?.has_newer && !historyLoading && !_programmaticScroll && isNearBottom()) {
         void loadHistoryPage(false);
       }
-      if (olderAutoloadCheck() || historyLoading || _olderAutoloadPolling || olderLoading || !olderHasMore) return;
+      if (olderAutoloadCheck() || historyLoading || _olderAutoloadPolling || !hasOlderMessages()) return;
       _olderAutoloadPolling = true;
       requestAnimationFrame(olderAutoloadTick);
     }, { passive: true });

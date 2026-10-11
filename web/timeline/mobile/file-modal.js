@@ -1,4 +1,3 @@
-    const _fileExistenceCache = new Map();
     let repoPreviewBaseTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
     let repoPreviewMode = "text";
     let repoPreviewControlsWired = false;
@@ -184,7 +183,7 @@
             await navigator.share({ text: await res.text() });
           } else {
             const blob = await res.blob();
-            await navigator.share({ files: [new File([blob], displayAttachmentFilename(path), { type: blob.type })] });
+            await navigator.share({ files: [new File([blob], fileNameFromPath(path), { type: blob.type })] });
           }
         } catch (err) {
           if (err?.name !== "AbortError") setError("Share failed", err);
@@ -372,25 +371,6 @@
       const fromDataset = String(anchor.dataset?.filepath || "").trim();
       if (fromDataset) return fromDataset;
       return pathFromLocalHref(anchor.getAttribute("href") || "");
-    };
-    const fileExistsOnDisk = async (path) => {
-      const normalizedPath = String(path || "").trim();
-      if (!normalizedPath) return false;
-      const cached = _fileExistenceCache.get(normalizedPath);
-      try {
-        const res = await fetch("/files-exist", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paths: [normalizedPath] }),
-        });
-        if (!res.ok) return false;
-        const data = await res.json().catch(() => ({}));
-        const exists = !!data?.[normalizedPath];
-        _fileExistenceCache.set(normalizedPath, exists);
-        return exists;
-      } catch (_) {
-        return cached === true;
-      }
     };
     const openFileSurface = async (path, ext, sourceEl, triggerEvent) => {
       const normalizedPath = String(path || "").trim();

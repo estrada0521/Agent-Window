@@ -1,44 +1,7 @@
     const loadOlderMessages = async ({ limit = MESSAGE_BATCH } = {}) => {
-      if (historyWindow) {
-        await loadHistoryPage(true, limit);
-        return;
-      }
-      if (olderLoading || !latestPayloadData) return;
-      const loadedCount = displayEntriesForData(latestPayloadData).length;
-      if (!loadedCount) {
-        olderHasMore = false;
-        rerenderCurrentMessages();
-        return;
-      }
-      olderLoading = true;
-      const epoch = refreshEpoch;
-      const prevHeight = messagesEl.scrollHeight;
-      const prevTop = messagesEl.scrollTop;
-      try {
-        const res = await fetchWithTimeout(messagesFetchUrl({ offset: loadedCount, limit }));
-        if (!res.ok) throw new Error("older messages unavailable");
-        const data = await res.json();
-        if (epoch !== refreshEpoch) return;
-        const olderBatch = Array.isArray(data?.entries) ? data.entries : [];
-        olderHasMore = !!data?.has_older;
-        if (olderBatch.length) {
-          olderEntries = mergeEntriesById(olderBatch, olderEntries);
-        }
-      } catch (err) {
-        if (epoch === refreshEpoch) setError("History unavailable", err);
-      } finally {
-        olderLoading = false;
-        if (epoch !== refreshEpoch) return;
-        render(latestPayloadData, { suppressEntryAnimation: true });
-        if (!lastRenderPrepended) {
-          const delta = messagesEl.scrollHeight - prevHeight;
-          _programmaticScroll = true;
-          messagesEl.scrollTop = prevTop + delta;
-          _pollScrollLockTop = messagesEl.scrollTop;
-          queueMicrotask(() => { _programmaticScroll = false; });
-        }
-        updateScrollBtn();
-      }
+      if (!latestPayloadData || historyLoading) return;
+      if (!historyWindow) historyWindow = { ...latestPayloadData };
+      await loadHistoryPage(true, limit);
     };
 __INCLUDE:transcript-refresh.js__
     const loadHistoryPage = async (before, limit = MESSAGE_BATCH) => {
@@ -56,7 +19,6 @@ __INCLUDE:transcript-refresh.js__
         if (before) {
           current.before = data.before;
           current.has_older = data.has_older;
-          olderHasMore = data.has_older;
         } else {
           current.after = data.after;
           current.has_newer = data.has_newer;
@@ -81,8 +43,6 @@ __INCLUDE:transcript-refresh.js__
       refreshEpoch += 1;
       historyWindow = data;
       historyLoading = true;
-      olderEntries = [];
-      olderHasMore = data.has_older;
       clearPollScrollLock();
       _stickyToBottom = false;
       render(latestPayloadData, { forceFullRender: true, suppressEntryAnimation: true });
@@ -126,17 +86,6 @@ __INCLUDE:transcript-refresh.js__
     const blurComposerOnMobile = (message) => {
       if (document.documentElement.dataset.mobile === "1") message.blur();
     };
-    const applyTimelineActivation = (data) => {
-      if (!data?.activated) return;
-      sessionActive = true;
-      if (Array.isArray(data.targets) && data.targets.length) {
-        availableTargets = normalizedTimelineTargets(data.targets);
-        selectedTargets = data.targets.filter((t) => availableTargets.includes(t));
-        saveTargetSelection(currentTimelineName, selectedTargets);
-        renderTargetPicker(availableTargets);
-      }
-      syncSessionMenuOptions();
-    };
     const postAgentCommand = async ({
       command_id,
       arg = "",
@@ -167,11 +116,7 @@ __INCLUDE:transcript-refresh.js__
         if (!res.ok || !data.ok) {
           throw new Error(data.error || "Command failed");
         }
-        applyTimelineActivation(data);
         void refresh();
-        if (data.activated) {
-          void refreshTimelineState();
-        }
         return true;
       } catch (error) {
         setError("Command failed", error);
@@ -284,7 +229,6 @@ __INCLUDE:transcript-refresh.js__
             if (!res.ok || !data.ok) {
               throw new Error(data.error || "Command failed");
             }
-            applyTimelineActivation(data);
             clearComposerDraft();
             if (terminalMode) {
               setTerminalMode(false);
@@ -302,9 +246,6 @@ __INCLUDE:transcript-refresh.js__
               showPaneTraceViewer("terminal");
             }
             void refresh();
-            if (data.activated) {
-              void refreshTimelineState();
-            }
             return true;
           } catch (error) {
             setError("Command failed", error);
@@ -350,7 +291,6 @@ __INCLUDE:transcript-refresh.js__
         if (!res.ok || !data.ok) {
           throw new Error(data.error || "send failed");
         }
-        applyTimelineActivation(data);
         clearComposerDraft();
         blurComposerOnMobile(message);
         if (pendingAttachments.length) {
@@ -366,9 +306,6 @@ __INCLUDE:transcript-refresh.js__
           }
         }
         applyLocalEntry(data.entry);
-        if (data.activated) {
-          void refreshTimelineState();
-        }
         return true;
       } catch (error) {
         setError("Send failed", error);

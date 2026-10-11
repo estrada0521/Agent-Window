@@ -879,41 +879,17 @@ __INCLUDE:git-panel/events.js__
     const chevronIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
     const BACK_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
     const rootIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 6 6 12 12 18"/><polyline points="19 6 13 12 19 18"/></svg>';
-    const fetchRepoDir = async (rawPath) => {
-      const path = normalizePath(rawPath);
-      const res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load directory");
-      const payload = await res.json().catch(() => ({}));
-      const rawEntries = Array.isArray(payload?.entries) ? payload.entries : [];
-      return rawEntries
-        .filter((item) => item && typeof item.path === "string")
-        .map((item) => {
-          const entryPath = normalizePath(item.path);
-          const rawSize = Number(item.size);
-          return {
-            name: String(item.name || entryPath.split("/").pop() || entryPath),
-            path: entryPath,
-            kind: item.kind === "dir" ? "dir" : "file",
-            size: item.kind === "dir" || !Number.isFinite(rawSize) || rawSize < 0 ? null : rawSize,
-          };
-        })
-        .sort((a, b) => {
-          if (a.kind !== b.kind) return a.kind === "dir" ? -1 : 1;
-          return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
-        });
-    };
     const buildRepoEntryItem = (entry) => {
       const isDir = entry.kind === "dir";
       const btn = document.createElement("button");
       btn.type = "button";
-      const displayName = isDir ? entry.name : displayAttachmentFilename(entry.path);
-      btn.className = `repo-browser-item ${isDir ? "repo-browser-dir" : "repo-browser-file"}${displayName.startsWith(".") ? " repo-browser-item-dimmed" : ""}`;
+      btn.className = `repo-browser-item ${isDir ? "repo-browser-dir" : "repo-browser-file"}${entry.name.startsWith(".") ? " repo-browser-item-dimmed" : ""}`;
       btn.title = entry.path;
       btn.dataset.path = entry.path;
       const iconEl = fileIconElement(entry.path, { isDir }, "repo-browser-item-icon");
       const nameEl = document.createElement("span");
       nameEl.className = "repo-browser-item-name";
-      nameEl.textContent = displayName;
+      nameEl.textContent = entry.name;
       btn.append(iconEl, nameEl);
       if (isDir) {
         const chevronEl = document.createElement("span");
@@ -1029,16 +1005,13 @@ __INCLUDE:git-panel/events.js__
         node.textContent = "";
         list.appendChild(node);
       } else {
-        const dirs = (entries || []).filter(e => e.kind === "dir");
-        const files = (entries || []).filter(e => e.kind !== "dir");
-        if (!dirs.length && !files.length) {
+        if (!entries.length) {
           const node = document.createElement("div");
           node.className = "repo-browser-empty";
           node.textContent = "Empty directory";
           list.appendChild(node);
         } else {
-          dirs.forEach(e => list.appendChild(buildRepoEntryItem(e)));
-          files.forEach(e => list.appendChild(buildRepoEntryItem(e)));
+          entries.forEach(entry => list.appendChild(buildRepoEntryItem(entry)));
         }
       }
       scroll.appendChild(list);

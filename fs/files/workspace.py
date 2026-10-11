@@ -56,15 +56,9 @@ class WorkspaceFiles:
     }
     SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache"}
 
-    def __init__(
-        self,
-        *,
-        workspace: str | Path,
-        repo_root: str | Path | None = None,
-    ):
+    def __init__(self, *, workspace: str | Path):
         raw = str(workspace or "").strip()
         self.workspace = os.path.realpath(os.path.normpath(raw)) if raw else ""
-        self.repo_root = os.path.realpath(os.path.normpath(str(repo_root))) if repo_root else None
         self._file_index_ignore = FileIndexIgnoreRules(self.workspace)
 
     @staticmethod

@@ -81,7 +81,6 @@ def _get_messages(handler, parsed, ctx) -> None:
         return
     body = ctx["payload_fn"](
         limit=min(ENTRY_WINDOW_LIMIT, int(qs.get("limit", [ENTRY_WINDOW_LIMIT])[0])),
-        offset=int(qs.get("offset", ["0"])[0]),
     )
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
 

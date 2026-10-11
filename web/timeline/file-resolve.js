@@ -46,3 +46,12 @@
       }
       return out;
     };
+    const fetchRepoDir = async (path) => {
+      const res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load directory");
+      const { entries } = await res.json();
+      return entries.sort((a, b) => {
+        if (a.kind !== b.kind) return a.kind === "dir" ? -1 : 1;
+        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
+      });
+    };

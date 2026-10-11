@@ -12,8 +12,6 @@
         refreshEpoch += 1;
         historyWindow = null;
         historyLoading = false;
-        olderEntries = [];
-        olderHasMore = !!latestPayloadData?.has_older;
         render(latestPayloadData, { forceScroll: true, forceFullRender: true, suppressEntryAnimation: true });
         void refresh();
         return;
@@ -67,8 +65,8 @@
       const loadedEntries = () => displayEntriesForData(latestPayloadData).length;
       const start = loadedEntries();
       let target = findStepTarget(stepRows(senders), false, anchor);
-      while (!target && olderHasMore && loadedEntries() - start < OLDER_SEARCH_LIMIT) {
-        if (olderLoading) {
+      while (!target && hasOlderMessages() && loadedEntries() - start < OLDER_SEARCH_LIMIT) {
+        if (historyLoading) {
           await new Promise((resolve) => setTimeout(resolve, 50));
           continue;
         }

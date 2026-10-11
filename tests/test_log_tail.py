@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from fs.log.jsonl import newest_entries
+from fs.log.jsonl import message_window
 
 
 def _write_log(path: Path, count: int) -> None:
@@ -21,18 +21,10 @@ class LogTailTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             log_path = Path(tmp) / "log.jsonl"
             _write_log(log_path, 200)
-            entries = newest_entries(log_path, offset=0, limit=51)
+            entries = message_window(log_path, cursor=log_path.stat().st_size, limit=51, before=True)["entries"]
             self.assertEqual(len(entries), 51)
             self.assertEqual(entries[0]["context_hash"], "m149")
             self.assertEqual(entries[-1]["context_hash"], "m199")
-
-    def test_older_window_skips_the_offset(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            log_path = Path(tmp) / "log.jsonl"
-            _write_log(log_path, 200)
-            older = newest_entries(log_path, offset=50, limit=50)
-            self.assertEqual(older[0]["context_hash"], "m100")
-            self.assertEqual(older[-1]["context_hash"], "m149")
 
 
 if __name__ == "__main__":

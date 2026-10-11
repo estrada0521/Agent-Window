@@ -428,7 +428,7 @@
     };
     let _sheetPreviewStack = [];
     const applyPreviewChrome = (path) => {
-      const filename = (displayAttachmentFilename(path) || path || "Preview").trim();
+      const filename = (fileNameFromPath(path) || path || "Preview").trim();
       sharedSheetTitleEl.replaceChildren(fileIconElement(path, {}, "sheet-title-file-icon"), filename);
       sharedSheetTitleEl.title = filename;
       sharedSheetTitleEl.classList.remove("git-sheet-detail-title", "git-sheet-title");
@@ -719,50 +719,16 @@ __INCLUDE:git-panel.js__
         repoPanelRenderSig = "";
       }
 
-      const fetchRepoDir = async (rawPath) => {
-        const path = normalizeRepoPath(rawPath);
-        const res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
-        if (!res.ok) {
-          throw new Error((await res.json().catch(() => ({}))).error || "Failed to load directory");
-        }
-        const payload = await res.json().catch(() => ({}));
-        const rawEntries = Array.isArray(payload?.entries) ? payload.entries : [];
-        return rawEntries
-          .filter((item) => item && typeof item.path === "string")
-          .map((item) => {
-            const entryPath = normalizeRepoPath(item.path);
-            const entryName = String(item.name || entryPath.split("/").pop() || entryPath);
-            const entryKind = item.kind === "dir" ? "dir" : "file";
-            const rawSize = Number(item.size);
-            return {
-              name: entryName,
-              path: entryPath,
-              kind: entryKind,
-              size: entryKind === "file" && Number.isFinite(rawSize) && rawSize >= 0 ? rawSize : null,
-            };
-          })
-          .sort((a, b) => {
-            if (a.kind !== b.kind) return a.kind === "dir" ? -1 : 1;
-            return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
-          });
-      };
-
       const chevronRightIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
 
       const renderPanel = (rawPath, entriesForPath, { loading = false, error = "", transition = "none" } = {}) => {
         const path = normalizeRepoPath(rawPath);
-        const allEntries = Array.isArray(entriesForPath) ? entriesForPath : [];
         const nextRenderSig = JSON.stringify({
           timeline: timelineKey,
           path,
           loading: loading ? 1 : 0,
           error: String(error || ""),
-          entries: allEntries.map((entry) => ({
-            name: String(entry?.name || ""),
-            path: String(entry?.path || ""),
-            kind: entry?.kind === "dir" ? "dir" : "file",
-            size: Number.isFinite(entry?.size) ? entry.size : null,
-          })),
+          entries: entriesForPath,
         });
         if (nextRenderSig === repoPanelRenderSig && repoBrowserMountEl()?.childElementCount) return;
         const prevList = repoBrowserMountEl()?.querySelector(".mobile-sheet-list");
@@ -784,11 +750,11 @@ __INCLUDE:git-panel.js__
           void openRepoPath(parts.join("/"), { transition: "back" });
         };
         _repoGoToParentPath = goToParentPath;
-        const appendDirectoryItem = (container, dirEntry, selected = false) => {
+        const appendDirectoryItem = (container, dirEntry) => {
           const btn = document.createElement("button");
           btn.type = "button";
           const isHidden = dirEntry.name.startsWith(".");
-          btn.className = `repo-browser-item repo-browser-dir sheet-list-row${selected ? " selected" : ""}${isHidden ? " repo-browser-item-dimmed" : ""}`;
+          btn.className = `repo-browser-item repo-browser-dir sheet-list-row${isHidden ? " repo-browser-item-dimmed" : ""}`;
           btn.title = dirEntry.path;
 
           const icon = fileIconElement(dirEntry.path, { isDir: true }, "repo-browser-item-icon");
@@ -812,8 +778,7 @@ __INCLUDE:git-panel.js__
           container.appendChild(btn);
         };
         const appendFileItem = (container, fileEntry) => {
-          const nameText = displayAttachmentFilename(fileEntry.path);
-          const isHidden = nameText.startsWith(".");
+          const isHidden = fileEntry.name.startsWith(".");
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = `repo-browser-item repo-browser-file sheet-list-row${isHidden ? " repo-browser-item-dimmed" : ""}`;
@@ -823,7 +788,7 @@ __INCLUDE:git-panel.js__
 
           const name = document.createElement("span");
           name.className = "repo-browser-item-name";
-          name.textContent = nameText;
+          name.textContent = fileEntry.name;
 
           btn.append(icon, name);
 
@@ -843,15 +808,7 @@ __INCLUDE:git-panel.js__
           });
           container.appendChild(btn);
         };
-        const buildEntryGroups = (items) => {
-          const listItems = Array.isArray(items) ? items : [];
-          return {
-            dirs: listItems.filter((entry) => entry?.kind === "dir"),
-            files: listItems.filter((entry) => entry?.kind !== "dir"),
-          };
-        };
         const mount = repoBrowserMountEl();
-        const { dirs: directoryEntries, files: fileEntries } = buildEntryGroups(allEntries);
         const finishChrome = () => {
           if (!sheetPreviewOpen() && chromeBelongsTo(mobileSheet) && sheetKind() === "repo") {
             setRepoSheetTitle(repoBrowserTitleForPath(path));
@@ -868,7 +825,7 @@ __INCLUDE:git-panel.js__
           finishChrome();
           return;
         }
-        if (!directoryEntries.length && !fileEntries.length) {
+        if (!entriesForPath.length) {
           presentMobileSheetStatus(mount, "No files in this directory");
           finishChrome();
           return;
@@ -880,8 +837,10 @@ __INCLUDE:git-panel.js__
         }
         const body = document.createElement("div");
         body.className = "mobile-sheet-list-body";
-        directoryEntries.forEach((dirEntry) => appendDirectoryItem(body, dirEntry));
-        fileEntries.forEach((fileEntry) => appendFileItem(body, fileEntry));
+        entriesForPath.forEach((entry) => {
+          if (entry.kind === "dir") appendDirectoryItem(body, entry);
+          else appendFileItem(body, entry);
+        });
         list.appendChild(body);
         if (mount) mount.replaceChildren(list);
         if (transition === "back" && repoScrollByPath.has(path)) restoreSheetListScroll(list, repoScrollByPath.get(path));

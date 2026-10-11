@@ -1,11 +1,6 @@
-    const mergeEntriesById = (...groups) => groups.flatMap((group) => group || []);
     const entryRenderKey = (entry) => entry.context_hash;
-    const displayEntriesForData = (data) => {
-      if (historyWindow) return historyWindow.entries;
-      const baseEntries = Array.isArray(data?.entries) ? data.entries : [];
-      const merged = mergeEntriesById(olderEntries, baseEntries);
-      return olderEntries.length ? merged : merged.slice(-INITIAL_MESSAGE_WINDOW);
-    };
+    const displayEntriesForData = (data) => historyWindow ? historyWindow.entries : data.entries;
+    const hasOlderMessages = () => (historyWindow || latestPayloadData)?.has_older;
     const entryTargetsSignature = (entry) => {
       const targets = Array.isArray(entry?.targets) ? entry.targets : [];
       return targets.map((target) => String(target || "").trim().toLowerCase()).filter(Boolean).sort().join("\u001f");

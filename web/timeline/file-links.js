@@ -137,7 +137,7 @@ __INCLUDE:file-autocomplete.js__
     };
     const buildAutocompleteFileItem = (entry) => {
       const path = String(entry?.path || "");
-      const label = (displayAttachmentFilename(path) || basename(path) || path).trim() || path;
+      const label = (fileNameFromPath(path) || path).trim() || path;
       const relDir = composerAutocompleteRelativeDir(path);
       const row = document.createElement("div");
       row.className = "file-item";

@@ -266,7 +266,6 @@ __AGENT_ROW_MESSAGE_SELECTORS__ {
 
 .message-thinking-floating-icon-wrap {
       animation: mono-icon-pulse 1s infinite;
-      animation-delay: var(--agent-pulse-delay, 0s);
     }
 
 .message-thinking-icon-wrap {
@@ -277,7 +276,6 @@ __AGENT_ROW_MESSAGE_SELECTORS__ {
       width: 1.55em;
       height: 1.55em;
       animation: mono-icon-pulse 1s infinite;
-      animation-delay: var(--agent-pulse-delay, 0s);
     }
 
 .message-thinking-glow {
@@ -328,7 +326,6 @@ __AGENT_ROW_MESSAGE_SELECTORS__ {
       mask-position: center;
       background: var(--icon-fg);
       animation: mono-icon-spin 1s infinite;
-      animation-delay: var(--agent-pulse-delay, 0s);
     }
 
 .message-thinking-label {

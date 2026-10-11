@@ -2,8 +2,7 @@
     const applyLocalEntry = (entry) => {
       refreshEpoch += 1;
       const current = latestPayloadData || {};
-      latestPayloadData = { ...current, entries: mergeEntriesById(current.entries || [], [entry]) };
-      render(latestPayloadData);
+      render({ ...current, entries: [...(current.entries || []), entry].slice(-MESSAGE_BATCH) });
       void refresh();
     };
     const refresh = async (options = {}) => {
@@ -28,20 +27,13 @@
           && data.entries.some((entry) =>
             entry.context_hash && !previousIds.has(entry.context_hash)
             && entry.sender && entry.sender !== "user" && entry.sender !== "system");
-        if (data.server_instance !== currentServerInstance) {
-          olderEntries = [];
-          olderHasMore = false;
-          currentServerInstance = data.server_instance;
-        }
+        currentServerInstance = data.server_instance;
         if (data.server_instance !== SERVER_INSTANCE_SEED) {
           setResidentError("server-restarted", "Server restarted; reload");
         }
         latestPayloadData = data;
         if (historyWindow) {
-          historyWindow.has_newer = historyWindow.entries.at(-1)?.context_hash !== data.entries.at(-1)?.context_hash;
-          olderHasMore = historyWindow.has_older;
-        } else if (!olderEntries.length) {
-          olderHasMore = !!data?.has_older;
+          historyWindow.has_newer = historyWindow.after < data.after;
         }
         render(data, refreshOptions);
         if (hasNewAgentMessage) document.dispatchEvent(new Event("timeline-agent-message"));

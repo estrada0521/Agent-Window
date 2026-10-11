@@ -19,8 +19,6 @@
         if (!forceScroll && renderSig === lastMessagesSig) return;
         lastMessagesSig = renderSig;
 
-        initialLoadDone = true;
-
         const root = document.getElementById("messages");
         if (!displayEntries.length) {
           _renderedIds.clear();

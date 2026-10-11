@@ -95,18 +95,6 @@ def log_slice(path: Path, *, start_hash: str, end_hash: str) -> bytes:
     raise LookupError(f"context_hash {start_hash if picked else end_hash} not found in the log")
 
 
-def newest_entries(path: Path, *, offset: int, limit: int) -> list[dict]:
-    picked: list[dict] = []
-    for index, entry in enumerate(iter_log_entries_reversed(path)):
-        if index < offset:
-            continue
-        picked.append(entry)
-        if len(picked) >= limit:
-            break
-    picked.reverse()
-    return picked
-
-
 def date_message_offset(path: Path, date: str) -> int:
     formats = {7: "%Y-%m", 10: "%Y-%m-%d", 13: "%Y-%m-%d %H", 16: "%Y-%m-%d %H:%M", 19: "%Y-%m-%d %H:%M:%S"}
     start = datetime.strptime(date, formats[len(date)])

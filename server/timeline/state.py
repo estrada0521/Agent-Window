@@ -6,11 +6,10 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from fs.log.jsonl import append_jsonl_entry
+from fs.log.jsonl import append_jsonl_entry, message_window
 from fs.log.meta import log_meta_agents
 from tmux import run_tmux
 from tmux.send_keys import deliver_text_to_pane
-from fs.log.jsonl import newest_entries
 from agents.native_log_projector import NativeLogProjector
 from git.commit import CommitAnnouncer
 from tmux.session import (
@@ -159,15 +158,12 @@ class TimelineState:
             "stopped_threads": stopped_threads,
         }
 
-    def payload(self, limit: int, offset: int) -> bytes:
-        entries = newest_entries(self.log_path, offset=offset, limit=limit + 1)
-        has_older = len(entries) > limit
-        if has_older:
-            entries = entries[1:]
-        return json.dumps(
-            {"server_instance": self.server_instance, "has_older": has_older, "entries": entries},
-            ensure_ascii=True,
-        ).encode("utf-8")
+    def payload(self, limit: int) -> bytes:
+        path = self.log_path
+        data = message_window(path, cursor=path.stat().st_size, limit=limit, before=True)
+        data["server_instance"] = self.server_instance
+        data["has_newer"] = False
+        return json.dumps(data, ensure_ascii=True).encode("utf-8")
 
     def active_agents(self) -> list[str]:
         return list(self.agent_panes())

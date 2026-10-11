@@ -193,7 +193,6 @@
         const icon = wrap.querySelector(".message-thinking-icon");
         return [
           row.dataset.agent || "",
-          row.style.getPropertyValue("--agent-pulse-delay") || "",
           icon?.className || "",
           icon?.getAttribute("style") || "",
         ].join(":");
@@ -223,11 +222,10 @@
         animateScrollButtonContentSwap(button, () => {
           button.setAttribute("data-thinking-sig", buttonSig);
           button.innerHTML = "";
-          visibleSources.forEach(({ row, wrap }) => {
+          visibleSources.forEach(({ wrap }) => {
             const clone = wrap.cloneNode(true);
             clone.removeAttribute("title");
             clone.classList.add("message-thinking-floating-icon-wrap");
-            clone.style.setProperty("--agent-pulse-delay", row.style.getPropertyValue("--agent-pulse-delay") || "0s");
             button.appendChild(clone);
           });
           button.classList.add("thinking-scroll-btn");
@@ -291,7 +289,6 @@
       const ensureAgentRow = (agent) => {
         let row = Array.from(container.querySelectorAll(".message-thinking-row[data-agent]"))
           .find((node) => node.dataset.agent === agent);
-        const pulse = agentPulseOffset(agent);
         if (!row) {
           row = document.createElement("div");
           row.className = "message-thinking-row is-appearing";
@@ -311,10 +308,6 @@
           if (document.documentElement.dataset.mobile !== "1") {
             row.querySelector(".message-thinking-icons").title = "Open Pane";
           }
-        }
-        const pulseDelay = `${pulse}s`;
-        if (row.style.getPropertyValue("--agent-pulse-delay") !== pulseDelay) {
-          row.style.setProperty("--agent-pulse-delay", pulseDelay);
         }
         const runningItem = currentThinkingRunningItem(agent);
         const label = row.querySelector(".message-thinking-label-agent");

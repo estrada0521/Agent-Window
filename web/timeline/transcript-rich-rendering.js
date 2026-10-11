@@ -121,7 +121,6 @@ __INCLUDE:markdown-tables.js__
       if (AGENT_ICON_DATA[base]) return AGENT_ICON_DATA[base];
       return `${TIMELINE_ASSET_BASE}/icon/${enc}`;
     };
-    const agentPulseOffset = () => 0;
     const paneViewerTabIconHtml = (agent) => {
       const iconUrl = agentIconSrc(agent);
       const sub = agentIconInstanceSubHtml(agent);
