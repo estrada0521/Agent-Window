@@ -6,13 +6,17 @@ from collections import deque
 from pathlib import Path
 from typing import Callable
 
-from agents import agent_base_name, resolve_binding
-from agents.binding import NativeLogBinding, PaneBindingRequest
-from agents.claude.read_updates import project_claude_native_log
-from agents.codex.read_updates import project_codex_native_log
-from agents.cursor.read_updates import project_cursor_native_log
+from agents import agent_base_name
 from agents.antigravity.read_updates import project_antigravity_native_log
+from agents.antigravity.resolve_path import resolve_antigravity_native_log
+from agents.claude.read_updates import project_claude_native_log
+from agents.claude.resolve_path import resolve_claude_session_jsonl_path
+from agents.codex.read_updates import project_codex_native_log
+from agents.codex.resolve_path import resolve_codex_rollout_jsonl_path
+from agents.cursor.read_updates import project_cursor_native_log
+from agents.cursor.resolve_path import resolve_cursor_session_jsonl_path
 from agents.grok.read_updates import project_grok_native_log
+from agents.grok.resolve_path import resolve_grok_updates_path
 from agents.native_log_watcher import NativeLogWatcher
 from tmux.session import pane_field
 
@@ -20,6 +24,14 @@ BIND_INTERVAL_SECONDS = 0.5
 BIND_TIMEOUT_SECONDS = 3.0
 MIN_RUNNING_DISPLAY_SECONDS = 0.5
 MAX_RUNNING_DISPLAY_QUEUE = 20
+
+_RESOLVE_BY_BASE = {
+    "claude": resolve_claude_session_jsonl_path,
+    "codex": lambda _pane_id, pane_pid: resolve_codex_rollout_jsonl_path(pane_pid),
+    "cursor": lambda _pane_id, pane_pid: resolve_cursor_session_jsonl_path(pane_pid),
+    "antigravity": lambda _pane_id, pane_pid: resolve_antigravity_native_log(pane_pid),
+    "grok": lambda _pane_id, pane_pid: resolve_grok_updates_path(pane_pid),
+}
 
 _PROJECT_BY_BASE = {
     "claude": project_claude_native_log,
@@ -50,7 +62,7 @@ class NativeLogProjector:
         self.mark_idle = mark_idle
         self.mark_running = mark_running
         self.offsets: dict[str, int] = {}
-        self._bindings: dict[str, NativeLogBinding] = {}
+        self._bindings: dict[str, str] = {}
         self._bindings_lock = threading.Lock()
         self._project_lock = threading.Lock()
         self._watcher: NativeLogWatcher | None = None
@@ -71,39 +83,36 @@ class NativeLogProjector:
         self._watcher = NativeLogWatcher(self, self._publish_state)
         threading.Thread(target=self._watcher.run, daemon=True, name="native-vnode").start()
 
-    def bindings(self) -> dict[str, NativeLogBinding]:
+    def bindings(self) -> dict[str, str]:
         with self._bindings_lock:
             return dict(self._bindings)
 
     def refresh_bindings(self, agents: list[str] | None = None) -> None:
         panes_by_agent = self._agent_panes()
-        target_agents = list(agents) if agents is not None else list(panes_by_agent)
-        requests = [
-            PaneBindingRequest(agent=agent, pane_id=pane_id, pane_pid=pane_field(pane_id, "#{pane_pid}"))
-            for agent in target_agents
-            if (pane_id := panes_by_agent.get(agent, ""))
+        target_agents = [
+            agent
+            for agent in (agents if agents is not None else panes_by_agent)
+            if panes_by_agent.get(agent)
         ]
         bound = self.bindings()
-        resolved: list[NativeLogBinding] = []
-        for request in requests:
-            binding = resolve_binding(request)
-            if binding is None:
+        resolved: dict[str, str] = {}
+        for agent in target_agents:
+            pane_id = panes_by_agent[agent]
+            path = _RESOLVE_BY_BASE[agent_base_name(agent)](pane_id, pane_field(pane_id, "#{pane_pid}"))
+            if not path:
                 continue
-            if bound.get(binding.agent) == binding:
-                resolved.append(binding)
-                continue
-            try:
-                self.project(binding.agent, binding.path, start_at_end=True)
-            except Exception as exc:
-                self.failed(binding.agent, f"projection failed: {exc}")
-                continue
-            resolved.append(binding)
+            if bound.get(agent) != path:
+                try:
+                    self.project(agent, path, start_at_end=True)
+                except Exception as exc:
+                    self.failed(agent, f"projection failed: {exc}")
+                    continue
+            resolved[agent] = path
         with self._bindings_lock:
             next_by_agent = {} if agents is None else dict(self._bindings)
-            for request in requests:
-                next_by_agent.pop(request.agent, None)
-            for binding in resolved:
-                next_by_agent[binding.agent] = binding
+            for agent in target_agents:
+                next_by_agent.pop(agent, None)
+            next_by_agent.update(resolved)
             self._bindings = next_by_agent
         self._wake_watcher()
 
@@ -128,9 +137,7 @@ class NativeLogProjector:
             self.remove_binding(agent)
 
     def project(self, agent: str, path: str, *, start_at_end: bool = False) -> None:
-        project_fn = _PROJECT_BY_BASE.get(agent_base_name(agent))
-        if project_fn is None:
-            raise ValueError(f"unknown agent type: {agent}")
+        project_fn = _PROJECT_BY_BASE[agent_base_name(agent)]
         with self._project_lock:
             project_fn(self, agent, path, start_at_end=start_at_end)
 

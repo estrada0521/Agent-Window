@@ -53,12 +53,12 @@ class NativeLogWatcher:
             for agent in list(self._fd_by_agent):
                 if agent not in bindings:
                     self._close_locked(agent)
-            for agent, binding in bindings.items():
-                if self._path_by_agent.get(agent) != binding.path:
+            for agent, path in bindings.items():
+                if self._path_by_agent.get(agent) != path:
                     if agent in self._fd_by_agent:
                         self._close_locked(agent)
                     try:
-                        self._open_locked(agent, binding.path)
+                        self._open_locked(agent, path)
                     except OSError as exc:
                         failed_opens.append((agent, exc))
             paths_changed = self._path_by_agent != previous_paths
