@@ -27,12 +27,6 @@ class FileRuntimeListTests(unittest.TestCase):
             self.assertEqual([entry["name"] for entry in app_entries], ["test.md"])
             self.assertEqual(app_entries[0]["kind"], "file")
 
-    def test_list_dir_fails_when_workspace_is_missing(self) -> None:
-        state = WorkspaceFiles(workspace="")
-        self.assertEqual(state.workspace, "")
-        with self.assertRaisesRegex(RuntimeError, "workspace is not configured"):
-            state.list_dir("")
-
     def test_list_dir_fails_when_workspace_folder_is_gone(self) -> None:
         state = WorkspaceFiles(workspace="/no/such/even-parity")
         with self.assertRaises(FileNotFoundError):

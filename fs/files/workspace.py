@@ -36,54 +36,27 @@ class WorkspaceFiles:
         ".m4a": "audio/mp4",
         ".flac": "audio/flac",
     }
-    IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico"}
+    IMAGE_EXTS = {ext for ext, mime in MIME_TYPES.items() if mime.startswith("image/")}
     TEXT_EXTS = {".py", ".js", ".json", ".yaml", ".yml", ".sh", ".sql", ".html", ".css", ".tex", ".txt", ".csv", ".log"}
     EDITABLE_TEXT_EXTS = TEXT_EXTS | {".md", ".ts", ".tsx", ".jsx", ".toml", ".ini", ".cfg", ".conf", ".rst", ".env"}
-    PDF_EXTS = {".pdf"}
-    VIDEO_EXTS = {
-        ".mp4": "video/mp4",
-        ".mov": "video/quicktime",
-        ".webm": "video/webm",
-        ".avi": "video/x-msvideo",
-        ".mkv": "video/x-matroska",
-    }
-    AUDIO_EXTS = {
-        ".mp3": "audio/mpeg",
-        ".wav": "audio/wav",
-        ".ogg": "audio/ogg",
-        ".m4a": "audio/mp4",
-        ".flac": "audio/flac",
-    }
+    PDF_EXTS = {ext for ext, mime in MIME_TYPES.items() if mime == "application/pdf"}
+    VIDEO_EXTS = {ext for ext, mime in MIME_TYPES.items() if mime.startswith("video/")}
+    AUDIO_EXTS = {ext for ext, mime in MIME_TYPES.items() if mime.startswith("audio/")}
     SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache"}
 
-    def __init__(self, *, workspace: str | Path):
-        raw = str(workspace or "").strip()
-        self.workspace = os.path.realpath(os.path.normpath(raw)) if raw else ""
-        self._file_index_ignore = FileIndexIgnoreRules(self.workspace)
-
-    @staticmethod
-    def _normalize_rel_path(rel: str) -> str:
-        return FileIndexIgnoreRules.normalize_rel_path(rel)
-
-    def _rel_path_is_skipped(self, rel: str) -> bool:
-        normalized = self._normalize_rel_path(rel)
-        if not normalized:
-            return False
-        parts = Path(normalized).parts
-        if any(part in self.SKIP_DIRS for part in parts):
-            return True
-        return self._file_index_ignore.matches(normalized)
+    def __init__(self, *, workspace: str):
+        self.workspace = workspace
+        self._file_index_ignore = FileIndexIgnoreRules(workspace)
 
     def file_index_path_is_ignored(self, rel: str) -> bool:
-        return self._rel_path_is_skipped(rel)
+        if any(part in self.SKIP_DIRS for part in Path(rel).parts):
+            return True
+        return self._file_index_ignore.matches(rel)
 
     def _require_workspace(self) -> str:
-        root = str(self.workspace or "").strip()
-        if not root:
-            raise RuntimeError("workspace is not configured")
-        if not os.path.isdir(root):
-            raise FileNotFoundError(root)
-        return root
+        if not os.path.isdir(self.workspace):
+            raise FileNotFoundError(self.workspace)
+        return self.workspace
 
     def resolve_path(self, rel: str) -> str:
         if rel.startswith("~") or os.path.isabs(rel):
@@ -95,7 +68,7 @@ class WorkspaceFiles:
         for rel in paths:
             try:
                 result[rel] = os.path.exists(self.resolve_path(rel))
-            except (RuntimeError, FileNotFoundError):
+            except FileNotFoundError:
                 result[rel] = False
         return result
 
@@ -329,7 +302,7 @@ class WorkspaceFiles:
             if not raw:
                 continue
             rel = raw.decode("utf-8", "replace")
-            if not rel or self._rel_path_is_skipped(rel):
+            if not rel or self.file_index_path_is_ignored(rel):
                 continue
             files.append({"path": rel, "size": None})
         files.sort(key=lambda item: str(item.get("path") or "").casefold())
@@ -348,7 +321,7 @@ class WorkspaceFiles:
             with scanner:
                 for entry in scanner:
                     rel = f"{rel_dir}/{entry.name}" if rel_dir else entry.name
-                    if self._rel_path_is_skipped(rel):
+                    if self.file_index_path_is_ignored(rel):
                         continue
                     try:
                         is_dir = entry.is_dir(follow_symlinks=False)
@@ -444,13 +417,12 @@ class WorkspaceFiles:
         entries = self.list_files()
         needle = str(query or "").strip().lower()
         if not needle:
-            preferred_text_exts = self.EDITABLE_TEXT_EXTS | {".md"}
             ranked_default = sorted(
                 entries,
                 key=lambda entry: (
                     ranking_penalty(str(entry.get("path") or "").lower()),
                     0
-                    if os.path.splitext(str(entry.get("path") or "").lower())[1] in preferred_text_exts
+                    if os.path.splitext(str(entry.get("path") or "").lower())[1] in self.EDITABLE_TEXT_EXTS
                     else 1,
                     str(entry.get("path") or "").count("/"),
                     len(str(entry.get("path") or "")),
@@ -495,7 +467,7 @@ class WorkspaceFiles:
         with os.scandir(full) as scanner:
             for entry in scanner:
                 child_rel = f"{normalized_rel}/{entry.name}" if normalized_rel else entry.name
-                if self._rel_path_is_skipped(child_rel):
+                if self.file_index_path_is_ignored(child_rel):
                     continue
                 is_dir = False
                 try:

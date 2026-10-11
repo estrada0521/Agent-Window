@@ -167,7 +167,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     server_instance = state.server_instance
     payload = state.payload
     send_message = _send_or_enqueue_message
-    files = WorkspaceFiles(workspace=workspace)
+    files = WorkspaceFiles(workspace=state.workspace)
     start_workspace_fsevents_watcher(
         files,
         publish_event=state.publish_event,
