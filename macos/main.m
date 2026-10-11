@@ -552,7 +552,9 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         return;
     }
     NSDictionary *body = message.body;
-    replyHandler(nil, [self run:body[@"cmd"] args:body[@"args"] ?: @{}]);
+    NSString *error = [self run:body[@"cmd"] args:body[@"args"] ?: @{}];
+    NSNumber *width = [body[@"cmd"] isEqualToString:@"resize_window_from_edge"] ? @(self.webView.bounds.size.width) : nil;
+    replyHandler(width, error);
 }
 
 #pragma mark Web view

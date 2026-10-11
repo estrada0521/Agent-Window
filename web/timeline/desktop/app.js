@@ -545,8 +545,7 @@ __INCLUDE:../pointer-capability.js__
       applySideBarWidth();
     };
     window.addEventListener("pagehide", restoreSideBarWindow);
-    const applySideBarWidth = () => {
-      const panelWidth = sideBarOpen && !sideBarWindow ? currentSideBarWidthPx() : 0;
+    const applySideBarWidth = (panelWidth = sideBarOpen && !sideBarWindow ? currentSideBarWidthPx() : 0) => {
       document.documentElement.style.setProperty("--side-bar-width", `${panelWidth}px`);
       document.documentElement.style.setProperty("--side-bar-reserved-width", `${panelWidth > 0 ? panelWidth + SIDE_BAR_GAP : 0}px`);
     };
@@ -605,7 +604,7 @@ __INCLUDE:git-panel/events.js__
       splitPanel.classList.toggle("workspace-only", !data.git);
       if (!data.git) setSideBarView("repo");
     };
-    const openSideBar = async ({ view = null, reset = false } = {}) => {
+    const openSideBar = async ({ view = null, reset = false, resizeWindow = null } = {}) => {
       if (!sideBar) return;
       try {
         await updateSideBarWorkspace();
@@ -613,25 +612,30 @@ __INCLUDE:git-panel/events.js__
         setError(error.message === "Workspace not found" ? error.message : "Sidebar unavailable", error);
         return;
       }
-      if (view) setSideBarView(view);
-      sideBarOpen = true;
-      localStorage.setItem(sideBarOpenStorageKey(), "1");
-      applySideBarWidth();
-      applyGitOverviewHeader();
-      const existingStack = repoContent?.querySelector(".repo-browser-stack");
-      if (existingStack) {
-        existingStack.classList.remove("repo-browser-nav-forward", "repo-browser-nav-back");
-        existingStack.classList.add("repo-browser-nav-none");
-      }
-      sideBar.hidden = false;
-      sideBar.classList.add("open");
-      document.body.classList.add("side-bar-open");
-      syncSideBarWindow();
-      reportSideBarFitHeight();
-      syncSplitGitHeightForMode();
-      const loadP = loadSideBarView({ reset, animateRepo: false });
-      syncPanelState();
-      return loadP;
+      const panelWidth = sideBarWindow ? 0 : currentSideBarWidthPx();
+      const show = () => {
+        if (view) setSideBarView(view);
+        sideBarOpen = true;
+        localStorage.setItem(sideBarOpenStorageKey(), "1");
+        document.body.classList.add("side-bar-open");
+        applySideBarWidth(panelWidth);
+        applyGitOverviewHeader();
+        const existingStack = repoContent?.querySelector(".repo-browser-stack");
+        if (existingStack) {
+          existingStack.classList.remove("repo-browser-nav-forward", "repo-browser-nav-back");
+          existingStack.classList.add("repo-browser-nav-none");
+        }
+        sideBar.hidden = false;
+        sideBar.classList.add("open");
+        syncSideBarWindow();
+        reportSideBarFitHeight();
+        syncSplitGitHeightForMode();
+        const loadP = loadSideBarView({ reset, animateRepo: false });
+        syncPanelState();
+        return loadP;
+      };
+      if (resizeWindow) return resizeWindow(panelWidth, show, closeSideBar);
+      return show();
     };
     const closeSideBar = () => {
       if (!sideBar) return;
@@ -664,6 +668,9 @@ __INCLUDE:git-panel/events.js__
       if (sideBarOpen) closeSideBar();
       else openSideBar();
     };
+    window.toggleSideBarOutwardRight = (resizeWindow) => sideBarOpen
+      ? resizeWindow(-currentSideBarWidthPx(), closeSideBar, () => openSideBar())
+      : openSideBar({ resizeWindow });
     const stopSideBarResize = ({ persist = false } = {}) => {
       if (!_sideBarResizeState) return;
       _sideBarResizeState = null;

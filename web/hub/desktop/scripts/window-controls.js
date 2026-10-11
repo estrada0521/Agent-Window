@@ -214,6 +214,10 @@
       const opening = !_deskSideBarActiveMode;
       const width = _deskSideBarWidth;
       const edge = document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right";
+      if (edge === "right") {
+        void toggleDeskSideBarOutwardRight();
+        return;
+      }
       void resizeDeskWindowAroundPane({
         edge,
         delta: opening ? width : -width,
@@ -222,6 +226,41 @@
         rollback: () => sendDeskSideBarCommand(""),
         label: "Toggle side bar outward",
       });
+    }
+
+    async function toggleDeskSideBarOutwardRight() {
+      if (_deskOutwardResizeInFlight) return;
+      const invoke = getNativeInvoke();
+      if (!invoke) return;
+      _deskOutwardResizeInFlight = true;
+      try {
+        await _deskTimelineFrame.contentWindow.toggleSideBarOutwardRight(async (delta, apply, rollback) => {
+          _deskTimelineFrame.style.width = `${_deskTimelineFrame.clientWidth + delta}px`;
+          apply();
+          try {
+            const width = await invoke("resize_window_from_edge", { edge: "right", delta });
+            if (Math.abs(document.documentElement.clientWidth - width) >= 1) {
+              await new Promise((resolve) => {
+                const observer = new ResizeObserver(() => {
+                  if (Math.abs(document.documentElement.clientWidth - width) >= 1) return;
+                  observer.disconnect();
+                  resolve();
+                });
+                observer.observe(document.documentElement);
+              });
+            }
+          } catch (error) {
+            rollback();
+            throw error;
+          } finally {
+            _deskTimelineFrame.style.removeProperty("width");
+          }
+        });
+      } catch (error) {
+        setError("Toggle side bar outward failed", error);
+      } finally {
+        _deskOutwardResizeInFlight = false;
+      }
     }
 
     window.addEventListener("keydown", (event) => {
