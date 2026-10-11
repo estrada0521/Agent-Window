@@ -58,7 +58,7 @@ Appは 1s でbuildされ、`/Applications/Agent Window.app` に保存・起動�
 | Archive | tmux sessionを終了する | logは残る |
 | Revive | 保存したworkspaceとAgent構成でtmux sessionを作り直す | 各CLIのresume機能を利用する |
 | Delete | timelineの保存物を完全に削除する | Archive中のみ |
-| Rename | timelineの名前を変える | |
+| Rename | timelineの名前を変える | timeline行にフォーカスして `⌘Enter` |
 | Change Workspace | workspaceを変える | Archive中のみ |
 | Reset Agents | 保存したAgent構成を消す | Revive用のもの |
 

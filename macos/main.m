@@ -321,7 +321,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         return item;
     };
     [self popUp:@[
-        [self action:@"renameTimeline" title:@"Rename" key:nil mods:0],
+        [self action:@"renameTimeline" title:@"Rename" key:@"\r" mods:NSEventModifierFlagCommand],
         NSMenuItem.separatorItem,
         [self action:@"copyWorkspacePath" title:@"Copy Workspace Path" key:nil mods:0],
         NSMenuItem.separatorItem,

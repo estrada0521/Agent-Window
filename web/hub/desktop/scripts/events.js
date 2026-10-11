@@ -540,10 +540,10 @@
         const name = row.dataset.timelineName || "";
         if (href) openTimelineFrame(href, name);
       });
-      _deskTimelineList.addEventListener("keydown", (event) => {
-        const row = event.target.closest(".desk-timeline-row");
+      document.addEventListener("keydown", (event) => {
+        const row = event.target.matches(".desk-timeline-row") ? event.target : null;
         if (!row) return;
-        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        if (_deskTimelineList.contains(row) && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
           event.preventDefault();
           event.stopPropagation();
           moveDeskTimelineSelection(event.key === "ArrowDown" ? 1 : -1, row);
@@ -551,7 +551,9 @@
         }
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
-        openDeskTimelineRow(row);
+        event.stopPropagation();
+        if (event.key === "Enter" && event.metaKey) beginDeskTimelineRename(row.dataset.timelineName);
+        else openDeskTimelineRow(row);
       });
     }
 

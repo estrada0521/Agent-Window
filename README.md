@@ -58,7 +58,7 @@ The app builds in 1s, and is saved to `/Applications/Agent Window.app` and launc
 | Archive | Kills the tmux session | Log stays |
 | Revive | Recreates the tmux session from the saved workspace and Agent set | Uses each CLI's resume |
 | Delete | Permanently deletes the timeline's saved data | Archived only |
-| Rename | Changes the timeline's name | |
+| Rename | Changes the timeline's name | `⌘Enter` on a focused timeline row |
 | Change Workspace | Changes the workspace | Archived only |
 | Reset Agents | Clears the saved Agent set | The one used by Revive |
 
