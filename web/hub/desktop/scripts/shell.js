@@ -421,7 +421,6 @@
             const row = child.querySelector(".desk-timeline-row");
             if (row) {
               const clone = row.cloneNode(true);
-              clone.querySelectorAll(".desk-row-hover-action").forEach(b => b.remove());
               listEl.appendChild(clone);
             }
           }
@@ -435,6 +434,7 @@
         hoverPopover.addEventListener("mouseenter", cancelDismiss);
         hoverPopover.addEventListener("mouseleave", scheduleDismiss);
         hoverPopover.addEventListener("click", (event) => {
+          if (handleDeskTimelineHoverAction(event)) { dismiss(); return; }
           const row = event.target.closest(".desk-timeline-row");
           if (!row) return;
           const href = row.dataset.openHref;

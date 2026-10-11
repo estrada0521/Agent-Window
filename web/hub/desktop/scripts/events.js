@@ -521,23 +521,7 @@
       });
       attachDeskTimelineStatsHover(_deskTimelineList);
       _deskTimelineList.addEventListener("click", (event) => {
-        const hoverAction = event.target.closest("[data-desk-hover-action]");
-        if (hoverAction) {
-          event.preventDefault();
-          event.stopPropagation();
-          const row = hoverAction.closest(".desk-timeline-row");
-          const timelineName = row?.dataset.timelineName || "";
-          const kind = hoverAction.dataset.deskHoverAction || "";
-          if (timelineName && kind) {
-            if (kind === "revive") {
-              const href = `/revive-timeline?timeline=${encodeURIComponent(timelineName)}`;
-              openTimelineFrame(href, timelineName);
-            } else {
-              void runDeskContextAction(timelineName, kind);
-            }
-          }
-          return;
-        }
+        if (handleDeskTimelineHoverAction(event)) return;
         const swipeAction = event.target.closest("[data-desk-swipe-action]");
         if (swipeAction) return;
         const row = event.target.closest(".desk-timeline-row");
