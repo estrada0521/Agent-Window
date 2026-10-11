@@ -430,8 +430,6 @@ def render_file_view(
         markdown_frontmatter_js = _timeline_markdown_frontmatter_js()
         file_link_parse_js = _timeline_file_link_parse_js()
         markdown_render_js = _timeline_markdown_render_js()
-        preview_hud_css = (_REPO_ROOT / "web/hud.css").read_text(encoding="utf-8")
-        preview_hud_js = (_REPO_ROOT / "web/hud.js").read_text(encoding="utf-8")
         markdown_tables_js = (_REPO_ROOT / "web/timeline/markdown-tables.js").read_text(encoding="utf-8")
         initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
         dark_preview_fg_channels = TEXT_PRIMARY_MOBILE_DARK_CHANNELS.replace(" ", "")
@@ -476,13 +474,15 @@ def render_file_view(
         return (
             f'<!DOCTYPE html><html data-preview-mode="web"{preview_shell_attrs(gutter_width=text_gutter_width, title_offset=text_title_offset)} data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-mobile-timeline="1" data-mobile="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
             f'{markdown_head_libs}'
-            f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}{markdown_mode_css}{preview_hud_css}#timelineHud{{--pill-bg-rgb:var(--bg-rgb);--hud-height:calc(var(--pill-row-height) + 2 * var(--pill-row-margin) + 1px);background:var(--pill-bg);border:0.5px solid var(--pill-border)}}'
+            f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}{markdown_mode_css}'
             '</style></head>'
-            f'<body><div class="md-preview-shell"><div class="md-body" id="out"></div></div><div id="timelineHud" class="hud" role="status" aria-live="polite"></div>{text_panel_markup(text_gutter_rows, text_code_rows)}'
+            f'<body><div class="md-preview-shell"><div class="md-body" id="out"></div></div>{text_panel_markup(text_gutter_rows, text_code_rows)}'
             f'<script>{markdown_mode_js}</script>'
             f'''<script>
-{preview_hud_js}
-const {{ setError }} = createHud(document.getElementById("timelineHud"));
+const reportPreviewError = (message, error) => {{
+  console.error(message, error);
+  window.parent.postMessage({{ type: "file-preview-error", message }}, window.location.origin);
+}};
 const __mdText = {content_json};
 const __mdRel = {rel_json};
 const __fileBase = {prefix_json};
@@ -798,14 +798,14 @@ const renderPreview = async () => {{
   const staging = document.createElement("div");
   staging.innerHTML = renderMarkdown(__mdText);
   const markdownError = staging.querySelector("[data-markdown-error]")?.dataset.markdownError;
-  if (markdownError) setError(markdownError);
+  if (markdownError) reportPreviewError(markdownError);
   __rewriteMarkdownPictureSources(staging);
   applyPreviewPictureTheme(staging, __root.getAttribute("data-preview-theme") || "dark");
   applyPreviewDiffCode(staging);
   try {{
     await reserveMarkdownImageSpace(staging);
   }} catch (err) {{
-    setError("Failed to load image dimensions", err);
+    reportPreviewError("Failed to load image dimensions", err);
   }}
   out.replaceChildren(...staging.childNodes);
   void __rewriteMarkdownPreviewHrefs(out);
@@ -813,9 +813,9 @@ const renderPreview = async () => {{
   renderMathInScope(out);
 }};
 const rerenderCurrentMessages = () => renderPreview().catch((err) => {{
-  setError("Markdown preview failed", err);
+  reportPreviewError("Markdown preview failed", err);
 }});
-void rerenderCurrentMessages();
+if (markdownLibrariesSettled) void rerenderCurrentMessages();
 </script></body></html>'''
         )
 

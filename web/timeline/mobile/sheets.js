@@ -610,6 +610,12 @@
     };
     window.addEventListener("message", (event) => {
       if (event.origin !== window.location.origin) return;
+      if (event.data?.type === "file-preview-error") {
+        if (event.source === sheetPreviewFrameEl()?.contentWindow && sheetPreviewOpen()) {
+          setError(event.data.message);
+        }
+        return;
+      }
       if (event.data?.type !== "agent-preview-open-file") return;
       const path = String(event.data.path || "").trim();
       if (!path) return;
