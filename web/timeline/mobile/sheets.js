@@ -721,9 +721,6 @@ __INCLUDE:git-panel.js__
       if (!mobileSheet) return;
       repoPanelEntries = Array.isArray(entries) ? entries : [];
 
-      const normalizeRepoPath = (value) => String(value || "")
-        .replace(/\\/g, "/")
-        .replace(/^\/+|\/+$/g, "");
       const timelineKey = repoTimeline || currentTimelineName || "";
       if (mobileSheet._repoTimelineKey !== timelineKey) {
         mobileSheet._repoTimelineKey = timelineKey;

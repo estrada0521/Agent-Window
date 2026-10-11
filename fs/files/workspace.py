@@ -455,14 +455,14 @@ class WorkspaceFiles:
         return [hydrate_size(item[1]) for item in ranked[:limit]]
 
     def list_dir(self, rel: str = ""):
-        normalized_rel = str(rel or "").strip("/")
+        normalized_rel = str(rel or "")
         full = self.resolve_path(normalized_rel)
         if not os.path.isdir(full):
             raise NotADirectoryError(full)
         entries: list[dict] = []
         with os.scandir(full) as scanner:
             for entry in scanner:
-                child_rel = f"{normalized_rel}/{entry.name}" if normalized_rel else entry.name
+                child_rel = os.path.join(normalized_rel, entry.name)
                 if self.file_index_path_is_ignored(child_rel):
                     continue
                 is_dir = False
