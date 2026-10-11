@@ -8,10 +8,7 @@ from agents.running_display import running_event, short_line, unknown_tool_label
 from agents.running_display import display_path
 
 
-def iter_tool_calls(entry: dict) -> list[tuple[str, dict]]:
-
-    if not isinstance(entry, dict) or str(entry.get("source") or "").upper() != "MODEL":
-        return []
+def _tool_calls(entry: dict) -> list[tuple[str, dict]]:
     calls: list[tuple[str, dict]] = []
     for call in entry.get("tool_calls") or []:
         if not isinstance(call, dict):
@@ -41,15 +38,13 @@ def _normalize_transcript_args(value: object) -> object:
     return value
 
 
-def parse_antigravity_transcript_step(entry: dict | None) -> tuple[str, list[tuple[str, dict]]]:
-    if not isinstance(entry, dict):
-        return "", []
+def parse_antigravity_transcript_step(entry: dict) -> tuple[str, list[tuple[str, dict]]]:
     if str(entry.get("source") or "").upper() != "MODEL":
         return "", []
     if str(entry.get("type") or "").upper() != "PLANNER_RESPONSE":
         return "", []
     text = str(entry.get("content") or "").strip()
-    return text, iter_tool_calls(entry)
+    return text, _tool_calls(entry)
 
 
 def _pick(args: object, *keys: str) -> str:
@@ -90,11 +85,10 @@ def _source_id(name: str, sub: str) -> str:
     return f"tool:{name[:60]}:{sub[:120]}"
 
 
-def running_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
+def running_tool_events(name: object, arguments: object, *, workspace: str) -> list[dict]:
     raw_name = str(name or "").strip() or "tool"
     lower = raw_name.lower()
     args = arguments if isinstance(arguments, dict) else {}
-    ws = str(workspace or "")
     main = ""
     sub = ""
 
@@ -102,19 +96,19 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
         return []
     if lower == "view_file":
         main = "Read"
-        sub = display_path(_pick(args, "AbsolutePath"), workspace=ws)
+        sub = display_path(_pick(args, "AbsolutePath"), workspace=workspace)
     elif lower == "list_dir":
         main = "Explore"
-        sub = display_path(_pick(args, "DirectoryPath"), workspace=ws)
+        sub = display_path(_pick(args, "DirectoryPath"), workspace=workspace)
     elif lower == "grep_search":
         main = "Search"
         query = _pick(args, "Query")
-        path = display_path(_pick(args, "SearchPath"), workspace=ws)
+        path = display_path(_pick(args, "SearchPath"), workspace=workspace)
         sub = f"{query} in {path}" if query and path else query or path
     elif lower == "find_by_name":
         main = "Search"
         pattern = _pick(args, "Pattern")
-        path = display_path(_pick(args, "SearchDirectory"), workspace=ws)
+        path = display_path(_pick(args, "SearchDirectory"), workspace=workspace)
         sub = f"{pattern} in {path}" if pattern and path else pattern or path
     elif lower == "run_command":
         labeled = _command_label(_pick(args, "CommandLine"))
@@ -122,10 +116,10 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
             main, _, sub = labeled.partition(" ")
     elif lower in {"replace_file_content", "multi_replace_file_content"}:
         main = "Edit"
-        sub = display_path(_pick(args, "TargetFile"), workspace=ws)
+        sub = display_path(_pick(args, "TargetFile"), workspace=workspace)
     elif lower in {"write_to_file", "write_file"}:
         main = "Write"
-        sub = display_path(_pick(args, "TargetFile"), workspace=ws)
+        sub = display_path(_pick(args, "TargetFile"), workspace=workspace)
     elif lower == "search_web":
         main = "Web"
         sub = _pick(args, "query", "Query")

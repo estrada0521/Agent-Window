@@ -117,10 +117,9 @@ def _exec_command_event(args: object, *, workspace: str) -> tuple[str, str] | No
         return None
     base = os.path.basename(tokens[0])
     lower = base.lower()
-    ws = str(workspace or "")
 
     if lower in {"sed", "cat", "head", "tail", "nl", "xxd", "strings", "file", "wc"}:
-        return "Read", _first_path_arg(tokens, workspace=ws) or short_line(line)
+        return "Read", _first_path_arg(tokens, workspace=workspace) or short_line(line)
 
     if lower in {"ls", "find", "pwd", "mdfind"}:
         return "Explore", short_line(line)
@@ -164,7 +163,6 @@ def _exec_command_event(args: object, *, workspace: str) -> tuple[str, str] | No
 
 
 def _codex_subline(tool_lower: str, args: object, *, workspace: str) -> str:
-    ws = str(workspace or "")
 
     if tool_lower == "apply_patch":
         return _patch_target_path(args)
@@ -173,7 +171,7 @@ def _codex_subline(tool_lower: str, args: object, *, workspace: str) -> str:
         return ""
 
     if tool_lower == "view_image":
-        return display_path(_pick(args, "path", "file_path"), workspace=ws)
+        return display_path(_pick(args, "path", "file_path"), workspace=workspace)
 
     if tool_lower == "list_mcp_resources":
         srv = str(args.get("server") or "").strip() or "(server)"
@@ -403,13 +401,13 @@ def iter_tool_calls(entry: dict) -> list[tuple[str, object]]:
     return []
 
 
-def running_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
+def running_tool_events(name: object, arguments: object, *, workspace: str) -> list[dict]:
     lower = str(name or "").strip().lower()
     if lower in QUIET or not lower:
         return []
     a = _coerce_args(arguments)
     if lower == "exec_command":
-        event = _exec_command_event(a, workspace=str(workspace or ""))
+        event = _exec_command_event(a, workspace=workspace)
         if event is None:
             return [running_event("Shell", "exec_command", source_id="tool:exec_command:fallback")]
         main, sub = event
@@ -427,5 +425,5 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
     if main is None:
         main, sub = unknown_tool_label(lower)
     else:
-        sub = _codex_subline(lower, a, workspace=str(workspace or "")).strip() or lower
+        sub = _codex_subline(lower, a, workspace=workspace).strip() or lower
     return [running_event(main, sub, source_id=_sid(f"tool:{lower}", sub))]

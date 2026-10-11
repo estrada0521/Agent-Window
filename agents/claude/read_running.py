@@ -152,14 +152,13 @@ def _send_message_subline(args: dict) -> str:
 
 
 def _claude_tool_subline(tool_lower: str, args: dict, *, workspace: str) -> str:
-    ws = str(workspace or "")
     if tool_lower == "bash":
         cmd = str(args.get("command") or args.get("cmd") or "").strip()
         if not cmd:
             return ""
         return short_line(cmd)
     if tool_lower == "read":
-        path = display_path(_pick(args, "path", "file_path", "notebook_path"), workspace=ws)
+        path = display_path(_pick(args, "path", "file_path", "notebook_path"), workspace=workspace)
         bits: list[str] = []
         if "offset" in args and args.get("offset") is not None:
             bits.append(f"@{args.get('offset')}")
@@ -170,7 +169,7 @@ def _claude_tool_subline(tool_lower: str, args: dict, *, workspace: str) -> str:
     if tool_lower == "glob":
         pat = str(args.get("glob_pattern") or args.get("pattern") or "").strip()
         base_raw = str(args.get("target_directory") or args.get("path") or "").strip()
-        base = display_path(base_raw, workspace=ws) if base_raw else ""
+        base = display_path(base_raw, workspace=workspace) if base_raw else ""
         if pat and base:
             return f"{pat} in {base}"
         if pat:
@@ -199,13 +198,13 @@ def _claude_tool_subline(tool_lower: str, args: dict, *, workspace: str) -> str:
             return "1 item"
         return f"{n} items"
     if tool_lower == "write":
-        return display_path(_pick(args, "file_path", "path"), workspace=ws)
+        return display_path(_pick(args, "file_path", "path"), workspace=workspace)
     if tool_lower == "edit":
-        return display_path(_pick(args, "file_path", "path"), workspace=ws)
+        return display_path(_pick(args, "file_path", "path"), workspace=workspace)
     return ""
 
 
-def running_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
+def running_tool_events(name: object, arguments: object, *, workspace: str) -> list[dict]:
     raw_name = str(name or "").strip() or "tool"
     lower = raw_name.lower()
     if lower in _QUIET:
@@ -213,11 +212,10 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
     a = _coerce_args(arguments)
     if not isinstance(a, dict):
         a = {}
-    ws = str(workspace or "")
 
     if lower.startswith("mcp__playwright__browser_"):
         main = "Browser"
-        sub = _browser_subline(lower, a, workspace=ws)
+        sub = _browser_subline(lower, a, workspace=workspace)
     elif lower == "websearch":
         main = "Search"
         sub = short_line(a.get("query"))
@@ -241,5 +239,5 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
         if main is None:
             fallback_main, fallback_sub = unknown_tool_label(raw_name)
             return [running_event(fallback_main, fallback_sub, source_id=_source_id("tool:unknown", raw_name))]
-        sub = _claude_tool_subline(lower, a, workspace=ws).strip()
+        sub = _claude_tool_subline(lower, a, workspace=workspace).strip()
     return [running_event(main, sub, source_id=_source_id(f"tool:{lower}", sub))]

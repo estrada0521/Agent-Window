@@ -20,7 +20,7 @@ def running_event(main: str, sub: str = "", *, source_id: str) -> dict:
     return {"keyword": m, "detail": s, "source_id": source_id}
 
 
-def display_path(value: object, *, workspace: str = "") -> str:
+def display_path(value: object, *, workspace: str) -> str:
     text = str(value or "").strip()
     if not text:
         return ""
@@ -38,11 +38,9 @@ def display_path(value: object, *, workspace: str = "") -> str:
     if not os.path.isabs(normalized):
         return normalized.replace(os.sep, "/")
     normalized_real = os.path.realpath(normalized)
-    root = str(workspace or "").strip()
-    if root:
-        rel = os.path.relpath(normalized_real, os.path.realpath(root))
-        if rel == ".":
-            return "."
-        if rel != ".." and not rel.startswith(f"..{os.sep}"):
-            return rel.replace(os.sep, "/")
+    rel = os.path.relpath(normalized_real, os.path.realpath(workspace))
+    if rel == ".":
+        return "."
+    if rel != ".." and not rel.startswith(f"..{os.sep}"):
+        return rel.replace(os.sep, "/")
     return normalized_real.replace(os.sep, "/")
