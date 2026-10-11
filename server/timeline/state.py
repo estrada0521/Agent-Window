@@ -187,9 +187,10 @@ class TimelineState:
     def pane_id_for_control_target(self, target: str) -> str:
         return self.pane_id_for_terminal() if target == "terminal" else self.pane_id_for_agent(target)
 
-    def mark_agents_running(self, agents: list[str]) -> None:
+    def mark_agents_delivered(self, agents: list[str]) -> None:
         for agent in agents:
             self._mark_running(agent)
+            self.native_log.bind_after_send(agent)
 
     def mark_agents_idle(self, agents: list[str]) -> None:
         for agent in agents:
@@ -231,8 +232,7 @@ class TimelineState:
             if not pane_id or not deliver_text_to_pane(run_tmux, pane_id, message):
                 failed.append(agent)
                 continue
-            self._mark_running(agent)
-            self.native_log.bind_after_send(agent)
+            self.mark_agents_delivered([agent])
         return failed
 
     def agent_statuses(self) -> dict[str, str]:

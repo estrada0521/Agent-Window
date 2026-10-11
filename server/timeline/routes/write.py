@@ -595,7 +595,7 @@ def _post_send(handler, _parsed, ctx) -> None:
     handler._send_json(status, body)
 
 
-def _post_agent_running(handler, _parsed, ctx) -> None:
+def _post_agents_delivered(handler, _parsed, ctx) -> None:
     data, err = _read_json_body(handler)
     if err:
         handler._send_json(400, {"ok": False, "error": err})
@@ -609,7 +609,7 @@ def _post_agent_running(handler, _parsed, ctx) -> None:
     if not targets or any(not target or target not in active for target in targets):
         handler._send_json(400, {"ok": False, "error": "targets must name active agents"})
         return
-    ctx["state"].mark_agents_running(list(dict.fromkeys(targets)))
+    ctx["state"].mark_agents_delivered(list(dict.fromkeys(targets)))
     handler._send_json(200, {"ok": True})
 
 
@@ -634,7 +634,7 @@ _POST_ROUTES = {
     "/restart-agent": _post_restart_agent,
     "/mark-idle": _post_mark_idle,
     "/native-log": _post_native_log,
-    "/agent-running": _post_agent_running,
+    "/agents-delivered": _post_agents_delivered,
     "/send": _post_send,
 }
 

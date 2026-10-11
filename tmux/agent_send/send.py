@@ -193,14 +193,14 @@ class AgentSender:
             targets.append(DeliveryTarget(agent_name=name, pane_id=pane))
         return targets
 
-    def _notify_running_agents(self, agents: list[str], workspace: str) -> None:
+    def _notify_delivered_agents(self, agents: list[str], workspace: str) -> None:
         port = workspace_timeline_port(workspace)
         body = json.dumps({"targets": agents}).encode("utf-8")
         connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
         try:
             connection.request(
                 "POST",
-                "/agent-running",
+                "/agents-delivered",
                 body=body,
                 headers={
                     "Content-Type": "application/json",
@@ -315,7 +315,7 @@ class AgentSender:
             payload=delivery_payload,
         )
         try:
-            self._notify_running_agents(successful_targets, workspace)
+            self._notify_delivered_agents(successful_targets, workspace)
         except AgentSendError as exc:
             print(f"Delivered, but Agent Window was not notified: {exc}", file=sys.stderr)
 
