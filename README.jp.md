@@ -236,6 +236,12 @@ Tailscale等でHubに接続し、PWAとして使う。gitやfile treeへ繋が�
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">
   <img src="media/agent-window-mobile-dark-1.png" width="48%" alt="Mobile UI, dark 1">
+</p>
+
+<details>
+<summary>その他のスクリーンショット</summary>
+
+<p align="center">
   <img src="media/agent-window-mobile-light-2.png" width="48%" alt="Mobile UI, light 2">
   <img src="media/agent-window-mobile-dark-2.png" width="48%" alt="Mobile UI, dark 2">
   <img src="media/agent-window-mobile-light-3.png" width="48%" alt="Mobile UI, light 3">
@@ -245,6 +251,8 @@ Tailscale等でHubに接続し、PWAとして使う。gitやfile treeへ繋が�
   <img src="media/agent-window-mobile-light-5.png" width="48%" alt="Mobile UI, light 5">
   <img src="media/agent-window-mobile-dark-5.png" width="48%" alt="Mobile UI, dark 5">
 </p>
+
+</details>
 
 ## Supported CLI
 
