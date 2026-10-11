@@ -145,6 +145,7 @@ class TimelineState:
         timeline_name = self.timeline_name
         with self._events:
             stopped_threads = [f"{name} stopped: {detail}" for name, detail in self._stopped_threads.items()]
+        panes = self.agent_panes()
         return {
             "server_instance": self.server_instance,
             "pid": os.getpid(),
@@ -152,8 +153,8 @@ class TimelineState:
             "active": self.session_is_active,
             "workspace": self.workspace,
             "repo_root": str(self.repo_root),
-            "targets": self.active_agents() if self.session_is_active else log_meta_agents(timeline_name),
-            "statuses": self.agent_statuses(),
+            "targets": list(panes) if self.session_is_active else log_meta_agents(timeline_name),
+            "statuses": {agent: "running" if agent in self._agent_running else "idle" for agent in panes},
             "running_display": self.native_log.running_display_for_api(),
             "stopped_threads": stopped_threads,
         }
@@ -224,8 +225,6 @@ class TimelineState:
 
     def deliver_message(self, targets: list[str], message: str) -> list[str]:
         panes_by_agent = self.agent_panes()
-
-
         failed: list[str] = []
         for agent in targets:
             pane_id = panes_by_agent.get(agent, "")
@@ -234,15 +233,6 @@ class TimelineState:
                 continue
             self.mark_agents_delivered([agent])
         return failed
-
-    def agent_statuses(self) -> dict[str, str]:
-        statuses: dict[str, str] = {}
-        for agent in self.active_agents():
-            running = agent in self._agent_running
-            statuses[agent] = "running" if running else "idle"
-            if not running:
-                self.native_log.clear_running_display(agent)
-        return statuses
 
     def trace_content(self, agent: str, *, tail_lines: int) -> str:
         pane_id = self.pane_id_for_control_target(agent)
