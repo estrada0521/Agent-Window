@@ -213,7 +213,8 @@ def get_timeline_stats(handler, parsed, _ctx) -> None:
     if not log_path.is_file():
         handler._send_json(404, {"ok": False, "error": "Timeline not found"})
         return
-    handler._send_json(200, {"ok": True, **_timeline_stats(log_path)})
+    port = workspace_timeline_port(log_workspace(timeline_name))
+    handler._send_json(200, {"ok": True, **_timeline_stats(log_path), "port": port})
 
 
 def post_restart_hub(handler, _parsed, ctx) -> None:

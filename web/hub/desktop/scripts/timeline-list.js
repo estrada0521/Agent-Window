@@ -75,7 +75,7 @@
         const row = event.target.closest(".desk-action-timeline-row");
         if (!row || row.contains(event.relatedTarget)) return;
         const name = row.dataset.timelineName;
-        const key = `${name}\n${row.dataset.revision}`;
+        const key = `${name}\n${row.dataset.revision}\n${findTimelineRecord(name).timeline.workspace}`;
         if (!_deskTimelineStatsCache.has(key)) {
           _deskTimelineStatsCache.set(key, fetch(`/timeline-stats?timeline=${encodeURIComponent(name)}`).then(async (res) => {
             const data = await res.json();
@@ -85,6 +85,7 @@
               name,
               `Created: ${data.created}\nLast updated: ${data.updated}`,
               [`${total} message${total === 1 ? "" : "s"}`, ...data.senders.map(([sender, count]) => `${sender} : ${count}`)].join("\n"),
+              `port: ${data.port}`,
             ].join("\n\n");
           }));
         }
