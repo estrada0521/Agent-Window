@@ -11,6 +11,7 @@
           String(event.data.mode || ""),
           Number(event.data.width || 0),
         );
+        _deskMain.style.setProperty("--side-bar-reserved-width", `${event.data.reservedWidth}px`);
         if (event.data.side === "left") document.documentElement.dataset.sideBarPosition = "left";
         else delete document.documentElement.dataset.sideBarPosition;
         return;

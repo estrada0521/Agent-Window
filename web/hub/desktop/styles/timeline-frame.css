@@ -49,7 +49,11 @@
     }
     #hubHud {
       position: absolute;
+      left: calc((100% - var(--side-bar-reserved-width, 0px)) / 2);
       --hud-weight: var(--hub-body-weight);
+    }
+    html[data-side-bar-position="left"] #hubHud {
+      left: calc((100% + var(--side-bar-reserved-width, 0px)) / 2);
     }
     html[data-timeline-hud] #hubHud {
       top: calc(env(safe-area-inset-top, 0px) + var(--text-size, 13px) * 16 / 13 + var(--hud-height));

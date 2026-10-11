@@ -566,6 +566,7 @@ __INCLUDE:git-panel/events.js__
           mode: sideBarOpen ? "open" : "",
           view: activeSideBarView,
           width: outwardSideBarWidthPx(),
+          reservedWidth: Number.parseFloat(document.documentElement.style.getPropertyValue("--side-bar-reserved-width")),
           side: document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right",
         }, "*");
       }

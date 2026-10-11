@@ -67,6 +67,7 @@
     }
 
     function clearDeskTimelineFrame() {
+      _deskMain.style.removeProperty("--side-bar-reserved-width");
       navigateDeskTimelineFrame("about:blank");
       setDeskTimelineLoading(false);
       finishDeskHubLoad();
