@@ -63,6 +63,9 @@ DESKTOP_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 MOBILE_LIGHT_ICON_HOVER = "rgb(35, 35, 35)"
 MOBILE_DARK_ICON_HOVER = "rgb(190, 190, 190)"
 
+CHIP_HOVER_LIGHT = "rgb(100.25, 100.25, 100.25)"
+CHIP_HOVER_DARK = "rgb(136, 136, 136)"
+
 DESKTOP_SCROLLBAR_THUMB_LIGHT = "rgb(218, 218, 216)"
 DESKTOP_SCROLLBAR_THUMB_DARK = "rgb(35, 35, 35)"
 
@@ -144,8 +147,10 @@ def resolve_theme_palette(theme: str = "dark") -> dict[str, object]:
         "color_scheme": color_scheme,
         "dark_bg_channels": ", ".join(str(v) for v in bg_rgb),
         "dark_bg": f"rgb({','.join(str(v) for v in bg_rgb)})",
+        "desktop_hub_light_bg_channels": ", ".join(str(v) for v in DESKTOP_HUB_LIGHT_BG_RGB),
         "desktop_hub_light_bg": f"rgb({','.join(str(v) for v in DESKTOP_HUB_LIGHT_BG_RGB)})",
         "desktop_hub_light_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_HUB_LIGHT_BG_RGB)}, {DESKTOP_HUB_LIGHT_BG_ALPHA})",
+        "desktop_hub_dark_bg_channels": ", ".join(str(v) for v in DESKTOP_HUB_DARK_BG_RGB),
         "desktop_hub_dark_bg": f"rgb({','.join(str(v) for v in DESKTOP_HUB_DARK_BG_RGB)})",
         "desktop_hub_dark_bg_fill": f"rgba({', '.join(str(v) for v in DESKTOP_HUB_DARK_BG_RGB)}, {DESKTOP_HUB_DARK_BG_ALPHA})",
         "desktop_timeline_light_bg_channels": ", ".join(str(v) for v in DESKTOP_TIMELINE_LIGHT_BG_RGB),
@@ -166,8 +171,10 @@ def resolve_theme_palette(theme: str = "dark") -> dict[str, object]:
         "gray_muted": _gray_rgb_string(muted_level),
         "icon_fg": _gray_rgb_string(icon_fg_level),
         "icon_muted": _gray_rgb_string(icon_muted_level),
+        "icon_muted_channels": f"{icon_muted_level}, {icon_muted_level}, {icon_muted_level}",
         "icon_hover": _gray_rgb_string(icon_hover_level),
         "chip_color": _gray_rgb_string(chip_color_level),
+        "chip_hover_color": CHIP_HOVER_LIGHT if theme == "light" else CHIP_HOVER_DARK,
         "line": line,
         "line_strong": line_strong,
         "code_copy_hover_bg": code_copy_hover_bg,
@@ -193,6 +200,8 @@ def apply_color_tokens(
     replacements: tuple[tuple[str, str], ...] = (
         ("__THEME_MOBILE_DEFAULT__", mobile_theme_default),
         *((f"__{key.upper()}__", str(value)) for key, value in resolve_theme_palette(theme).items()),
+        ("__CHIP_HOVER_LIGHT__", CHIP_HOVER_LIGHT),
+        ("__CHIP_HOVER_DARK__", CHIP_HOVER_DARK),
         ("__DESKTOP_LIGHT_ICON_HOVER__", DESKTOP_LIGHT_ICON_HOVER),
         ("__DESKTOP_DARK_ICON_HOVER__", DESKTOP_DARK_ICON_HOVER),
         ("__MOBILE_LIGHT_ICON_HOVER__", MOBILE_LIGHT_ICON_HOVER),

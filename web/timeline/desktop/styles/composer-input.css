@@ -88,7 +88,7 @@
       pointer-events: auto;
     }
     html[data-theme="dark"] .send-btn {
-      background: color-mix(in srgb, var(--fg) 60%, var(--muted));
+      background: var(--control-active-color);
     }
     .send-btn.is-pressed {
       transform: scale(0.93);

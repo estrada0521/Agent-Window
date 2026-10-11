@@ -311,17 +311,17 @@
       .target-chip:hover:not(.active) {
         background: transparent;
         border-color: transparent;
-        color: color-mix(in srgb, var(--chip-color) 45%, var(--icon-hover));
+        color: var(--chip-hover-color);
         transform: none;
         box-shadow: none;
       }
       .target-chip:hover:not(.active) .target-icon,
       .target-chip:active:not(.active) .target-icon {
-        color: color-mix(in srgb, var(--chip-color) 45%, var(--icon-hover));
+        color: var(--chip-hover-color);
       }
       .target-chip:hover:not(.active) .agent-icon-slot--chip,
       .target-chip:active:not(.active) .agent-icon-slot--chip {
-        color: color-mix(in srgb, var(--chip-color) 45%, var(--icon-hover));
+        color: var(--chip-hover-color);
       }
       .target-chip.active:hover {
         background: transparent;
@@ -353,7 +353,7 @@
     }
     html[data-theme="dark"] .target-chip.active .agent-icon-slot--chip,
     html[data-theme="dark"] .target-chip.active .target-icon {
-      color: color-mix(in srgb, var(--fg) 60%, var(--muted));
+      color: var(--control-active-color);
     }
     .agent-icon-slot {
       position: relative;

@@ -240,10 +240,9 @@
         const rootFgStyle = getComputedStyle(document.documentElement);
         const darkFgRgb = rootFgStyle.getPropertyValue("--dark-fg-rgb").trim() || "249, 249, 247";
         const lightFgRgb = rootFgStyle.getPropertyValue("--light-fg-rgb").trim() || "19, 19, 19";
-        const darkMutedRgb = rootFgStyle.getPropertyValue("--dark-muted-rgb").trim() || "150, 150, 150";
         const fgRgb = isLight ? lightFgRgb : darkFgRgb;
         const fg = `rgb(${fgRgb})`;
-        const lnFg = isLight ? `rgba(${lightFgRgb},0.8)` : `color-mix(in srgb, rgb(${darkMutedRgb}) 88%, white)`;
+        const lnFg = isLight ? `rgba(${lightFgRgb},0.8)` : "rgb(162.6,162.6,162.6)";
         const scheme = isLight ? "light" : "dark";
         frameDoc.documentElement.setAttribute("data-preview-base-theme", scheme);
         let style = frameDoc.getElementById("base-theme-style");

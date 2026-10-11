@@ -49,13 +49,13 @@
     }
     .message.user .message-body-row {
       --icon-muted: var(--muted);
-      --line: color-mix(in srgb, var(--fg) 15%, transparent);
-      --scrollbar-thumb: color-mix(in srgb, var(--fg) 35%, transparent);
+      --line: rgba(var(--fg-rgb), 0.15);
+      --scrollbar-thumb: rgba(var(--fg-rgb), 0.35);
     }
     html[data-theme="light"] .message.user .md-body a[href]:not(.inline-file-link):not(.local-file-link) {
       text-decoration: underline;
       text-decoration-thickness: clamp(0.5px, 0.0769em, 1px);
-      text-decoration-color: color-mix(in srgb, var(--fg) 65%, transparent);
+      text-decoration-color: rgba(var(--fg-rgb), 0.65);
     }
     html[data-theme="dark"] .message.user .md-body a[href]:not(.inline-file-link):not(.local-file-link) {
       text-decoration: none;

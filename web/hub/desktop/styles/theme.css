@@ -2,7 +2,8 @@
       --app-shell-height: 100dvh;
       color-scheme: __COLOR_SCHEME__;
       --text-size: __TEXT_SIZE_PX__;
-      --bg: __DARK_BG__;
+      --bg-rgb: __DARK_BG_CHANNELS__;
+      --bg: rgb(var(--bg-rgb));
       --page-side-pad: 14px;
       --chrome-icon-btn-size: 26px;
       --chrome-icon-size: 16px;
@@ -10,12 +11,14 @@
       --chrome-icon-gap: 2px;
       --line: __LINE__;
       --line-strong: __LINE_STRONG__;
-      --fg: __LIGHT_FG__;
+      --fg-rgb: __LIGHT_FG_CHANNELS__;
+      --fg: rgb(var(--fg-rgb));
       --muted: __GRAY_MUTED__;
-      --icon-fg: __ICON_FG__;
-      --icon-muted: __ICON_MUTED__;
+      --icon-fg: var(--fg);
+      --icon-muted-rgb: __ICON_MUTED_CHANNELS__;
+      --icon-muted: rgb(var(--icon-muted-rgb));
       --timeline-dim-fg: rgb(__TEXT_TIMELINE_DIM_DESKTOP_LIGHT_CHANNELS__);
-      --spinner-ring-color: color-mix(in srgb, var(--icon-muted) 50%, transparent);
+      --spinner-ring-color: rgba(var(--icon-muted-rgb), 0.5);
       --icon-hover: __ICON_HOVER__;
       --timeline-hover-bg: __TIMELINE_HOVER_BG__;
       --timeline-selected-bg: __TIMELINE_SELECTED_BG__;
@@ -26,12 +29,15 @@
     }
     html[data-theme="light"] {
       color-scheme: light;
-      --bg: __DESKTOP_HUB_LIGHT_BG__;
-      --fg: rgb(__TEXT_TIMELINE_DESKTOP_LIGHT_CHANNELS__);
+      --bg-rgb: __DESKTOP_HUB_LIGHT_BG_CHANNELS__;
+      --bg: rgb(var(--bg-rgb));
+      --fg-rgb: __TEXT_TIMELINE_DESKTOP_LIGHT_CHANNELS__;
+      --fg: rgb(var(--fg-rgb));
       --timeline-dim-fg: rgb(__TEXT_TIMELINE_DIM_DESKTOP_LIGHT_CHANNELS__);
       --muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
-      --icon-fg: rgb(__TEXT_TIMELINE_DESKTOP_LIGHT_CHANNELS__);
-      --icon-muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
+      --icon-fg: var(--fg);
+      --icon-muted-rgb: __TEXT_MUTED_LIGHT_CHANNELS__;
+      --icon-muted: rgb(var(--icon-muted-rgb));
       --icon-hover: __DESKTOP_LIGHT_ICON_HOVER__;
       --resizer: __DESKTOP_RESIZER_LIGHT__;
       --resizer-active: __DESKTOP_RESIZER_ACTIVE_LIGHT__;
@@ -50,13 +56,16 @@
     }
     html[data-theme="dark"] {
       color-scheme: dark;
-      --bg: __DESKTOP_HUB_DARK_BG__;
+      --bg-rgb: __DESKTOP_HUB_DARK_BG_CHANNELS__;
+      --bg: rgb(var(--bg-rgb));
       --hub-glass: __DESKTOP_HUB_DARK_BG_FILL__;
-      --fg: rgb(__TEXT_TIMELINE_DESKTOP_DARK_CHANNELS__);
+      --fg-rgb: __TEXT_TIMELINE_DESKTOP_DARK_CHANNELS__;
+      --fg: rgb(var(--fg-rgb));
       --timeline-dim-fg: rgb(__TEXT_TIMELINE_DIM_DESKTOP_DARK_CHANNELS__);
       --muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
-      --icon-fg: rgb(__TEXT_TIMELINE_DESKTOP_DARK_CHANNELS__);
-      --icon-muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
+      --icon-fg: var(--fg);
+      --icon-muted-rgb: __TEXT_MUTED_DARK_CHANNELS__;
+      --icon-muted: rgb(var(--icon-muted-rgb));
       --icon-hover: __DESKTOP_DARK_ICON_HOVER__;
       --resizer: var(--line);
       --resizer-active: __DESKTOP_RESIZER_ACTIVE_DARK__;

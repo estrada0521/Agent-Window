@@ -9,11 +9,13 @@
       --timeline-bg-rgb: __MOBILE_TIMELINE_DARK_BG_CHANNELS__;
       --line: __LINE__;
       --line-strong: __LINE_STRONG__;
-      --fg: __LIGHT_FG__;
+      --fg-rgb: __LIGHT_FG_CHANNELS__;
+      --fg: rgb(var(--fg-rgb));
       --muted: __GRAY_MUTED__;
-      --icon-fg: __ICON_FG__;
-      --icon-muted: __ICON_MUTED__;
-      --spinner-ring-color: color-mix(in srgb, var(--icon-muted) 50%, transparent);
+      --icon-fg: var(--fg);
+      --icon-muted-rgb: __ICON_MUTED_CHANNELS__;
+      --icon-muted: rgb(var(--icon-muted-rgb));
+      --spinner-ring-color: rgba(var(--icon-muted-rgb), 0.5);
       --icon-hover: __ICON_HOVER__;
       --timeline-hover-bg: __TIMELINE_HOVER_BG__;
       --timeline-selected-bg: __TIMELINE_SELECTED_BG__;
@@ -33,10 +35,12 @@
       --bg-rgb: __MOBILE_HUB_LIGHT_BG_CHANNELS__;
       --timeline-bg-rgb: __MOBILE_TIMELINE_LIGHT_BG_CHANNELS__;
       --bg: __MOBILE_HUB_LIGHT_BG__;
-      --fg: rgb(__TEXT_TIMELINE_MOBILE_LIGHT_CHANNELS__);
+      --fg-rgb: __TEXT_TIMELINE_MOBILE_LIGHT_CHANNELS__;
+      --fg: rgb(var(--fg-rgb));
       --muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
-      --icon-fg: rgb(__TEXT_TIMELINE_MOBILE_LIGHT_CHANNELS__);
-      --icon-muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
+      --icon-fg: var(--fg);
+      --icon-muted-rgb: __TEXT_MUTED_LIGHT_CHANNELS__;
+      --icon-muted: rgb(var(--icon-muted-rgb));
       --icon-hover: rgb(35, 35, 35);
       --line: rgba(0, 0, 0, 0.10);
       --line-strong: rgba(0, 0, 0, 0.18);
@@ -49,16 +53,19 @@
       --row-preview-fg: var(--muted);
       --timeline-dim-fg: rgb(__TEXT_TIMELINE_DIM_MOBILE_LIGHT_CHANNELS__);
       --row-name-weight: 700;
+      --footer-fg: rgb(209.4, 209.4, 207.7);
       --hud-weight: __MOBILE_LIGHT_BODY_WEIGHT__;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
       --bg-rgb: __MOBILE_HUB_DARK_BG_CHANNELS__;
       --bg: __MOBILE_HUB_DARK_BG__;
-      --fg: rgb(__TEXT_TIMELINE_MOBILE_DARK_CHANNELS__);
+      --fg-rgb: __TEXT_TIMELINE_MOBILE_DARK_CHANNELS__;
+      --fg: rgb(var(--fg-rgb));
       --muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
-      --icon-fg: rgb(__TEXT_TIMELINE_MOBILE_DARK_CHANNELS__);
-      --icon-muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
+      --icon-fg: var(--fg);
+      --icon-muted-rgb: __TEXT_MUTED_DARK_CHANNELS__;
+      --icon-muted: rgb(var(--icon-muted-rgb));
       --icon-hover: rgb(190, 190, 190);
       --line: rgba(255, 255, 255, 0.07);
       --line-strong: rgba(255, 255, 255, 0.12);
@@ -69,7 +76,8 @@
       --timeline-danger-fg: rgb(204, 47, 38);
       --timeline-success-fg: rgb(41, 178, 75);
       --mob-top-gradient-rgb: var(--bg-rgb);
-      --row-preview-fg: color-mix(in srgb, var(--muted) 85%, var(--bg));
+      --row-preview-fg: rgb(130.05, 130.05, 130.05);
+      --footer-fg: rgb(49.25, 49.25, 49.25);
       --timeline-dim-fg: rgb(__TEXT_TIMELINE_DIM_MOBILE_DARK_CHANNELS__);
       --row-name-weight: 600;
       --hud-weight: __MOBILE_DARK_BODY_WEIGHT__;
@@ -338,7 +346,7 @@
       padding: 12px 0 calc(4px + env(safe-area-inset-bottom, 0px));
       text-align: center;
       font-size: 12px;
-      color: color-mix(in srgb, var(--fg) 15%, var(--bg));
+      color: var(--footer-fg);
     }
 
     .mob-section-label {
@@ -423,7 +431,7 @@
       transform: translateY(-50%);
       border-radius: 50%;
       background: var(--icon-fg);
-      box-shadow: 0 0 5px color-mix(in srgb, var(--icon-fg) 68%, transparent);
+      box-shadow: 0 0 5px rgba(var(--fg-rgb), 0.68);
     }
 
     .mob-row-name {

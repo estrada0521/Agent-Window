@@ -47,9 +47,10 @@ __INCLUDE:../../transcript.css__
       --user-bubble-side-space: 0.3em;
       padding: 0.65em calc(0.9em + var(--user-bubble-side-space));
       border-radius: 1.9em;
-      --fg: var(--bg);
+      --fg-rgb: var(--bg-rgb);
+      --fg: rgb(var(--fg-rgb));
       --fg-bold: var(--bg);
-      --muted: color-mix(in srgb, var(--bg) 65%, transparent);
+      --muted: rgba(var(--bg-rgb), 0.65);
       --icon-fg: var(--bg);
       color: var(--fg);
       background: var(--user-bubble-bg);

@@ -2,7 +2,7 @@
       cursor: pointer;
     }
     html[data-export-range] #messages .export-in-range {
-      background: color-mix(in srgb, var(--fg) 6%, transparent);
+      background: rgba(var(--fg-rgb), 0.06);
     }
     .hud.has-controls {
       padding: 0 var(--pill-row-margin);
@@ -57,7 +57,7 @@
       font-variant-numeric: tabular-nums;
     }
     html[data-theme="dark"] .export-hud-export {
-      background: color-mix(in srgb, var(--fg) 60%, var(--muted));
+      background: var(--control-active-color);
     }
     .export-hud:not(.is-picked) .export-hud-export {
       display: none;

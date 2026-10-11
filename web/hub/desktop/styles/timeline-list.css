@@ -147,7 +147,7 @@
       width: 0.46em;
       height: 0.46em;
       background: var(--icon-fg);
-      box-shadow: 0 0 0.38em color-mix(in srgb, var(--icon-fg) 68%, transparent);
+      box-shadow: 0 0 0.38em rgba(var(--fg-rgb), 0.68);
     }
     .desk-timeline-row.archived {
       opacity: 1;

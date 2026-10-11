@@ -183,7 +183,7 @@
       height: var(--fit-chrome-mark-height);
       border-radius: 0.15em;
       background: var(--fg);
-      box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--bg) 35%, transparent);
+      box-shadow: inset 0 0 0 0.5px rgba(var(--bg-rgb), 0.35);
     }
     html[data-native-app="1"][data-auto-window-height="1"] #timelineTreeLabel.is-following + #timelineMenuBtn {
       position: relative;
@@ -336,7 +336,7 @@
       inset: var(--native-window-edge-inset, 4px);
       align-items: center;
       justify-content: center;
-      background: color-mix(in srgb, var(--bg) 28%, transparent);
+      background: rgba(var(--bg-rgb), 0.28);
       border-radius: var(--desk-inner-radius);
       z-index: 2000;
       pointer-events: none;
