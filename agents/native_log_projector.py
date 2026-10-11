@@ -83,10 +83,14 @@ class NativeLogProjector:
             for agent in target_agents
             if (pane_id := panes_by_agent.get(agent, ""))
         ]
+        bound = self.bindings()
         resolved: list[NativeLogBinding] = []
         for request in requests:
             binding = resolve_binding(request)
             if binding is None:
+                continue
+            if bound.get(binding.agent) == binding:
+                resolved.append(binding)
                 continue
             try:
                 self.project(binding.agent, binding.path, start_at_end=True)
