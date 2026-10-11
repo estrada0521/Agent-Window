@@ -151,28 +151,14 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
                     return_value=(True, 41000, ""),
                 ),
             ):
-                post_start_timeline_draft(
-                    handler,
-                    None,
-                    {
-                        "hub": hub,
-                        "format_timeline_url_fn": (
-                            lambda port, _path: f"/{port}/"
-                        ),
-                    },
-                )
+                post_start_timeline_draft(handler, None, {"hub": hub})
 
             handler._send_json.assert_called_once()
             status, payload = handler._send_json.call_args.args
             self.assertEqual(status, 200)
-            self.assertEqual(
-                {k: v for k, v in payload.items() if k != "notice"},
-                {
-                    "ok": True,
-                    "timeline": expected_name,
-                    "timeline_url": "/41000/",
-                },
-            )
+            self.assertTrue(payload["ok"])
+            self.assertEqual(payload["timeline"], expected_name)
+            self.assertRegex(payload["timeline_url"], r"^/41000/\?ts=\d+$")
             self.assertIn(expected_name, payload["notice"])
             create_session.assert_called_once_with(
                 timeline_name=expected_name,

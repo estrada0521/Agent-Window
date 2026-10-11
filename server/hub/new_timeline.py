@@ -16,6 +16,7 @@ from fs.log.paths import (
     workspace_timeline_port,
 )
 from server.timeline.control import create_session
+from server.hub.proxy import format_timeline_url
 from server.hub.supervisor import ensure_timeline_server
 
 
@@ -164,7 +165,7 @@ def post_start_timeline_draft(handler, _parsed, ctx) -> None:
         handler._send_json(500, {"ok": False, "error": "Failed to create timeline"})
         return
     ctx["hub"].publish_timeline_messages_changed()
-    timeline_url = ctx["format_timeline_url_fn"](
+    timeline_url = format_timeline_url(
         timeline_port,
         f"/?ts={int(time.time() * 1000)}",
     )

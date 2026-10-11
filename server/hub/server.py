@@ -14,7 +14,7 @@ from server.appearance.colors import apply_color_tokens, resolve_theme_palette
 from server.appearance.colors import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from server.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
-from server.hub.proxy import format_timeline_url, proxy_timeline, split_timeline_proxy_path
+from server.hub.proxy import proxy_timeline, split_timeline_proxy_path
 from server.hub.supervisor import stop_inactive_timeline_servers
 from server.page_header import (
     PAGE_HEADER_CSS,
@@ -30,20 +30,20 @@ from server.hub.timeline_query import (
 
 from server import APP_DISPLAY_NAME
 from server.hub.new_timeline import (
-    post_pick_workspace as _post_pick_workspace_action,
-    post_start_timeline_draft as _post_start_timeline_draft_action,
+    post_pick_workspace,
+    post_start_timeline_draft,
 )
 from server.hub.actions import (
-    post_delete_archived_timeline as _post_delete_archived_timeline_action,
-    post_archive_timeline as _post_archive_timeline_action,
-    post_open_timeline as _post_open_timeline_action,
-    post_revive_timeline as _post_revive_timeline_action,
-    get_timeline_workspace as _get_timeline_workspace_action,
-    get_timeline_stats as _get_timeline_stats_action,
-    post_change_timeline_workspace as _post_change_timeline_workspace_action,
-    post_rename_timeline as _post_rename_timeline_action,
-    post_reset_timeline_agents as _post_reset_timeline_agents_action,
-    post_restart_hub as _post_restart_hub_action,
+    post_delete_archived_timeline,
+    post_archive_timeline,
+    post_open_timeline,
+    post_revive_timeline,
+    get_timeline_workspace,
+    get_timeline_stats,
+    post_change_timeline_workspace,
+    post_rename_timeline,
+    post_reset_timeline_agents,
+    post_restart_hub,
 )
 from server.hub.pages import build_hub_html_pages, error_page
 from server.request import request_view_variant
@@ -123,10 +123,6 @@ _HUB_PWA_FILES = {
     "/hub-service-worker.js": ("service-worker.js", "application/javascript; charset=utf-8"),
 }
 
-_PAGE_HEADER_CSS = PAGE_HEADER_CSS
-_PAGE_HEADER_HTML = render_page_header()
-_PAGE_HEADER_HTML_MOBILE = render_page_header(actions_html=MOBILE_HUB_HEADER_ACTIONS)
-_PAGE_HEADER_JS = PAGE_HEADER_JS
 _HUB_LAUNCH_SHELL_BODY_HTML = (
     '<div class="launch-shell-card" id="launchShellCard">'
     '<span class="launch-shell-title">Agent Window</span>'
@@ -343,10 +339,10 @@ _hub_pages = build_hub_html_pages(
     pwa_hub_manifest_url=f"/hub.webmanifest?v={Path(__file__).stat().st_mtime_ns}",
     pwa_icon_192_url="/pwa-icon-192.png",
     pwa_apple_touch_icon_url="/apple-touch-icon.png",
-    hub_header_css=_PAGE_HEADER_CSS,
-    hub_header_html=_PAGE_HEADER_HTML,
-    hub_header_html_mobile=_PAGE_HEADER_HTML_MOBILE,
-    hub_header_js=_PAGE_HEADER_JS,
+    hub_header_css=PAGE_HEADER_CSS,
+    hub_header_html=render_page_header(),
+    hub_header_html_mobile=render_page_header(actions_html=MOBILE_HUB_HEADER_ACTIONS),
+    hub_header_js=PAGE_HEADER_JS,
 )
 HUB_HOME_DESKTOP_HTML = _hub_pages["hub_home_html_desktop"]
 HUB_HOME_MOBILE_HTML = _hub_pages["hub_home_html_mobile"]
@@ -355,42 +351,12 @@ HUB_HOME_MOBILE_HTML = _hub_pages["hub_home_html_mobile"]
 def _hub_action_context() -> dict[str, object]:
     return {
         "hub": hub,
-        "error_page_fn": error_page,
-        "format_timeline_url_fn": format_timeline_url,
         "queue_hub_restart_fn": queue_hub_restart,
         "release_restart_hold_fn": release_restart_hold,
     }
 
 
-_GET_ROUTE_HANDLERS = {
-    "/hub.webmanifest": "_get_hub_manifest",
-    "/hub-launch-shell.html": "_get_hub_launch_shell",
-    "/timelines": "_get_timelines",
-    "/timeline-messages-events": "_get_timeline_messages_events",
-    "/timeline-workspace": _get_timeline_workspace_action,
-    "/timeline-stats": _get_timeline_stats_action,
-    "/": "_get_home",
-    "/index.html": "_get_home",
-}
-
-_POST_ROUTE_HANDLERS = {
-    "/open-timeline": _post_open_timeline_action,
-    "/revive-timeline": _post_revive_timeline_action,
-    "/archive-timeline": _post_archive_timeline_action,
-    "/delete-archived-timeline": _post_delete_archived_timeline_action,
-    "/restart-hub": _post_restart_hub_action,
-    "/rename-timeline": _post_rename_timeline_action,
-    "/change-timeline-workspace": _post_change_timeline_workspace_action,
-    "/reset-timeline-agents": _post_reset_timeline_agents_action,
-    "/pick-workspace": _post_pick_workspace_action,
-    "/start-timeline-draft": _post_start_timeline_draft_action,
-    "/timeline-messages-changed": "_post_timeline_messages_changed",
-}
-
 class Handler(BaseHTTPRequestHandler):
-    _GET_ROUTE_HANDLERS = _GET_ROUTE_HANDLERS
-    _POST_ROUTE_HANDLERS = _POST_ROUTE_HANDLERS
-
     def _send_json(self, status, payload):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
@@ -427,21 +393,18 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Location", location)
         self.end_headers()
 
-    def _dispatch_route(self, parsed, route_map: dict[str, str]) -> bool:
-        handler_name = route_map.get(parsed.path)
-        if not handler_name:
+    def _dispatch_route(self, parsed, route_map) -> bool:
+        route = route_map.get(parsed.path)
+        if route is None:
             return False
         try:
-            if callable(handler_name):
-                handler_name(self, parsed, _hub_action_context())
-            else:
-                getattr(self, handler_name)(parsed)
+            route(self, parsed, _hub_action_context())
         except Exception as exc:
             self.log_error("Hub request failed: %s: %s", type(exc).__name__, exc)
             self._send_json(500, {"ok": False, "error": "Hub request failed"})
         return True
 
-    def _get_hub_manifest(self, _parsed):
+    def _get_hub_manifest(self, _parsed, _ctx):
         palette = resolve_theme_palette()
         bg = str(palette["dark_bg"])
         body = json.dumps({
@@ -461,10 +424,10 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _get_hub_launch_shell(self, _parsed):
+    def _get_hub_launch_shell(self, _parsed, _ctx):
         variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
         if variant == "mobile":
-            self._get_home(_parsed)
+            self._get_home(_parsed, _ctx)
             return
         page = (
             HUB_LAUNCH_SHELL_HTML
@@ -482,7 +445,7 @@ class Handler(BaseHTTPRequestHandler):
         page = apply_font_tokens(page)
         self._send_html(200, apply_color_tokens(page))
 
-    def _get_timelines(self, _parsed):
+    def _get_timelines(self, _parsed, _ctx):
         live = live_timelines_query(hub)
         active = [
             {
@@ -511,7 +474,7 @@ class Handler(BaseHTTPRequestHandler):
             "tmux_detail": live.detail,
         })
 
-    def _get_timeline_messages_events(self, _parsed):
+    def _get_timeline_messages_events(self, _parsed, _ctx):
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
@@ -530,7 +493,7 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             return
 
-    def _post_timeline_messages_changed(self, _parsed):
+    def _post_timeline_messages_changed(self, _parsed, _ctx):
         hub.publish_timeline_messages_changed()
         self.send_response(204)
         self.send_header("Cache-Control", "no-store")
@@ -539,7 +502,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 
-    def _get_home(self, _parsed):
+    def _get_home(self, _parsed, _ctx):
         variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
         page = HUB_HOME_MOBILE_HTML if variant == "mobile" else HUB_HOME_DESKTOP_HTML
         if variant == "desktop":
@@ -566,7 +529,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         if serve_pwa_file(self, parsed.path, _HUB_PWA_FILES):
             return
-        if self._dispatch_route(parsed, self._GET_ROUTE_HANDLERS):
+        if self._dispatch_route(parsed, _GET_ROUTE_HANDLERS):
             return
         self.send_response(404)
         self.end_headers()
@@ -578,10 +541,36 @@ class Handler(BaseHTTPRequestHandler):
         if split_timeline_proxy_path(parsed.path) is not None:
             proxy_timeline(self, "POST")
             return
-        if self._dispatch_route(parsed, self._POST_ROUTE_HANDLERS):
+        if self._dispatch_route(parsed, _POST_ROUTE_HANDLERS):
             return
         self.send_response(404)
         self.end_headers()
+
+
+_GET_ROUTE_HANDLERS = {
+    "/hub.webmanifest": Handler._get_hub_manifest,
+    "/hub-launch-shell.html": Handler._get_hub_launch_shell,
+    "/timelines": Handler._get_timelines,
+    "/timeline-messages-events": Handler._get_timeline_messages_events,
+    "/timeline-workspace": get_timeline_workspace,
+    "/timeline-stats": get_timeline_stats,
+    "/": Handler._get_home,
+    "/index.html": Handler._get_home,
+}
+
+_POST_ROUTE_HANDLERS = {
+    "/open-timeline": post_open_timeline,
+    "/revive-timeline": post_revive_timeline,
+    "/archive-timeline": post_archive_timeline,
+    "/delete-archived-timeline": post_delete_archived_timeline,
+    "/restart-hub": post_restart_hub,
+    "/rename-timeline": post_rename_timeline,
+    "/change-timeline-workspace": post_change_timeline_workspace,
+    "/reset-timeline-agents": post_reset_timeline_agents,
+    "/pick-workspace": post_pick_workspace,
+    "/start-timeline-draft": post_start_timeline_draft,
+    "/timeline-messages-changed": Handler._post_timeline_messages_changed,
+}
 
 
 def main(argv: list[str] | None = None) -> None:
