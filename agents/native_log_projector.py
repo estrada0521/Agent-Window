@@ -67,7 +67,7 @@ class NativeLogProjector:
         return self._log_path()
 
     def start(self) -> None:
-        self.refresh_bindings(start_at_end=True)
+        self.refresh_bindings()
         self._watcher = NativeLogWatcher(self, self._publish_state)
         threading.Thread(target=self._watcher.run, daemon=True, name="native-vnode").start()
 
@@ -75,8 +75,7 @@ class NativeLogProjector:
         with self._bindings_lock:
             return dict(self._bindings)
 
-    def refresh_bindings(self, agents: list[str] | None = None, *, start_at_end: bool = False) -> None:
-        replace_all = agents is None
+    def refresh_bindings(self, agents: list[str] | None = None) -> None:
         panes_by_agent = self._agent_panes()
         target_agents = list(agents) if agents is not None else list(panes_by_agent)
         requests = [
@@ -85,22 +84,24 @@ class NativeLogProjector:
             if (pane_id := panes_by_agent.get(agent, ""))
         ]
         resolved: list[NativeLogBinding] = []
+        for request in requests:
+            binding = resolve_binding(request)
+            if binding is None:
+                continue
+            try:
+                self.project(binding.agent, binding.path, start_at_end=True)
+            except Exception as exc:
+                self.failed(binding.agent, f"projection failed: {exc}")
+                continue
+            resolved.append(binding)
         with self._bindings_lock:
-            next_by_agent = {} if replace_all else dict(self._bindings)
+            next_by_agent = {} if agents is None else dict(self._bindings)
             for request in requests:
                 next_by_agent.pop(request.agent, None)
-                binding = resolve_binding(request)
-                if binding is None:
-                    continue
-                resolved.append(binding)
+            for binding in resolved:
                 next_by_agent[binding.agent] = binding
             self._bindings = next_by_agent
         self._wake_watcher()
-        for binding in resolved:
-            try:
-                self.project(binding.agent, binding.path, start_at_end=start_at_end)
-            except Exception as exc:
-                self.failed(binding.agent, f"projection failed: {exc}")
 
     def remove_binding(self, agent: str) -> None:
         with self._bindings_lock:
@@ -118,7 +119,7 @@ class NativeLogProjector:
 
     def rebind(self, agent: str) -> None:
         if self._agent_panes().get(agent):
-            self.refresh_bindings([agent], start_at_end=True)
+            self.refresh_bindings([agent])
         else:
             self.remove_binding(agent)
 
@@ -140,7 +141,7 @@ class NativeLogProjector:
             try:
                 while agent in self._agent_panes():
                     try:
-                        self.refresh_bindings([agent], start_at_end=True)
+                        self.refresh_bindings([agent])
                     except Exception as exc:
                         self.failed(agent, f"bind failed: {exc}")
                         return

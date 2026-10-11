@@ -33,7 +33,7 @@ def _projector(has_log_binding):
     )
     appears = iter(has_log_binding)
 
-    def refresh(_agents, *, start_at_end):
+    def refresh(_agents):
         if next(appears, False):
             projector._bindings["codex"] = object()
 
@@ -57,7 +57,7 @@ class NativeLogBindPollingTests(unittest.TestCase):
         _bind_and_wait(projector, clock)
 
         self.assertEqual(projector.refresh_bindings.call_count, 3)
-        projector.refresh_bindings.assert_called_with(["codex"], start_at_end=True)
+        projector.refresh_bindings.assert_called_with(["codex"])
         self.assertEqual(clock.sleeps, [0.5, 0.5])
 
     def test_send_polls_for_three_seconds_before_giving_up(self) -> None:

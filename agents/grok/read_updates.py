@@ -5,7 +5,6 @@ import time
 from pathlib import Path
 
 from agents.read_offset import (
-    _normalized_native_log_path,
     advance_read_offset,
     read_offset_start,
 )
@@ -24,10 +23,10 @@ def extract_grok_assistant_text(entry: object) -> str:
     return content.strip() if isinstance(content, str) else ""
 
 
-def _append_grok_reply(projector, agent: str, history_path: str, line_start: int, entry: dict) -> bool:
+def _append_grok_reply(projector, agent: str, history_path: str, line_start: int, entry: dict) -> None:
     display = extract_grok_assistant_text(entry)
     if not display:
-        return False
+        return
     append_jsonl_entry(
         projector.log_path,
         {
@@ -39,34 +38,18 @@ def _append_grok_reply(projector, agent: str, history_path: str, line_start: int
             "native_log_offset": line_start,
         },
     )
-    return True
 
 
-def _sync_grok_chat_history(projector, agent: str, history_path: str) -> bool:
-    normalized = _normalized_native_log_path(history_path)
-    is_first_encounter = normalized not in projector.offsets
+def _sync_grok_chat_history(projector, agent: str, history_path: str) -> None:
     file_size = os.path.getsize(history_path)
     start = read_offset_start(projector.offsets, history_path, file_size)
     if start >= file_size:
-        return False
-
-    appended = False
+        return
     scan = CompleteJsonlScan(history_path, start)
-    if is_first_encounter:
-        latest: tuple[int, dict] | None = None
-        for line_start, entry in scan:
-            if extract_grok_assistant_text(entry):
-                latest = (line_start, entry)
-        if latest is not None:
-            appended = _append_grok_reply(projector, agent, history_path, *latest)
-    else:
-        for line_start, entry in scan:
-            if _append_grok_reply(projector, agent, history_path, line_start, entry):
-                appended = True
-
+    for line_start, entry in scan:
+        _append_grok_reply(projector, agent, history_path, line_start, entry)
     advance_read_offset(projector.offsets, history_path, scan.consumed)
     report_skipped_lines(projector, agent, scan)
-    return appended
 
 
 def _turn_completed(entry: object) -> bool:
@@ -123,8 +106,6 @@ def project_grok_native_log(
                 projector.push_running_display(agent, tool_evs)
         advance_read_offset(projector.offsets, updates_path, scan.consumed)
         report_skipped_lines(projector, agent, scan)
-    else:
-        advance_read_offset(projector.offsets, updates_path, file_size)
 
     _sync_grok_chat_history(projector, agent, history_path)
     if turn_completed:
