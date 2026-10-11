@@ -624,7 +624,7 @@ __INCLUDE:git-panel/events.js__
       sideBarOpen = true;
       localStorage.setItem(sideBarOpenStorageKey(), "1");
       applySideBarWidth();
-      syncPinnedSummaryStrip();
+      applyGitOverviewHeader();
       const existingStack = repoContent?.querySelector(".repo-browser-stack");
       if (existingStack) {
         existingStack.classList.remove("repo-browser-nav-forward", "repo-browser-nav-back");
@@ -659,7 +659,7 @@ __INCLUDE:git-panel/events.js__
         updateScrollBtn();
       }
       disconnectGitObserver();
-      syncPinnedSummaryStrip();
+      applyGitOverviewHeader();
       syncPanelState();
     };
     const restoreTimelineSideBar = () => {
@@ -1136,7 +1136,7 @@ __INCLUDE:git-panel/events.js__
         if (sideBarOpen) syncSplitGitHeightForMode();
         if (isComposerOverlayOpen()) autoResizeTextarea();
         syncMainAfterHeight();
-        syncPinnedSummaryStrip();
+        applyGitOverviewHeader();
         if (event.data.on) {
           requestAnimationFrame(reportFitHeight);
         } else {

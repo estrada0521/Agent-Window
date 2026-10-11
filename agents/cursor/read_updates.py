@@ -2,15 +2,10 @@ from __future__ import annotations
 
 import os
 import re
-import time
 
-from agents.read_offset import (
-    advance_read_offset,
-    read_offset_start,
-)
+from agents.read_offset import read_offset_start
 from agents.cursor.read_running import iter_tool_calls, running_tool_events
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
-from fs.log.jsonl import append_jsonl_entry
 
 
 _CURSOR_INTERNAL_NOTE_RE = re.compile(
@@ -51,7 +46,7 @@ def _extract_cursor_sync_display_text(entry: dict) -> str:
     if role == "assistant":
         if not _cursor_assistant_message_has_no_tool_use(entry):
             return ""
-        msg_obj = entry.get("message") if isinstance(entry, dict) else {}
+        msg_obj = entry.get("message")
         if not isinstance(msg_obj, dict):
             return ""
         content = msg_obj.get("content", [])
@@ -69,7 +64,7 @@ def _extract_cursor_sync_display_text(entry: dict) -> str:
             return "\n".join(texts)
         return ""
     if role == "system":
-        msg_obj = entry.get("message") if isinstance(entry, dict) else {}
+        msg_obj = entry.get("message")
         if isinstance(msg_obj, dict):
             content = msg_obj.get("content", "")
             if isinstance(content, str) and content.strip():
@@ -92,28 +87,22 @@ def _cursor_display_for_projection(entry: dict) -> str:
 def project_cursor_native_log(
     projector,
     agent: str,
-    native_log_path: str | None = None,
+    path: str,
     *,
     start_at_end: bool = False,
 ) -> None:
-    transcript_path = str(native_log_path or "").strip()
-    if not transcript_path or not os.path.exists(transcript_path):
+    if not os.path.exists(path):
         return
 
-    file_size = os.path.getsize(transcript_path)
+    file_size = os.path.getsize(path)
     if start_at_end:
-        advance_read_offset(projector.offsets, transcript_path, file_size)
+        projector.offsets[path] = file_size
         return
-    start = read_offset_start(
-        projector.offsets,
-        transcript_path,
-        file_size,
-        on_shrink="wait",
-    )
+    start = read_offset_start(projector.offsets, path, file_size, wait_on_shrink=True)
     if start >= file_size:
         return
 
-    scan = CompleteJsonlScan(transcript_path, start)
+    scan = CompleteJsonlScan(path, start)
     batch = list(scan)
     turn_done_seen = _cursor_turn_done_from_batch(batch)
 
@@ -122,15 +111,7 @@ def project_cursor_native_log(
         if not display:
             continue
 
-        jsonl_entry = {
-            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "sender": agent,
-            "targets": ["user"],
-            "message": display,
-            "native_log_path": transcript_path,
-            "native_log_offset": line_start,
-        }
-        append_jsonl_entry(projector.log_path, jsonl_entry)
+        projector.append_reply(agent, path, line_start, display)
 
     for _ls, entry in batch:
         tool_evs = []
@@ -139,7 +120,7 @@ def project_cursor_native_log(
         if tool_evs:
             projector.push_running_display(agent, tool_evs)
 
-    advance_read_offset(projector.offsets, transcript_path, scan.consumed)
+    projector.offsets[path] = scan.consumed
     report_skipped_lines(projector, agent, scan)
     if turn_done_seen:
         projector.mark_idle(agent)

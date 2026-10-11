@@ -257,14 +257,14 @@
       return null;
     }
 
-    function buildTimelineOpenHref(timelineName, _archived) {
+    function buildTimelineOpenHref(timelineName) {
       return `/open-timeline?timeline=${encodeURIComponent(timelineName)}`;
     }
 
     function switchToDeskActiveTimeline(index) {
       const target = (_hubTimelinesCache.active || [])[index];
       if (!target || !target.name || target.name === _deskSelectedTimelineName) return;
-      openTimelineFrame(buildTimelineOpenHref(target.name, false), target.name);
+      openTimelineFrame(buildTimelineOpenHref(target.name), target.name);
     }
 
     function systemPrefersDark() {

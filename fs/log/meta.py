@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from fs.log.paths import (
+    normalize_workspace,
     agent_window_log_root,
     ensure_workspace_log_link,
     log_dir,
@@ -48,12 +49,12 @@ def log_workspace_claims(
         if not entry.is_dir() or entry.name == exclude:
             continue
         workspace = log_workspace(entry.name)
-        claims[str(Path(workspace).expanduser().resolve())] = (entry.name, workspace)
+        claims[normalize_workspace(workspace)] = (entry.name, workspace)
     return claims
 
 
 def find_timeline_name_for_workspace(workspace: Path | str, *, exclude_timeline_name: str = "") -> str | None:
-    target = str(Path(workspace).expanduser().resolve())
+    target = normalize_workspace(workspace)
     claim = log_workspace_claims(exclude_timeline_name=exclude_timeline_name).get(target)
     return claim[0] if claim else None
 
@@ -77,7 +78,7 @@ def set_log_workspace(timeline_name: str, workspace: str) -> None:
         raise LogMetaError(f"A timeline already exists for this workspace: {owner}")
     old_workspace = Path(raw["workspace"]).expanduser().resolve()
     raw["workspace"] = ws
-    write_json_atomically(path, raw, indent=2)
+    write_json_atomically(path, raw)
     old_link = workspace_log_link_path(old_workspace)
     if old_workspace != Path(ws).expanduser().resolve() and old_link.is_symlink():
         old_link.unlink()
@@ -98,7 +99,7 @@ def reset_log_agents(timeline_name: str) -> None:
         raise LogMetaError("timeline name is required")
     path, raw = _existing_log_meta(name)
     raw["agents"] = []
-    write_json_atomically(path, raw, indent=2)
+    write_json_atomically(path, raw)
 
 
 def write_log_meta_file(
@@ -109,7 +110,6 @@ def write_log_meta_file(
     write_json_atomically(
         log_meta_path(timeline_name),
         {"workspace": workspace, "agents": agents},
-        indent=2,
     )
 
 
@@ -119,13 +119,13 @@ def create_log_dir(timeline_name: str, workspace: str, agents: list[str]) -> Non
     log_jsonl_path(timeline_name).touch()
 
 
-def write_json_atomically(path: Path, data: dict, *, indent: int | None = None) -> None:
+def write_json_atomically(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     tmp_path = Path(tmp_name)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, ensure_ascii=False, indent=indent)
+            json.dump(data, handle, ensure_ascii=False, indent=2)
             handle.write("\n")
         os.replace(tmp_path, path)
     except BaseException:

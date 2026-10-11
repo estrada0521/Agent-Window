@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import hashlib
-import json
-import shutil
 import subprocess
 import time
 from pathlib import Path
 
 from fs.log.meta import find_timeline_name_for_workspace
 from fs.log.paths import (
+    normalize_workspace,
     TIMELINE_NAME_MAX_LENGTH,
     port_is_bindable,
     sanitize_timeline_name,
@@ -16,6 +15,8 @@ from fs.log.paths import (
     workspace_timeline_port,
 )
 from server.timeline.control import create_session
+from server.hub.proxy import format_timeline_url
+from server.request import read_json_body
 from server.hub.supervisor import ensure_timeline_server
 
 
@@ -50,18 +51,9 @@ def _timeline_name_for_workspace(workspace: str) -> tuple[str, str]:
 
 
 def post_pick_workspace(handler, _parsed, _ctx) -> None:
-    if not shutil.which("osascript"):
-        handler._send_json(501, {"ok": False, "error": "native workspace picker is unavailable on this device"})
-        return
-    length = int(handler.headers["Content-Length"])
-    raw = handler.rfile.read(length)
-    try:
-        data = json.loads(raw.decode("utf-8") or "{}")
-    except json.JSONDecodeError:
-        handler._send_json(400, {"ok": False, "error": "invalid json"})
-        return
-    if not isinstance(data, dict):
-        handler._send_json(400, {"ok": False, "error": "invalid json"})
+    data, err = read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
         return
     start_path = str(data.get("path") or "").strip()
     start_clause = ""
@@ -113,19 +105,16 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
 
 
 def post_start_timeline_draft(handler, _parsed, ctx) -> None:
-    length = int(handler.headers["Content-Length"])
-    raw = handler.rfile.read(length)
-    try:
-        data = json.loads(raw.decode("utf-8") or "{}")
-    except json.JSONDecodeError:
-        handler._send_json(400, {"ok": False, "error": "invalid json"})
+    data, err = read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
         return
     workspace = str(data.get("workspace") or "").strip()
     if not workspace:
         handler._send_json(400, {"ok": False, "error": "workspace required"})
         return
     try:
-        resolved_workspace = str(Path(workspace).expanduser().resolve())
+        resolved_workspace = normalize_workspace(workspace)
     except Exception as exc:
         handler.log_error("Invalid workspace: %s", exc)
         handler._send_json(400, {"ok": False, "error": "Invalid workspace"})
@@ -167,7 +156,7 @@ def post_start_timeline_draft(handler, _parsed, ctx) -> None:
         handler._send_json(500, {"ok": False, "error": "Failed to create timeline"})
         return
     ctx["hub"].publish_timeline_messages_changed()
-    timeline_url = ctx["format_timeline_url_fn"](
+    timeline_url = format_timeline_url(
         timeline_port,
         f"/?ts={int(time.time() * 1000)}",
     )

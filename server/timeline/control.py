@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 
 from fs.log.jsonl import append_jsonl_entry, iter_log_entries_reversed
-from server.timeline.probe import read_timeline_server_state
+from server.timeline.probe import read_timeline_server_state, timeline_server_serves
 from fs.log.meta import (
     LogMetaError,
     create_log_dir,
@@ -17,6 +17,7 @@ from fs.log.meta import (
     write_log_meta_file,
 )
 from fs.log.paths import (
+    normalize_workspace,
     ensure_workspace_log_link,
     log_jsonl_path,
     workspace_timeline_port,
@@ -120,18 +121,12 @@ def _own_timeline_listener_pids(timeline_port: int, workspace: str) -> list[int]
     if not listeners:
         return []
     state = read_timeline_server_state(timeline_port)
-    expected_workspace = str(Path(workspace).expanduser().resolve())
-    reported_workspace = str((state or {}).get("workspace") or "").strip()
-    if not reported_workspace or str(Path(reported_workspace).expanduser().resolve()) != expected_workspace:
+    if not timeline_server_serves(state, workspace):
         shown = ", ".join(str(pid) for pid in listeners)
         raise SessionControlError(
             f"timeline port {timeline_port} is occupied by pid {shown}, not this workspace's timeline server"
         )
-    try:
-        reported_pid = int(state.get("pid") or 0)
-    except (TypeError, ValueError):
-        reported_pid = 0
-    if reported_pid <= 0 or listeners != [reported_pid]:
+    if listeners != [state["pid"]]:
         shown = ", ".join(str(pid) for pid in listeners)
         raise SessionControlError(f"timeline server pid mismatch on port {timeline_port}: {shown}")
     return listeners
@@ -160,7 +155,7 @@ def _signal_timeline_pids(pids: list[int], sig: int) -> str:
 
 
 def stop_timeline_server(workspace: str) -> tuple[bool, str]:
-    resolved_workspace = str(Path(workspace).expanduser().resolve())
+    resolved_workspace = normalize_workspace(workspace)
     timeline_port = workspace_timeline_port(resolved_workspace)
     try:
         pids = _own_timeline_listener_pids(timeline_port, resolved_workspace)

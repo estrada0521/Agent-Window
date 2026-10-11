@@ -48,15 +48,14 @@ def expand_includes(path: Path, stack: tuple[Path, ...] = ()) -> str:
 
 
 def load_timeline_template(variant: str) -> str:
-    normalized = "mobile" if str(variant or "").strip().lower() == "mobile" else "desktop"
-    template_dir = _TIMELINE_DIR / normalized
+    template_dir = _TIMELINE_DIR / variant
     shell = expand_includes(template_dir / "shell.html")
     composer = expand_includes(_TIMELINE_DIR / "composer.html")
     if _COMPOSER_DROPDOWNS_MARKER not in composer:
         raise ValueError(f"Timeline composer missing {_COMPOSER_DROPDOWNS_MARKER}")
     composer = composer.replace(
         _COMPOSER_DROPDOWNS_MARKER,
-        _COMPOSER_DROPDOWNS_HTML if normalized == "desktop" else "",
+        _COMPOSER_DROPDOWNS_HTML if variant == "desktop" else "",
         1,
     )
     css = expand_includes(template_dir / "main.css")

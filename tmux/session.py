@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Callable
 from dataclasses import dataclass
-from functools import partial
-from subprocess import CompletedProcess
 
 from tmux import run_tmux
 from tmux.process_cleanup import cleanup_target_process_groups
@@ -99,14 +96,8 @@ def parse_agent_topology(output: str) -> list[AgentPane]:
     return panes
 
 
-def terminal_window_pane_id(
-    session_name: str,
-    *,
-    run_tmux: Callable[[list[str]], CompletedProcess[str]] = partial(run_tmux, timeout=2),
-) -> str:
-    result = run_tmux(
-        ["list-windows", "-t", session_name, "-F", "#{window_name}\t#{pane_id}"],
-    )
+def terminal_window_pane_id(session_name: str) -> str:
+    result = run_tmux(["list-windows", "-t", session_name, "-F", "#{window_name}\t#{pane_id}"], timeout=2)
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
         raise RuntimeError(detail or f"cannot read tmux topology for {session_name}")

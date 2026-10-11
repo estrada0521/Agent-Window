@@ -107,8 +107,7 @@
       gap: 0;
       margin-left: auto;
     }
-    html[data-native-app="1"][data-native-root-window="1"] .page-header .page-header-actions,
-    html[data-native-app="1"][data-native-root-window="1"] .page-header-actions.page-header-actions-floating {
+    html[data-native-app="1"][data-native-root-window="1"] .page-header .page-header-actions {
       position: fixed;
       top: env(safe-area-inset-top, 0px);
       right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
@@ -139,8 +138,7 @@
     .page-header .page-header-actions .page-menu-btn svg {
       transform: translateY(-2px);
     }
-    html[data-native-app="1"][data-native-root-window="1"] .page-header .page-header-actions .page-menu-btn,
-    html[data-native-app="1"][data-native-root-window="1"] .page-header-actions.page-header-actions-floating .page-menu-btn {
+    html[data-native-app="1"][data-native-root-window="1"] .page-header .page-header-actions .page-menu-btn {
       width: var(--chrome-icon-btn-size);
       height: var(--chrome-icon-btn-size);
       margin: 0;
@@ -150,8 +148,7 @@
       align-items: center;
       justify-content: center;
     }
-    html[data-native-app="1"][data-native-root-window="1"] .page-header .page-header-actions .page-menu-btn svg,
-    html[data-native-app="1"][data-native-root-window="1"] .page-header-actions.page-header-actions-floating .page-menu-btn svg {
+    html[data-native-app="1"][data-native-root-window="1"] .page-header .page-header-actions .page-menu-btn svg {
       width: var(--chrome-icon-size);
       height: var(--chrome-icon-size);
       margin: 0 auto;
@@ -353,25 +350,6 @@
       white-space: nowrap;
       pointer-events: none;
       user-select: none;
-    }
-    html[data-native-app="1"] .page-header-actions.page-header-actions-floating #pageNativeMenuBridge {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: auto;
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      opacity: 0.001;
-      z-index: 2;
-      pointer-events: auto;
-      border: 0;
-      outline: none;
-      background: transparent;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      appearance: none;
-      -webkit-appearance: none;
     }
     .page-header .page-header-actions .page-menu-btn:active {
       background: transparent;

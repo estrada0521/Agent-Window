@@ -52,16 +52,13 @@ def ensure_workspace_log_link(timeline_name: str, workspace: Path | str) -> None
     gitignore = aw_dir / ".gitignore"
     if not gitignore.exists():
         gitignore.write_text("*\n", encoding="utf-8")
-    mirrors = ((log_jsonl_path(timeline_name), workspace_log_link_path(workspace_path)),)
-    for target, link_path in mirrors:
-        link_path.parent.mkdir(parents=True, exist_ok=True)
-        if link_path.is_symlink():
-            if link_path.resolve() == target.resolve():
-                continue
-            link_path.unlink()
-        elif link_path.exists():
-            link_path.unlink()
-        link_path.symlink_to(target)
+    target = log_jsonl_path(timeline_name)
+    link_path = workspace_log_link_path(workspace_path)
+    if link_path.is_symlink() and link_path.resolve() == target.resolve():
+        return
+    if link_path.is_symlink() or link_path.exists():
+        link_path.unlink()
+    link_path.symlink_to(target)
 
 
 def workspace_upload_dir(workspace: Path | str) -> Path:
@@ -69,7 +66,7 @@ def workspace_upload_dir(workspace: Path | str) -> Path:
 
 
 def workspace_timeline_port(workspace: Path | str) -> int:
-    canonical_workspace = str(Path(workspace).expanduser().resolve())
+    canonical_workspace = normalize_workspace(workspace)
     digest = int(hashlib.md5(canonical_workspace.encode()).hexdigest(), 16)
     return 30000 + (digest % 19000)
 

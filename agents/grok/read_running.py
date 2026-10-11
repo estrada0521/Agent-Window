@@ -65,9 +65,7 @@ def _coerce_args(arguments: object) -> dict:
     return {}
 
 
-def _update_payload(entry: object) -> dict | None:
-    if not isinstance(entry, dict):
-        return None
+def update_payload(entry: dict) -> dict | None:
     params = entry.get("params")
     if not isinstance(params, dict):
         return None
@@ -96,8 +94,8 @@ def _tool_name_from_update(update: dict) -> str:
     return title or "tool"
 
 
-def iter_tool_calls_from_update(entry: object) -> list[tuple[str, dict]]:
-    update = _update_payload(entry)
+def iter_tool_calls_from_update(entry: dict) -> list[tuple[str, dict]]:
+    update = update_payload(entry)
     if update is None:
         return []
     if update.get("sessionUpdate") != "tool_call":
@@ -111,28 +109,27 @@ def iter_tool_calls_from_update(entry: object) -> list[tuple[str, dict]]:
 
 
 def _subline(lower: str, args: dict, *, workspace: str) -> str:
-    ws = str(workspace or "")
     if lower in {"run_terminal_command", "bash"}:
         desc = _pick(args, "description")
         if desc:
             return short_line(desc)
         return short_line(_pick(args, "command", "cmd"))
     if lower in {"read_file", "read"}:
-        return display_path(_pick(args, "target_file", "path", "file_path"), workspace=ws)
+        return display_path(_pick(args, "target_file", "path", "file_path"), workspace=workspace)
     if lower == "grep":
         pattern = _pick(args, "pattern", "query", "q")
         path = _pick(args, "path")
         glob = _pick(args, "glob")
-        path_disp = display_path(path, workspace=ws) if path else ""
+        path_disp = display_path(path, workspace=workspace) if path else ""
         scope = path_disp or glob
         if pattern and scope:
             return short_line(f"{pattern} in {scope}")
         return short_line(pattern or scope or "grep")
     if lower in {"list_dir", "glob"}:
         path = _pick(args, "target_directory", "path", "glob_pattern", "pattern")
-        return display_path(path, workspace=ws) if path and not path.startswith("*") else short_line(path or ".")
+        return display_path(path, workspace=workspace) if path and not path.startswith("*") else short_line(path or ".")
     if lower in {"search_replace", "write"}:
-        return display_path(_pick(args, "file_path", "path", "target_file"), workspace=ws)
+        return display_path(_pick(args, "file_path", "path", "target_file"), workspace=workspace)
     if lower in {"web_search", "websearch"}:
         return short_line(_pick(args, "query", "q", "prompt") or "web")
     if lower in {"web_fetch", "webfetch", "open_page"}:
@@ -149,12 +146,12 @@ def _subline(lower: str, args: dict, *, workspace: str) -> str:
         value = _pick(args, key)
         if value:
             if key in {"path", "target_file", "file_path"}:
-                return display_path(value, workspace=ws)
+                return display_path(value, workspace=workspace)
             return short_line(value)
     return ""
 
 
-def running_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
+def running_tool_events(name: object, arguments: object, *, workspace: str) -> list[dict]:
     raw_name = str(name or "").strip() or "tool"
     lower = raw_name.lower().replace("-", "_")
     if lower in _QUIET:
@@ -162,7 +159,7 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
     args = _coerce_args(arguments)
     tool_call_id = _pick(args, "_tool_call_id")
     main = _MAIN_LABEL.get(lower)
-    sub = _subline(lower, args, workspace=str(workspace or "")).strip()
+    sub = _subline(lower, args, workspace=workspace).strip()
     if main is None:
         main = "Tool"
         sub = sub or raw_name

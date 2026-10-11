@@ -45,7 +45,7 @@
       if (window.parent === window) {
         openTimelineMenu(rightMenuBtn, {
           sessionActive: !!sessionActive,
-          addAgents: ALL_BASE_AGENTS.filter(Boolean),
+          addAgents: ALL_BASE_AGENTS,
           removeAgents: agentActionCandidates("remove"),
           worktrees,
           gitTree: gitTree(),
@@ -56,7 +56,7 @@
       }
       const agentIcons = {};
       const allAgentNames = [...new Set([
-        ...ALL_BASE_AGENTS.filter(Boolean),
+        ...ALL_BASE_AGENTS,
         ...agentActionCandidates("remove"),
       ])];
       await Promise.all(allAgentNames.map(async (name) => {
@@ -73,7 +73,7 @@
         x: Math.round(rect.left || 0),
         y: Math.round((rect.bottom || ((rect.top || 0) + (rect.height || 28))) + 2),
         sessionActive: !!sessionActive,
-        addAgents: ALL_BASE_AGENTS.filter(Boolean),
+        addAgents: ALL_BASE_AGENTS,
         removeAgents: agentActionCandidates("remove"),
         agentIcons,
         worktrees,

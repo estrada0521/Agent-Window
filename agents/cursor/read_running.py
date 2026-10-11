@@ -58,18 +58,17 @@ def _pick(d: object, *keys: str) -> str:
     return ""
 
 
-def running_tool_events(name: object, arguments: object, *, workspace: str = "") -> list[dict]:
+def running_tool_events(name: object, arguments: object, *, workspace: str) -> list[dict]:
     raw = str(name or "").strip() or "tool"
     lower = raw.lower()
     if lower in _QUIET:
         return []
-    ws = str(workspace or "")
     args_obj = _coerce(arguments)
     if not isinstance(args_obj, dict):
         return []
 
     if lower == "read":
-        path = display_path(args_obj.get("path"), workspace=ws)
+        path = display_path(args_obj.get("path"), workspace=workspace)
         bits: list[str] = []
         if "offset" in args_obj and args_obj.get("offset") is not None:
             bits.append(f"@{args_obj.get('offset')}")
@@ -84,7 +83,7 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
     if lower == "glob":
         pat = str(args_obj.get("glob_pattern") or "").strip()
         td = str(args_obj.get("target_directory") or "").strip()
-        td_disp = display_path(td, workspace=ws) if td else ""
+        td_disp = display_path(td, workspace=workspace) if td else ""
         if pat and td_disp:
             sub = f"{pat} in {td_disp}"
         elif pat:
@@ -99,7 +98,7 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
         extra = ""
         if isinstance(tds, list) and tds:
             t0 = str(tds[0] or "").strip()
-            extra = display_path(t0, workspace=ws) if t0 else ""
+            extra = display_path(t0, workspace=workspace) if t0 else ""
         if q and extra:
             sub = f"{q} in {extra}"
         elif q:
@@ -113,7 +112,7 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
     if lower == "readlints":
         paths_list = args_obj.get("paths")
         if isinstance(paths_list, list) and paths_list:
-            parts = [display_path(p, workspace=ws) for p in paths_list[:3] if p]
+            parts = [display_path(p, workspace=workspace) for p in paths_list[:3] if p]
             parts = [p for p in parts if p]
             if len(paths_list) > 3:
                 sub = f"{', '.join(parts)} +{len(paths_list) - 3} more" if parts else f"{len(paths_list)} files"
@@ -133,7 +132,7 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
     if lower == "grep":
         pat = _pick(args_obj, "pattern", "q", "query")
         raw_tgt = _pick(args_obj, "path", "dir_path")
-        tgt = display_path(raw_tgt, workspace=ws) if raw_tgt else ""
+        tgt = display_path(raw_tgt, workspace=workspace) if raw_tgt else ""
         if pat and tgt:
             sub = f"{pat} in {tgt}"
         else:
@@ -143,19 +142,19 @@ def running_tool_events(name: object, arguments: object, *, workspace: str = "")
         return [running_event("Search", sub, source_id=_source_id("tool:grep", sub))]
 
     if lower == "strreplace":
-        path = display_path(_pick(args_obj, "path", "file_path"), workspace=ws)
+        path = display_path(_pick(args_obj, "path", "file_path"), workspace=workspace)
         if not path:
             return []
         return [running_event("Edit", path, source_id=_source_id("tool:strreplace", path))]
 
     if lower == "write":
-        path = display_path(_pick(args_obj, "path", "file_path"), workspace=ws)
+        path = display_path(_pick(args_obj, "path", "file_path"), workspace=workspace)
         if not path:
             return []
         return [running_event("Write", path, source_id=_source_id("tool:write", path))]
 
     if lower == "delete":
-        path = display_path(_pick(args_obj, "path", "file_path"), workspace=ws)
+        path = display_path(_pick(args_obj, "path", "file_path"), workspace=workspace)
         if not path:
             return []
         return [running_event("Delete", path, source_id=_source_id("tool:delete", path))]

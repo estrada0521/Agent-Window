@@ -79,7 +79,7 @@ def _get_messages(handler, parsed, ctx) -> None:
             return
         _send_bytes(handler, 200, json.dumps(data, ensure_ascii=True).encode(), content_type="application/json")
         return
-    body = ctx["payload_fn"](
+    body = ctx["state"].payload(
         limit=min(ENTRY_WINDOW_LIMIT, int(qs.get("limit", [ENTRY_WINDOW_LIMIT])[0])),
     )
     _send_bytes(handler, 200, body, content_type="application/json; charset=utf-8")
@@ -151,20 +151,19 @@ def _get_file_raw(handler, parsed, ctx) -> None:
     except FileNotFoundError:
         handler.send_error(404)
         return
-    if int(metadata.get("status", 500)) == 416:
+    if metadata["status"] == 416:
         handler.send_response(416)
         handler.send_header("Accept-Ranges", "bytes")
-        handler.send_header("Content-Range", f"bytes */{int(metadata.get('size', 0) or 0)}")
+        handler.send_header("Content-Range", f"bytes */{metadata['size']}")
         handler.end_headers()
         return
-    handler.send_response(int(metadata.get("status", 200)))
-    handler.send_header("Content-Type", str(metadata.get("content_type") or "application/octet-stream"))
+    handler.send_response(metadata["status"])
+    handler.send_header("Content-Type", metadata["content_type"])
     handler.send_header("Cache-Control", "no-store")
     handler.send_header("Accept-Ranges", "bytes")
-    content_range = str(metadata.get("content_range") or "")
-    if content_range:
-        handler.send_header("Content-Range", content_range)
-    handler.send_header("Content-Length", str(int(metadata.get("length", 0) or 0)))
+    if metadata["content_range"]:
+        handler.send_header("Content-Range", metadata["content_range"])
+    handler.send_header("Content-Length", str(metadata["length"]))
     handler.end_headers()
     ctx["files"].stream_raw_response(metadata, handler.wfile.write)
 
@@ -243,7 +242,7 @@ def _get_files_search(handler, parsed, ctx) -> None:
 
 
 def _get_workspace_state(handler, _parsed, ctx) -> None:
-    workspace = ctx["workspace"]
+    workspace = ctx["state"].workspace
     if not workspace or not Path(workspace).is_dir():
         _send_bytes(handler, 200, b'{"workspace":false,"git":false}', content_type="application/json")
         return
@@ -296,7 +295,7 @@ def _send_git_json(handler, parsed, ctx, read) -> None:
     qs = parse_qs(parsed.query)
     arg = lambda name: (qs.get(name, [""])[0] or "").strip()
     try:
-        body = json.dumps(read(workspace_git.git_tree_root(ctx["workspace"], arg("tree")), arg), ensure_ascii=True).encode("utf-8")
+        body = json.dumps(read(workspace_git.git_tree_root(ctx["state"].workspace, arg("tree")), arg), ensure_ascii=True).encode("utf-8")
     except LookupError as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
         _send_bytes(handler, 404, body, content_type="application/json; charset=utf-8")
@@ -319,7 +318,7 @@ def _get_git_overview(handler, parsed, ctx) -> None:
 
 def _get_git_worktrees(handler, parsed, ctx) -> None:
     def read(_root, _arg):
-        trees = workspace_git.git_worktrees(ctx["workspace"])
+        trees = workspace_git.git_worktrees(ctx["state"].workspace)
         linked = sorted(trees[1:], key=lambda tree: (Path(tree["path"]) / ".git").stat().st_birthtime, reverse=True)
         worktrees = [{"path": "", "branch": trees[0]["branch"]}, *linked]
         follow_tree = ctx["state"].last_changed_git_tree()

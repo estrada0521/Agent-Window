@@ -4,7 +4,7 @@ import os
 import shutil
 from pathlib import Path
 
-from server.timeline.probe import read_timeline_server_state
+from server.timeline.probe import read_timeline_server_state, timeline_server_serves
 from fs.log.meta import read_log_meta, log_workspace_claims
 from server.timeline.control import (
     SessionControlError,
@@ -13,6 +13,7 @@ from server.timeline.control import (
     stop_timeline_server,
 )
 from fs.log.paths import (
+    normalize_workspace,
     port_is_bindable,
     agent_window_log_root,
     workspace_timeline_port,
@@ -27,26 +28,7 @@ class TmuxUnhealthy(RuntimeError):
 
 
 def timeline_server_state_matches(hub, state: dict | None, *, workspace: str) -> bool:
-    if not state:
-        return False
-    reported_repo_root = str(state.get("repo_root") or "").strip()
-    if reported_repo_root != str(hub.repo_root):
-        return False
-    expected_workspace = str(Path(workspace).expanduser().resolve())
-    reported_workspace = str(state.get("workspace") or "").strip()
-    if not reported_workspace or str(Path(reported_workspace).expanduser().resolve()) != expected_workspace:
-        return False
-    return True
-
-
-def timeline_launch_env(hub) -> dict[str, str]:
-    env = os.environ.copy()
-    pythonpath_parts = [str(hub.repo_root)]
-    existing_pythonpath = (env.get("PYTHONPATH") or "").strip()
-    if existing_pythonpath:
-        pythonpath_parts.append(existing_pythonpath)
-    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
-    return env
+    return timeline_server_serves(state, workspace) and state["repo_root"] == str(hub.repo_root)
 
 
 def stop_inactive_timeline_servers(*, keep_workspace: str = "") -> str:
@@ -69,7 +51,7 @@ def ensure_timeline_server(
     expected_active: bool = True,
     workspace: str,
 ) -> tuple[bool, int, str]:
-    resolved_workspace = str(Path(workspace).expanduser().resolve())
+    resolved_workspace = normalize_workspace(workspace)
     lock = hub._get_launch_lock(resolved_workspace)
     with lock:
         timeline_port = workspace_timeline_port(resolved_workspace)
@@ -89,9 +71,8 @@ def ensure_timeline_server(
             if stop_detail:
                 return False, timeline_port, stop_detail
 
-        env = timeline_launch_env(hub)
         try:
-            process = launch_timeline_server(resolved_workspace, env=env)
+            process = launch_timeline_server(resolved_workspace, env=os.environ)
         except OSError as exc:
             return False, timeline_port, str(exc)
 

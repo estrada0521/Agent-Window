@@ -227,7 +227,7 @@ __INCLUDE:../hud.js__
       window.parent?.postMessage({ type: "timeline-hud-visible", visible }, "*");
     });
     const agentActionCandidates = (mode) => {
-      if (mode === "add") return ALL_BASE_AGENTS.filter(Boolean);
+      if (mode === "add") return ALL_BASE_AGENTS;
       return availableTargets;
     };
     const syncSessionMenuOptions = () => {

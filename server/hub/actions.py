@@ -25,6 +25,8 @@ from server.hub.supervisor import (
     archive_timeline,
     revive_timeline,
 )
+from server.hub.pages import error_page
+from server.hub.proxy import format_timeline_url
 from server.hub.timeline_query import live_timelines_query
 
 
@@ -57,17 +59,17 @@ def _timeline_query(parsed) -> tuple[str, str]:
     return (qs.get("timeline", [""])[0] or "").strip(), qs.get("format", [""])[0]
 
 
-def _fail(handler, ctx, fmt: str, status: int, message: str, *, detail: str = "") -> None:
+def _fail(handler, fmt: str, status: int, message: str, *, detail: str = "") -> None:
     if detail:
         handler.log_error("%s: %s", message, detail)
     if fmt == "json":
         handler._send_json(status, {"ok": False, "error": message})
     else:
-        handler._send_html(status, ctx["error_page_fn"](message))
+        handler._send_html(status, error_page(message))
 
 
-def _open_timeline(handler, ctx, fmt: str, timeline_port: int) -> None:
-    location = ctx["format_timeline_url_fn"](timeline_port, f"/?ts={int(time.time() * 1000)}")
+def _open_timeline(handler, fmt: str, timeline_port: int) -> None:
+    location = format_timeline_url(timeline_port, f"/?ts={int(time.time() * 1000)}")
     if fmt == "json":
         handler._send_json(200, {"ok": True, "timeline_url": location})
     else:
@@ -84,25 +86,25 @@ def _back_to_hub(handler, fmt: str, timeline_name: str, action: str) -> None:
 def post_open_timeline(handler, parsed, ctx) -> None:
     timeline_name, fmt = _timeline_query(parsed)
     if not timeline_name:
-        _fail(handler, ctx, fmt, 404, "That timeline is not available in this repo.")
+        _fail(handler, fmt, 404, "That timeline is not available in this repo.")
         return
     resolved = resolve_timeline_target(ctx["hub"], timeline_name)
     if resolved["status"] == "unhealthy":
         handler._send_unhealthy(fmt, resolved["detail"])
         return
     if resolved["status"] == "missing":
-        _fail(handler, ctx, fmt, 404, "That timeline is not available in this repo.")
+        _fail(handler, fmt, 404, "That timeline is not available in this repo.")
         return
     if resolved["status"] != "ok":
-        _fail(handler, ctx, fmt, 500, "Failed to open timeline", detail=f"{timeline_name}: {resolved['detail']}")
+        _fail(handler, fmt, 500, "Failed to open timeline", detail=f"{timeline_name}: {resolved['detail']}")
         return
-    _open_timeline(handler, ctx, fmt, resolved["timeline_port"])
+    _open_timeline(handler, fmt, resolved["timeline_port"])
 
 
 def post_revive_timeline(handler, parsed, ctx) -> None:
     timeline_name, fmt = _timeline_query(parsed)
     if not timeline_name:
-        _fail(handler, ctx, fmt, 404, "That archived timeline is not available in this repo.")
+        _fail(handler, fmt, 404, "That archived timeline is not available in this repo.")
         return
     try:
         ok, detail = revive_timeline(ctx["hub"], timeline_name)
@@ -111,24 +113,24 @@ def post_revive_timeline(handler, parsed, ctx) -> None:
         return
     if not ok:
         if detail == "Workspace not found":
-            _fail(handler, ctx, fmt, 404, detail)
+            _fail(handler, fmt, 404, detail)
         else:
             message = "Conversation unavailable · Reset Agents" if detail == "Conversation unavailable · Reset Agents" else "Revive failed"
-            _fail(handler, ctx, fmt, 500, message, detail=f"{timeline_name}: {detail}")
+            _fail(handler, fmt, 500, message, detail=f"{timeline_name}: {detail}")
         return
     ctx["hub"].publish_timeline_messages_changed()
     workspace = log_workspace(timeline_name)
     ok, timeline_port, detail = ensure_timeline_server(ctx["hub"], expected_active=True, workspace=workspace)
     if not ok:
-        _fail(handler, ctx, fmt, 500, "Failed to open timeline", detail=f"{timeline_name}: {detail}")
+        _fail(handler, fmt, 500, "Failed to open timeline", detail=f"{timeline_name}: {detail}")
         return
-    _open_timeline(handler, ctx, fmt, timeline_port)
+    _open_timeline(handler, fmt, timeline_port)
 
 
 def post_archive_timeline(handler, parsed, ctx) -> None:
     timeline_name, fmt = _timeline_query(parsed)
     if not timeline_name:
-        _fail(handler, ctx, fmt, 404, "That active timeline is not available in this repo.")
+        _fail(handler, fmt, 404, "That active timeline is not available in this repo.")
         return
     try:
         ok, detail = archive_timeline(ctx["hub"], timeline_name)
@@ -136,7 +138,7 @@ def post_archive_timeline(handler, parsed, ctx) -> None:
         handler._send_unhealthy(fmt, str(exc))
         return
     if not ok:
-        _fail(handler, ctx, fmt, 500, "Failed to archive timeline", detail=f"{timeline_name}: {detail}")
+        _fail(handler, fmt, 500, "Failed to archive timeline", detail=f"{timeline_name}: {detail}")
         return
     ctx["hub"].publish_timeline_messages_changed()
     _back_to_hub(handler, fmt, timeline_name, "killed")
@@ -145,7 +147,7 @@ def post_archive_timeline(handler, parsed, ctx) -> None:
 def post_delete_archived_timeline(handler, parsed, ctx) -> None:
     timeline_name, fmt = _timeline_query(parsed)
     if not timeline_name:
-        _fail(handler, ctx, fmt, 404, "That archived timeline is not available in this repo.")
+        _fail(handler, fmt, 404, "That archived timeline is not available in this repo.")
         return
     try:
         ok, detail = delete_archived_timeline(ctx["hub"], timeline_name)
@@ -153,7 +155,7 @@ def post_delete_archived_timeline(handler, parsed, ctx) -> None:
         handler._send_unhealthy(fmt, str(exc))
         return
     if not ok:
-        _fail(handler, ctx, fmt, 500, "Failed to delete timeline", detail=f"{timeline_name}: {detail}")
+        _fail(handler, fmt, 500, "Failed to delete timeline", detail=f"{timeline_name}: {detail}")
         return
     ctx["hub"].publish_timeline_messages_changed()
     _back_to_hub(handler, fmt, timeline_name, "deleted")

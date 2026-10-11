@@ -1,43 +1,37 @@
 from __future__ import annotations
 
 import os
-import time
 from pathlib import Path
 
-from agents.read_offset import (
-    advance_read_offset,
-    read_offset_start,
-)
+from agents.read_offset import read_offset_start
 from agents.antigravity.read_running import (
     parse_antigravity_transcript_step,
     running_tool_events,
 )
 from agents.jsonl_read import CompleteJsonlScan, report_skipped_lines
-from fs.log.jsonl import append_jsonl_entry
 
 
 def project_antigravity_native_log(
     projector,
     agent: str,
-    native_log_path: str | None = None,
+    path: str,
     *,
     start_at_end: bool = False,
 ) -> None:
-    session_path_str = str(native_log_path or "").strip()
-    if not session_path_str or not os.path.exists(session_path_str):
+    if not os.path.exists(path):
         return
-    if Path(session_path_str).name != "transcript_full.jsonl":
-        raise RuntimeError(f"Antigravity native log is not transcript_full.jsonl: {session_path_str}")
+    if Path(path).name != "transcript_full.jsonl":
+        raise RuntimeError(f"Antigravity native log is not transcript_full.jsonl: {path}")
 
-    file_size = os.path.getsize(session_path_str)
+    file_size = os.path.getsize(path)
     if start_at_end:
-        advance_read_offset(projector.offsets, session_path_str, file_size)
+        projector.offsets[path] = file_size
         return
-    start = read_offset_start(projector.offsets, session_path_str, file_size)
+    start = read_offset_start(projector.offsets, path, file_size)
     if start >= file_size:
         return
 
-    scan = CompleteJsonlScan(session_path_str, start)
+    scan = CompleteJsonlScan(path, start)
     appended = False
     for line_start, entry in scan:
         compacted = entry.get("source") == "SYSTEM" and entry.get("type") == "CHECKPOINT" and entry.get("status") == "DONE"
@@ -54,22 +48,11 @@ def project_antigravity_native_log(
                 projector.push_running_display(agent, running_events)
         if not text:
             continue
-        append_jsonl_entry(
-            projector.log_path,
-            {
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "sender": agent,
-                "targets": ["user"],
-                "message": text,
-                "native_log_kind": "antigravity_checkpoint" if compacted else "antigravity_assistant_response",
-                "native_log_path": session_path_str,
-                "native_log_offset": line_start,
-            },
-        )
+        projector.append_reply(agent, path, line_start, text)
         if not compacted:
             appended = True
 
-    advance_read_offset(projector.offsets, session_path_str, scan.consumed)
+    projector.offsets[path] = scan.consumed
     report_skipped_lines(projector, agent, scan)
     if appended:
         projector.mark_idle(agent)
