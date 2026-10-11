@@ -69,6 +69,7 @@
     function clearDeskTimelineFrame() {
       navigateDeskTimelineFrame("about:blank");
       setDeskTimelineLoading(false);
+      finishDeskHubLoad();
     }
 
     function clearDeskSelection() {

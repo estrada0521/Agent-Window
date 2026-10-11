@@ -70,6 +70,27 @@
     .desk-reload-shell.visible {
       display: flex;
     }
+    .launch-shell.desk-launch-shell {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 12000;
+      background: var(--bg);
+    }
+    html[data-hub-loading] .desk-launch-shell {
+      display: flex;
+    }
+    html[data-hub-loading] body > .shell {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .desk-launch-shell .launch-shell-title {
+      animation: none;
+      opacity: 1;
+    }
+    html[data-native-app="1"] .desk-launch-shell {
+      background: transparent;
+    }
     .desk-reload-shell-card {
       display: inline-flex;
       align-items: center;

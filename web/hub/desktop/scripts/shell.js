@@ -35,6 +35,13 @@
       if (!_deskTimelineShell) return;
       _deskTimelineShell.classList.toggle("loading", !!active);
     }
+    function finishDeskHubLoad() {
+      if (document.documentElement.dataset.hubLoading !== "1") return;
+      delete document.documentElement.dataset.hubLoading;
+      const url = new URL(window.location.href);
+      url.searchParams.delete("launch_shell");
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+    }
     function triggerDeskHubReload() {
       if (!_deskReloadBtn || _deskReloadBtn.classList.contains("restarting")) return;
       _deskReloadShell.hidden = false;

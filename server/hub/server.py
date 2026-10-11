@@ -128,6 +128,7 @@ _HUB_LAUNCH_SHELL_BODY_HTML = (
     '<span class="launch-shell-title">Agent Window</span>'
     "</div>"
 )
+_HUB_LAUNCH_SHELL_CSS = (Path(__file__).resolve().parents[2] / "web" / "hub" / "launch-shell.css").read_text()
 HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
 <html lang="en" data-theme-desktop="__THEME_DESKTOP__" data-theme-mobile="__THEME_MOBILE__" data-view="__VIEW_VARIANT__">
 <head>
@@ -162,7 +163,6 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       --bg: __DESKTOP_HUB_LIGHT_BG__;
       --fg: __SYSTEM_LIGHT_FG__;
     }}
-    html[data-theme-desktop="dark"] {{ --launch-shell-title-fg: rgb(255,255,255); }}
     html, body {{
       margin: 0;
       min-height: 100%;
@@ -181,54 +181,8 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       }}
       html[data-view="mobile"][data-theme-mobile="system"] {{ --bg: __MOBILE_HUB_LIGHT_BG__; }}
     }}
-    @media (prefers-color-scheme: dark) {{
-      html[data-theme-desktop="system"] {{ --launch-shell-title-fg: rgb(255,255,255); }}
-    }}
     body {{ font-family: var(--font-main); }}
-    .launch-shell {{
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-height: 100dvh;
-    }}
-    .launch-shell-card {{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: auto;
-      height: auto;
-      border-radius: 0;
-      background: transparent;
-      border: none;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      box-shadow: none;
-    }}
-    @keyframes titleFadeIn {{
-      0% {{ opacity: 0; }}
-      100% {{ opacity: 1; }}
-    }}
-    .launch-shell-title {{
-      color: var(--launch-shell-title-fg, var(--fg));
-      font-family: "Snell Roundhand", "Apple Chancery", cursive;
-      font-size: calc(var(--text-size, 13px) * 1.69);
-      font-weight: 200;
-      letter-spacing: -0.04em;
-      white-space: nowrap;
-      opacity: 0;
-      animation: titleFadeIn 800ms ease-out forwards;
-    }}
-    html[data-view="mobile"] .launch-shell-title {{
-      color: rgb(__TEXT_TIMELINE_MOBILE_DARK_CHANNELS__);
-      font-size: 26px;
-      font-weight: 900;
-      padding: 0 12px;
-    }}
-    html[data-view="mobile"][data-theme-mobile="light"] .launch-shell-title {{ color: rgb(__TEXT_TIMELINE_MOBILE_LIGHT_CHANNELS__); }}
-    @media (prefers-color-scheme: light) {{
-      html[data-view="mobile"][data-theme-mobile="system"] .launch-shell-title {{ color: rgb(__TEXT_TIMELINE_MOBILE_LIGHT_CHANNELS__); }}
-    }}
+    {_HUB_LAUNCH_SHELL_CSS}
     .launch-shell-card.is-error {{
       width: auto;
       height: auto;

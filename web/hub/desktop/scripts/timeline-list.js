@@ -584,6 +584,7 @@
         if (!skipRestore) maybeRestoreDeskSelection();
       } catch (_) {
         if (requestSeq !== _deskTimelinesRequestSeq) return;
+        finishDeskHubLoad();
         if (_deskTimelinesRenderedOnce || _hubTimelinesCache.active.length || _hubTimelinesCache.archived.length) return;
         if (_deskTimelineList) {
           const newTimelineSection = _deskNewTimelineToggle?.closest(".desk-new-timeline-section") || null;

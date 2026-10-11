@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script>
     (() => {
+      if (new URLSearchParams(window.location.search).get("launch_shell") === "1") {
+        document.documentElement.dataset.hubLoading = "1";
+      }
       const appearance = window.__agentWindowAppearance = {
         themeKey: "agent_window_theme_desktop",
         textSizeKey: "agent_window_text_size",
@@ -69,6 +72,7 @@ __INCLUDE:styles/window-chrome.css__
 __INCLUDE:styles/workbench.css__
 __INCLUDE:styles/timeline-list.css__
 __INCLUDE:styles/timeline-frame.css__
+__INCLUDE:../launch-shell.css__
 __INCLUDE:styles/shell-overrides.css__
 __INCLUDE:styles/sidebar-popover.css__
 __INCLUDE:../../timeline/desktop/controls.css__
@@ -76,6 +80,9 @@ __INCLUDE:../../hud.css__
   </style>
 </head>
 <body>
+  <div class="launch-shell desk-launch-shell">
+    <div class="launch-shell-card"><span class="launch-shell-title">Agent Window</span></div>
+  </div>
   <div class="shell">
     <div class="desk-window-traffic" aria-label="Window controls">
       <button type="button" class="desk-window-traffic-btn is-close" data-window-action="close" aria-label="Close" tabindex="-1">

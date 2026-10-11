@@ -1,5 +1,11 @@
 
     window.addEventListener("message", (event) => {
+      if ((event.data?.type === "timeline-render-ready" || event.data?.type === "timeline-render-error")
+          && event.source === _deskTimelineFrame?.contentWindow) {
+        setDeskTimelineLoading(false);
+        finishDeskHubLoad();
+        return;
+      }
       if (event.data && event.data.type === "side-bar-state" && event.source === _deskTimelineFrame?.contentWindow) {
         updateDeskSideBarButtonState(
           String(event.data.mode || ""),
@@ -278,7 +284,6 @@
 
     _deskTimelineFrame && _deskTimelineFrame.addEventListener("load", () => {
       delete document.documentElement.dataset.timelineHud;
-      setDeskTimelineLoading(false);
       if (_deskTimelineFrameLoadedUrl) {
         const frameDoc = _deskTimelineFrame.contentDocument;
         if (!frameDoc?.getElementById("timelineHud")) {
