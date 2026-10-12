@@ -653,20 +653,9 @@ __INCLUDE:../../mobile-edge-swipe.js__
         if (document.documentElement.classList.contains("hub-timeline-ui-active")) void playAgentSound();
         return;
       }
-      if (e.data?.type === "timeline-reload-stage" && e.source === _timelineFrame.contentWindow) {
-        if (e.data.stage === "error") {
-          stopHubReadyWait();
-          return;
-        }
-        if (e.data.stage !== "1" && e.data.stage !== "rendering") return;
-        if (e.data.stage === "1") {
-          clearHubReadyTimeout();
-          _awaitingTimelineRenderReady = true;
-          _timelineFrameRenderReady = false;
-        } else {
-          startTimelineRenderWait();
-        }
-        _launchShell.dataset.reloadStage = e.data.stage;
+      if (e.data?.type === "timeline-reloading" && e.source === _timelineFrame.contentWindow) {
+        startTimelineRenderWait();
+        _launchShell.dataset.reloadStage = "rendering";
         showLaunchShell();
         return;
       }
@@ -1002,8 +991,8 @@ __INCLUDE:../../mobile-edge-swipe.js__
           if (!res.ok) throw new Error("failed");
           const data = await res.json();
           if (requestSeq !== _mobTimelinesRequestSeq) return;
-          if (data.hub_instance !== HUB_INSTANCE) {
-            setResidentError("hub-restarted", "Hub restarted; reload");
+          if (data.server_instance !== SERVER_INSTANCE_SEED) {
+            setResidentError("server-restarted", "Server restarted; reload");
           }
           const activeTimelines = data.active_timelines;
           const archivedTimelines = data.archived_timelines;

@@ -85,7 +85,6 @@
               name,
               `Created: ${data.created}\nLast updated: ${data.updated}`,
               [`${total} message${total === 1 ? "" : "s"}`, ...data.senders.map(([sender, count]) => `${sender} : ${count}`)].join("\n"),
-              `port: ${data.port}`,
             ].join("\n\n");
           }));
         }
@@ -549,8 +548,8 @@
         const response = await fetch(`/timelines?ts=${Date.now()}`, { cache: "no-store" });
         if (!response.ok) throw new Error("failed");
         const data = await response.json();
-        if (data.hub_instance !== HUB_INSTANCE) {
-          setResidentError("hub-restarted", "Hub restarted; reload");
+        if (data.server_instance !== SERVER_INSTANCE_SEED) {
+          setResidentError("server-restarted", "Server restarted; reload");
         }
         const active = data.active_timelines;
         const archived = data.archived_timelines;

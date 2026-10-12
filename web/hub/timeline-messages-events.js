@@ -1,4 +1,4 @@
-    const HUB_INSTANCE = "__HUB_INSTANCE__";
+    const SERVER_INSTANCE_SEED = "__SERVER_INSTANCE__";
     const startHubTimelineMessagesEvents = (refreshTimelines) => {
       let opened = false;
       const events = new EventSource("/timeline-messages-events");

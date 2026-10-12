@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 import os
-import signal
-import socket
-import subprocess
 import time
 from collections import Counter
 from pathlib import Path
 
 from fs.log.jsonl import append_jsonl_entry, iter_log_entries_reversed
-from server.timeline.probe import read_timeline_server_state, timeline_server_serves
 from fs.log.meta import (
     LogMetaError,
     create_log_dir,
@@ -17,10 +13,8 @@ from fs.log.meta import (
     write_log_meta_file,
 )
 from fs.log.paths import (
-    normalize_workspace,
     ensure_workspace_log_link,
     log_jsonl_path,
-    workspace_timeline_port,
 )
 from agents.executables import agent_executable_path, agent_launch_cmd
 from agents import agent_base_name
@@ -95,91 +89,6 @@ def _append_log(timeline_name: str, message: str) -> None:
             "message": message,
         },
     )
-
-
-def _timeline_listener_pids(timeline_port: int) -> list[int]:
-    try:
-        result = subprocess.run(
-            ["lsof", "-nP", f"-tiTCP:{int(timeline_port)}", "-sTCP:LISTEN"],
-            capture_output=True,
-            text=True,
-            timeout=1,
-            check=False,
-        )
-    except subprocess.TimeoutExpired as exc:
-        raise SessionControlError(f"lsof timed out for port {timeline_port}") from exc
-    except OSError as exc:
-        raise SessionControlError(f"lsof failed for port {timeline_port}: {exc}") from exc
-    if result.returncode not in (0, 1):
-        detail = (result.stderr or result.stdout or "").strip() or f"lsof exited {result.returncode}"
-        raise SessionControlError(f"lsof failed for port {timeline_port}: {detail}")
-    return sorted({int(line.strip()) for line in (result.stdout or "").splitlines() if line.strip().isdigit()})
-
-
-def _own_timeline_listener_pids(timeline_port: int, workspace: str) -> list[int]:
-    listeners = _timeline_listener_pids(timeline_port)
-    if not listeners:
-        return []
-    state = read_timeline_server_state(timeline_port)
-    if not timeline_server_serves(state, workspace):
-        shown = ", ".join(str(pid) for pid in listeners)
-        raise SessionControlError(
-            f"timeline port {timeline_port} is occupied by pid {shown}, not this workspace's timeline server"
-        )
-    if listeners != [state["pid"]]:
-        shown = ", ".join(str(pid) for pid in listeners)
-        raise SessionControlError(f"timeline server pid mismatch on port {timeline_port}: {shown}")
-    return listeners
-
-
-def _timeline_port_open(timeline_port: int) -> bool:
-    try:
-        with socket.create_connection(("127.0.0.1", int(timeline_port)), timeout=0.35):
-            return True
-    except OSError:
-        return False
-
-
-_TIMELINE_STOP_WAIT_SEC = 2.0
-
-
-def _signal_timeline_pids(pids: list[int], sig: int) -> str:
-    for pid in pids:
-        try:
-            os.kill(pid, sig)
-        except ProcessLookupError:
-            continue
-        except OSError as exc:
-            return f"failed to signal timeline server pid {pid}: {exc}"
-    return ""
-
-
-def stop_timeline_server(workspace: str) -> tuple[bool, str]:
-    resolved_workspace = normalize_workspace(workspace)
-    timeline_port = workspace_timeline_port(resolved_workspace)
-    try:
-        pids = _own_timeline_listener_pids(timeline_port, resolved_workspace)
-    except SessionControlError as exc:
-        return False, str(exc)
-    if not pids:
-        return True, ""
-    detail = _signal_timeline_pids(pids, signal.SIGTERM)
-    if detail:
-        return False, detail
-    deadline = time.monotonic() + _TIMELINE_STOP_WAIT_SEC
-    while time.monotonic() < deadline:
-        if not _timeline_port_open(timeline_port):
-            return True, ""
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            break
-        time.sleep(min(0.1, remaining))
-    detail = _signal_timeline_pids(pids, signal.SIGKILL)
-    if detail:
-        return False, detail
-    if _timeline_port_open(timeline_port):
-        return False, f"timeline server on port {timeline_port} still running after SIGKILL"
-    return True, ""
 
 
 def _start_agent(
@@ -335,9 +244,6 @@ def kill_session(
     if not tmux_name:
         raise SessionControlError(f"Timeline does not exist: {timeline_name}")
     workspace = tmux_session_workspace(tmux_name)
-    stop_ok, stop_detail = stop_timeline_server(workspace)
-    if not stop_ok:
-        raise SessionControlError(f"failed to stop timeline server for {timeline_name}: {stop_detail}")
     cleanup_target_process_groups(target=tmux_name)
     result = run_tmux(["kill-session", "-t", tmux_name], timeout=4)
     if result.returncode != 0:

@@ -115,11 +115,11 @@ __INCLUDE:markdown-tables.js__
     };
     const agentIconSrc = (name) => {
       const raw = String(name || "").trim();
-      if (!raw) return `${TIMELINE_ASSET_BASE}/icon/`;
+      if (!raw) return `${TIMELINE_BASE_PATH}/icon/`;
       const base = agentBaseName(raw);
       const enc = encodeURIComponent(raw.toLowerCase());
       if (AGENT_ICON_DATA[base]) return AGENT_ICON_DATA[base];
-      return `${TIMELINE_ASSET_BASE}/icon/${enc}`;
+      return `${TIMELINE_BASE_PATH}/icon/${enc}`;
     };
     const paneViewerTabIconHtml = (agent) => {
       const iconUrl = agentIconSrc(agent);

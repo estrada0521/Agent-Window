@@ -9,15 +9,12 @@ from fs.log.meta import find_timeline_name_for_workspace
 from fs.log.paths import (
     normalize_workspace,
     TIMELINE_NAME_MAX_LENGTH,
-    port_is_bindable,
     sanitize_timeline_name,
     log_dir,
-    workspace_timeline_port,
+    workspace_timeline_path,
 )
 from server.timeline.control import create_session
-from server.hub.proxy import format_timeline_url
 from server.request import read_json_body
-from server.hub.supervisor import ensure_timeline_server
 
 
 _GENERATED_TIMELINE_PREFIX = "aw-"
@@ -132,34 +129,19 @@ def post_start_timeline_draft(handler, _parsed, ctx) -> None:
         handler.log_error("Failed to create timeline: %s", exc)
         handler._send_json(500, {"ok": False, "error": "Failed to create timeline"})
         return
-    timeline_port = workspace_timeline_port(resolved_workspace)
-    if not port_is_bindable(timeline_port):
-        handler._send_json(409, {"ok": False, "error": "Timeline port occupied"})
-        return
     try:
         create_session(
             timeline_name=timeline_name,
             workspace=resolved_workspace,
             agents=[],
         )
-        ok, timeline_port, detail = ensure_timeline_server(
-            ctx["hub"],
-            expected_active=True,
-            workspace=resolved_workspace,
-        )
-        if not ok:
-            handler.log_error("Failed to open timeline: %s", detail)
-            handler._send_json(500, {"ok": False, "error": "Failed to open timeline"})
-            return
+        ctx["hub"].timeline(resolved_workspace)
     except Exception as exc:
         handler.log_error("Failed to create timeline: %s", exc)
         handler._send_json(500, {"ok": False, "error": "Failed to create timeline"})
         return
     ctx["hub"].publish_timeline_messages_changed()
-    timeline_url = format_timeline_url(
-        timeline_port,
-        f"/?ts={int(time.time() * 1000)}",
-    )
+    timeline_url = workspace_timeline_path(resolved_workspace) + f"/?ts={int(time.time() * 1000)}"
     handler._send_json(
         200,
         {

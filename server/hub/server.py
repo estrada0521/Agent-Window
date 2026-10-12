@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import threading
@@ -14,8 +15,7 @@ from server.appearance.colors import apply_color_tokens, resolve_theme_palette
 from server.appearance.colors import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from server.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
-from server.hub.proxy import proxy_timeline
-from server.hub.supervisor import stop_inactive_timeline_servers
+from server.hub.timeline_routes import dispatch_timeline_route
 from server.page_header import (
     PAGE_HEADER_CSS,
     PAGE_HEADER_JS,
@@ -57,6 +57,7 @@ restart_lock = threading.Lock()
 restart_pending = False
 _restart_release_event = threading.Event()
 hub_server = None
+RELOAD_RUNNING_AGENTS_ENV = "AGENT_WINDOW_RELOAD_RUNNING_AGENTS"
 
 
 def initialize_from_argv(argv: list[str] | None = None) -> None:
@@ -75,7 +76,7 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     repo_root = Path(root_arg).resolve()
     script_path = Path(script_arg).resolve()
     port = int((repo_root / "server" / "hub" / "port").read_text().strip())
-    hub = HubState(repo_root, hub_port=port)
+    hub = HubState(initial_running_agents=json.loads(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "{}")))
     restart_pending, hub_server = False, None
 
     _initialized = True
@@ -84,9 +85,14 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
 PROCESS_HANDOFF_TIMEOUT_SEC = 8.0
 
 
+def _restart_env():
+    return {**os.environ, RELOAD_RUNNING_AGENTS_ENV: json.dumps(hub.running_agents_for_reload())}
+
+
 def launch_hub_restart(*, script_path, repo_root, hub_server) -> str:
     hub_server.shutdown()
     hub_server.server_close()
+    hub.close()
     try:
         completed = subprocess.run(
             ["bash", str(script_path)],
@@ -96,6 +102,7 @@ def launch_hub_restart(*, script_path, repo_root, hub_server) -> str:
             text=True,
             check=False,
             timeout=PROCESS_HANDOFF_TIMEOUT_SEC,
+            env=_restart_env(),
         )
     except subprocess.TimeoutExpired:
         return f"server/hub/start did not finish within {PROCESS_HANDOFF_TIMEOUT_SEC:g}s"
@@ -107,9 +114,6 @@ def queue_hub_restart():
     with restart_lock:
         if restart_pending:
             return False, "restart already pending", False
-        cleanup_detail = stop_inactive_timeline_servers()
-        if cleanup_detail:
-            return False, cleanup_detail, False
         restart_pending = True
     detail = launch_hub_restart(script_path=script_path, repo_root=repo_root, hub_server=hub_server)
     return not detail, detail, True
@@ -396,7 +400,7 @@ class Handler(BaseHTTPRequestHandler):
     def _get_timelines(self, _parsed, _ctx):
         live = live_timelines_query(hub)
         self._send_json(200, {
-            "hub_instance": hub.instance,
+            "server_instance": hub.server_instance,
             "active_timelines": active_timeline_records(live),
             "archived_timelines": archived_timeline_records(live),
             "tmux_state": live.state,
@@ -422,15 +426,6 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             return
 
-    def _post_timeline_messages_changed(self, _parsed, _ctx):
-        hub.publish_timeline_messages_changed()
-        self.send_response(204)
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Length", "0")
-        self.end_headers()
-
-
-
     def _get_home(self, _parsed, _ctx):
         variant = request_view_variant(headers=self.headers, query_string=_parsed.query)
         page = HUB_HOME_MOBILE_HTML if variant == "mobile" else HUB_HOME_DESKTOP_HTML
@@ -440,7 +435,7 @@ class Handler(BaseHTTPRequestHandler):
             page = page.replace("__TEXT_SIZE_DEFAULT__", str(DESKTOP_TEXT_SIZE))
             page = page.replace("__TEXT_SIZE_MIN__", str(TEXT_SIZE_MIN))
             page = page.replace("__TEXT_SIZE_MAX__", str(TEXT_SIZE_MAX))
-        page = apply_font_tokens(page.replace("__HUB_INSTANCE__", hub.instance))
+        page = apply_font_tokens(page.replace("__SERVER_INSTANCE__", hub.server_instance))
         self._send_html(
             200,
             apply_color_tokens(page, mobile_theme_default=MOBILE_THEME_DEFAULT),
@@ -453,7 +448,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        if proxy_timeline(self, "GET", parsed):
+        try:
+            if dispatch_timeline_route(self, "GET", parsed, hub):
+                return
+        except Exception as exc:
+            self.log_error("Timeline request failed: %s", exc)
+            self._send_json(500, {"ok": False, "error": "Timeline request failed"})
             return
         if serve_pwa_file(self, parsed.path, _HUB_PWA_FILES):
             return
@@ -466,7 +466,12 @@ class Handler(BaseHTTPRequestHandler):
         if reject_cross_origin(self):
             return
         parsed = urlparse(self.path)
-        if proxy_timeline(self, "POST", parsed):
+        try:
+            if dispatch_timeline_route(self, "POST", parsed, hub):
+                return
+        except Exception as exc:
+            self.log_error("Timeline request failed: %s", exc)
+            self._send_json(500, {"ok": False, "error": "Timeline request failed"})
             return
         if self._dispatch_route(parsed, _POST_ROUTE_HANDLERS):
             return
@@ -496,7 +501,6 @@ _POST_ROUTE_HANDLERS = {
     "/reset-timeline-agents": post_reset_timeline_agents,
     "/pick-workspace": post_pick_workspace,
     "/start-timeline-draft": post_start_timeline_draft,
-    "/timeline-messages-changed": Handler._post_timeline_messages_changed,
 }
 
 
@@ -508,6 +512,7 @@ def main(argv: list[str] | None = None) -> None:
     ThreadingHTTPServer.allow_reuse_address = True
     ThreadingHTTPServer.request_queue_size = 128
     hub_server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    threading.Thread(target=hub.start_timelines, daemon=True, name="timeline-startup").start()
     print(f"http://127.0.0.1:{port}/", flush=True)
     hub_server.serve_forever()
     if restart_pending:

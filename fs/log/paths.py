@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import re
-import socket
 from pathlib import Path
 
 
@@ -65,22 +64,9 @@ def workspace_upload_dir(workspace: Path | str) -> Path:
     return workspace_agent_window_dir(workspace) / "uploads"
 
 
-def workspace_timeline_port(workspace: Path | str) -> int:
+def workspace_timeline_path(workspace: Path | str) -> str:
     canonical_workspace = normalize_workspace(workspace)
-    digest = int(hashlib.md5(canonical_workspace.encode()).hexdigest(), 16)
-    return 30000 + (digest % 19000)
-
-
-def port_is_bindable(port: int) -> bool:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    try:
-        sock.bind(("127.0.0.1", int(port)))
-        return True
-    except OSError:
-        return False
-    finally:
-        sock.close()
+    return "/timeline/" + hashlib.md5(canonical_workspace.encode()).hexdigest()
 
 
 def normalize_workspace(value: str) -> str:

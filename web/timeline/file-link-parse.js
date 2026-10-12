@@ -26,7 +26,7 @@
         if (url.protocol === "file:" && (!url.host || url.host === "localhost")) {
           return localFilePathWithoutLocation(decodeLocalPathHref(url.pathname || ""));
         }
-        if (url.origin === window.location.origin && ((TIMELINE_BASE_PATH && (url.pathname === `${TIMELINE_BASE_PATH}/file-raw` || url.pathname === `${TIMELINE_BASE_PATH}/file-view`)) || url.pathname === "/file-raw" || url.pathname === "/file-view")) {
+        if (url.origin === window.location.origin && (url.pathname === `${TIMELINE_BASE_PATH}/file-raw` || url.pathname === `${TIMELINE_BASE_PATH}/file-view`)) {
           return url.searchParams.get("path") || "";
         }
       } catch (_) {}

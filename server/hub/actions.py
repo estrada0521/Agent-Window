@@ -17,41 +17,15 @@ from fs.log.meta import (
     set_log_workspace,
 )
 from fs.log.jsonl import append_jsonl_entry
-from fs.log.paths import agent_window_log_root, log_jsonl_path, port_is_bindable, workspace_timeline_port
-from server.hub.supervisor import (
+from fs.log.paths import agent_window_log_root, log_jsonl_path, workspace_timeline_path
+from server.hub.timelines import (
     TmuxUnhealthy,
     delete_archived_timeline,
-    ensure_timeline_server,
     archive_timeline,
     revive_timeline,
 )
 from server.hub.pages import error_page
-from server.hub.proxy import format_timeline_url
 from server.hub.timeline_query import live_timelines_query
-
-
-def _timeline_target(hub, workspace: str, *, session_is_active: bool) -> dict:
-    ok, timeline_port, detail = ensure_timeline_server(
-        hub,
-        expected_active=session_is_active,
-        workspace=workspace,
-    )
-    if not ok:
-        return {"status": "error", "detail": detail}
-    return {"status": "ok", "timeline_port": timeline_port}
-
-
-def resolve_timeline_target(hub, timeline_name: str) -> dict:
-    live = live_timelines_query(hub)
-    if timeline_name in live.workspaces:
-        return _timeline_target(hub, live.workspaces[timeline_name], session_is_active=True)
-    if live.state == "unhealthy":
-        return {"status": "unhealthy", "detail": live.detail}
-    try:
-        workspace = read_log_meta(timeline_name)["workspace"]
-    except FileNotFoundError:
-        return {"status": "missing"}
-    return _timeline_target(hub, workspace, session_is_active=False)
 
 
 def _timeline_query(parsed) -> tuple[str, str]:
@@ -68,8 +42,8 @@ def _fail(handler, fmt: str, status: int, message: str, *, detail: str = "") -> 
         handler._send_html(status, error_page(message))
 
 
-def _open_timeline(handler, fmt: str, timeline_port: int) -> None:
-    location = format_timeline_url(timeline_port, f"/?ts={int(time.time() * 1000)}")
+def _open_timeline(handler, fmt: str, workspace: str) -> None:
+    location = workspace_timeline_path(workspace) + f"/?ts={int(time.time() * 1000)}"
     if fmt == "json":
         handler._send_json(200, {"ok": True, "timeline_url": location})
     else:
@@ -83,22 +57,17 @@ def _back_to_hub(handler, fmt: str, timeline_name: str, action: str) -> None:
         handler._redirect("/")
 
 
-def post_open_timeline(handler, parsed, ctx) -> None:
+def post_open_timeline(handler, parsed, _ctx) -> None:
     timeline_name, fmt = _timeline_query(parsed)
     if not timeline_name:
         _fail(handler, fmt, 404, "That timeline is not available in this repo.")
         return
-    resolved = resolve_timeline_target(ctx["hub"], timeline_name)
-    if resolved["status"] == "unhealthy":
-        handler._send_unhealthy(fmt, resolved["detail"])
-        return
-    if resolved["status"] == "missing":
+    try:
+        workspace = read_log_meta(timeline_name)["workspace"]
+    except FileNotFoundError:
         _fail(handler, fmt, 404, "That timeline is not available in this repo.")
         return
-    if resolved["status"] != "ok":
-        _fail(handler, fmt, 500, "Failed to open timeline", detail=f"{timeline_name}: {resolved['detail']}")
-        return
-    _open_timeline(handler, fmt, resolved["timeline_port"])
+    _open_timeline(handler, fmt, workspace)
 
 
 def post_revive_timeline(handler, parsed, ctx) -> None:
@@ -120,11 +89,8 @@ def post_revive_timeline(handler, parsed, ctx) -> None:
         return
     ctx["hub"].publish_timeline_messages_changed()
     workspace = log_workspace(timeline_name)
-    ok, timeline_port, detail = ensure_timeline_server(ctx["hub"], expected_active=True, workspace=workspace)
-    if not ok:
-        _fail(handler, fmt, 500, "Failed to open timeline", detail=f"{timeline_name}: {detail}")
-        return
-    _open_timeline(handler, fmt, timeline_port)
+    ctx["hub"].timeline(workspace)
+    _open_timeline(handler, fmt, workspace)
 
 
 def post_archive_timeline(handler, parsed, ctx) -> None:
@@ -215,8 +181,7 @@ def get_timeline_stats(handler, parsed, _ctx) -> None:
     if not log_path.is_file():
         handler._send_json(404, {"ok": False, "error": "Timeline not found"})
         return
-    port = workspace_timeline_port(log_workspace(timeline_name))
-    handler._send_json(200, {"ok": True, **_timeline_stats(log_path), "port": port})
+    handler._send_json(200, {"ok": True, **_timeline_stats(log_path)})
 
 
 def post_restart_hub(handler, _parsed, ctx) -> None:
@@ -285,10 +250,14 @@ def post_change_timeline_workspace(handler, _parsed, ctx) -> None:
         return
     try:
         current_workspace = log_workspace(timeline_name)
-        if not port_is_bindable(workspace_timeline_port(current_workspace)):
-            handler._send_json(409, {"ok": False, "error": "Close timeline first"})
-            return
-        set_log_workspace(timeline_name, workspace)
+        hub = ctx["hub"]
+        with hub._get_timeline_lock(current_workspace):
+            state = hub._timelines.get(current_workspace)
+            if state and state.viewers:
+                handler._send_json(409, {"ok": False, "error": "Close timeline first"})
+                return
+            hub.close_timeline(current_workspace)
+            set_log_workspace(timeline_name, workspace)
     except LogMetaError as exc:
         handler.log_error("Failed to change workspace: %s", exc)
         handler._send_json(409, {"ok": False, "error": "Failed to change workspace"})

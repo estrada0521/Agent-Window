@@ -9,6 +9,7 @@ class NativeLogWatcher:
     def __init__(self, projector, publish_state) -> None:
         self._projector = projector
         self._publish_state = publish_state
+        self._stopped = False
         self._lock = threading.Lock()
         self._kq = select.kqueue()
         self._fd_by_agent: dict[str, int] = {}
@@ -31,10 +32,17 @@ class NativeLogWatcher:
         )
 
     def wake(self) -> None:
-        try:
-            os.write(self._wake_w, b"\0")
-        except BlockingIOError:
-            return
+        with self._lock:
+            if self._wake_w is None:
+                return
+            try:
+                os.write(self._wake_w, b"\0")
+            except BlockingIOError:
+                return
+
+    def stop(self) -> None:
+        self._stopped = True
+        self.wake()
 
     def _drain_wake(self) -> None:
         while True:
@@ -82,7 +90,11 @@ class NativeLogWatcher:
             flags=select.KQ_EV_ADD | select.KQ_EV_CLEAR,
             fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND | select.KQ_NOTE_DELETE | select.KQ_NOTE_RENAME,
         )
-        self._kq.control([ev], 0)
+        try:
+            self._kq.control([ev], 0)
+        except Exception:
+            os.close(fd)
+            raise
         self._fd_by_agent[agent] = fd
         self._path_by_agent[agent] = path
         self._agent_by_fd[fd] = agent
@@ -92,9 +104,25 @@ class NativeLogWatcher:
             return dict(self._path_by_agent)
 
     def run(self) -> None:
+        try:
+            self._run()
+        except Exception as exc:
+            self._projector.report_failure(f"Native log watcher stopped: {exc}")
+        finally:
+            with self._lock:
+                for agent in list(self._fd_by_agent):
+                    self._close_locked(agent)
+                self._kq.close()
+                os.close(self._wake_r)
+                os.close(self._wake_w)
+                self._wake_w = None
+
+    def _run(self) -> None:
         self._sync_bindings()
-        while True:
+        while not self._stopped:
             events = self._kq.control(None, 16, None)
+            if self._stopped:
+                return
             woke = False
             pending = []
             for event in events:

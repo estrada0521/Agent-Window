@@ -218,7 +218,7 @@
         return;
       }
       if (action === "openInBrowser") {
-        await openExternalLink(`${window.location.protocol}//${window.location.hostname}:__TIMELINE_PORT__/`).catch(reportExternalLinkFailure);
+        await openExternalLink(`${window.location.origin}${TIMELINE_BASE_PATH}/`).catch(reportExternalLinkFailure);
         return;
       }
       if (action === "targetMessagePrevious" || action === "targetMessageNext") {

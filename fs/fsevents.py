@@ -50,7 +50,10 @@ def cf_path_array(cf: ctypes.CDLL, paths: list[str]) -> c_void_p:
     cf_strings = [cf_string(cf, path.encode("utf-8")) for path in paths]
     count = len(cf_strings)
     holder = (c_void_p * count)(*cf_strings)
-    return fn(None, holder, count, byref(k_cf_type_array_callbacks))
+    array = fn(None, holder, count, byref(k_cf_type_array_callbacks))
+    for value in cf_strings:
+        cf.CFRelease(value)
+    return array
 
 
 FSEventCallback = CFUNCTYPE(

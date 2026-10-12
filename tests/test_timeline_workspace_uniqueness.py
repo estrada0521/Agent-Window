@@ -144,12 +144,6 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
                     side_effect=lambda name: log_root / name,
                 ),
                 mock.patch("server.hub.new_timeline.create_session") as create_session,
-                mock.patch("server.hub.new_timeline.workspace_timeline_port", return_value=41000),
-                mock.patch("server.hub.new_timeline.port_is_bindable", return_value=True),
-                mock.patch(
-                    "server.hub.new_timeline.ensure_timeline_server",
-                    return_value=(True, 41000, ""),
-                ),
             ):
                 post_start_timeline_draft(handler, None, {"hub": hub})
 
@@ -158,7 +152,7 @@ class FindTimelineForWorkspaceTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertTrue(payload["ok"])
             self.assertEqual(payload["timeline"], expected_name)
-            self.assertRegex(payload["timeline_url"], r"^/41000/\?ts=\d+$")
+            self.assertRegex(payload["timeline_url"], r"^/timeline/[0-9a-f]{32}/\?ts=\d+$")
             self.assertIn(expected_name, payload["notice"])
             create_session.assert_called_once_with(
                 timeline_name=expected_name,

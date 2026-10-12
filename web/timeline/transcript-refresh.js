@@ -28,7 +28,7 @@
             entry.context_hash && !previousIds.has(entry.context_hash)
             && entry.sender && entry.sender !== "user" && entry.sender !== "system");
         currentServerInstance = data.server_instance;
-        if (data.server_instance !== SERVER_INSTANCE_SEED) {
+        if (window.parent === window && data.server_instance !== SERVER_INSTANCE_SEED) {
           setResidentError("server-restarted", "Server restarted; reload");
         }
         latestPayloadData = data;

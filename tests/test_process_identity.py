@@ -5,7 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from server.timeline.control import SessionControlError, _create_tmux_session, _own_timeline_listener_pids
+from server.timeline.control import _create_tmux_session
 
 
 class TmuxIdentityTests(unittest.TestCase):
@@ -19,30 +19,6 @@ class TmuxIdentityTests(unittest.TestCase):
         self.assertIn("-P", args)
         self.assertEqual(args[args.index("-F") + 1], "#{session_name}")
         self.assertNotIn("-s", args)
-
-
-class TimelineServerIdentityTests(unittest.TestCase):
-    def test_listener_is_owned_by_its_reported_workspace_and_pid(self) -> None:
-        workspace = "/work/project with spaces"
-        with (
-            patch("server.timeline.control._timeline_listener_pids", return_value=[4123]),
-            patch(
-                "server.timeline.control.read_timeline_server_state",
-                return_value={"pid": 4123, "workspace": workspace},
-            ),
-        ):
-            self.assertEqual(_own_timeline_listener_pids(38000, workspace), [4123])
-
-    def test_listener_from_another_workspace_is_never_signaled(self) -> None:
-        with (
-            patch("server.timeline.control._timeline_listener_pids", return_value=[4123]),
-            patch(
-                "server.timeline.control.read_timeline_server_state",
-                return_value={"pid": 4123, "workspace": "/work/other"},
-            ),
-        ):
-            with self.assertRaisesRegex(SessionControlError, "not this workspace"):
-                _own_timeline_listener_pids(38000, "/work/project")
 
 
 if __name__ == "__main__":

@@ -8,7 +8,6 @@ from urllib.parse import parse_qs
 from server.appearance.typography import MOBILE_TEXT_SIZE
 from fs.log.jsonl import log_slice, date_message_offset, message_window, search_messages, iter_log_entries_reversed
 from git import repo as workspace_git
-from server.request import request_base_path
 from server.timeline.file_view import render_file_view, validate_file_preview
 from server.timeline.syntax import add_syntax_highlighting
 from server.timeline.state import ENTRY_WINDOW_LIMIT
@@ -186,7 +185,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
             ctx["files"],
             rel,
             embed=embed,
-            base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
+            base_path=handler.timeline_base_path,
             preview_base_theme=str(qs.get("base_theme", [""])[0] or "").strip(),
             agent_text_size=preview_text_size,
             force_progressive_text=force_progressive_text,
@@ -270,16 +269,19 @@ def _get_timeline_state(handler, _parsed, ctx) -> None:
 
 
 def _get_events(handler, _parsed, ctx) -> None:
-    handler.send_response(200)
-    handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
-    handler.send_header("Cache-Control", "no-store")
-    handler.send_header("Connection", "keep-alive")
-    handler.end_headers()
     state = ctx["state"]
-    seen = state.event_counts()
+    ctx["hub"].watch_timeline(state)
     try:
-        while True:
+        handler.send_response(200)
+        handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        handler.send_header("Cache-Control", "no-store")
+        handler.send_header("Connection", "keep-alive")
+        handler.end_headers()
+        seen = state.event_counts()
+        while not state.closed:
             events = state.wait_for_events(seen, timeout=15.0)
+            if state.closed:
+                break
             body = "".join(
                 f"event: git\ndata: {json.dumps(kind.removeprefix('git:'))}\n\n" if kind.startswith("git:")
                 else f"event: {kind}\ndata: {json.dumps(data)}\n\n"
@@ -289,6 +291,9 @@ def _get_events(handler, _parsed, ctx) -> None:
             handler.wfile.flush()
     except (BrokenPipeError, ConnectionResetError):
         return
+    finally:
+        handler.close_connection = True
+        ctx["hub"].release_timeline(state)
 
 
 def _send_git_json(handler, parsed, ctx, read) -> None:

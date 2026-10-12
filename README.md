@@ -97,7 +97,7 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 | New Timeline | `⌘N` | |
 | Switch active timeline | `⌘1`–`⌘9` | |
 | Open Hub in browser | `⇧⌥⌘O` | |
-| Restart Hub server | `⇧⌘R` | Re-reads changed source |
+| Restart server | `⇧⌘R` | Re-reads changed source |
 | Copy workspace path | | right-click menu |
 | Show timeline stats | hover | |
 
@@ -149,7 +149,7 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | Open timeline in browser | `⌥⌘O` | |
 | Search the full timeline | `⌘F` / Search... | Hold `⇧` to jump 10 matches at a time |
 | Export timeline as HTML / JSONL | | |
-| Restart timeline server | `⌘R` | Re-reads changed source |
+| Reload timeline page | `⌘R` | |
 
 <p align="center">
   <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
@@ -285,6 +285,6 @@ The source code is about 1.6 MB and 40,000 lines.
 
 The app is a native launcher that uses the local repo directly, under 200 KB in size. No telemetry. The only network dependencies besides the Agent CLIs are `marked`, `DOMPurify`, `katex`, and (when a syntax theme is configured) `highlight.js` from `cdn.jsdelivr.net`. Vendor them yourself if you want it fully local.
 
-The Hub occupies the port in the `server/hub/port` file (default `8788`); edit the file to change it. Each timeline occupies a fixed port derived from its workspace's path.
+The Hub occupies the port in the `server/hub/port` file (default `8788`); edit the file to change it.
 
 Agent Window itself writes filesystem data only under `~/.agent-window/` and `<workspace>/.agent-window/`.

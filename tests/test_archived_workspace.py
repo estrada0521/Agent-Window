@@ -2,55 +2,18 @@ from __future__ import annotations
 
 import json
 import tempfile
-import threading
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from server.hub.supervisor import timeline_server_state_matches, ensure_timeline_server
-from server.hub.actions import resolve_timeline_target
+from server.hub.actions import post_open_timeline
+from fs.log.paths import workspace_timeline_path
+from urllib.parse import urlparse
 from server.hub.timeline_query import LiveTimelines, archived_timeline_records
 from git import repo as workspace_git
 
 
 class ArchivedWorkspaceTests(unittest.TestCase):
-    def test_hub_reload_stops_archived_timeline_servers_before_restart(self) -> None:
-        from server.hub import server as hub_server
-
-        fake_hub = object()
-        with (
-            patch.object(hub_server, "hub", fake_hub),
-            patch.object(hub_server, "stop_inactive_timeline_servers", return_value=""),
-            patch.object(hub_server, "restart_pending", False),
-            patch.object(hub_server, "launch_hub_restart", return_value="") as launch,
-        ):
-            ok, detail, owns_restart = hub_server.queue_hub_restart()
-            self.assertTrue(hub_server.restart_pending)
-
-        self.assertTrue(ok)
-        self.assertEqual(detail, "")
-        self.assertTrue(owns_restart)
-        launch.assert_called_once()
-
-    def test_hub_reload_does_not_restart_when_archived_cleanup_fails(self) -> None:
-        from server.hub import server as hub_server
-
-        fake_hub = object()
-        with (
-            patch.object(hub_server, "hub", fake_hub),
-            patch.object(hub_server, "stop_inactive_timeline_servers", return_value="cleanup failed"),
-            patch.object(hub_server, "restart_pending", False),
-            patch.object(hub_server, "launch_hub_restart") as launch,
-        ):
-            ok, detail, owns_restart = hub_server.queue_hub_restart()
-            self.assertFalse(hub_server.restart_pending)
-
-        self.assertFalse(ok)
-        self.assertEqual(detail, "cleanup failed")
-        self.assertFalse(owns_restart)
-        launch.assert_not_called()
-
     def test_archived_timelines_keep_a_non_git_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Lab-workspace"
@@ -79,83 +42,21 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             self.assertFalse((workspace / ".git").exists())
 
     def test_archived_open_passes_saved_workspace_not_hub_root(self) -> None:
-        captured = {}
-
-        def ensure_timeline_server(_hub, *, expected_active=True, workspace=""):
-            captured["expected_active"] = expected_active
-            captured["workspace"] = workspace
-            return True, 8206, ""
-
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Even-Parity"
             workspace.mkdir()
             with (
-                patch("server.hub.actions.live_timelines_query", return_value=LiveTimelines({}, "ok")),
                 patch(
                     "server.hub.actions.read_log_meta",
                     return_value={"workspace": str(workspace), "agents": []},
                 ),
-                patch("server.hub.actions.ensure_timeline_server", side_effect=ensure_timeline_server),
             ):
-                resolved = resolve_timeline_target(object(), "Even-Parity")
-        self.assertEqual(resolved["status"], "ok")
-        self.assertFalse(captured["expected_active"])
-        self.assertEqual(captured["workspace"], str(workspace))
-        self.assertNotEqual(captured["workspace"], "/Users/okadaharuto/workspace/Agent-Window")
-
-    def test_timeline_server_state_rejects_wrong_workspace(self) -> None:
-        repo_root = "/Users/okadaharuto/workspace/Agent-Window"
-        state = {
-            "timeline": "Even-Parity",
-            "repo_root": repo_root,
-            "workspace": repo_root,
-            "targets": [],
-            "active": False,
-        }
-        hub = SimpleNamespace(
-            repo_root=Path(repo_root),
-        )
-        self.assertFalse(
-            timeline_server_state_matches(
-                hub,
-                state,
-                workspace="/Users/okadaharuto/workspace/Even-Parity",
-            )
-        )
-        self.assertTrue(
-            timeline_server_state_matches(
-                hub,
-                state,
-                workspace=repo_root,
-            )
-        )
-
-    def test_archived_launch_argv_is_the_saved_workspace(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            workspace = Path(tmp) / "Even-Parity"
-            workspace.mkdir()
-            hub = SimpleNamespace(
-                repo_root=Path("/Users/okadaharuto/workspace/Agent-Window"),
-                _get_launch_lock=lambda _name: threading.Lock(),
-            )
-            with (
-                patch("server.hub.supervisor.workspace_timeline_port", return_value=8206),
-                patch("server.hub.supervisor.port_is_bindable", return_value=True),
-                patch("server.hub.supervisor.read_timeline_server_state", return_value=None),
-                patch("server.hub.supervisor.stop_inactive_timeline_servers", return_value=""),
-                patch("server.hub.supervisor.launch_timeline_server", return_value=object()) as launch,
-                patch("server.hub.supervisor.wait_for_timeline_server", return_value=""),
-            ):
-                ok, port, detail = ensure_timeline_server(
-                    hub,
-                    expected_active=False,
-                    workspace=str(workspace),
-                )
-        self.assertTrue(ok)
-        self.assertEqual(port, 8206)
-        self.assertEqual(detail, "")
-        self.assertEqual(launch.call_args.args, (str(workspace.resolve()),))
-
+                handler = Mock()
+                post_open_timeline(handler, urlparse("/open-timeline?timeline=Even-Parity&format=json"), {})
+        status, body = handler._send_json.call_args.args
+        self.assertEqual(status, 200)
+        self.assertTrue(body["timeline_url"].startswith(workspace_timeline_path(workspace) + "/?"))
+        self.assertFalse(body["timeline_url"].startswith(workspace_timeline_path("/Users/okadaharuto/workspace/Agent-Window") + "/"))
 
     def test_git_overview_does_not_use_hub_repo_as_the_project(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "git workspace is not configured"):

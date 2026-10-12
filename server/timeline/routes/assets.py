@@ -10,14 +10,13 @@ from server.timeline.page import render_timeline_html
 from server.appearance.colors import resolve_server_theme
 from server.appearance.typography import DESKTOP_TEXT_SIZE, MOBILE_TEXT_SIZE, clamp_text_size
 from server import APP_DISPLAY_NAME
-from server.request import request_base_path
 from server.request import request_view_variant
 from server.timeline.routes.read import _send_bytes
 from server.timeline.syntax import add_syntax_highlighting
 
 
 def _get_app_manifest(handler, _parsed, ctx) -> None:
-    base_path = request_base_path(headers=handler.headers, query_string=_parsed.query)
+    base_path = handler.timeline_base_path
     palette = resolve_theme_palette()
     bg = str(palette["dark_bg"])
     timeline_name = ctx["state"].timeline_name
@@ -121,9 +120,7 @@ def _get_timeline_index(handler, parsed, ctx) -> None:
     body = render_timeline_html(
         icon_data_uris=ctx["assets"].icon_data_uris,
         server_instance=state.server_instance,
-        hub_port=state.hub_port,
-        timeline_port=state.port,
-        timeline_base_path=request_base_path(headers=handler.headers, query_string=parsed.query),
+        timeline_base_path=handler.timeline_base_path,
         variant=variant,
         timeline_name=state.timeline_name,
         theme=theme,

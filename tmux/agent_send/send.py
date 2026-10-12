@@ -12,7 +12,7 @@ from fs.log.meta import find_timeline_name_for_workspace
 from tmux.session import AgentPane, agent_topology, terminal_window_pane_id
 from tmux import TMUX_SOCKET_NAME, run_tmux
 from tmux.send_keys import deliver_text_to_pane
-from fs.log.paths import log_jsonl_path, workspace_timeline_port
+from fs.log.paths import log_jsonl_path, workspace_timeline_path
 
 
 class AgentSender:
@@ -135,20 +135,20 @@ def resolve_agent_instance(requested: str, available: list[str]) -> str:
 
 
 def notify_delivered_agents(agents: list[str], workspace: str) -> None:
-    port = workspace_timeline_port(workspace)
+    port = int((Path(__file__).resolve().parents[2] / "server/hub/port").read_text())
     body = json.dumps({"targets": agents}).encode("utf-8")
     connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
     try:
         connection.request(
             "POST",
-            "/agents-delivered",
+            workspace_timeline_path(workspace) + "/agents-delivered",
             body=body,
             headers={"Content-Type": "application/json", "Content-Length": str(len(body))},
         )
         response = connection.getresponse()
         detail = response.read().decode("utf-8", errors="replace").strip()
         if not 200 <= response.status < 300:
-            raise RuntimeError(detail or f"timeline server returned {response.status}")
+            raise RuntimeError(detail or f"Hub returned {response.status}")
     finally:
         connection.close()
 

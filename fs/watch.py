@@ -76,6 +76,7 @@ class _DebouncedWorkspaceRefresh:
         self._trees_pending = False
         self._full_rescan_pending = False
         self._timer: threading.Timer | None = None
+        self._closed = False
 
     def _load_trees(self) -> list[tuple[str, str, str]]:
         workspace = self._files.workspace
@@ -158,7 +159,17 @@ class _DebouncedWorkspaceRefresh:
             return True
         return False
 
+    def close(self) -> None:
+        with self._lock:
+            self._closed = True
+            if self._timer:
+                self._timer.cancel()
+        with self._flush_lock:
+            pass
+
     def _schedule_flush_locked(self) -> None:
+        if self._closed:
+            return
         if self._timer:
             self._timer.cancel()
         self._timer = threading.Timer(_DEBOUNCE_SEC, self._flush)
@@ -171,6 +182,8 @@ class _DebouncedWorkspaceRefresh:
             return
         try:
             self._flush_locked()
+        except Exception as exc:
+            self._report_failure(f"Workspace refresh failed: {exc}")
         finally:
             self._flush_lock.release()
 
@@ -180,6 +193,8 @@ class _DebouncedWorkspaceRefresh:
 
     def _flush_locked(self) -> None:
         with self._lock:
+            if self._closed:
+                return
             paths = set(self._pending)
             tree_files = {key: set(values) for key, values in self._tree_files.items()}
             git_keys = set(self._git_pending)
@@ -245,31 +260,30 @@ class _DebouncedWorkspaceRefresh:
             self._schedule_flush()
 
 
-def _watch_paths(paths: list[str], on_path, on_rescan, report_failure, name: str) -> None:
-    def run_loop():
-        cf, cs = load_cf_cs()
-        CFRelease = cf.CFRelease
-        CFRelease.argtypes = [c_void_p]
-        CFRelease.restype = None
+def _watch_paths(paths: list[str], on_path, on_rescan, report_failure, name: str):
+    cf, cs = load_cf_cs()
+    cf.CFRelease.argtypes = [c_void_p]
+    cf.CFRelease.restype = None
+    cs.FSEventStreamCreate.restype = c_void_p
+    cs.FSEventStreamCreate.argtypes = [c_void_p, FSEventCallback, c_void_p, c_void_p, c_uint64, c_double, c_uint32]
+    cs.FSEventStreamSetDispatchQueue.argtypes = [c_void_p, c_void_p]
+    cs.FSEventStreamSetDispatchQueue.restype = None
+    cs.FSEventStreamStart.argtypes = [c_void_p]
+    cs.FSEventStreamStart.restype = ctypes.c_bool
+    for function in (cs.FSEventStreamStop, cs.FSEventStreamInvalidate, cs.FSEventStreamRelease):
+        function.argtypes = [c_void_p]
+        function.restype = None
+    dispatch = ctypes.CDLL("/usr/lib/libSystem.B.dylib")
+    dispatch.dispatch_queue_create.argtypes = [ctypes.c_char_p, c_void_p]
+    dispatch.dispatch_queue_create.restype = c_void_p
+    dispatch.dispatch_release.argtypes = [c_void_p]
+    dispatch.dispatch_release.restype = None
+    dispatch_callback = ctypes.CFUNCTYPE(None, c_void_p)
+    dispatch.dispatch_sync_f.argtypes = [c_void_p, c_void_p, dispatch_callback]
+    dispatch.dispatch_sync_f.restype = None
 
-        FSEventStreamCreate = cs.FSEventStreamCreate
-        FSEventStreamCreate.restype = c_void_p
-        FSEventStreamCreate.argtypes = [c_void_p, FSEventCallback, c_void_p, c_void_p, c_uint64, c_double, c_uint32]
-        FSEventStreamScheduleWithRunLoop = cs.FSEventStreamScheduleWithRunLoop
-        FSEventStreamScheduleWithRunLoop.argtypes = [c_void_p, c_void_p, c_void_p]
-        FSEventStreamScheduleWithRunLoop.restype = None
-        FSEventStreamStart = cs.FSEventStreamStart
-        FSEventStreamStart.argtypes = [c_void_p]
-        FSEventStreamStart.restype = ctypes.c_bool
-        CFRunLoopGetCurrent = cf.CFRunLoopGetCurrent
-        CFRunLoopGetCurrent.restype = c_void_p
-        CFRunLoopGetCurrent.argtypes = []
-        CFRunLoopRun = cf.CFRunLoopRun
-        CFRunLoopRun.restype = None
-        CFRunLoopRun.argtypes = []
-        kCFRunLoopDefaultMode = c_void_p.in_dll(cf, "kCFRunLoopDefaultMode")
-
-        def on_events(_stream, _info, num, event_paths, flags, _ids):
+    def on_events(_stream, _info, num, event_paths, flags, _ids):
+        try:
             if not num or not event_paths:
                 return
             if any(flags[index] & FSEVENT_RESCAN_FLAGS for index in range(num)):
@@ -278,44 +292,49 @@ def _watch_paths(paths: list[str], on_path, on_rescan, report_failure, name: str
             for index in range(num):
                 if event_paths[index]:
                     on_path(os.fsdecode(event_paths[index]))
+        except Exception as exc:
+            report_failure(f"Workspace watch failed: {exc}")
 
-        callback = FSEventCallback(on_events)
+    callback = FSEventCallback(on_events)
+    cfarr = cf_path_array(cf, paths)
+    stream = cs.FSEventStreamCreate(None, callback, None, cfarr,
+        c_uint64(KFSEVENTSTREAM_EVENT_ID_SINCE_NOW), 0.05, c_uint32(FSEVENT_CREATE_FLAGS))
+    cf.CFRelease(cfarr)
+    if not stream:
+        raise RuntimeError("FSEventStreamCreate returned null")
+    queue = dispatch.dispatch_queue_create(name.encode(), None)
+    cs.FSEventStreamSetDispatchQueue(stream, queue)
+    if not cs.FSEventStreamStart(stream):
+        cs.FSEventStreamInvalidate(stream)
+        cs.FSEventStreamRelease(stream)
+        dispatch.dispatch_release(queue)
+        raise RuntimeError("FSEventStreamStart returned false")
 
-        cfarr = cf_path_array(cf, paths)
-        stream = FSEventStreamCreate(
-            None,
-            callback,
-            None,
-            cfarr,
-            c_uint64(KFSEVENTSTREAM_EVENT_ID_SINCE_NOW),
-            0.05,
-            c_uint32(FSEVENT_CREATE_FLAGS),
-        )
-        CFRelease(cfarr)
-        if not stream:
-            report_failure("Workspace watch failed: FSEventStreamCreate returned null")
-            return
-        FSEventStreamScheduleWithRunLoop(stream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode)
-        if not FSEventStreamStart(stream):
-            report_failure("Workspace watch failed: FSEventStreamStart returned false")
-            return
-        CFRunLoopRun()
+    def stop():
+        nonlocal callback
+        cs.FSEventStreamStop(stream)
+        dispatch.dispatch_sync_f(queue, None, dispatch_callback(lambda _: None))
+        cs.FSEventStreamInvalidate(stream)
+        cs.FSEventStreamRelease(stream)
+        dispatch.dispatch_release(queue)
+        callback = None
 
-    threading.Thread(target=run_loop, daemon=True, name=name).start()
+    return stop
 
 
-def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on_head_changed) -> None:
+def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on_head_changed):
     workspace_root = files.workspace
     if not workspace_root or not os.path.isdir(workspace_root):
         return
     watched_roots: set[str] = set()
+    stops = []
 
     def watch_outside_trees(trees) -> None:
         for _key, root, _gitdir in trees:
             if root in watched_roots or _is_under(root, workspace_root):
                 continue
             watched_roots.add(root)
-            _watch_paths([root], debouncer.add_path, debouncer.mark_full_rescan, report_failure, f"worktree-fsevents:{root}")
+            stops.append(_watch_paths([root], debouncer.add_path, debouncer.mark_full_rescan, report_failure, f"worktree-fsevents:{root}"))
 
     debouncer = _DebouncedWorkspaceRefresh(
         files,
@@ -324,5 +343,16 @@ def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on
         on_head_changed=on_head_changed,
         on_trees_changed=watch_outside_trees,
     )
-    _watch_paths([workspace_root], debouncer.add_path, debouncer.mark_full_rescan, report_failure, "workspace-fsevents")
-    watch_outside_trees(debouncer.trees)
+    def stop():
+        debouncer.close()
+        for close in stops:
+            close()
+
+    try:
+        stops.append(_watch_paths([workspace_root], debouncer.add_path, debouncer.mark_full_rescan, report_failure, "workspace-fsevents"))
+        watch_outside_trees(debouncer.trees)
+    except Exception:
+        stop()
+        raise
+
+    return stop

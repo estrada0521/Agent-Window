@@ -6,18 +6,18 @@ from types import SimpleNamespace
 from unittest import mock
 
 import server.timeline.state as state_module
-from server.timeline import server as timeline_server
+from server.hub import server as hub_server
 
 
 class ReloadRunningAgentsHandoffTests(unittest.TestCase):
 
     def test_restart_env_stamps_the_running_agents_env_var(self) -> None:
-        fake_runtime = SimpleNamespace(running_agents_for_reload=lambda: ["claude", "codex"])
-        with mock.patch.object(timeline_server, "state", fake_runtime):
-            env = timeline_server._restart_env()
+        fake_runtime = SimpleNamespace(running_agents_for_reload=lambda: {"/work/project": ["claude", "codex"]})
+        with mock.patch.object(hub_server, "hub", fake_runtime):
+            env = hub_server._restart_env()
         self.assertEqual(
-            json.loads(env[timeline_server.RELOAD_RUNNING_AGENTS_ENV]),
-            ["claude", "codex"],
+            json.loads(env[hub_server.RELOAD_RUNNING_AGENTS_ENV]),
+            {"/work/project": ["claude", "codex"]},
         )
 
     def test_timeline_runtime_seeds_agent_running_from_the_handoff(self) -> None:
@@ -27,10 +27,9 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
             mock.patch.object(state_module, "find_session_for_workspace", return_value=None),
         ):
             state = state_module.TimelineState(
-                port=1,
                 workspace="/work/project",
-                    hub_port=1,
-                repo_root="/tmp",
+                server_instance="test",
+                publish_hub_messages=lambda: None,
                 initial_running_agents=["claude", "codex"],
             )
         self.assertEqual(state._agent_running, {"claude", "codex"})
@@ -43,10 +42,9 @@ class ReloadRunningAgentsHandoffTests(unittest.TestCase):
             mock.patch.object(state_module, "find_session_for_workspace", return_value=None),
         ):
             state = state_module.TimelineState(
-                port=1,
                 workspace="/work/project",
-                    hub_port=1,
-                repo_root="/tmp",
+                server_instance="test",
+                publish_hub_messages=lambda: None,
             )
         self.assertEqual(state._agent_running, set())
 

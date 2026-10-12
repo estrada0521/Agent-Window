@@ -67,6 +67,8 @@ class NativeLogProjector:
         self._bindings_lock = threading.Lock()
         self._project_lock = threading.Lock()
         self._watcher: NativeLogWatcher | None = None
+        self._thread: threading.Thread | None = None
+        self._stopped = False
         self._bind_workers: set[str] = set()
         self._bind_workers_lock = threading.Lock()
         self._running_display: dict[str, dict] = {}
@@ -82,7 +84,20 @@ class NativeLogProjector:
     def start(self) -> None:
         self.refresh_bindings()
         self._watcher = NativeLogWatcher(self, self._publish_state)
-        threading.Thread(target=self._watcher.run, daemon=True, name="native-vnode").start()
+        self._thread = threading.Thread(target=self._watcher.run, daemon=True, name="native-vnode")
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stopped = True
+        if self._thread and self._thread.is_alive():
+            self._watcher.stop()
+            self._thread.join()
+        with self._running_lock:
+            for timer in self._running_timers.values():
+                timer.cancel()
+            self._running_timers.clear()
+            self._running_queues.clear()
+            self._running_display.clear()
 
     def bindings(self) -> dict[str, str]:
         with self._bindings_lock:
@@ -97,11 +112,13 @@ class NativeLogProjector:
         ]
         resolved: dict[str, str] = {}
         for agent in target_agents:
+            if self._stopped:
+                return
             pane_id = panes_by_agent[agent]
-            path = _RESOLVE_BY_BASE[agent_base_name(agent)](pane_id, pane_field(pane_id, "#{pane_pid}"))
-            if not path:
-                continue
             try:
+                path = _RESOLVE_BY_BASE[agent_base_name(agent)](pane_id, pane_field(pane_id, "#{pane_pid}"))
+                if not path:
+                    continue
                 self.project(agent, path, start_at_end=True)
             except Exception as exc:
                 self.failed(agent, f"projection failed: {exc}")
@@ -121,7 +138,7 @@ class NativeLogProjector:
         self._wake_watcher()
 
     def _wake_watcher(self) -> None:
-        if self._watcher is not None:
+        if self._watcher is not None and not self._stopped:
             self._watcher.wake()
 
     def failed(self, agent: str, detail: str) -> None:
@@ -162,7 +179,7 @@ class NativeLogProjector:
         def bind() -> None:
             deadline = time.monotonic() + BIND_TIMEOUT_SECONDS
             try:
-                while agent in self._agent_panes():
+                while not self._stopped and agent in self._agent_panes():
                     try:
                         self.refresh_bindings([agent])
                     except Exception as exc:
@@ -185,6 +202,8 @@ class NativeLogProjector:
         return self._watcher.watched_paths() if self._watcher else {}
 
     def push_running_display(self, agent: str, events: list[dict]) -> None:
+        if self._stopped:
+            return
         self.mark_running(agent)
         normalized: list[tuple[str, str, str]] = []
         for ev in events:
@@ -212,6 +231,8 @@ class NativeLogProjector:
 
     def _publish_next_running_display(self, agent: str) -> None:
         with self._running_lock:
+            if self._stopped:
+                return
             queue = self._running_queues.get(agent)
             if not queue:
                 self._running_timers.pop(agent, None)

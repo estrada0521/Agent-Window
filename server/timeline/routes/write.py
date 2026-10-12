@@ -34,20 +34,6 @@ def _resolve_upload_path(path_value: str, *, workspace: str) -> Path:
     return target
 
 
-def _post_reload_timeline(handler, _parsed, ctx) -> None:
-    owns_restart = False
-    try:
-        ok, detail, owns_restart = ctx["queue_timeline_restart_fn"]()
-        handler._send_json(
-            200 if ok else 503,
-            {"ok": ok, "error": "" if ok else detail},
-        )
-        handler.wfile.flush()
-    finally:
-        if owns_restart:
-            ctx["release_timeline_restart_fn"]()
-
-
 def _post_add_agent(handler, _parsed, ctx) -> None:
     data, err = read_json_body(handler)
     if err:
@@ -606,7 +592,6 @@ def _post_agents_delivered(handler, _parsed, ctx) -> None:
 
 
 _POST_ROUTES = {
-    "/reload-timeline": _post_reload_timeline,
     "/add-agent": _post_add_agent,
     "/remove-agent": _post_remove_agent,
     "/upload": _post_upload,

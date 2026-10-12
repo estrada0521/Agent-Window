@@ -1,19 +1,5 @@
     const hubBtn = document.getElementById("pageTitleLink");
-    const hubRootUrl = () => {
-      if (TIMELINE_BASE_PATH) {
-        return `${window.location.origin}/`;
-      }
-      const portValue = Number(__HUB_PORT__) || 0;
-      const protocol = window.location.protocol || "http:";
-      const host = window.location.hostname || "127.0.0.1";
-      const defaultPort =
-        (protocol === "https:" && portValue === 443) ||
-        (protocol === "http:" && portValue === 80);
-      if (portValue > 0 && !defaultPort) {
-        return `${protocol}//${host}:${portValue}/`;
-      }
-      return `${protocol}//${host}/`;
-    };
+    const hubRootUrl = () => `${window.location.origin}/`;
     const hubUrlForPath = (path = "/") => {
       const normalizedPath = normalizeHubPath(path);
       const raw = `${hubRootUrl().replace(/\/$/, "")}${normalizedPath}`;

@@ -13,29 +13,26 @@
       return raw.startsWith("/") ? raw : `/${raw}`;
     };
     const TIMELINE_BASE_PATH = "__TIMELINE_BASE_PATH__";
-    const TIMELINE_ASSET_BASE = TIMELINE_BASE_PATH || "";
     const withTimelineBase = (path) => {
       const raw = String(path || "");
-      if (!TIMELINE_BASE_PATH || !raw.startsWith("/") || raw.startsWith("//")) return raw;
+      if (!raw.startsWith("/") || raw.startsWith("//")) return raw;
       if (raw === TIMELINE_BASE_PATH || raw.startsWith(`${TIMELINE_BASE_PATH}/`)) return raw;
       return `${TIMELINE_BASE_PATH}${raw}`;
     };
-    if (TIMELINE_BASE_PATH) {
-      const __origFetch = window.fetch.bind(window);
-      window.fetch = (input, init) => {
-        if (typeof input === "string" && input.startsWith("/") && !input.startsWith("//")) {
-          return __origFetch(withTimelineBase(input), init);
+    const __origFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      if (typeof input === "string" && input.startsWith("/") && !input.startsWith("//")) {
+        return __origFetch(withTimelineBase(input), init);
+      }
+      if (input instanceof Request) {
+        const url = input.url || "";
+        if (url.startsWith(window.location.origin + "/")) {
+          const nextUrl = `${window.location.origin}${withTimelineBase(url.slice(window.location.origin.length))}`;
+          return __origFetch(new Request(nextUrl, input), init);
         }
-        if (input instanceof Request) {
-          const url = input.url || "";
-          if (url.startsWith(window.location.origin + "/")) {
-            const nextUrl = `${window.location.origin}${withTimelineBase(url.slice(window.location.origin.length))}`;
-            return __origFetch(new Request(nextUrl, input), init);
-          }
-        }
-        return __origFetch(input, init);
-      };
-    }
+      }
+      return __origFetch(input, init);
+    };
     const loadExternalScriptOnce = (() => {
       const pending = new Map();
       return (resource) => {
@@ -138,7 +135,6 @@ __INCLUDE:file-icon-theme.js__
         params.set("embed", "1");
         params.set("progressive", "1");
       }
-      if (TIMELINE_BASE_PATH) params.set("base_path", TIMELINE_BASE_PATH);
       params.set("base_theme", document.documentElement.dataset.theme === "light" ? "light" : "dark");
       const textSize = currentFilePreviewTextSize();
       if (textSize) params.set("agent_text_size", textSize);

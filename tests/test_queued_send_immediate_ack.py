@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import queue
+import threading
 import unittest
 
-import server.timeline.server as server_module
+from server.timeline.state import TimelineState
 
 
 class _FakeQueueRuntime:
@@ -14,23 +15,20 @@ class _FakeQueueRuntime:
 
 class QueuedSendImmediateAckTest(unittest.TestCase):
     def setUp(self) -> None:
-        self._orig_runtime = server_module.state
-        self._orig_queue = server_module.send_queue
-        server_module.state = _FakeQueueRuntime()
-        server_module.send_queue = queue.Queue()
-
-    def tearDown(self) -> None:
-        server_module.state = self._orig_runtime
-        server_module.send_queue = self._orig_queue
+        self.state = _FakeQueueRuntime()
+        self.state.closed = False
+        self.state.session_is_active = True
+        self.state._events = threading.Condition()
+        self.state.send_queue = queue.Queue()
 
     def test_queued_send_acks_before_any_target_validation(self) -> None:
-        status, body = server_module._send_or_enqueue_message("nonexistent-agent", "hello")
+        status, body = TimelineState.send_message(self.state, "nonexistent-agent", "hello")
 
         self.assertEqual(status, 200)
         self.assertTrue(body["ok"])
         self.assertEqual(body["entry"]["targets"], ["nonexistent-agent"])
 
-        job = server_module.send_queue.get_nowait()
+        job = self.state.send_queue.get_nowait()
         self.assertEqual(job["targets"], ["nonexistent-agent"])
 
 

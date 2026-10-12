@@ -15,5 +15,5 @@
       };
       fetch("/timelines", { cache: "no-store" })
         .then(function (res) { return res.json(); })
-        .then(function (data) { open(data.hub_instance === HUB_INSTANCE); });
+        .then(function (data) { open(data.server_instance === SERVER_INSTANCE_SEED); });
     }

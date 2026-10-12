@@ -97,7 +97,7 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 | New Timeline | `⌘N` | |
 | active timelineの切り替え | `⌘1`–`⌘9` | |
 | ブラウザでHubを開く | `⇧⌥⌘O` |  |
-| Hub serverの再起動 | `⇧⌘R` | 変更後のsourceを読み直す |
+| serverの再起動 | `⇧⌘R` | 変更後のsourceを読み直す |
 | workspaceのpathをコピー | | 右クリックmenu |
 | timelineの統計表示 | hover |  |
 
@@ -149,7 +149,7 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | ブラウザでtimelineを開く | `⌥⌘O` |  |
 | timelineの全文検索 | `⌘F` / Search... | `⇧`併用で10件ずつ飛び |
 | timelineをHTML / JSONLとしてExport | | |
-| timeline serverの再起動 | `⌘R` | 変更後のsourceを読み直す |
+| timelineページの再読込 | `⌘R` | |
 
 <p align="center">
   <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
@@ -285,6 +285,6 @@ HTML/CSS/vanilla JavaScript、Python標準libraryと、app用のObjective-Cが1 
 
 appはローカルのrepoを直接使うnative launcherで、サイズは200 KB未満。telemetryなし。Agent CLI以外のネットワーク依存は `cdn.jsdelivr.net` の `marked`・`DOMPurify`・`katex`・構文配色設定時のみ `highlight.js` 。local完結させる場合は自分でvendorする。
 
-Hubの port は `server/hub/port` fileの値(既定 `8788`)を専有する。fileを書き換えれば変わる。timelineごとのport はworkspaceのpathから決まる固定値を専有する。
+Hubの port は `server/hub/port` fileの値(既定 `8788`)を専有する。fileを書き換えれば変わる。
 
 Agent Window自身がfilesystemへ保存するdataは `~/.agent-window/` と、workspace内の `.agent-window/` だけ。

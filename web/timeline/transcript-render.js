@@ -407,47 +407,16 @@ __INCLUDE:../hud.js__
     const waitForLaunchStage = () => new Promise((resolve) => {
       requestAnimationFrame(() => setTimeout(resolve, LAUNCH_STAGE_MIN_MS));
     });
-    const setReloadStage = (stage) => {
-      if (stage === "error") document.documentElement.removeAttribute("data-launch-shell");
-      else document.documentElement.dataset.launchShell = stage;
-      if (document.documentElement.hasAttribute("data-mobile-timeline") && window.parent !== window) {
-        window.parent.postMessage({ type: "timeline-reload-stage", stage }, "*");
-      }
-    };
-    const reloadTimeline = async () => {
+    const reloadTimeline = () => {
       if (reloadInFlight) return;
       reloadInFlight = true;
       if (document.body.classList.contains("side-bar-open")) closeSideBar();
-      setReloadStage("rendering");
-      let minimumDisplay = Promise.resolve();
-      let error = "";
-      try {
-        const stateResponse = await fetch("/timeline-state", { cache: "no-store" });
-        if (!stateResponse.ok) throw new Error(`HTTP ${stateResponse.status}`);
-        const current = await stateResponse.json();
-        if (current.server_instance === SERVER_INSTANCE_SEED) {
-          setReloadStage("1");
-          if (document.documentElement.hasAttribute("data-mobile-timeline")) minimumDisplay = waitForLaunchStage();
-          const response = await fetch("/reload-timeline", { method: "POST", cache: "no-store" });
-          if (!response.ok) {
-            error = response.headers.get("Content-Type")?.includes("json")
-              ? (await response.json()).error
-              : await response.text();
-          }
-        }
-      } catch (err) {
-        error = err.message;
+      document.documentElement.dataset.launchShell = "rendering";
+      if (document.documentElement.hasAttribute("data-mobile-timeline") && window.parent !== window) {
+        window.parent.postMessage({ type: "timeline-reloading" }, "*");
       }
-      if (error) {
-        reloadInFlight = false;
-        setReloadStage("error");
-        setError("Reload failed", error);
-        return;
-      }
-      await minimumDisplay;
       const params = new URLSearchParams(window.location.search);
       params.set("ts", String(Date.now()));
-      if (document.documentElement.hasAttribute("data-mobile-timeline")) setReloadStage("rendering");
       window.location.replace(`${window.location.pathname}?${params.toString()}`);
     };
 
