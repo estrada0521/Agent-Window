@@ -1,4 +1,3 @@
-    let lastRenderPrepended = false;
     let renderFailed = false;
     let lastMarkdownError = "";
     let _firstContentSettleFired = false;
@@ -8,7 +7,6 @@
       suppressEntryAnimation = false,
     } = {}) => {
       try {
-        lastRenderPrepended = false;
         const shouldStick = forceScroll || (!historyWindow && (_stickyToBottom || isNearBottom()));
         const displayEntries = displayEntriesForData(data);
         const metaHiddenIds = computeMetaHiddenIds(displayEntries);
@@ -114,8 +112,6 @@
           }
           pendingStreamRowCleanups = shouldMarkNewRowsAnimated ? pendingRowCleanup : [];
         } else if (canIncrementallyPrepend) {
-          const heightBefore = messagesEl.scrollHeight;
-          const topBefore = messagesEl.scrollTop;
           const frag = document.createDocumentFragment();
           const pendingRowCleanup = [];
           for (const entry of newEntries) {
@@ -135,13 +131,6 @@
             if (row.isConnected) postRenderScope(row);
           }
           pendingStreamRowCleanups = [];
-          void messagesEl.offsetHeight;
-          _programmaticScroll = true;
-          messagesEl.scrollTop = topBefore + (messagesEl.scrollHeight - heightBefore);
-          _pollScrollLockTop = messagesEl.scrollTop;
-          _pollScrollAnchor = scrollAnchor;
-          lastRenderPrepended = true;
-          queueMicrotask(() => { _programmaticScroll = false; });
         } else {
           root.innerHTML = displayEntries.map((entry) => {
             const entryContextHash = entry.context_hash;
@@ -175,12 +164,8 @@
         });
         renderThinkingIndicator();
 
-        if (canIncrementallyPrepend) {
-          _stickyToBottom = isNearBottom();
-          requestAnimationFrame(() => {
-            requestAnimationFrame(maybeRestorePollScrollLock);
-          });
-          settleScrollLockFrames(10);
+        if (historyLoading) {
+          clearPollScrollLock();
         } else if (shouldStick) {
           _pollScrollLockTop = null;
           _pollScrollAnchor = null;

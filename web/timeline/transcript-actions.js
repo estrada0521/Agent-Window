@@ -8,6 +8,11 @@ __INCLUDE:transcript-refresh.js__
       if (!historyWindow || historyLoading) return;
       historyLoading = true;
       const current = historyWindow;
+      clearPollScrollLock();
+      if (before) {
+        messagesEl.style.scrollbarGutter = "stable";
+        messagesEl.style.overflowY = "hidden";
+      }
       const top = messagesEl.scrollTop;
       const height = messagesEl.scrollHeight;
       try {
@@ -25,10 +30,16 @@ __INCLUDE:transcript-refresh.js__
         }
         _stickyToBottom = false;
         render(latestPayloadData, { suppressEntryAnimation: true });
-        if (!before || !lastRenderPrepended) messagesEl.scrollTop = top + (before ? messagesEl.scrollHeight - height : 0);
+        _programmaticScroll = true;
+        messagesEl.scrollTop = top + (before ? messagesEl.scrollHeight - height : 0);
+        queueMicrotask(() => { _programmaticScroll = false; });
       } catch (error) {
         if (historyWindow === current) setError("History unavailable", error);
       } finally {
+        if (before) {
+          messagesEl.style.removeProperty("overflow-y");
+          messagesEl.style.removeProperty("scrollbar-gutter");
+        }
         if (historyWindow === current) historyLoading = false;
       }
     };
