@@ -35,7 +35,6 @@ class TimelineState:
         workspace: str,
         server_instance: str,
         publish_hub_messages,
-        initial_running_agents: list[str] | None = None,
     ):
         self._timeline_binding = WorkspaceTimelineBinding(workspace)
         self.workspace = self._timeline_binding.workspace
@@ -43,7 +42,7 @@ class TimelineState:
         self._publish_hub_messages = publish_hub_messages
         self.tmux_session_name = find_session_for_workspace(self.workspace) or ""
         self.session_is_active = bool(self.tmux_session_name)
-        self._agent_running = set(initial_running_agents or [])
+        self._agent_running = set()
         self._events = threading.Condition()
         self._event_counts = dict.fromkeys(EVENT_KINDS, 0)
         self._event_data: dict[str, str] = {}
@@ -305,9 +304,6 @@ class TimelineState:
             self._agent_running.discard(agent)
             self.native_log.clear_running_display(agent)
         self.publish_event("state")
-
-    def running_agents_for_reload(self) -> list[str]:
-        return sorted(self._agent_running)
 
     def _mark_running(self, agent: str) -> None:
         already_running = agent in self._agent_running

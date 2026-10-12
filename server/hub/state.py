@@ -24,13 +24,12 @@ class TmuxRunResult:
 
 
 class HubState:
-    def __init__(self, *, initial_running_agents: dict | None = None):
+    def __init__(self):
         self.server_instance = uuid.uuid4().hex
         self.assets = TimelineAssets()
         self._timelines = {}
         self._timeline_locks = {}
         self._timeline_locks_master = threading.Lock()
-        self._initial_running_agents = initial_running_agents or {}
         self._closed = False
         self._timeline_messages_condition = threading.Condition()
         self._timeline_messages_seq = 0
@@ -53,7 +52,6 @@ class HubState:
                     workspace=workspace,
                     server_instance=self.server_instance,
                     publish_hub_messages=self.publish_timeline_messages_changed,
-                    initial_running_agents=self._initial_running_agents.pop(workspace, []),
                 )
                 with self._timeline_locks_master:
                     if self._closed:
@@ -102,10 +100,6 @@ class HubState:
         for state in states:
             with self._get_timeline_lock(state.workspace):
                 state.close()
-
-    def running_agents_for_reload(self) -> dict:
-        return {workspace: state.running_agents_for_reload()
-                for workspace, state in self._timelines.items() if state.session_is_active}
 
     def publish_timeline_messages_changed(self) -> None:
         with self._timeline_messages_condition:

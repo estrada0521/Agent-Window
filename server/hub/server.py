@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import sys
 import threading
@@ -57,7 +56,6 @@ restart_lock = threading.Lock()
 restart_pending = False
 _restart_release_event = threading.Event()
 hub_server = None
-RELOAD_RUNNING_AGENTS_ENV = "AGENT_WINDOW_RELOAD_RUNNING_AGENTS"
 
 
 def initialize_from_argv(argv: list[str] | None = None) -> None:
@@ -76,17 +74,13 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
     repo_root = Path(root_arg).resolve()
     script_path = Path(script_arg).resolve()
     port = int((repo_root / "server" / "hub" / "port").read_text().strip())
-    hub = HubState(initial_running_agents=json.loads(os.environ.pop(RELOAD_RUNNING_AGENTS_ENV, "{}")))
+    hub = HubState()
     restart_pending, hub_server = False, None
 
     _initialized = True
 
 
 PROCESS_HANDOFF_TIMEOUT_SEC = 8.0
-
-
-def _restart_env():
-    return {**os.environ, RELOAD_RUNNING_AGENTS_ENV: json.dumps(hub.running_agents_for_reload())}
 
 
 def launch_hub_restart(*, script_path, repo_root, hub_server) -> str:
@@ -102,7 +96,6 @@ def launch_hub_restart(*, script_path, repo_root, hub_server) -> str:
             text=True,
             check=False,
             timeout=PROCESS_HANDOFF_TIMEOUT_SEC,
-            env=_restart_env(),
         )
     except subprocess.TimeoutExpired:
         return f"server/hub/start did not finish within {PROCESS_HANDOFF_TIMEOUT_SEC:g}s"
