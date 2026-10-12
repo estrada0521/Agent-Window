@@ -20,19 +20,18 @@ def dispatch_timeline_route(handler, method: str, parsed, hub) -> bool:
     if len(parts) == 3:
         handler._redirect(prefix + "/" + ("?" + parsed.query if parsed.query else ""))
         return True
-    state = hub.timeline(workspace)
-    ctx = {
-        "state": state,
-        "files": state.files,
-        "assets": hub.assets,
-        "hub": hub,
-        "send_message_fn": state.send_message,
-    }
     handler.timeline_base_path = prefix
     parsed = parsed._replace(path=f"/{parts[3]}" if len(parts) == 4 else "/")
     routes = (dispatch_get_assets_route, dispatch_get_read_route) if method == "GET" else (dispatch_post_write_route,)
-    for dispatch in routes:
-        if dispatch(handler, parsed, ctx):
-            return True
-    handler.send_error(404)
-    return True
+    with hub.timeline_request(workspace, watch=method == "GET" and parsed.path == "/events") as state:
+        ctx = {
+            "state": state,
+            "files": state.files,
+            "assets": hub.assets,
+            "send_message_fn": state.send_message,
+        }
+        for dispatch in routes:
+            if dispatch(handler, parsed, ctx):
+                return True
+        handler.send_error(404)
+        return True

@@ -6,6 +6,7 @@ import threading
 import uuid
 import time
 from dataclasses import dataclass
+from contextlib import contextmanager
 
 from tmux import run_tmux
 from fs.log.paths import normalize_workspace
@@ -73,18 +74,20 @@ class HubState:
             except Exception as exc:
                 print(f"Timeline startup failed: {workspace}: {exc}", file=sys.stderr, flush=True)
 
-    def watch_timeline(self, state: TimelineState) -> None:
-        with self._get_timeline_lock(state.workspace):
-            if state.closed:
-                raise RuntimeError("Timeline is closed")
-            state.start()
-            state.viewers += 1
-
-    def release_timeline(self, state: TimelineState) -> None:
-        with self._get_timeline_lock(state.workspace):
-            state.viewers -= 1
-            if not state.session_is_active and state.viewers == 0 and self._timelines.get(state.workspace) is state:
-                self.close_timeline(state.workspace)
+    @contextmanager
+    def timeline_request(self, workspace: str, *, watch: bool = False):
+        with self._get_timeline_lock(workspace):
+            state = self.timeline(workspace)
+            if watch:
+                state.start()
+            state.requests += 1
+        try:
+            yield state
+        finally:
+            with self._get_timeline_lock(state.workspace):
+                state.requests -= 1
+                if not state.session_is_active and state.requests == 0 and self._timelines.get(state.workspace) is state:
+                    self.close_timeline(state.workspace)
 
     def close_timeline(self, workspace: str) -> None:
         workspace = normalize_workspace(workspace)

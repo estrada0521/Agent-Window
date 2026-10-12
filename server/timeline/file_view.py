@@ -553,7 +553,6 @@ const buildPreviewHref = (relPath) => {{
   const params = new URLSearchParams();
   params.set("path", String(relPath || ""));
   if (__previewEmbed) params.set("embed", "1");
-  if (__previewBasePath) params.set("base_path", __previewBasePath);
   if (__previewAgentTextSize) params.set("agent_text_size", String(__previewAgentTextSize));
   const theme = __root.getAttribute("data-preview-theme") || __root.getAttribute("data-theme") || "";
   if (theme === "light" || theme === "dark") params.set("base_theme", theme);

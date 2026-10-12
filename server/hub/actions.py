@@ -253,7 +253,7 @@ def post_change_timeline_workspace(handler, _parsed, ctx) -> None:
         hub = ctx["hub"]
         with hub._get_timeline_lock(current_workspace):
             state = hub._timelines.get(current_workspace)
-            if state and state.viewers:
+            if state and state.requests:
                 handler._send_json(409, {"ok": False, "error": "Close timeline first"})
                 return
             hub.close_timeline(current_workspace)

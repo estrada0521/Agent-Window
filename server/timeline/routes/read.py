@@ -270,7 +270,6 @@ def _get_timeline_state(handler, _parsed, ctx) -> None:
 
 def _get_events(handler, _parsed, ctx) -> None:
     state = ctx["state"]
-    ctx["hub"].watch_timeline(state)
     try:
         handler.send_response(200)
         handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
@@ -293,7 +292,6 @@ def _get_events(handler, _parsed, ctx) -> None:
         return
     finally:
         handler.close_connection = True
-        ctx["hub"].release_timeline(state)
 
 
 def _send_git_json(handler, parsed, ctx, read) -> None:

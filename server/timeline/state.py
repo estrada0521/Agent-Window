@@ -49,7 +49,7 @@ class TimelineState:
         self._latest_failure = ""
         self._stopped_threads: dict[str, str] = {}
         self.files = WorkspaceFiles(workspace=self.workspace)
-        self.viewers = 0
+        self.requests = 0
         self.closed = False
         self._log_thread = self._send_thread = None
         self._watch_stop = None
