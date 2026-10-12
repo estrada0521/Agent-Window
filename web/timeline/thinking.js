@@ -1,16 +1,10 @@
     let currentAgentStatuses = {};
     let currentRunningDisplay = {};
     let thinkingRunningItems = {};
-    const clearThinkingRunningItemTimers = (item) => {
-      if (!item) return;
-      clearTimeout(item.enterTimer);
-      item.enterTimer = 0;
-    };
     const currentThinkingRunningItem = (agent) => thinkingRunningItems[agent] || null;
     const clearThinkingRunningAgent = (agent, { suppressRender = false } = {}) => {
       const item = thinkingRunningItems[agent];
       if (!item) return false;
-      clearThinkingRunningItemTimers(item);
       delete thinkingRunningItems[agent];
       if (!suppressRender) renderThinkingIndicator();
       return true;
@@ -20,16 +14,10 @@
         id: String(event?.id || "").trim(),
         keyword: String(event?.keyword || "").trim(),
         detail: String(event?.detail || "").trim(),
-        phase: "live",
-        enterTimer: 0,
-        updatedAt: Number.isFinite(Number(event?.updatedAt)) && Number(event.updatedAt) > 0
-          ? Number(event.updatedAt)
-          : Date.now(),
       };
       if (!entry.id || !entry.keyword) return false;
       const current = currentThinkingRunningItem(agent);
       if (current && current.id === entry.id && current.keyword === entry.keyword && current.detail === entry.detail) return false;
-      clearThinkingRunningItemTimers(current);
       thinkingRunningItems[agent] = entry;
       if (!suppressRender) renderThinkingIndicator();
       return true;
@@ -266,7 +254,7 @@
         runningAgents.map((agent) => [
           agent,
           currentThinkingRunningItem(agent)
-            ? [currentThinkingRunningItem(agent).id, currentThinkingRunningItem(agent).keyword, currentThinkingRunningItem(agent).detail, currentThinkingRunningItem(agent).phase]
+            ? [currentThinkingRunningItem(agent).id, currentThinkingRunningItem(agent).keyword, currentThinkingRunningItem(agent).detail]
             : null,
         ])
       );

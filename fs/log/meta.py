@@ -77,12 +77,12 @@ def set_log_workspace(timeline_name: str, workspace: str) -> None:
     if owner:
         raise LogMetaError(f"A timeline already exists for this workspace: {owner}")
     old_workspace = Path(raw["workspace"]).expanduser().resolve()
+    ensure_workspace_log_link(name, ws)
     raw["workspace"] = ws
     write_json_atomically(path, raw)
     old_link = workspace_log_link_path(old_workspace)
     if old_workspace != Path(ws).expanduser().resolve() and old_link.is_symlink():
         old_link.unlink()
-    ensure_workspace_log_link(name, ws)
 
 
 def rename_log(old_name: str, new_name: str) -> None:
