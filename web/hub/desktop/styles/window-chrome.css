@@ -356,11 +356,6 @@
       transform: none;
     }
 
-    html[data-native-app="1"][data-native-root-window="1"] {
-      position: absolute;
-      top: 0;
-      height: 100%;
-    }
     html[data-native-app="1"][data-native-root-window="1"] :is(.desk-floating-controls, .desk-top-right-controls, .desk-window-traffic, .fit-window-dots, .native-top-drag-strip, .desk-launch-shell) {
       position: absolute;
     }

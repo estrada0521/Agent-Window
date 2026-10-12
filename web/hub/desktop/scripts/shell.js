@@ -36,7 +36,7 @@
       _deskTimelineShell.classList.toggle("loading", !!active);
     }
     function finishDeskHubLoad() {
-      if (document.documentElement.dataset.hubLoading !== "1") return;
+      if (window.__agentWindowHubRestarting || document.documentElement.dataset.hubLoading !== "1") return;
       delete document.documentElement.dataset.hubLoading;
       const url = new URL(window.location.href);
       url.searchParams.delete("launch_shell");
@@ -44,8 +44,7 @@
     }
     function triggerDeskHubReload() {
       if (!_deskReloadBtn || _deskReloadBtn.classList.contains("restarting")) return;
-      _deskReloadShell.hidden = false;
-      _deskReloadShell.classList.add("visible");
+      document.documentElement.dataset.hubLoading = "1";
       beginHubRestart(_deskReloadBtn);
     }
     function failDeskOpen(message) {

@@ -1,17 +1,29 @@
 (() => {
   const root = document.documentElement;
   root.dataset.nativeApp = "1";
-  const installDragStrip = () => {
-    const workbench = document.getElementById("deskWorkbench");
-    root.dataset.nativeRootWindow = workbench ? "1" : "0";
-    if (!workbench || document.getElementById("nativeTopDragStrip")) return;
+  root.dataset.nativeRootWindow = "0";
+  if (window.parent === window && ["127.0.0.1", "localhost"].includes(window.location.hostname)) {
+    root.style.visibility = "hidden";
     const applyViewport = ({ width, left }) => {
       root.style.width = `${width}px`;
       root.style.left = `${left}px`;
       window.dispatchEvent(new Event("resize"));
     };
-    window.addEventListener("native-window-resize", (event) => applyViewport(event.detail));
-    window.webkit.messageHandlers.agentWindow.postMessage({ cmd: "get_window_viewport" }).then(applyViewport);
+    window.webkit.messageHandlers.agentWindow.postMessage({ cmd: "get_window_viewport" }).then((viewport) => {
+      if (viewport.rootWindow) {
+        root.dataset.nativeRootWindow = "1";
+        root.style.position = "absolute";
+        root.style.top = "0";
+        root.style.height = "100%";
+        window.addEventListener("native-window-resize", (event) => applyViewport(event.detail));
+        applyViewport(viewport);
+      }
+      root.style.removeProperty("visibility");
+    });
+  }
+  const installDragStrip = () => {
+    const workbench = document.getElementById("deskWorkbench");
+    if (!workbench || document.getElementById("nativeTopDragStrip")) return;
     const strip = document.createElement("div");
     strip.id = "nativeTopDragStrip";
     strip.className = "native-top-drag-strip";

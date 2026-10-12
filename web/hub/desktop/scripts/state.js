@@ -16,7 +16,6 @@
     const _deskTimelineReloadBtn = document.getElementById("timelineReloadBtn");
     const _deskSideBarToggle = document.getElementById("sideBarToggle");
     const _deskTimelineShell = document.querySelector(".desk-timeline-shell");
-    const _deskReloadShell = document.getElementById("deskReloadShell");
     const _deskMain = document.querySelector(".desk-main");
     const _deskSettingsBtn = document.getElementById("deskSettingsBtn");
     const _deskReloadBtn = document.getElementById("deskReloadBtn");

@@ -558,7 +558,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     }
     NSDictionary *body = message.body;
     if ([body[@"cmd"] isEqualToString:@"get_window_viewport"]) {
-        replyHandler(@{ @"width": @(self.window.contentView.bounds.size.width), @"left": @(-self.webView.frame.origin.x) }, nil);
+        replyHandler(@{ @"rootWindow": @(message.webView == self.webView), @"width": @(self.window.contentView.bounds.size.width), @"left": @(-self.webView.frame.origin.x) }, nil);
         return;
     }
     NSString *error = [self run:body[@"cmd"] args:body[@"args"] ?: @{}];

@@ -61,19 +61,6 @@
     .desk-timeline-shell.loading .desk-timeline-frame {
       visibility: hidden;
     }
-    .desk-reload-shell {
-      position: absolute;
-      inset: 0;
-      z-index: 4;
-      background: var(--timeline-pane-bg);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-    .desk-reload-shell.visible {
-      display: flex;
-    }
     .launch-shell.desk-launch-shell {
       display: none;
       position: fixed;
@@ -95,20 +82,7 @@
     html[data-native-app="1"] .desk-launch-shell {
       background: transparent;
     }
-    .desk-reload-shell-card {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px;
-      height: 18px;
-      border-radius: 0;
-      background: transparent;
-      border: none;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      box-shadow: none;
-    }
-    .desk-reload-shell-spinner {
+    .desk-timeline-list-spinner {
       width: 18px;
       height: 18px;
       border-radius: 999px;
