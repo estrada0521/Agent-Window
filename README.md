@@ -266,6 +266,11 @@ printf '%s' '<message>' | agent-send <target>
 
 To use it, add `tmux/agent_send/agent-send` to PATH and place `tmux/agent_send/SKILL.md` yourself.
 
+<p align="center">
+  <img src="media/agent-window-agent-send.png" width="100%" alt="Claude, Grok, and Codex talking to each other">
+</p>
+
+
 ## Stack
 
 The stack is HTML/CSS/vanilla JavaScript, the Python standard library, and one Objective-C file for the app. There is no Node runtime, npm build, or DB; the following are used directly:

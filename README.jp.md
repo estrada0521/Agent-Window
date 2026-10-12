@@ -266,6 +266,11 @@ printf '%s' '<message>' | agent-send <target>
 
 使う場合は、`tmux/agent_send/agent-send` へのPATHと、`tmux/agent_send/SKILL.md` を、自分で置く。
 
+<p align="center">
+  <img src="media/agent-window-agent-send.png" width="100%" alt="Claude・Grok・CodexのAgent間会話">
+</p>
+
+
 ## Stack
 
 HTML/CSS/vanilla JavaScript、Python標準libraryと、app用のObjective-Cが1 file。Node、npm build、DBなどは使わず、次を直接叩く。
