@@ -190,7 +190,7 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | Follow changes |  | 既定でON |
 | Pin changes | `⇧⌘P` / pinボタン | |
 
-https://github.com/user-attachments/assets/7adeae0e-3384-4e55-af63-bf9220fc5f6c
+https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
 
 </details>
 
@@ -209,7 +209,7 @@ https://github.com/user-attachments/assets/7adeae0e-3384-4e55-af63-bf9220fc5f6c
 | Fitの表示message数を減らす／増やす | `⌥⌘[` / `⌥⌘]` | Fit中のみ |
 | Collapse Window | `⌥⌘M` | 新しいmessageで復帰。Fit Window to Message中のみ |
 
-https://github.com/user-attachments/assets/08a26dd6-e640-49dd-91a8-87f953e8c181
+https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
 
 *拡大・縮小はwindow全体の相似を保つ。sizeと位置を変えて、アプリケーションを作業の邪魔にならない場所へ。*
 
