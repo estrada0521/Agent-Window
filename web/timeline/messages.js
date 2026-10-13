@@ -72,7 +72,7 @@ __INCLUDE:messages-data.js__
     };
     const updateMessageProjectionUI = (displayEntries) => {
       if (document.documentElement.dataset.mobile === "1") {
-        updateRepoPanel(displayEntries);
+        updateRepoPanel();
       } else {
         onTimelineSummaryPinReload();
       }

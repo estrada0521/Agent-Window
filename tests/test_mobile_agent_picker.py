@@ -28,8 +28,8 @@ class MobileAgentPickerTests(unittest.TestCase):
     def test_leftover_hamburger_tap_opens_the_second_picker(self) -> None:
         pointerdown = _between(
             SHEETS,
-            'nativeHeaderMenuSelect?.addEventListener("pointerdown"',
-            'nativeHeaderMenuSelect?.addEventListener("change"',
+            'nativeHeaderMenuSelect.addEventListener("pointerdown"',
+            'nativeHeaderMenuSelect.addEventListener("change"',
         )
         self.assertIn("subMenuIsArmed()", pointerdown)
         self.assertIn("event.preventDefault()", pointerdown)
@@ -39,8 +39,8 @@ class MobileAgentPickerTests(unittest.TestCase):
 
         button = _between(
             SHEETS,
-            'rightMenuBtn?.addEventListener("click"',
-            'mobileSheet?.addEventListener("click"',
+            'rightMenuBtn.addEventListener("click"',
+            'mobileSheet.addEventListener("click"',
         )
         self.assertLess(
             button.index("subMenuIsArmed()"),

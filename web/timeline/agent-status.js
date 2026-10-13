@@ -52,7 +52,7 @@
         if (document.documentElement.dataset.mobile === "1") {
           const timelineChanged = repoTimeline !== currentTimelineName;
           repoTimeline = currentTimelineName;
-          if (latestPayloadData) updateRepoPanel(displayEntriesForData(latestPayloadData));
+          if (latestPayloadData) updateRepoPanel();
           if (timelineChanged) void refreshGitSummaryHud();
         }
       }

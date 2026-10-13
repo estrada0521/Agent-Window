@@ -7,13 +7,10 @@
     const mobileSheet = document.getElementById("mobileSheet");
     const paneTracePanel = document.getElementById("paneTracePanel");
     const nativeHeaderMenuSelect = document.getElementById("pageNativeMenuSelect");
-    const useNativeHeaderMenuPicker = !!(nativeHeaderMenuSelect && rightMenuBtn);
     const clearNativeHeaderMenuSelection = () => {
-      if (!nativeHeaderMenuSelect) return;
       nativeHeaderMenuSelect.value = "";
     };
     const syncNativeHeaderMenuSelectAnchor = () => {
-      if (!useNativeHeaderMenuPicker || !nativeHeaderMenuSelect || !rightMenuBtn) return;
       const rect = rightMenuBtn.getBoundingClientRect();
       nativeHeaderMenuSelect.style.left = `${Math.round(rect.left)}px`;
       nativeHeaderMenuSelect.style.top = `${Math.round(rect.top)}px`;
@@ -21,17 +18,13 @@
       nativeHeaderMenuSelect.style.height = `${Math.max(1, Math.round(rect.height))}px`;
     };
     const openNativeHeaderMenuPicker = () => {
-      if (!useNativeHeaderMenuPicker || !nativeHeaderMenuSelect) return false;
       syncNativeHeaderMenuSelectAnchor();
       clearNativeHeaderMenuSelection();
       openNativeSelect(nativeHeaderMenuSelect);
-      return true;
     };
-    if (useNativeHeaderMenuPicker) {
-      nativeHeaderMenuSelect.classList.add("is-ios-active");
-      syncNativeHeaderMenuSelectAnchor();
-    }
-    nativeHeaderMenuSelect?.addEventListener("pointerdown", (event) => {
+    nativeHeaderMenuSelect.classList.add("is-ios-active");
+    syncNativeHeaderMenuSelectAnchor();
+    nativeHeaderMenuSelect.addEventListener("pointerdown", (event) => {
       if (subMenuIsArmed()) {
         event.preventDefault();
         event.stopPropagation();
@@ -40,18 +33,18 @@
       }
       resetSubMenu({ clearOptions: true });
     });
-    nativeHeaderMenuSelect?.addEventListener("change", () => {
+    nativeHeaderMenuSelect.addEventListener("change", () => {
       const target = String(nativeHeaderMenuSelect.value || "");
       clearNativeHeaderMenuSelection();
       if (!target) return;
       _ignoreGlobalClick = true;
       void runForwardAction(target);
     });
-    nativeHeaderMenuSelect?.addEventListener("blur", () => {
+    nativeHeaderMenuSelect.addEventListener("blur", () => {
       setTimeout(clearNativeHeaderMenuSelection, 0);
     });
     const headerRoot = document.querySelector(".page-header");
-    const hasOpenHeaderMenu = () => !!(mobileSheet?.classList.contains("open") || paneTracePanel?.classList.contains("open"));
+    const hasOpenHeaderMenu = () => mobileSheet.classList.contains("open") || paneTracePanel.classList.contains("open");
     const mobileSheetCloseIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     const mobileSheetBackIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 6 9 12 15 18"/></svg>';
     const mobileSheetExpandedKey = "aw-mobile-sheet-expanded";
@@ -61,7 +54,6 @@
       panel.style.setProperty("--sheet-inset", expanded ? "0px" : "10px");
     };
     const showBottomSheet = (panel, onOpened = () => { }) => {
-      if (!panel) return;
       const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
       if (sheetPanel) {
         sheetPanel.style.transition = "";
@@ -230,7 +222,7 @@
     };
     const createMobileSheetController = (panel, activeClass, { onOpened = () => { }, onClosed = () => { } } = {}) => {
       const close = ({ immediate = false } = {}) => {
-        if (!panel || panel.hidden) return;
+        if (panel.hidden) return;
         const sheetPanel = panel.querySelector(".mobile-bottom-sheet-panel");
         const finish = () => {
           if (sheetPanel) {
@@ -274,7 +266,6 @@
         sheetPanel.addEventListener("transitionend", finishFade);
       };
       const open = (afterOpen = () => { }) => {
-        if (!panel) return;
         setHudCovered(true);
         document.body.classList.add(activeClass);
         showBottomSheet(panel, () => {
@@ -293,17 +284,13 @@
         repoScrollByPath.clear();
         repoPanelRenderSig = "";
         repoBrowserMountEl()?.replaceChildren();
-        if (mobileSheet) delete mobileSheet.dataset.kind;
+        delete mobileSheet.dataset.kind;
       },
     });
     const closeSheet = (options) => workspaceSheet.close(options);
     const paneTraceSheet = createMobileSheetController(paneTracePanel, MOBILE_SHEET_ACTIVE_CLASS);
-    const closePaneTraceSheet = (options) => {
-      if (!paneTracePanel) return;
-      paneTraceSheet.close(options);
-    };
+    const closePaneTraceSheet = (options) => paneTraceSheet.close(options);
     const openPaneTraceSheet = (onOpened = () => { }) => {
-      if (!paneTracePanel) return;
       ensureMobileSheetDom(paneTracePanel, { kind: "pane-trace" });
       activateSheetChrome(paneTracePanel, {
         title: "Pane Trace",
@@ -313,18 +300,16 @@
       setSharedSheetLeading(() => openNativeSelect(paneViewerMacroSelect), "Command", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><line x1="15" y1="5" x2="9" y2="19"/></svg>');
       paneTraceSheet.open(onOpened);
     };
-    const sheetIsOpen = () => !!(mobileSheet && mobileSheet.classList.contains("open") && !mobileSheet.hidden);
-    const sheetKind = () => String(mobileSheet?.dataset.kind || "");
-    const gitHostEl = () => mobileSheet?.querySelector(".git-host");
+    const sheetIsOpen = () => mobileSheet.classList.contains("open") && !mobileSheet.hidden;
+    const sheetKind = () => String(mobileSheet.dataset.kind || "");
+    const gitHostEl = () => mobileSheet.querySelector(".git-host");
     const setSheetKind = (kind) => {
-      if (!mobileSheet) return;
       mobileSheet.dataset.kind = kind;
       const closeLabel = kind === "git" ? "Close git" : "Close workspace";
       activateSheetChrome(mobileSheet, { title: "", closeLabel, onClose: () => closeSheet() });
       sharedSheetCloseBtn.setAttribute("aria-label", closeLabel);
     };
     const updateHeaderMenuViewportMetrics = () => {
-      if (!headerRoot) return;
       const rect = headerRoot.getBoundingClientRect();
       const height = Math.max(0, Math.round(rect.top));
       const left = Math.max(0, Math.round(rect.left));
@@ -353,17 +338,15 @@
         clearTimeout(paneViewerTabScrollEndTimer);
         paneViewerTabScrollEndTimer = null;
       }
-      if (paneEl?.classList?.contains("visible") && paneViewerCarousel && paneViewerAgents.length) {
+      if (paneEl.classList.contains("visible") && paneViewerCarousel && paneViewerAgents.length) {
         const w = paneViewerCarousel.offsetWidth;
         if (w) {
           const idx = Math.max(0, Math.min(paneViewerAgents.length - 1, Math.round(paneViewerCarousel.scrollLeft / w)));
           paneViewerLastAgent = paneViewerAgents[idx];
         }
       }
-      if (paneEl) {
-        paneEl.classList.remove("visible");
-        paneEl.hidden = true;
-      }
+      paneEl.classList.remove("visible");
+      paneEl.hidden = true;
       closePaneTraceSheet();
       if (paneViewerInterval) {
         clearInterval(paneViewerInterval);
@@ -374,7 +357,6 @@
     let repoTimeline = "";
     let repoPanelRenderSig = "";
     let repoPanelUpdateSeq = 0;
-    let repoPanelEntries = [];
     let _repoBrowserPath = "";
     let cancelRepoLoading = () => {};
     const repoScrollByPath = new Map();
@@ -394,34 +376,27 @@
       const joined = parts.join("/");
       return isAbsolute ? `/${joined}` : joined;
     };
-    const repoSheetTitleEl = () => sharedSheetTitleEl;
-    const repoSheetBackBtn = () => sharedSheetLeadingBtn;
-    const repoBrowserMountEl = () => mobileSheet?.querySelector(".repo-browser-mount");
+    const repoBrowserMountEl = () => mobileSheet.querySelector(".repo-browser-mount");
     const repoBrowserTitleForPath = (rawPath) => {
       const path = normalizeRepoPath(rawPath);
       return path ? (path.split("/").filter(Boolean).pop() || "Workspace") : "Workspace";
     };
     const setRepoSheetTitle = (text) => {
       if (!chromeBelongsTo(mobileSheet) || sheetKind() !== "repo") return;
-      const titleEl = repoSheetTitleEl();
-      if (!titleEl) return;
-      titleEl.textContent = text;
-      titleEl.title = text;
+      sharedSheetTitleEl.textContent = text;
+      sharedSheetTitleEl.title = text;
     };
     const syncRepoSheetBackBtn = () => {
-      const backBtn = repoSheetBackBtn();
-      if (!backBtn) return;
       if (sheetPreviewOpen()) {
-        backBtn.disabled = false;
-        backBtn.setAttribute("aria-label", "Back to directory");
+        sharedSheetLeadingBtn.disabled = false;
+        sharedSheetLeadingBtn.setAttribute("aria-label", "Back to directory");
         return;
       }
       const atRoot = !normalizeRepoPath(_repoBrowserPath);
-      backBtn.disabled = atRoot;
-      backBtn.setAttribute("aria-label", atRoot ? "No parent directory" : "Go to parent directory");
+      sharedSheetLeadingBtn.disabled = atRoot;
+      sharedSheetLeadingBtn.setAttribute("aria-label", atRoot ? "No parent directory" : "Go to parent directory");
     };
     const handleRepoSheetBack = () => {
-      if (!mobileSheet) return;
       if (sheetPreviewOpen()) {
         popSheetPreview();
         return;
@@ -443,11 +418,9 @@
     };
     const clearSheetPreview = ({ restoreChrome = true } = {}) => {
       if (restoreChrome) _sheetPreviewStack = [];
-      if (mobileSheet) {
-        delete mobileSheet._previewPath;
-        delete mobileSheet._previewExt;
-        mobileSheet.classList.remove("sheet-mode-preview");
-      }
+      delete mobileSheet._previewPath;
+      delete mobileSheet._previewExt;
+      mobileSheet.classList.remove("sheet-mode-preview");
       resetEmbeddedFilePreviewFrame(sheetPreviewFrameEl());
       resetRepoPreviewControls();
       if (!restoreChrome) return;
@@ -511,8 +484,7 @@
       surface.addEventListener("touchcancel", reset, { passive: true });
     };
     const ensureSheetDom = () => {
-      if (!mobileSheet) return false;
-      if (mobileSheet.querySelector(".mobile-bottom-sheet-content")) return true;
+      if (mobileSheet.querySelector(".mobile-bottom-sheet-content")) return;
       ensureMobileSheetDom(mobileSheet, {
         kind: "workspace",
         afterBuild: ({ contentEl }) => {
@@ -548,7 +520,6 @@
         },
       });
       wireRepoPreviewControls(sharedSheetFooter);
-      return true;
     };
     const openSheetPreview = async (rawPath, ext, { kind, pushHistory = true } = {}) => {
       const targetKind = kind || sheetKind() || "repo";
@@ -561,7 +532,7 @@
           .catch(reportExternalLinkFailure);
         return;
       }
-      if (!path || !mobileSheet) return;
+      if (!path) return;
       const checkUrl = new URL(fileViewHrefForPath(path), window.location.href);
       checkUrl.searchParams.set("check", "1");
       let check, stateResponse;
@@ -569,8 +540,8 @@
         [check, stateResponse] = await Promise.all([fetch(checkUrl), fetch("/timeline-state"), ensureFileIconTheme()]);
         if (!stateResponse.ok) throw new Error("Failed to read workspace path");
         mobileSheet._previewWorkspace = (await stateResponse.json()).workspace.replace(/\/+$/, "");
-      } catch (_) {
-        setError("Failed to open file");
+      } catch (err) {
+        setError("Failed to open file", err);
         return;
       }
       if (!check.ok) {
@@ -630,10 +601,8 @@
         kind: sheetKind() || "repo",
       });
     });
-    const sheetListTopPlayPx = () => {
-      const n = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mobile-sheet-list-top-play"));
-      return Number.isFinite(n) ? n : 0;
-    };
+    const sheetListTopPlayPx = () =>
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mobile-sheet-list-top-play"));
     const pinSheetListBody = (el) => {
       const body = el?.querySelector(":scope > .mobile-sheet-list-body");
       if (!body || !el.clientHeight) return;
@@ -688,7 +657,6 @@
     };
 __INCLUDE:git-panel.js__
     const openGitSheet = async () => {
-      if (!mobileSheet) return;
       try {
         await loadGitWorktreeList();
       } catch (err) {
@@ -704,7 +672,6 @@ __INCLUDE:git-panel.js__
       await updateGitPanel();
     };
     const openRepoSheet = async () => {
-      if (!mobileSheet) return;
       try {
         const res = await fetchWithTimeout("/files-dir?path=", {}, 12000);
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load workspace");
@@ -724,9 +691,7 @@ __INCLUDE:git-panel.js__
         });
       }
     };
-    const updateRepoPanel = async (entries) => {
-      if (!mobileSheet) return;
-      repoPanelEntries = Array.isArray(entries) ? entries : [];
+    const updateRepoPanel = async () => {
 
       const timelineKey = repoTimeline || currentTimelineName || "";
       if (mobileSheet._repoTimelineKey !== timelineKey) {
@@ -901,7 +866,6 @@ __INCLUDE:git-panel.js__
         void openRepoPath(_repoBrowserPath, { transition: "none", preserveCurrent: true });
       };
       mobileSheet._openRepoPath = openRepoPath;
-      mobileSheet._scrollToCategory = () => false;
       const panelVisible = sheetIsOpen() && sheetKind() === "repo";
       if (!panelVisible) return;
       if (sheetPreviewOpen()) return;
@@ -914,29 +878,7 @@ __INCLUDE:git-panel.js__
       closeSheet();
       syncHeaderMenuFocus();
     };
-    const handleNativeMenuAction = async (payload) => {
-      const data = payload || {};
-      if (data.action === "agent") {
-        const mode = String(data.mode || "");
-        const agent = String(data.agent || "");
-        if ((mode === "add" || mode === "remove") && agent) {
-          closeHeaderMenus();
-          await performAgentAction(mode, agent);
-        }
-        return;
-      }
-      const action = String(data.action || "");
-      if (!action) return;
-      await runForwardAction(action);
-    };
-    window.addEventListener("message", (event) => {
-      if (!(event.data && event.data.type === "native-menu-action")) return;
-      void handleNativeMenuAction(event.data.payload);
-    });
-    window.addEventListener("native-menu-action", (event) => {
-      void handleNativeMenuAction(event.detail || {});
-    });
-    rightMenuBtn?.addEventListener("click", (event) => {
+    rightMenuBtn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       if (subMenuIsArmed()) {
@@ -944,18 +886,15 @@ __INCLUDE:git-panel.js__
         return;
       }
       resetSubMenu({ clearOptions: true });
-      if (useNativeHeaderMenuPicker) {
-        if (openNativeHeaderMenuPicker()) return;
-      }
-      closeHeaderMenus();
+      openNativeHeaderMenuPicker();
     });
-    mobileSheet?.addEventListener("click", (event) => {
+    mobileSheet.addEventListener("click", (event) => {
       if (event.target !== mobileSheet) return;
       event.preventDefault();
       event.stopPropagation();
       closeSheet();
     });
-    headerRoot?.addEventListener("click", (event) => {
+    headerRoot.addEventListener("click", (event) => {
       if (!sheetPreviewOpen()) return;
       if (event.defaultPrevented) return;
       if (event.target.closest(".page-menu-btn, .page-menu-panel, button, a, details, summary, input, textarea, select, label, [role='button']")) {
@@ -981,9 +920,9 @@ __INCLUDE:git-panel.js__
         return;
       }
 
-      const inRightMenu = rightMenuBtn?.contains(event.target);
-      const inWorkspaceSheet = mobileSheet?.contains(event.target);
-      const inPaneTraceMenu = paneTracePanel?.contains(event.target);
+      const inRightMenu = rightMenuBtn.contains(event.target);
+      const inWorkspaceSheet = mobileSheet.contains(event.target);
+      const inPaneTraceMenu = paneTracePanel.contains(event.target);
       const inNativeMenu = !!event.target.closest?.("select");
       if (!inRightMenu && !inWorkspaceSheet && !inPaneTraceMenu && !inNativeMenu) {
         closeHeaderMenus();
@@ -991,7 +930,6 @@ __INCLUDE:git-panel.js__
     });
     async function runForwardAction(target) {
       const action = String(target || "");
-      if (!action) return;
       if (action === "esc" || action === "restart" || action === "ctrlc" || action === "enter") {
         await postAgentCommand({ command_id: action, path: action === "restart" ? "/restart-agent" : "/key-macro" });
         return;
