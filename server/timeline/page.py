@@ -5,6 +5,7 @@ import json
 from server.pwa import pwa_url
 from agents.registry import agent_names_js_array
 from server.timeline.page_scripts import TIMELINE_HEADER_MENU_BUTTON_HTML, TIMELINE_SHEET_PANELS_HTML
+from server.timeline.control import SESSION_WIDTH
 from server.template import load_timeline_template
 from server.appearance.colors import apply_color_tokens
 from server.timeline.file_icon_theme import load_file_icon_theme_document
@@ -84,6 +85,7 @@ def render_timeline_html(
         "__TIMELINE_SERVICE_WORKER_HTML__": TIMELINE_SERVICE_WORKER_HTML,
         "__SERVER_INSTANCE__": server_instance,
         "__TEXT_SIZE_DEFAULT__": str(DESKTOP_TEXT_SIZE),
+        "__SESSION_WIDTH__": str(SESSION_WIDTH),
         "__TIMELINE_FONT_SETTINGS_INLINE_STYLE__": timeline_font_style(text_size=text_size),
         "__HUB_HEADER_CSS__": PAGE_HEADER_CSS,
         "__APP_DISPLAY_NAME__": APP_DISPLAY_NAME,

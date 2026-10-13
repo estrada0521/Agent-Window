@@ -12,6 +12,18 @@
     const paneViewerEl = document.getElementById("paneViewer");
     const paneViewerTabs = document.getElementById("paneViewerTabs");
     const paneViewerCarousel = document.getElementById("paneViewerCarousel");
+    const paneTraceMeasure = document.createElement("canvas").getContext("2d");
+    const fitPaneTraceWidth = () => {
+      const body = paneViewerCarousel.querySelector(".pane-viewer-body");
+      if (!body || !body.clientWidth) return;
+      const style = getComputedStyle(body);
+      const width = body.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      paneTraceMeasure.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      const columnsWidth = paneTraceMeasure.measureText("0".repeat(__SESSION_WIDTH__)).width;
+      paneViewerCarousel.style.setProperty("--pane-trace-text-size", `${parseFloat(style.fontSize) * width / columnsWidth}px`);
+    };
+    window.addEventListener("resize", fitPaneTraceWidth);
+    document.fonts.addEventListener("loadingdone", fitPaneTraceWidth);
     const paneViewerMacroSelect = document.getElementById("paneViewerMacroSelect");
     paneViewerMacroSelect?.addEventListener("change", () => {
       const commandId = String(paneViewerMacroSelect.value || "");
@@ -192,6 +204,7 @@
       paneViewerCarousel.innerHTML = paneViewerAgents.map(a =>
         `<div class="pane-viewer-slide" data-agent="${escapeHtml(a)}"><div class="pane-viewer-header-shadow"></div><div class="pane-viewer-body inline-loading-pane">${loadingIndicatorHtml()}</div></div>`
       ).join("");
+      fitPaneTraceWidth();
       paneViewerTabs.querySelectorAll(".pane-viewer-tab").forEach(tab => {
         tab.addEventListener("click", () => scrollToAgent(tab.dataset.agent));
       });

@@ -223,7 +223,8 @@
     .pane-viewer-carousel {
       flex: 1 1 auto;
       min-height: 0;
-      width: 100%;
+      width: calc(100vw - 20px);
+      margin-inline: auto;
       display: flex;
       overflow-x: auto;
       overflow-y: hidden;
@@ -264,6 +265,7 @@
 
     .pane-viewer-body {
       flex: 1 1 auto;
+      width: 100%;
       min-height: 0;
       min-width: 0;
       overflow-x: auto;
@@ -273,7 +275,7 @@
       font-family: var(--font-code);
       font-weight: var(--body-weight);
       font-style: normal;
-      font-size: 9.5px;
+      font-size: var(--pane-trace-text-size);
       line-height: 1.35;
       white-space: pre-wrap;
       word-break: break-word;
