@@ -482,68 +482,6 @@ const __previewBasePath = {prefix_json};
 const __previewAgentTextSize = {json.dumps(agent_text_size)};
 const __rawBase = `${{__fileBase}}/file-raw?path=`;
 const __root = document.documentElement;
-const KATEX_CSS = window.cdnResources.katex_css;
-const KATEX_JS = window.cdnResources.katex;
-const KATEX_AUTO_RENDER = window.cdnResources.katex_auto;
-const loadExternalScriptOnce = (() => {{
-  const pending = new Map();
-  return (resource) => {{
-    const raw = String(resource.url).trim();
-    if (!raw) return Promise.resolve(false);
-    const href = new URL(raw, window.location.href).href;
-    for (const script of document.scripts) {{
-      if ((script.src || "") === href) return Promise.resolve(true);
-    }}
-    if (pending.has(href)) return pending.get(href);
-    const promise = new Promise((resolve, reject) => {{
-      const script = document.createElement("script");
-      script.src = href;
-      script.integrity = resource.integrity;
-      script.crossOrigin = "anonymous";
-      script.onload = () => resolve(true);
-      script.onerror = () => reject(new Error(`failed to load ${{href}}`));
-      document.head.appendChild(script);
-    }}).catch(() => false);
-    pending.set(href, promise);
-    return promise;
-  }};
-}})();
-const loadExternalStylesheetOnce = (() => {{
-  const pending = new Map();
-  return (resource) => {{
-    const raw = String(resource.url).trim();
-    if (!raw) return Promise.resolve(false);
-    const absHref = new URL(raw, window.location.href).href;
-    for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {{
-      if ((link.href || "") === absHref) return Promise.resolve(true);
-    }}
-    if (pending.has(absHref)) return pending.get(absHref);
-    const promise = new Promise((resolve, reject) => {{
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = absHref;
-      link.integrity = resource.integrity;
-      link.crossOrigin = "anonymous";
-      link.onload = () => resolve(true);
-      link.onerror = () => reject(new Error(`failed to load ${{absHref}}`));
-      document.head.appendChild(link);
-    }}).catch(() => false);
-    pending.set(absHref, promise);
-    return promise;
-  }};
-}})();
-let katexLoadPromise = null;
-const ensureKatexReady = async () => {{
-  if (typeof renderMathInElement === "function") return true;
-  if (katexLoadPromise) return katexLoadPromise;
-  katexLoadPromise = (async () => {{
-    const cssReady = await loadExternalStylesheetOnce(KATEX_CSS);
-    const katexReady = await loadExternalScriptOnce(KATEX_JS);
-    const autoRenderReady = katexReady ? await loadExternalScriptOnce(KATEX_AUTO_RENDER) : false;
-    return cssReady && katexReady && autoRenderReady && typeof renderMathInElement === "function";
-  }})().catch(() => false);
-  return katexLoadPromise;
-}};
 const TIMELINE_BASE_PATH = __previewBasePath || "";
 {file_link_parse_js}
 const buildPreviewHref = (relPath) => {{
@@ -723,18 +661,9 @@ const applyPreviewPictureTheme = (root, theme) => {{
 window.__agentIndexApplyPreviewTheme = applyPreviewTheme;
 const renderMathInScope = (scope) => {{
   if (!scope || !scope.querySelector(".math-render-needed")) return;
-  const applyMath = () => {{
-    if (typeof renderMathInElement !== "function") return;
-    renderMathInElement(scope, mathRenderOptions);
-    scope.querySelectorAll(".math-render-needed").forEach((marker) => marker.remove());
-  }};
-  if (typeof renderMathInElement === "function") {{
-    applyMath();
-    return;
-  }}
-  ensureKatexReady().then((ready) => {{
-    if (ready) applyMath();
-  }});
+  if (typeof renderMathInElement !== "function") return;
+  renderMathInElement(scope, mathRenderOptions);
+  scope.querySelectorAll(".math-render-needed").forEach((marker) => marker.remove());
 }};
 const copyText = async (text) => {{
   if (navigator.clipboard?.writeText) {{
