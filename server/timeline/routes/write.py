@@ -138,7 +138,7 @@ def _switch_front_terminal_client(tmux_name: str) -> bool:
         text=True,
         check=False,
     )
-    tty = (terminal_tty.stdout or "").strip()
+    tty = terminal_tty.stdout.strip()
     if terminal_tty.returncode != 0 or not tty:
         return False
     clients = subprocess.run(
@@ -176,7 +176,7 @@ def _raise_terminal_window_for_tty(tty: str) -> bool:
         ["osascript", "-e", apple_script],
         capture_output=True, text=True, check=False,
     )
-    return result.returncode == 0 and (result.stdout or "").strip() == "true"
+    return result.returncode == 0 and result.stdout.strip() == "true"
 
 
 def _open_pane(handler, ctx, agent: str) -> None:
@@ -200,7 +200,7 @@ def _open_pane(handler, ctx, agent: str) -> None:
         [*TMUX, "display-message", "-p", "-t", pane_id, "#{window_id}"],
         capture_output=True, text=True, check=False,
     )
-    window_id = (win_res.stdout or "").strip()
+    window_id = win_res.stdout.strip()
     if window_id:
         subprocess.run(
             [*TMUX, "select-window", "-t", window_id],
@@ -225,7 +225,7 @@ def _open_pane(handler, ctx, agent: str) -> None:
     if clients_res.returncode != 0:
         handler._send_json(500, {"ok": False, "error": "could not determine tmux session attachment"})
         return
-    attached_ttys = [line.strip() for line in (clients_res.stdout or "").splitlines() if line.strip()]
+    attached_ttys = [line.strip() for line in clients_res.stdout.splitlines() if line.strip()]
     if attached_ttys:
         if not _raise_terminal_window_for_tty(attached_ttys[0]):
             subprocess.Popen(
