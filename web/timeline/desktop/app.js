@@ -505,17 +505,21 @@ __INCLUDE:git-panel/events.js__
     };
     const updateSideBarWorkspace = async () => {
       const data = await fetchWorkspaceState();
-      if (!data.workspace) throw new Error("Workspace not found");
+      if (!data.workspace) {
+        setError("Workspace not found");
+        return false;
+      }
       gitContent.hidden = !data.git;
       splitDivider.hidden = !data.git;
       splitPanel.classList.toggle("workspace-only", !data.git);
       if (!data.git) setSideBarView("repo");
+      return true;
     };
     const openSideBar = async ({ view = null, resizeWindow = null } = {}) => {
       try {
-        await updateSideBarWorkspace();
+        if (!await updateSideBarWorkspace()) return;
       } catch (error) {
-        setError(error.message === "Workspace not found" ? error.message : "Sidebar unavailable", error);
+        setError("Sidebar unavailable", error);
         return;
       }
       const panelWidth = sideBarWindow ? 0 : currentSideBarWidthPx();
@@ -633,9 +637,7 @@ __INCLUDE:git-panel/events.js__
         startWidth: currentSideBarWidthPx(),
       };
       document.body.classList.add("side-bar-resizing");
-      try {
-        sideBarResizer.setPointerCapture(event.pointerId);
-      } catch (_) {}
+      sideBarResizer.setPointerCapture(event.pointerId);
     });
     const swapSideBarPosition = () => {
       if (document.documentElement.dataset.sideBarPosition === "left") {
@@ -1317,13 +1319,13 @@ __INCLUDE:git-panel/events.js__
     })();
     const restoreSideBarGit = async () => {
       try {
-        await updateSideBarWorkspace();
+        if (!await updateSideBarWorkspace()) return;
         if (sideBarOpen && !gitContent.hidden) {
           syncSplitGitHeightForMode();
           await loadGitPage({ reset: true });
         }
       } catch (error) {
-        setError(error.message === "Workspace not found" ? error.message : "Workspace unavailable", error);
+        setError("Workspace unavailable", error);
       }
     };
     const handleWorkspaceFilesChanged = () => {

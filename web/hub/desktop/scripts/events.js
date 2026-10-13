@@ -454,7 +454,7 @@
       };
       _deskWindowTraffic.querySelectorAll("[data-window-action]").forEach((button) => {
         const run = actions[button.dataset.windowAction];
-        if (run) button.addEventListener("click", () => { try { void run(); } catch (_) {} });
+        if (run) button.addEventListener("click", () => run().catch((err) => setError("Window action failed", err)));
       });
     })();
     (function armFitWindowDots() {
@@ -471,7 +471,7 @@
         if (!run) return;
         bar.setAttribute("role", "button");
         bar.setAttribute("aria-label", label);
-        bar.addEventListener("click", () => { try { void run(); } catch (_) {} });
+        bar.addEventListener("click", () => run().catch((err) => setError("Window action failed", err)));
       });
     })();
     _deskSettingsBtn && _deskSettingsBtn.addEventListener("click", () => { void openAppearanceMenu(); });

@@ -473,7 +473,8 @@
             sideBarAvailable: deskSideBarAvailable(),
           },
         });
-      } catch (_) {
+      } catch (err) {
+        setError("Settings menu failed", err);
       } finally {
         _deskSettingsBtn.classList.remove("is-active");
       }

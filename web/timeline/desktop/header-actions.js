@@ -2,7 +2,7 @@
     const closeHeaderMenus = () => {
       resetSubMenu({ clearOptions: true });
     };
-    const renderAgentIconRgba = (src) => new Promise((resolve) => {
+    const renderAgentIconRgba = (src) => new Promise((resolve, reject) => {
       if (!src) return resolve(null);
       const SIZE = 54;
       const PAD = 7;
@@ -22,9 +22,9 @@
             px[i] = iconVal; px[i + 1] = iconVal; px[i + 2] = iconVal;
           }
           resolve(Array.from(px));
-        } catch (e) { resolve(null); }
+        } catch (err) { reject(err); }
       };
-      img.onerror = () => resolve(null);
+      img.onerror = () => reject(new Error(`Agent icon failed to load: ${src}`));
       img.src = src;
     });
     const openNativeHeaderMenu = async (anchorRect = null) => {
@@ -65,7 +65,9 @@
           try {
             const rgba = await renderAgentIconRgba(agentIconSrc(name));
             if (rgba) agentIcons[base] = rgba;
-          } catch (_) {}
+          } catch (err) {
+            setError("Agent icon unavailable", err);
+          }
         }
       }));
 
