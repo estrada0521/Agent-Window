@@ -30,7 +30,7 @@ from server.hub.timeline_query import live_timelines_query
 
 def _timeline_query(parsed) -> tuple[str, str]:
     qs = parse_qs(parsed.query)
-    return (qs.get("timeline", [""])[0] or "").strip(), qs.get("format", [""])[0]
+    return qs.get("timeline", [""])[0].strip(), qs.get("format", [""])[0]
 
 
 def _fail(handler, fmt: str, status: int, message: str, *, detail: str = "") -> None:
@@ -129,7 +129,7 @@ def post_delete_archived_timeline(handler, parsed, ctx) -> None:
 
 def get_timeline_workspace(handler, parsed, _ctx) -> None:
     qs = parse_qs(parsed.query)
-    timeline_name = (qs.get("timeline", [""])[0] or "").strip()
+    timeline_name = qs.get("timeline", [""])[0].strip()
     if not timeline_name:
         handler._send_json(404, {"ok": False, "error": "Timeline not found"})
         return
@@ -173,7 +173,7 @@ def _timeline_stats(log_path: Path) -> dict:
 
 def get_timeline_stats(handler, parsed, _ctx) -> None:
     qs = parse_qs(parsed.query)
-    timeline_name = (qs.get("timeline", [""])[0] or "").strip()
+    timeline_name = qs.get("timeline", [""])[0].strip()
     if not timeline_name:
         handler._send_json(404, {"ok": False, "error": "Timeline not found"})
         return
@@ -204,8 +204,8 @@ def post_restart_hub(handler, _parsed, ctx) -> None:
 
 def post_rename_timeline(handler, _parsed, ctx) -> None:
     data = handler._read_form()
-    old_name = str(data.get("old_name") or "").strip()
-    new_name = str(data.get("new_name") or "").strip()
+    old_name = data.get("old_name", "").strip()
+    new_name = data.get("new_name", "").strip()
     if any(not name or name in {".", ".."} or "/" in name or "\0" in name for name in (old_name, new_name)):
         handler._send_json(409, {"ok": False, "error": "Timeline name is not a valid folder name."})
         return
@@ -239,8 +239,8 @@ def post_rename_timeline(handler, _parsed, ctx) -> None:
 
 def post_change_timeline_workspace(handler, _parsed, ctx) -> None:
     data = handler._read_form()
-    timeline_name = str(data.get("timeline") or "").strip()
-    workspace = str(data.get("workspace") or "").strip()
+    timeline_name = data.get("timeline", "").strip()
+    workspace = data.get("workspace", "").strip()
     live = live_timelines_query(ctx["hub"])
     if live.state == "unhealthy":
         handler._send_unhealthy("json", live.detail)
@@ -268,7 +268,7 @@ def post_change_timeline_workspace(handler, _parsed, ctx) -> None:
 
 def post_reset_timeline_agents(handler, _parsed, ctx) -> None:
     data = handler._read_form()
-    timeline_name = str(data.get("timeline") or "").strip()
+    timeline_name = data.get("timeline", "").strip()
     try:
         reset_log_agents(timeline_name)
     except LogMetaError as exc:
