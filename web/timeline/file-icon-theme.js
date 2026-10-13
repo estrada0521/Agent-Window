@@ -17,7 +17,7 @@
     };
 
     const activeFileIconAssociations = () => {
-      const theme = fileIconThemeState.theme || {};
+      const theme = fileIconThemeState.theme;
       let associations = {
         file: theme.file || "file",
         folder: theme.folder || "folder",
@@ -32,23 +32,23 @@
 
     const resolveFileIconDefinitionId = (rawPath, { isDir = false } = {}) => {
       const associations = activeFileIconAssociations();
-      const definitions = fileIconThemeState.theme?.iconDefinitions || {};
+      const definitions = fileIconThemeState.theme.iconDefinitions;
       const has = (id) => id && definitions[id];
       const basename = String(rawPath || "").replace(/\\/g, "/").split("/").pop() || "";
       const lowerName = basename.toLowerCase();
       if (isDir) {
-        const byName = associations.folderNames?.[lowerName];
+        const byName = associations.folderNames[lowerName];
         if (has(byName)) return byName;
         if (has(associations.folder)) return associations.folder;
         return "folder";
       }
-      const byFileName = associations.fileNames?.[lowerName];
+      const byFileName = associations.fileNames[lowerName];
       if (has(byFileName)) return byFileName;
       if (lowerName.includes(".")) {
         const parts = lowerName.split(".");
         for (let i = 1; i < parts.length; i += 1) {
           const ext = parts.slice(i).join(".");
-          const byExt = associations.fileExtensions?.[ext];
+          const byExt = associations.fileExtensions[ext];
           if (has(byExt)) return byExt;
         }
       }
@@ -61,13 +61,13 @@
         throw new Error("file icon theme is not ready");
       }
       const iconId = resolveFileIconDefinitionId(rawPath, { isDir });
-      const def = fileIconThemeState.theme?.iconDefinitions?.[iconId] || {};
+      const def = fileIconThemeState.theme.iconDefinitions[iconId] || {};
       const classes = ["file-icon", classNames].filter(Boolean).join(" ");
       if (fileIconThemeState.inline && def.svg) {
         return `<span class="${classes}" aria-hidden="true">${def.svg}</span>`;
       }
       const url = withTimelineBase(def.iconPath || `/file-icon-theme/icon/${encodeURIComponent(iconId)}`);
-      if (fileIconThemeState.theme?.usesCurrentColor) {
+      if (fileIconThemeState.theme.usesCurrentColor) {
         const maskUrl = escapeHtml(url).replaceAll('"', "&quot;");
         return `<span class="${classes}" aria-hidden="true" style="background:currentColor;-webkit-mask:url(&quot;${maskUrl}&quot;) center/contain no-repeat;mask:url(&quot;${maskUrl}&quot;) center/contain no-repeat"></span>`;
       }
@@ -77,13 +77,13 @@
     const fileIconElement = (rawPath, opts = {}, classNames = "") => {
       const host = document.createElement("div");
       host.innerHTML = fileIconHtml(rawPath, { ...opts, classNames });
-      return host.firstElementChild || host;
+      return host.firstElementChild;
     };
 
     const appendInlineFileLinkIcon = (anchor, path = "") => {
-      if (!anchor || !fileIconThemeState.ready) return;
+      if (!fileIconThemeState.ready) return;
       if (anchor.querySelector(".inline-file-link-icon")) return;
-      const normalized = String(path || anchor.dataset?.filepath || "").trim();
+      const normalized = (path || anchor.dataset.filepath || "").trim();
       if (!normalized) return;
       const icon = fileIconElement(normalized, {}, "inline-file-link-icon");
       const codeEl = anchor.querySelector("code");
@@ -92,7 +92,6 @@
     };
 
     const decorateInlineFileLinkIcons = (scope = document) => {
-      if (!fileIconThemeState.ready || !scope?.querySelectorAll) return;
       scope.querySelectorAll("a.inline-file-link, a.local-file-link").forEach((anchor) => {
         appendInlineFileLinkIcon(anchor);
       });
