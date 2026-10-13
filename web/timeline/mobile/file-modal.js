@@ -11,27 +11,27 @@
     const currentFileModalBaseTheme = () => document.documentElement.dataset.theme === "light" ? "light" : "dark";
     const hasPreviewModes = (ext) => ext === "html" || ext === "htm" || ext === "md";
     const defaultPreviewMode = (ext) => ext === "md" ? "web" : "text";
-    const sheetPreviewFrameEl = () => mobileSheet?.querySelector(".sheet-preview-frame");
+    const sheetPreviewFrameEl = () => mobileSheet.querySelector(".sheet-preview-frame");
     const repoPreviewMenuBtn = () => document.querySelector(".repo-preview-menu");
     const repoPreviewShareBtn = () => document.querySelector(".repo-preview-share");
-    const sheetPreviewOpen = () => !!mobileSheet?.classList.contains("sheet-mode-preview");
-    const repoPreviewExt = () => String(mobileSheet?._previewExt || "").toLowerCase();
+    const sheetPreviewOpen = () => mobileSheet.classList.contains("sheet-mode-preview");
+    const repoPreviewExt = () => String(mobileSheet._previewExt || "").toLowerCase();
     const syncRepoPreviewControls = () => {
       const shareBtn = repoPreviewShareBtn();
       if (shareBtn) shareBtn.hidden = !sheetPreviewOpen();
       const menuBtn = repoPreviewMenuBtn();
       if (menuBtn) menuBtn.hidden = !sheetPreviewOpen() || !repoPreviewMenuItems().length;
       const ext = repoPreviewExt();
-      mobileSheet?.classList.toggle("sheet-preview-glass", sheetPreviewOpen() && (ext === "html" || ext === "htm") && repoPreviewMode === "web");
-      mobileSheet?.classList.toggle("sheet-preview-gutter", sheetPreviewOpen() && (!hasPreviewModes(ext) || repoPreviewMode === "text") && !!sheetPreviewFrameEl()?.contentDocument?.querySelector(".code-gutter, .preview-text-gutter"));
+      mobileSheet.classList.toggle("sheet-preview-glass", sheetPreviewOpen() && (ext === "html" || ext === "htm") && repoPreviewMode === "web");
+      mobileSheet.classList.toggle("sheet-preview-gutter", sheetPreviewOpen() && (!hasPreviewModes(ext) || repoPreviewMode === "text") && !!sheetPreviewFrameEl()?.contentDocument?.querySelector(".code-gutter, .preview-text-gutter"));
     };
     const repoPreviewMenuItems = () => {
       const items = [];
       if (hasPreviewModes(repoPreviewExt())) {
         items.push(["mode", repoPreviewMode === "text" ? "Show Rendered" : "Show Source"]);
       }
-      const path = mobileSheet?._previewPath || "";
-      const root = mobileSheet?._previewWorkspace;
+      const path = mobileSheet._previewPath || "";
+      const root = mobileSheet._previewWorkspace;
       const outside = path.startsWith("/") && !path.startsWith(`${root}/`);
       items.push(["copyAbsolutePath", "Copy Absolute Path"], ["copyRelativePath", "Copy Relative Path", outside]);
       return items;
@@ -176,7 +176,7 @@
       shareBtn.addEventListener("click", async (event) => {
         event.preventDefault();
         event.stopPropagation();
-        const path = mobileSheet?._previewPath;
+        const path = mobileSheet._previewPath;
         if (!path) return;
         try {
           const res = await fetch(`/file-raw?path=${encodeURIComponent(path)}`);
@@ -238,9 +238,8 @@
           return true;
         }
         const isLight = resolvedBaseTheme === "light";
-        const rootFgStyle = getComputedStyle(document.documentElement);
-        const darkFgRgb = rootFgStyle.getPropertyValue("--dark-fg-rgb").trim() || "249, 249, 247";
-        const lightFgRgb = rootFgStyle.getPropertyValue("--light-fg-rgb").trim() || "19, 19, 19";
+        const darkFgRgb = rootStyle.getPropertyValue("--dark-fg-rgb").trim();
+        const lightFgRgb = rootStyle.getPropertyValue("--light-fg-rgb").trim();
         const fgRgb = isLight ? lightFgRgb : darkFgRgb;
         const fg = `rgb(${fgRgb})`;
         const lnFg = isLight ? `rgba(${lightFgRgb},0.8)` : "rgb(162.6,162.6,162.6)";
@@ -267,7 +266,7 @@
         applyPreviewThemeToFrame(frame, ext, baseTheme);
       });
       setTimeout(() => {
-        applyPreviewThemeToFrame(frame, ext, baseTheme, baseTheme);
+        applyPreviewThemeToFrame(frame, ext, baseTheme);
       }, 60);
     };
     const filePreviewViewEl = (frame) => frame?.closest(".sheet-preview-view") || frame?.parentElement;
@@ -387,12 +386,9 @@
         closeSheetPreview();
       }
     });
-    if (typeof MutationObserver !== "undefined") {
-      new MutationObserver((mutations) => {
-        if (!sheetPreviewOpen()) return;
-        if (!mutations.some((mutation) => mutation.attributeName === "data-theme")) return;
-        repoPreviewBaseTheme = currentFileModalBaseTheme();
-        postRepoPreviewTheme();
-      }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-    }
+    new MutationObserver(() => {
+      if (!sheetPreviewOpen()) return;
+      repoPreviewBaseTheme = currentFileModalBaseTheme();
+      postRepoPreviewTheme();
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     const scrollToBottomBtn = document.getElementById("scrollToBottomBtn");
