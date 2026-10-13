@@ -21,8 +21,6 @@
           if (Math.abs(drift) > 0.5) {
             _programmaticScroll = true;
             messagesEl.scrollTop += drift;
-            const maxTop = Math.max(0, messagesEl.scrollHeight - messagesEl.clientHeight);
-            messagesEl.scrollTop = Math.min(Math.max(0, messagesEl.scrollTop), maxTop);
             _pollScrollLockTop = messagesEl.scrollTop;
             queueMicrotask(() => { _programmaticScroll = false; });
             return;
@@ -46,14 +44,7 @@
         maybeRestorePollScrollLock();
       });
     };
-    if (typeof MutationObserver === "function") {
-      try {
-        new MutationObserver(() => schedulePollScrollRestore()).observe(messagesEl, {
-          childList: true,
-          subtree: true,
-        });
-      } catch (_) {}
-    }
+    new MutationObserver(schedulePollScrollRestore).observe(messagesEl, { childList: true, subtree: true });
     const settleScrollLockFrames = (remaining) => {
       if (remaining <= 0) return;
       maybeRestorePollScrollLock();
@@ -64,7 +55,7 @@
       const midY = tRect.top + messagesEl.clientHeight / 2;
       let fallback = null;
       for (const el of messagesEl.querySelectorAll("[data-context-hash]")) {
-        const contextHash = String(el.dataset.contextHash || "");
+        const contextHash = el.dataset.contextHash;
         if (!contextHash) continue;
         const r = el.getBoundingClientRect();
         if (r.bottom <= tRect.top + 0.5) continue;
@@ -91,8 +82,7 @@
       const drift = (row.getBoundingClientRect().top + anchor.offsetInRow) - midY;
       if (Math.abs(drift) <= 0.5) return;
       _programmaticScroll = true;
-      const maxTop = Math.max(0, messagesEl.scrollHeight - messagesEl.clientHeight);
-      messagesEl.scrollTop = Math.min(Math.max(0, messagesEl.scrollTop + drift), maxTop);
+      messagesEl.scrollTop += drift;
       queueMicrotask(() => { _programmaticScroll = false; });
     };
     const isNearBottom = () => {
