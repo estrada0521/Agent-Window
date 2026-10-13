@@ -175,12 +175,6 @@
     });
     document.getElementById("timelineReloadBtn").addEventListener("click", () => void reloadTimeline());
     document.getElementById("sideBarToggle").addEventListener("click", () => toggleSideBar());
-    window.addEventListener("resize", () => {
-      if (sideBarOpen) {
-        applySideBarWidth();
-      }
-      syncPanelState();
-    });
     document.addEventListener("click", (event) => {
 
       const inRightMenu = rightMenuBtn.contains(event.target);

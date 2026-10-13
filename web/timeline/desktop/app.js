@@ -274,11 +274,11 @@ __INCLUDE:../pointer-capability.js__
     const createRowSelection = ({ container, rowSelector, selectedClass = "is-selected" }) => {
       let selected = new Set();
       let anchor = "";
-      const order = () => Array.from(container?.querySelectorAll(rowSelector) || [])
+      const order = () => Array.from(container.querySelectorAll(rowSelector))
         .map((el) => el.dataset.path || "")
         .filter(Boolean);
       const applyClasses = () => {
-        container?.querySelectorAll(rowSelector).forEach((el) => {
+        container.querySelectorAll(rowSelector).forEach((el) => {
           el.classList.toggle(selectedClass, selected.has(el.dataset.path || ""));
         });
       };
@@ -295,7 +295,7 @@ __INCLUDE:../pointer-capability.js__
       };
       const orderedSelected = () => order().filter((p) => selected.has(p));
       const prune = () => { const present = new Set(order()); if (selected.size) set([...selected].filter((p) => present.has(p))); };
-      container?.addEventListener("mouseleave", clear);
+      container.addEventListener("mouseleave", clear);
       return { get selected() { return selected; }, set, clear, toggle, selectRangeTo, orderedSelected, prune, applyClasses };
     };
     const resolveRowClick = (sel, path, event) => {
@@ -311,22 +311,23 @@ __INCLUDE:../pointer-capability.js__
       return sel.orderedSelected();
     };
     const repoSel = createRowSelection({ container: repoContent, rowSelector: ".repo-browser-item" });
-    const repoFilePathSet = () => new Set(Array.from(repoContent?.querySelectorAll(".repo-browser-file") || []).map((el) => el.dataset.path || ""));
-    const repoOrderedSelectedFiles = () => repoSel.orderedSelected().filter((p) => repoFilePathSet().has(p));
-    const repoOrderedSelectedEntries = () => repoSel.orderedSelected();
+    const repoFilePathSet = () => new Set(Array.from(repoContent.querySelectorAll(".repo-browser-file")).map((el) => el.dataset.path || ""));
     const gitSel = createRowSelection({ container: gitContent, rowSelector: ".git-commit-file-row" });
-    const gitOrderedSelectedFiles = () => gitSel.orderedSelected();
-    const activeSideBarTargets = (repoOrdered, repoHoverSel, gitHoverSel) => {
+    const activeSideBarTargets = ({ filesOnly }) => {
       if (!sideBarOpen) return [];
-      let repoTargets = repoOrdered();
+      let repoTargets = repoSel.orderedSelected();
+      if (filesOnly) {
+        const files = repoFilePathSet();
+        repoTargets = repoTargets.filter((p) => files.has(p));
+      }
       if (!repoTargets.length) {
-        const hovered = repoContent?.querySelector(repoHoverSel);
+        const hovered = repoContent.querySelector(filesOnly ? ".repo-browser-file:hover" : ".repo-browser-item:hover");
         if (hovered?.dataset.path) repoTargets = [hovered.dataset.path];
       }
       if (repoTargets.length) return repoTargets;
-      let gitTargets = gitOrderedSelectedFiles();
+      let gitTargets = gitSel.orderedSelected();
       if (!gitTargets.length) {
-        const hovered = gitContent?.querySelector(gitHoverSel);
+        const hovered = gitContent.querySelector(".git-commit-file-row:hover");
         if (hovered?.dataset.path) gitTargets = [hovered.dataset.path];
       }
       return gitTargets;
@@ -348,7 +349,6 @@ __INCLUDE:../pointer-capability.js__
       applySplitGitHeight();
     };
     const syncSplitGitHeightForMode = () => {
-      if (!gitContent || !splitPanel) return;
       if (document.documentElement.dataset.autoWindowHeight === "1") {
         gitContent.style.height = "50%";
       } else if (_splitGitHeightInTextSize !== null) {
@@ -519,7 +519,6 @@ __INCLUDE:git-panel/events.js__
       if (!data.git) setSideBarView("repo");
     };
     const openSideBar = async ({ view = null, resizeWindow = null } = {}) => {
-      if (!sideBar) return;
       try {
         await updateSideBarWorkspace();
       } catch (error) {
@@ -534,7 +533,7 @@ __INCLUDE:git-panel/events.js__
         document.body.classList.add("side-bar-open");
         applySideBarWidth(panelWidth);
         applyGitOverviewHeader();
-        const existingStack = repoContent?.querySelector(".repo-browser-stack");
+        const existingStack = repoContent.querySelector(".repo-browser-stack");
         if (existingStack) {
           existingStack.classList.remove("repo-browser-nav-forward", "repo-browser-nav-back");
           existingStack.classList.add("repo-browser-nav-none");
@@ -552,7 +551,6 @@ __INCLUDE:git-panel/events.js__
       return show();
     };
     const closeSideBar = () => {
-      if (!sideBar) return;
       const wasAtBottom = _atBottomAtAnchorWidth || messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight <= 2;
       stopSideBarResize();
       sideBarOpen = false;
@@ -599,25 +597,25 @@ __INCLUDE:git-panel/events.js__
       applySideBarWidth();
       syncPanelState();
     };
-    splitDivider?.addEventListener("pointerdown", (e) => {
+    splitDivider.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       _splitDragging = true;
       splitDivider.setPointerCapture(e.pointerId);
       document.body.classList.add("split-resizing");
     });
-    splitDivider?.addEventListener("pointermove", (e) => {
-      if (!_splitDragging || !gitContent || !splitPanel) return;
+    splitDivider.addEventListener("pointermove", (e) => {
+      if (!_splitDragging) return;
       const rect = splitPanel.getBoundingClientRect();
       let newH = document.documentElement.dataset.gitRepoPosition === "repo-top"
         ? rect.bottom - e.clientY
         : e.clientY - rect.top;
       setSplitGitHeight(Math.max(0, Math.min(rect.height, newH)));
     });
-    splitDivider?.addEventListener("pointerup", () => {
+    splitDivider.addEventListener("pointerup", () => {
       _splitDragging = false;
       document.body.classList.remove("split-resizing");
     });
-    splitDivider?.addEventListener("pointercancel", () => {
+    splitDivider.addEventListener("pointercancel", () => {
       _splitDragging = false;
       document.body.classList.remove("split-resizing");
     });
@@ -630,9 +628,9 @@ __INCLUDE:git-panel/events.js__
         localStorage.setItem(GIT_REPO_POSITION_KEY, "repo-top");
       }
     };
-    document.getElementById("gitRepoSwapBtn")?.addEventListener("pointerdown", (event) => event.stopPropagation());
-    document.getElementById("gitRepoSwapBtn")?.addEventListener("click", swapGitRepoPosition);
-    sideBarResizer?.addEventListener("pointerdown", (event) => {
+    document.getElementById("gitRepoSwapBtn").addEventListener("pointerdown", (event) => event.stopPropagation());
+    document.getElementById("gitRepoSwapBtn").addEventListener("click", swapGitRepoPosition);
+    sideBarResizer.addEventListener("pointerdown", (event) => {
       if (!sideBarOpen) return;
       event.preventDefault();
       event.stopPropagation();
@@ -656,16 +654,16 @@ __INCLUDE:git-panel/events.js__
       }
       syncPanelState();
     };
-    document.getElementById("sideBarSwapBtn")?.addEventListener("click", swapSideBarPosition);
-    sideBarResizer?.addEventListener("pointermove", (event) => {
+    document.getElementById("sideBarSwapBtn").addEventListener("click", swapSideBarPosition);
+    sideBarResizer.addEventListener("pointermove", (event) => {
       if (!_sideBarResizeState || _sideBarResizeState.pointerId !== event.pointerId) return;
       handleSideBarResizeMove(event);
     });
-    sideBarResizer?.addEventListener("pointerup", (event) => {
+    sideBarResizer.addEventListener("pointerup", (event) => {
       if (!_sideBarResizeState || _sideBarResizeState.pointerId !== event.pointerId) return;
       stopSideBarResize({ persist: true });
     });
-    sideBarResizer?.addEventListener("pointercancel", () => {
+    sideBarResizer.addEventListener("pointercancel", () => {
       stopSideBarResize({ persist: true });
     });
     const normalizePath = (value) => String(value || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
@@ -855,7 +853,6 @@ __INCLUDE:git-panel/events.js__
     const repoEntriesStructureSignature = (entries) =>
       (entries || []).map((entry) => `${entry.kind}:${entry.path}`).join("\n");
     const renderRepoPanel = (rawPath, entries, { loading = false, direction = "none" } = {}) => {
-      if (!repoContent) return;
       const path = normalizePath(rawPath);
       const pathParts = path.split("/").filter(Boolean);
       const parentPath = pathParts.slice(0, -1).join("/");
@@ -981,7 +978,7 @@ __INCLUDE:git-panel/events.js__
       }
     };
     const refreshRepoDir = async (rawPath) => {
-      if (!sideBarOpen || !repoContent?.querySelector(".repo-browser-stack")) return;
+      if (!sideBarOpen || !repoContent.querySelector(".repo-browser-stack")) return;
       const path = normalizePath(rawPath);
       try {
         const [directory] = await Promise.all([
@@ -1165,9 +1162,7 @@ __INCLUDE:git-panel/events.js__
           }
           if (event.code === "KeyR") {
             event.preventDefault();
-            const revealTarget = activeSideBarTargets(
-              repoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
-            ).slice(-1)[0] || "";
+            const revealTarget = activeSideBarTargets({ filesOnly: true }).slice(-1)[0] || "";
             if (revealTarget) {
               void revealFileInFinder(revealTarget).catch((err) => {
                 setError("Reveal failed", err);
@@ -1275,9 +1270,7 @@ __INCLUDE:git-panel/events.js__
           return;
         }
         if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyO") {
-          const targets = activeSideBarTargets(
-            repoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
-          );
+          const targets = activeSideBarTargets({ filesOnly: true });
           if (targets.length) {
             event.preventDefault();
             for (const p of targets) void openFile(p);
@@ -1285,9 +1278,7 @@ __INCLUDE:git-panel/events.js__
           return;
         }
         if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyY") {
-          const targets = activeSideBarTargets(
-            repoOrderedSelectedFiles, ".repo-browser-file:hover", ".git-commit-file-row:hover",
-          );
+          const targets = activeSideBarTargets({ filesOnly: true });
           if (targets.length) {
             event.preventDefault();
             void quickLookPaths(targets);
@@ -1295,9 +1286,7 @@ __INCLUDE:git-panel/events.js__
           return;
         }
         if (event.metaKey && event.altKey && !event.ctrlKey && event.code === "KeyC") {
-          const targets = activeSideBarTargets(
-            repoOrderedSelectedEntries, ".repo-browser-item:hover", ".git-commit-file-row:hover",
-          );
+          const targets = activeSideBarTargets({ filesOnly: false });
           if (targets.length) {
             event.preventDefault();
             void copyFilePath(targets, !event.shiftKey).catch((err) => {
@@ -1311,9 +1300,7 @@ __INCLUDE:git-panel/events.js__
           if (target instanceof Element && (target.closest("input, textarea") || target.isContentEditable)) return;
           if (window.getSelection()?.toString()) return;
           if (document.documentElement.dataset.nativeApp !== "1") return;
-          const targets = activeSideBarTargets(
-            repoOrderedSelectedEntries, ".repo-browser-item:hover", ".git-commit-file-row:hover",
-          );
+          const targets = activeSideBarTargets({ filesOnly: false });
           if (targets.length) {
             event.preventDefault();
             void copyFiles(targets).catch((err) => {
