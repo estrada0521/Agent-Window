@@ -328,25 +328,6 @@
     html:not([data-mobile="1"]) .composer textarea {
       scrollbar-width: none;
     }
-    html[data-mobile="1"] .composer-overlay {
-      --composer-overlay-max-width: calc(100vw - calc(var(--text-size, 13px) * 16 / 13));
-    }
-    html[data-mobile="1"] .composer-overlay.visible {
-      inset: auto;
-      top: 0;
-      left: 0;
-      right: 0;
-      width: 100%;
-      height: var(--mobile-overlay-lock-height, 100dvh);
-      min-height: var(--mobile-overlay-lock-height, 100dvh);
-    }
-    html[data-mobile="1"] .composer-main-shell {
-      border: none;
-      background: transparent;
-      box-shadow: none;
-      padding: calc(var(--text-size, 13px) * 8 / 13) calc(var(--text-size, 13px) * 7 / 13) calc(var(--text-size, 13px) * 10 / 13) calc(var(--text-size, 13px) * 7 / 13);
-      border-radius: calc(var(--text-size, 13px) * 28 / 13);
-    }
     .shell {
       --message-side-padding: calc(var(--text-size, 13px) * 1.54);
       --timeline-scrollbar-layout-width: 2px;
@@ -398,9 +379,6 @@
     }
     html[data-auto-window-height="1"] main::after {
       min-height: var(--message-step-top-gap);
-    }
-    html[data-mobile="1"] main {
-      padding-right: var(--message-side-padding);
     }
     #scrollToBottomBtn,
     #composerFabBtn {
