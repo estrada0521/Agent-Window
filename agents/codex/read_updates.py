@@ -52,7 +52,7 @@ def _codex_task_error_message(payload: dict) -> str:
     if message.startswith("{"):
         try:
             parsed = json.loads(message)
-        except (json.JSONDecodeError, TypeError):
+        except json.JSONDecodeError:
             parsed = None
         if isinstance(parsed, dict):
             inner = parsed.get("error")
