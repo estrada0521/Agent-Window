@@ -16,9 +16,9 @@
         observer: null,
       };
       const root = () => host.root();
-      const modeEl = () => (host.modeEl ? host.modeEl() : root()?.querySelector(".git-stack")) || root();
-      const observerRoot = () => (host.observerRoot ? host.observerRoot() : root());
-      const scrollRoot = () => (host.scrollRoot ? host.scrollRoot() : observerRoot());
+      const modeEl = () => host.modeEl();
+      const observerRoot = () => host.observerRoot();
+      const scrollRoot = () => host.scrollRoot();
       const resetListScroll = () => {
         const scroller = scrollRoot();
         if (!scroller) return;
@@ -28,7 +28,7 @@
       const commitListEl = () => root()?.querySelector(".git-commit-list");
       const disconnectObserver = () => {
         if (!state.observer) return;
-        try { state.observer.disconnect(); } catch (_) { }
+        state.observer.disconnect();
         state.observer = null;
       };
       const renderCommitRows = (commits, { append = false, newHashes = null } = {}) => {
@@ -57,7 +57,7 @@
       const ensureObserver = () => {
         disconnectObserver();
         const lastRow = commitListEl()?.lastElementChild;
-        if (!lastRow?.matches(".git-commit-row") || !state.hasMore || state.pageLoading || state.loadFailed || typeof IntersectionObserver !== "function") return;
+        if (!lastRow?.matches(".git-commit-row") || !state.hasMore || state.pageLoading || state.loadFailed) return;
         state.observer = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
             if (!entry.isIntersecting) return;
@@ -93,9 +93,6 @@
         hash,
         { allowUndo = false, scope = "", preserveCurrent = false, incremental = false } = {},
       ) => {
-        if (host.renderFileStatsInto) {
-          return host.renderFileStatsInto(wrapEl, hash, { allowUndo, scope, preserveCurrent, incremental });
-        }
         if (!wrapEl) return null;
         const requestSeq = Math.max(0, parseInt(wrapEl.dataset.fileStatsRequestSeq) || 0) + 1;
         wrapEl.dataset.fileStatsRequestSeq = String(requestSeq);
