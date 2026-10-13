@@ -28,14 +28,14 @@
     const updateScrollBtn = () => {
       if (!hasInitialRefreshHydrated) {
         scrollToBottomBtn.classList.remove("visible");
-        composerFabBtn?.classList.remove("visible");
+        composerFabBtn.classList.remove("visible");
         return;
       }
       const overlayOpen = isComposerOverlayOpen();
       const emptyPlaceholder = !!document.querySelector("#messages .conversation-empty");
       const showComposerFab = !historyWindow && (emptyPlaceholder || isNearBottom());
       scrollToBottomBtn.classList.toggle("visible", !showComposerFab && !overlayOpen);
-      composerFabBtn?.classList.toggle("visible", showComposerFab && !overlayOpen);
+      composerFabBtn.classList.toggle("visible", showComposerFab && !overlayOpen);
     };
     let centeredRowRaf = 0;
     const updateCenteredMessageRow = () => {
@@ -67,7 +67,7 @@
       });
     };
     const flashHeaderToggle = (node) => {
-      if (!node || node.classList.contains("animating")) return;
+      if (node.classList.contains("animating")) return;
       node.classList.add("animating");
       setTimeout(() => {
         node.classList.remove("animating");

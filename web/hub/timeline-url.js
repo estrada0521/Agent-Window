@@ -21,11 +21,7 @@
         if (!k || !value) return "";
         if (cache.has(k)) cache.delete(k);
         cache.set(k, ttlMs ? { url: value, ts: Date.now() } : value);
-        while (cache.size > cacheLimit) {
-          const oldest = cache.keys().next();
-          if (oldest && !oldest.done) cache.delete(oldest.value);
-          else break;
-        }
+        while (cache.size > cacheLimit) cache.delete(cache.keys().next().value);
         return value;
       }
       function read(key) {
@@ -34,11 +30,11 @@
         const item = cache.get(k);
         let value = "";
         if (ttlMs) {
-          if ((Date.now() - Number(item?.ts || 0)) > ttlMs) {
+          if ((Date.now() - item.ts) > ttlMs) {
             cache.delete(k);
             return "";
           }
-          value = wrapUrl(item?.url, k);
+          value = wrapUrl(item.url, k);
         } else {
           value = wrapUrl(item, k);
         }
