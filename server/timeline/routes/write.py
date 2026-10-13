@@ -45,7 +45,7 @@ def _post_add_agent(handler, _parsed, ctx) -> None:
         return
     state = ctx["state"]
     try:
-        instance = add_agent(timeline_name=ctx["state"].timeline_name, agent=agent)
+        instance = add_agent(timeline_name=state.timeline_name, agent=agent)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -67,7 +67,7 @@ def _post_remove_agent(handler, _parsed, ctx) -> None:
         return
     state = ctx["state"]
     try:
-        instance = remove_agent(timeline_name=ctx["state"].timeline_name, agent=agent)
+        instance = remove_agent(timeline_name=state.timeline_name, agent=agent)
     except Exception as exc:
         handler._send_json(500, {"ok": False, "error": str(exc)})
         return
@@ -118,12 +118,8 @@ def _post_delete_upload(handler, _parsed, ctx) -> None:
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
-    path_rel = data.get("path", "")
-    if not path_rel:
-        handler._send_json(400, {"ok": False, "error": "path required"})
-        return
     try:
-        target = _resolve_upload_path(path_rel, workspace=ctx["state"].workspace)
+        target = _resolve_upload_path(data.get("path", ""), workspace=ctx["state"].workspace)
     except ValueError as exc:
         handler._send_json(400, {"ok": False, "error": str(exc)})
         return
@@ -151,7 +147,7 @@ def _switch_front_terminal_client(tmux_name: str) -> bool:
         text=True,
         check=False,
     )
-    if clients.returncode != 0 or tty not in {(line or "").strip() for line in (clients.stdout or "").splitlines()}:
+    if clients.returncode != 0 or tty not in {line.strip() for line in clients.stdout.splitlines()}:
         return False
     switched = subprocess.run(
         [*TMUX, "switch-client", "-c", tty, "-t", tmux_name],
