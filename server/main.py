@@ -127,19 +127,12 @@ _HUB_LAUNCH_SHELL_BODY_HTML = (
 )
 _HUB_LAUNCH_SHELL_CSS = (Path(__file__).resolve().parents[1] / "web" / "hub" / "launch-shell.css").read_text()
 HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
-<html lang="en" data-theme-desktop="__THEME_DESKTOP__" data-theme-mobile="__THEME_MOBILE__" data-view="__VIEW_VARIANT__">
+<html lang="en" data-theme-desktop="__THEME_DESKTOP__" data-view="__VIEW_VARIANT__">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script>
     (() => {{
-      if (document.documentElement.dataset.view === "mobile") {{
-        let setting = document.documentElement.dataset.themeMobile;
-        const stored = String(localStorage.getItem("agent_window_theme_mobile") || "").trim().toLowerCase();
-        if (["system", "light", "dark"].includes(stored)) setting = stored;
-        document.documentElement.dataset.themeMobile = setting;
-        return;
-      }}
       const stored = String(localStorage.getItem("agent_window_theme_desktop") || "").trim().toLowerCase();
       if (["system", "light", "dark"].includes(stored)) {{
         document.documentElement.dataset.themeDesktop = stored;
@@ -166,8 +159,6 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
       background: var(--bg);
       color: var(--fg);
     }}
-    html[data-view="mobile"] {{ --bg: __MOBILE_HUB_DARK_BG__; }}
-    html[data-view="mobile"][data-theme-mobile="light"] {{ --bg: __MOBILE_HUB_LIGHT_BG__; }}
     html[data-native-app="1"],
     html[data-native-app="1"] body {{ background: transparent; }}
     @media (prefers-color-scheme: light) {{
@@ -176,7 +167,6 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
         --bg: __DESKTOP_HUB_LIGHT_BG__;
         --fg: __SYSTEM_LIGHT_FG__;
       }}
-      html[data-view="mobile"][data-theme-mobile="system"] {{ --bg: __MOBILE_HUB_LIGHT_BG__; }}
     }}
     body {{ font-family: var(--font-main); }}
     {_HUB_LAUNCH_SHELL_CSS}
@@ -331,7 +321,7 @@ class Handler(BaseHTTPRequestHandler):
     def _read_form(self):
         length = int(self.headers["Content-Length"])
         raw = self.rfile.read(length).decode("utf-8", errors="replace")
-        return {key: values[-1] for key, values in parse_qs(raw).items() if values}
+        return {key: values[-1] for key, values in parse_qs(raw).items()}
 
     def _redirect(self, location: str):
         self.send_response(302)
@@ -377,7 +367,6 @@ class Handler(BaseHTTPRequestHandler):
         page = (
             HUB_LAUNCH_SHELL_HTML
             .replace("__THEME_DESKTOP__", DESKTOP_THEME_DEFAULT)
-            .replace("__THEME_MOBILE__", MOBILE_THEME_DEFAULT)
             .replace("__VIEW_VARIANT__", variant)
             .replace("__TEXT_SIZE_DEFAULT__", str(DESKTOP_TEXT_SIZE))
             .replace("__TEXT_SIZE_MIN__", str(TEXT_SIZE_MIN))
@@ -433,11 +422,6 @@ class Handler(BaseHTTPRequestHandler):
             200,
             apply_color_tokens(page, mobile_theme_default=MOBILE_THEME_DEFAULT),
         )
-
-
-
-
-
 
     def do_GET(self):
         parsed = urlparse(self.path)
