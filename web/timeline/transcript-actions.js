@@ -72,9 +72,8 @@ __INCLUDE:transcript-refresh.js__
       const r = await fetch("/slash-commands", { cache: "no-store" });
       if (!r.ok) throw new Error("Slash commands failed");
       const j = await r.json();
-      const commands = Array.isArray(j.commands) ? j.commands : [];
       const isMobile = document.documentElement.dataset.mobile === "1";
-      const list = commands.filter((command) => isMobile ? !command.desktop_only : !command.mobile_only);
+      const list = j.commands.filter((command) => isMobile ? !command.desktop_only : !command.mobile_only);
       if (!list.length) throw new Error("No slash commands");
       _slashCommandsCache = list;
       return list;

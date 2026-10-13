@@ -51,13 +51,9 @@
         return;
       }
       if (item.insert) {
-        const start = Number(item.replaceStart);
-        const end = Number(item.replaceEnd);
-        if (
-          !Number.isInteger(start) ||
-          !Number.isInteger(end) ||
-          messageInput.value.slice(start, end).toLowerCase() !== item.query
-        ) {
+        const start = item.replaceStart;
+        const end = item.replaceEnd;
+        if (messageInput.value.slice(start, end).toLowerCase() !== item.query) {
           closeCmdDrop();
           return;
         }
@@ -129,8 +125,7 @@
         cancelCmdAutocompleteLoading();
         if (_lastCmdQuery !== contextKey) return;
         const matches = list.filter((c) => {
-          const slash = String(c.slash || "").toLowerCase();
-          return (atInputStart || c.insert) && (!query || query === "/" || slash.startsWith(query));
+          return (atInputStart || c.insert) && (!query || query === "/" || c.slash.toLowerCase().startsWith(query));
         });
         if (!matches.length) {
           closeCmdDrop();
@@ -140,9 +135,9 @@
           id: c.id,
           slash: c.slash,
           desc: c.desc,
-          has_arg: !!c.has_arg,
+          has_arg: c.has_arg,
           path: c.path,
-          insert: c.insert || "",
+          insert: c.insert,
           replaceStart: tokenStart,
           replaceEnd: pos,
           query,
@@ -229,7 +224,6 @@
       return doCopyFallback(text);
     };
     const markCopied = (btn, holdMs = 1500, onEnded) => {
-      if (!btn) return;
       const copyIcon = btn.dataset.copyIcon || btn.innerHTML;
       const checkIcon = btn.dataset.checkIcon || btn.innerHTML;
       const token = String(Date.now() + Math.random());
@@ -310,7 +304,7 @@
         bodyRow.classList.add("is-hover-copy-hotspot");
       });
       messagesEl.addEventListener("pointerleave", clearHoverCopyBody);
-      messagesEl?.addEventListener("scroll", clearHoverCopyBody, { passive: true });
+      messagesEl.addEventListener("scroll", clearHoverCopyBody, { passive: true });
       window.addEventListener("resize", clearHoverCopyBody, { passive: true });
     }
     const openExternalLink = (href) => {
