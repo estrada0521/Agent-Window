@@ -23,6 +23,7 @@
       if (menuBtn) menuBtn.hidden = !sheetPreviewOpen() || !repoPreviewMenuItems().length;
       const ext = repoPreviewExt();
       mobileSheet?.classList.toggle("sheet-preview-glass", sheetPreviewOpen() && (ext === "html" || ext === "htm") && repoPreviewMode === "web");
+      mobileSheet?.classList.toggle("sheet-preview-gutter", sheetPreviewOpen() && (!hasPreviewModes(ext) || repoPreviewMode === "text") && !!sheetPreviewFrameEl()?.contentDocument?.querySelector(".code-gutter, .preview-text-gutter"));
     };
     const repoPreviewMenuItems = () => {
       const items = [];
@@ -363,6 +364,7 @@
         repoPreviewBaseTheme = currentFileModalBaseTheme();
         postPreviewThemeToFrame(frame, normalizedExt, repoPreviewBaseTheme);
         postPreviewModeToFrame(frame, normalizedExt, repoPreviewMode);
+        syncRepoPreviewControls();
       };
       frame.src = fileViewHrefForPath(normalizedPath, { embed: true });
     };

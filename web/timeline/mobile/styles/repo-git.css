@@ -201,6 +201,10 @@
       content: none;
     }
 
+    #mobileSheet.sheet-preview-gutter .mobile-bottom-sheet-panel::before {
+      left: calc(14px + var(--mobile-sheet-floating-height));
+    }
+
     .repo-preview-menu {
       position: absolute;
       right: calc(14px + var(--mobile-sheet-floating-height) + 8px + env(safe-area-inset-right, 0px));
