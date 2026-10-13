@@ -16,7 +16,7 @@
         void refresh();
         return;
       }
-      if (document.documentElement.dataset.autoWindowHeight === "1" && typeof fitStepToLatest === "function") {
+      if (document.documentElement.dataset.autoWindowHeight === "1") {
         fitStepToLatest();
         return;
       }
@@ -26,7 +26,7 @@
       scrollConversationToBottom(document.documentElement.dataset.mobile === "1" ? "smooth" : "auto");
     };
     const jumpConversationToTop = () => {
-      if (document.documentElement.dataset.autoWindowHeight === "1" && typeof fitStepToFirst === "function") {
+      if (document.documentElement.dataset.autoWindowHeight === "1") {
         fitStepToFirst();
         return;
       }
@@ -42,7 +42,7 @@
       if (!event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) return;
       if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
       const active = document.activeElement;
-      if (active && active.matches && active.matches("input, textarea, [contenteditable='true']")) return;
+      if (active?.matches("input, textarea, [contenteditable='true']")) return;
       event.preventDefault();
       (event.key === "ArrowDown" ? jumpConversationToBottom : jumpConversationToTop)();
     });
@@ -80,7 +80,7 @@
     };
     const stepConversationByMessage = async (down, senders = null) => {
       if (document.documentElement.dataset.autoWindowHeight === "1") {
-        if (typeof fitStepToMessage === "function") void fitStepToMessage(down, senders);
+        void fitStepToMessage(down, senders);
         return;
       }
       const anchor = _stepAnchor?.row.isConnected && performance.now() - _stepAnchor.at < STEP_ANCHOR_MS
@@ -107,7 +107,7 @@
       if (!event.altKey || event.metaKey || event.shiftKey) return;
       if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
       const active = document.activeElement;
-      if (active && active.matches && active.matches("input, textarea, [contenteditable='true']")) return;
+      if (active?.matches("input, textarea, [contenteditable='true']")) return;
       event.preventDefault();
       void (event.ctrlKey ? stepConversationByTarget : stepConversationByMessage)(event.key === "ArrowDown");
     });
