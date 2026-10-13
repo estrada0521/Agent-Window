@@ -251,6 +251,8 @@ def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = 
         worktree_added = worktree_unstaged_added + worktree_staged_added
         worktree_deleted = worktree_unstaged_deleted + worktree_staged_deleted
         worktree_has_diff = worktree_has_staged_diff or worktree_has_unstaged_diff or worktree_has_untracked_diff
+    if worktree_has_untracked_diff:
+        worktree_added += git_diff_files(str(root), scope="untracked")["total_ins"]
     if include_commits and cached_commits is None:
         if head_res.returncode != 0:
             cached_commits = {
@@ -298,10 +300,11 @@ def git_commit_info(workspace: str, *, commit_hash: str) -> dict:
 
 
 def git_worktree_stat(workspace: str) -> str:
-    res = _run_git(_git_root(workspace), "diff", "--shortstat", "HEAD", "--")
-    if res.returncode != 0:
-        raise RuntimeError((res.stderr or res.stdout or "git diff failed").strip())
-    return (res.stdout or "").strip()
+    stats = git_diff_files(workspace)
+    paths = stats["changed_paths"]
+    if not paths:
+        return ""
+    return f"{paths} {'path' if paths == 1 else 'paths'}, +{stats['total_ins']} -{stats['total_dels']}"
 
 
 def git_diff_files(workspace: str, *, commit_hash: str = "", scope: str = ""):
