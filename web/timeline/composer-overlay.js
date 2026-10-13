@@ -78,8 +78,10 @@
         if (canFocus) focusComposerTextarea();
         return;
       }
-      requestHubParentLayout();
-      if (document.documentElement.dataset.mobile === "1") bumpHubIframeLayoutLock();
+      if (document.documentElement.dataset.mobile === "1") {
+        requestHubParentLayout();
+        bumpHubIframeLayoutLock();
+      }
       composerOverlay.hidden = false;
       document.body.classList.add("composer-overlay-open");
       updateScrollBtn();

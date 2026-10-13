@@ -6,7 +6,7 @@ __INCLUDE:../link-presentation.js__
     let _fitCollapsed = false;
     const syncTimelineScrollbarLayoutWidth = () => {
       const mainEl = document.querySelector("main");
-      if (!mainEl || document.documentElement.dataset.mobile === "1") return;
+      if (!mainEl) return;
       const width = Math.max(0, mainEl.offsetWidth - mainEl.clientWidth);
       const next = `${width}px`;
       if (mainEl.style.getPropertyValue("--timeline-scrollbar-layout-width") !== next) {
@@ -24,26 +24,8 @@ __INCLUDE:../link-presentation.js__
     if (mainScrollbarEl && typeof ResizeObserver === "function") {
       new ResizeObserver(scheduleTimelineScrollbarLayoutWidthSync).observe(mainScrollbarEl);
     }
-    const syncMainAfterHeight = () => {
-      const mainEl = document.querySelector("main");
-      if (!mainEl) return;
-      if (document.documentElement.dataset.autoWindowHeight === "1") {
-        mainEl.style.setProperty("--main-spacer-height", "0px");
-      } else {
-        mainEl.style.removeProperty("--main-spacer-height");
-      }
-      mainEl.style.removeProperty("--main-after-height");
-    };
-    const syncAppShellHeight = () => {
-      document.documentElement.style.removeProperty("--app-shell-height");
-      document.documentElement.style.removeProperty("--mobile-overlay-lock-height");
-      syncMainAfterHeight();
-    };
-    syncAppShellHeight();
     scheduleTimelineScrollbarLayoutWidthSync();
-    window.addEventListener("pageshow", () => syncAppShellHeight());
     window.addEventListener("resize", () => {
-      syncAppShellHeight();
       scheduleTimelineScrollbarLayoutWidthSync();
       if (document.documentElement.dataset.autoWindowHeight === "1") {
         if (_fitTargetRow?.isConnected) return;
@@ -52,31 +34,15 @@ __INCLUDE:../link-presentation.js__
         requestAnimationFrame(() => scrollConversationToBottom("auto"));
       }
     });
-    if (window.visualViewport) {
-      let _vvSyncTimer = 0;
-      const scheduleSyncFromVV = () => {
-        if (_vvSyncTimer) clearTimeout(_vvSyncTimer);
-        _vvSyncTimer = setTimeout(() => { _vvSyncTimer = 0; syncAppShellHeight(); }, 200);
-      };
-      window.visualViewport.addEventListener("resize", scheduleSyncFromVV);
-      window.visualViewport.addEventListener("scroll", scheduleSyncFromVV);
-    }
 __INCLUDE:../conversation-state.js__
     const messagesEl = document.getElementById("messages");
     wireLinkPresentation(messagesEl);
     let _pollScrollLockTop = null;
     let _pollScrollAnchor = null;
-    let _hubChromeGapClientMin = Infinity;
-    let _hubChildOriW = 0;
-    let _hubChildOriH = 0;
     const isHubIframeTimeline = () =>
       document.documentElement.dataset.hubIframeTimeline === "1" ||
       document.documentElement.dataset.hubShell === "1" ||
       window.parent !== window;
-    const requestHubParentLayout = () => {
-      if (!isHubIframeTimeline()) return;
-      window.parent.postMessage({ type: "timeline-request-hub-layout" }, "*");
-    };
     const notifyHubTimelineRenderReady = () => {
       if (!isHubIframeTimeline()) return;
       requestAnimationFrame(() => {
@@ -89,43 +55,7 @@ __INCLUDE:../conversation-state.js__
       if (!isHubIframeTimeline()) return;
       window.parent.postMessage({ type: "timeline-render-error" }, "*");
     };
-    if (isHubIframeTimeline()) {
-      document.documentElement.dataset.hubIframeTimeline = "1";
-      _hubChildOriW = window.innerWidth || 0;
-      _hubChildOriH = window.innerHeight || 0;
-      window.addEventListener("message", (e) => {
-        if (!e.data || e.data.type !== "hub-layout") return;
-        if (e.source !== window.parent) return;
-        const pih = Number(e.data.parentInnerHeight);
-        const pvh = Number(e.data.parentVvHeight);
-        const pvTop = Number(e.data.parentVvOffsetTop);
-        const pcg = e.data.parentChromeGap;
-        if (pih > 0 && pvh >= 0) {
-          const top = Number.isFinite(pvTop) ? pvTop : 0;
-          const fallbackRaw = Math.max(0, Math.round(pih - top - pvh));
-          const incoming =
-            typeof pcg === "number" && Number.isFinite(pcg) && pcg >= 0 ? pcg : fallbackRaw;
-          if (incoming < 150) {
-            _hubChromeGapClientMin = Math.min(_hubChromeGapClientMin, incoming);
-          }
-          const effective = incoming >= 150 ? incoming : _hubChromeGapClientMin;
-          document.documentElement.style.setProperty(
-            "--hub-parent-chrome-gap",
-            (effective === Infinity ? incoming : effective) + "px",
-          );
-        }
-      });
-      __INCLUDE:../hub-safari-chrome.js__
-      window.addEventListener("resize", hubChildResizeChrome, { passive: true });
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", hubChildResizeChrome);
-        window.visualViewport.addEventListener("scroll", () => {
-          hubPingParentForSafariChrome();
-        });
-      }
-      messagesEl.addEventListener("scroll", hubPingParentForSafariChrome, { passive: true });
-      requestHubParentLayout();
-    }
+    if (isHubIframeTimeline()) document.documentElement.dataset.hubIframeTimeline = "1";
 
     const FIT_COMPOSER_BASE_HEIGHT = 275 / 13;
     const FIT_SIDEBAR_HEIGHT_SCALE = 1.8;
@@ -1146,7 +1076,6 @@ __INCLUDE:git-panel/events.js__
         syncSideBarWindow();
         if (sideBarOpen) syncSplitGitHeightForMode();
         if (isComposerOverlayOpen()) autoResizeTextarea();
-        syncMainAfterHeight();
         applyGitOverviewHeader();
         if (event.data.on) {
           requestAnimationFrame(reportFitHeight);
