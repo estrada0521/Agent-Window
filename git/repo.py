@@ -89,8 +89,6 @@ def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
         total_commits = int(raw_count)
     except ValueError as exc:
         raise RuntimeError(f"git rev-list --count returned {raw_count!r}") from exc
-    if total_commits < 0:
-        raise RuntimeError(f"git rev-list --count returned {total_commits}")
     log_res = _run_git(
         root,
         "log",
@@ -141,10 +139,10 @@ def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:
             commit_stats[current_hash] = {"paths": paths, "ins": ins, "dels": dels}
             current_hash = None
     for commit in recent_commits:
-        stats = commit_stats.get(commit["hash"]) or {}
-        commit["changed_paths"] = int(stats.get("paths", 0) or 0)
-        commit["ins"] = int(stats.get("ins", 0) or 0)
-        commit["dels"] = int(stats.get("dels", 0) or 0)
+        stats = commit_stats.get(commit["hash"], {"paths": 0, "ins": 0, "dels": 0})
+        commit["changed_paths"] = stats["paths"]
+        commit["ins"] = stats["ins"]
+        commit["dels"] = stats["dels"]
     return {
         "total_commits": total_commits,
         "recent_commits": recent_commits,
@@ -187,8 +185,7 @@ def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = 
                 deleted += int(dels)
         return added, deleted
     def _status_path(line: str) -> str:
-        raw = str(line or "")
-        path = raw[3:] if len(raw) > 3 else raw
+        path = line[3:]
         if " -> " in path:
             path = path.rsplit(" -> ", 1)[-1]
         return path.strip().strip('"')
@@ -196,16 +193,12 @@ def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = 
         staged: set[str] = set()
         unstaged: set[str] = set()
         untracked: set[str] = set()
-        for raw in lines:
-            line = str(raw or "")
+        for line in lines:
             path = _status_path(line)
-            if not path:
-                continue
             if line.startswith("??"):
                 untracked.add(path)
                 continue
-            x = line[0] if len(line) > 0 else " "
-            y = line[1] if len(line) > 1 else " "
+            x, y = line[0], line[1]
             if x not in {" ", "?"}:
                 staged.add(path)
             if y not in {" ", "?"}:
@@ -254,7 +247,7 @@ def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = 
     if worktree_has_untracked_diff:
         worktree_added += git_diff_files(str(root), scope="untracked")["total_ins"]
     if include_commits and cached_commits is None:
-        if head_res.returncode != 0:
+        if not has_head:
             cached_commits = {
                 "total_commits": 0,
                 "recent_commits": [],
@@ -264,9 +257,9 @@ def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = 
             with _commit_list_cache_lock:
                 _commit_list_cache[commit_key] = cached_commits
     recent_commits = list(cached_commits["recent_commits"]) if cached_commits is not None else []
-    total_commits = int(cached_commits["total_commits"]) if cached_commits is not None else 0
+    total_commits = cached_commits["total_commits"] if cached_commits is not None else 0
     next_offset = offset + len(recent_commits)
-    has_more = next_offset < total_commits if total_commits else len(recent_commits) >= limit
+    has_more = next_offset < total_commits
     return {
         "branch": branch,
         "offset": offset,
