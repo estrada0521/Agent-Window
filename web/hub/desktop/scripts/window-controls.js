@@ -103,13 +103,11 @@
         if (!restore) return;
         setDeskFitCollapsed(false);
       }
-      const content = Number(contentHeight);
-      if (!Number.isFinite(content) || content <= 0) return;
       const invoke = getNativeInvoke();
-      if (typeof invoke !== "function" || !_deskTimelineFrame) return;
+      if (typeof invoke !== "function") return;
       const iframeH = _deskTimelineFrame.getBoundingClientRect().height;
       const overhead = Math.min(240, Math.max(0, window.innerHeight - iframeH));
-      const target = Math.round(content + overhead);
+      const target = Math.round(contentHeight + overhead);
       const snapWidth = _deskFitWidthSnapPending;
       _deskFitWidthSnapPending = false;
       if (!snapWidth && Math.abs(target - _deskLastFitTarget) < 4) return;
@@ -170,7 +168,6 @@
       const root = document.documentElement;
       const previousViewportWidth = root.getBoundingClientRect().width;
       const previousLeft = parseFloat(root.style.left);
-      let applied = false;
       const waitForWidth = async (width) => {
         if (Math.abs(root.getBoundingClientRect().width - width) < 1) return;
         await new Promise((resolve) => {
@@ -186,13 +183,12 @@
         root.style.width = `${previousViewportWidth + delta}px`;
         if (edge === "left") root.style.left = `${previousLeft - delta}px`;
         _deskTimelineFrame.style.width = `${previousWidth + timelineDelta}px`;
-        applied = true;
         apply();
         await waitForWidth(await invoke("resize_window_from_edge", { edge, delta }));
       } catch (error) {
         root.style.width = `${previousViewportWidth}px`;
         root.style.left = `${previousLeft}px`;
-        if (applied) rollback();
+        rollback();
         throw error;
       } finally {
         _deskTimelineFrame.style.removeProperty("width");

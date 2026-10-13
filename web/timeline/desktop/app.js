@@ -111,21 +111,18 @@ __INCLUDE:../conversation-state.js__
       }
     };
     const fitMessageRows = () => [...messagesEl.querySelectorAll(":scope > article.message-row")];
-    const fitStepToLatest = () => {
-      _fitTargetRow = null;
+    const stepFitTo = (row) => {
+      _fitTargetRow = row;
       _pollScrollLockTop = null;
       _pollScrollAnchor = null;
-      _stickyToBottom = true;
+      _stickyToBottom = !row;
       reportFitHeight();
     };
+    const fitStepToLatest = () => stepFitTo(null);
     const fitStepToFirst = () => {
       const rows = fitMessageRows();
       if (!rows.length) return;
-      _fitTargetRow = rows[Math.min(_fitMessageCount, rows.length) - 1];
-      _pollScrollLockTop = null;
-      _pollScrollAnchor = null;
-      _stickyToBottom = false;
-      reportFitHeight();
+      stepFitTo(rows[Math.min(_fitMessageCount, rows.length) - 1]);
     };
     const fitStepToMessage = async (down, senders = null) => {
       const anchor = _fitTargetRow?.isConnected ? _fitTargetRow : fitMessageRows().at(-1);
@@ -138,11 +135,7 @@ __INCLUDE:../conversation-state.js__
         if (!next && senders) next = await findOlderStepTarget(senders, anchor);
         if (!next) return;
       }
-      _fitTargetRow = next;
-      _pollScrollLockTop = null;
-      _pollScrollAnchor = null;
-      _stickyToBottom = false;
-      reportFitHeight();
+      stepFitTo(next);
     };
     document.addEventListener("timeline-transcript-settled", () => {
       if (_fitCollapsed) { _fitTargetRow = null; _stickyToBottom = true; }
