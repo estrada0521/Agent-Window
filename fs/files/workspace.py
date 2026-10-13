@@ -294,14 +294,14 @@ class WorkspaceFiles:
                 raise _WorkspaceNotAGitRepo(detail)
             raise RuntimeError(detail or f"git ls-files exited {result.returncode}")
         files: list[dict] = []
-        for raw in (result.stdout or b"").split(b"\0"):
+        for raw in result.stdout.split(b"\0"):
             if not raw:
                 continue
             rel = raw.decode("utf-8", "replace")
-            if not rel or self.file_index_path_is_ignored(rel):
+            if self.file_index_path_is_ignored(rel):
                 continue
             files.append({"path": rel, "size": None})
-        files.sort(key=lambda item: str(item.get("path") or "").casefold())
+        files.sort(key=lambda item: item["path"].casefold())
         return files
 
     def _scandir_search_paths(self) -> list[dict]:
@@ -330,7 +330,7 @@ class WorkspaceFiles:
                         pending.append(rel)
                         continue
                     files.append({"path": rel, "size": None})
-        files.sort(key=lambda item: str(item.get("path") or "").casefold())
+        files.sort(key=lambda item: item["path"].casefold())
         return files
 
     def list_files(self):
@@ -352,8 +352,8 @@ class WorkspaceFiles:
         tail = "/" + rel.lower()
         matches = sorted({
             path
-            for path in (str(entry.get("path") or "") for entry in self.list_files())
-            if path and ("/" + path.lower()).endswith(tail)
+            for path in (entry["path"] for entry in self.list_files())
+            if ("/" + path.lower()).endswith(tail)
         })
         return matches[0] if len(matches) == 1 else ""
 
@@ -361,7 +361,7 @@ class WorkspaceFiles:
         result: dict[str, str] = {}
         seen: set[str] = set()
         for raw in queries:
-            query = str(raw or "").strip()
+            query = raw.strip()
             if not query or query in seen:
                 continue
             seen.add(query)
@@ -371,13 +371,7 @@ class WorkspaceFiles:
     def search_files(self, query: str, limit: int):
         def hydrate_size(entry: dict) -> dict:
             result = dict(entry)
-            if result.get("size") is not None:
-                return result
-            rel = str(result.get("path") or "")
-            if not rel:
-                result["size"] = None
-                return result
-            full = self.resolve_path(rel)
+            full = self.resolve_path(result["path"])
             try:
                 result["size"] = os.path.getsize(full) if os.path.isfile(full) else None
             except OSError:
@@ -385,7 +379,7 @@ class WorkspaceFiles:
             return result
 
         def ranking_penalty(path_lower: str) -> int:
-            parts = [part for part in str(path_lower or "").split("/") if part]
+            parts = [part for part in path_lower.split("/") if part]
             penalty = 0
             if parts and parts[0].startswith("."):
                 penalty += 1
@@ -416,22 +410,20 @@ class WorkspaceFiles:
             ranked_default = sorted(
                 entries,
                 key=lambda entry: (
-                    ranking_penalty(str(entry.get("path") or "").lower()),
+                    ranking_penalty(entry["path"].lower()),
                     0
-                    if os.path.splitext(str(entry.get("path") or "").lower())[1] in self.EDITABLE_TEXT_EXTS
+                    if os.path.splitext(entry["path"].lower())[1] in self.EDITABLE_TEXT_EXTS
                     else 1,
-                    str(entry.get("path") or "").count("/"),
-                    len(str(entry.get("path") or "")),
-                    str(entry.get("path") or "").lower(),
+                    entry["path"].count("/"),
+                    len(entry["path"]),
+                    entry["path"].lower(),
                 ),
             )
             return [hydrate_size(entry) for entry in ranked_default[:limit]]
 
         ranked: list[tuple[tuple[int, int, int, int, str], dict]] = []
         for entry in entries:
-            path = str(entry.get("path") or "")
-            if not path:
-                continue
+            path = entry["path"]
             path_lower = path.lower()
             base_lower = os.path.basename(path_lower)
             penalty = ranking_penalty(path_lower)
@@ -455,14 +447,13 @@ class WorkspaceFiles:
         return [hydrate_size(item[1]) for item in ranked[:limit]]
 
     def list_dir(self, rel: str = ""):
-        normalized_rel = str(rel or "")
-        full = self.resolve_path(normalized_rel)
+        full = self.resolve_path(rel)
         if not os.path.isdir(full):
             raise NotADirectoryError(full)
         entries: list[dict] = []
         with os.scandir(full) as scanner:
             for entry in scanner:
-                child_rel = os.path.join(normalized_rel, entry.name)
+                child_rel = os.path.join(rel, entry.name)
                 if self.file_index_path_is_ignored(child_rel):
                     continue
                 is_dir = False
@@ -485,5 +476,5 @@ class WorkspaceFiles:
                     except OSError:
                         item["size"] = None
                 entries.append(item)
-        entries.sort(key=lambda item: (item.get("kind") != "dir", str(item.get("name") or "").casefold()))
+        entries.sort(key=lambda item: (item["kind"] != "dir", item["name"].casefold()))
         return entries
