@@ -25,7 +25,7 @@ __INCLUDE:../git-panel-controller.js__
       refreshGitSheetTitle();
     };
     document.addEventListener("git-follow-changed", refreshGitSheetTitle);
-    const gitWorktreeButton = () => mobileSheet?.querySelector(".git-worktree-button");
+    const gitWorktreeButton = () => mobileSheet.querySelector(".git-worktree-button");
     const gitMoreButton = document.createElement("button");
     gitMoreButton.type = "button";
     gitMoreButton.className = "git-more-button mobile-bottom-sheet-button";
@@ -149,7 +149,7 @@ __INCLUDE:../git-panel-controller.js__
     const renderGitWorktreeButton = (data) => {
       let btn = gitWorktreeButton();
       if (!btn) {
-        const sheetPanel = mobileSheet?.querySelector(".mobile-bottom-sheet-panel");
+        const sheetPanel = mobileSheet.querySelector(".mobile-bottom-sheet-panel");
         if (!sheetPanel) return;
         btn = document.createElement("button");
         btn.type = "button";
@@ -293,7 +293,7 @@ __INCLUDE:../git-panel-controller.js__
       gitDiffToggle.hidden = !gitPanel.detailContext;
       gitDiffToggle.classList.toggle("is-active", gitDiffsExpanded);
       gitDiffToggle.setAttribute("aria-pressed", gitDiffsExpanded ? "true" : "false");
-      mobileSheet?.classList.toggle("git-diffs-expanded", gitDiffsExpanded);
+      mobileSheet.classList.toggle("git-diffs-expanded", gitDiffsExpanded);
     };
     const collapseWorktreeDiffs = () => {
       const context = gitPanel.detailContext;
@@ -376,8 +376,6 @@ __INCLUDE:../git-panel-controller.js__
       scrollRoot: gitSheetListEl,
       pinListScroll: resetSheetListScroll,
       holdDetailFilesUntilReady: true,
-      canLoad: () => !!mobileSheet,
-      canRefresh: () => !!mobileSheet,
       renderShell: (data) => {
         syncGitSheetBranch(data);
         renderGitWorktreeButton(data);
@@ -425,16 +423,13 @@ __INCLUDE:../git-panel-controller.js__
       void refreshGitSummaryHud();
     });
     const updateGitPanel = async () => {
-      if (!mobileSheet) return;
       if (gitPanel.hasShell()) {
-        try {
-          await gitPanel.refresh();
-        } catch (_) { }
+        await gitPanel.refresh();
         return;
       }
       await gitPanel.loadPage({ reset: true });
     };
-    mobileSheet?.addEventListener("click", (event) => {
+    mobileSheet.addEventListener("click", (event) => {
       void gitPanel.handleClick(event, {
         onFileRow: async (fileRow) => {
           const path = String(fileRow.dataset.path || "").trim();
