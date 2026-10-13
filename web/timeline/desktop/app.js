@@ -1025,12 +1025,7 @@ __INCLUDE:git-panel/events.js__
         const px = Number(event.data.textSize);
         if (Number.isFinite(px)) {
           document.documentElement.style.setProperty("--text-size", `${px}px`);
-          if (isComposerOverlayOpen()) {
-            autoResizeTextarea();
-            if (document.documentElement.dataset.nativeApp !== "1") {
-              requestAnimationFrame(() => reportFitHeight({ fromComposer: true }));
-            }
-          }
+          if (isComposerOverlayOpen()) autoResizeTextarea();
           applySideBarWidth();
           syncPanelState();
           const url = new URL(window.location.href);
