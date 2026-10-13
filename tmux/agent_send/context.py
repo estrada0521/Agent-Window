@@ -39,7 +39,7 @@ def describe_timeline(timeline_name: str) -> dict:
     agents = [pane.name for pane in topology]
     current_pane = os.environ.get("TMUX_PANE") or ""
     this_pane_role = None
-    panes: dict[str, dict | None] = {}
+    panes: dict[str, dict] = {}
     for pane in topology:
         panes[pane.name] = _pane_status(pane.pane_id)
         if current_pane and pane.pane_id == current_pane:
@@ -64,9 +64,7 @@ def describe_timeline(timeline_name: str) -> dict:
 def _format_panes(panes: dict) -> list[str]:
     lines = []
     for instance, pane in panes.items():
-        if not pane:
-            lines.append(f"  - {instance}: not configured")
-        elif pane["dead"]:
+        if pane["dead"]:
             lines.append(f"  - {instance}: pane={pane['pane_id']} dead title={pane['title'] or 'unknown'}")
         else:
             lines.append(
@@ -80,8 +78,7 @@ def format_context_text(info: dict) -> str:
     lines = ["## agent-send --context", ""]
     lines.append(f"- **timeline**: {info['timeline']}")
     lines.append(f"- **status**: {'active' if info['active'] else 'archived'}")
-    if info.get("workspace"):
-        lines.append(f"- **workspace**: {info['workspace']}")
+    lines.append(f"- **workspace**: {info['workspace']}")
     if info.get("tmux_name"):
         lines.append(f"- **tmux session**: {info['tmux_name']}")
     agents = info["agents"]
