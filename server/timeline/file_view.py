@@ -115,16 +115,14 @@ def render_file_view(
 ) -> str:
     validate_file_preview(files, rel)
     full = files.resolve_path(rel)
-    if not os.path.exists(full):
-        raise FileNotFoundError(full)
 
     ext = os.path.splitext(rel)[1].lower()
     filename = os.path.basename(rel)
-    prefix = (base_path or "").rstrip("/")
+    prefix = base_path.rstrip("/")
     raw_url = f"{prefix}/file-raw?path={url_quote(rel)}"
     size = os.path.getsize(full)
     resolved_line_height = text_line_height_px(agent_text_size)
-    requested_base_theme = str(preview_base_theme or "").strip().lower()
+    requested_base_theme = preview_base_theme.strip().lower()
     if requested_base_theme in ("dark", "light"):
         theme_palette = resolve_theme_palette(requested_base_theme)
     else:
@@ -154,8 +152,7 @@ def render_file_view(
         f'document.documentElement.style.setProperty("--text-line-height",(s*{TEXT_LINE_HEIGHT_RATIO})+"px");'
         '});'
     )
-    font_base = prefix or ""
-    font_face_css = apply_font_tokens(_FONT_FACES_CSS.replace("__TIMELINE_BASE_PATH__", font_base))
+    font_face_css = apply_font_tokens(_FONT_FACES_CSS.replace("__TIMELINE_BASE_PATH__", prefix))
     preview_top_offset = "max(32px, calc(10px + env(safe-area-inset-top)))" if embed else "0px"
     preview_top_gap = "14px"
     code_top_offset = f"calc({preview_top_gap} + {preview_top_offset})" if embed else "0px"
@@ -266,7 +263,7 @@ def render_file_view(
         )
     is_text_like = ext in files.EDITABLE_TEXT_EXTS or files.is_probably_text_file(full)
     if ext in {".html", ".htm"}:
-        progressive_html = bool(force_progressive_text) or size > INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES
+        progressive_html = force_progressive_text or size > INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES
         if progressive_html:
             gutter_width, title_offset = build_gutter_metrics(
                 max(1, int(size / 32)),
@@ -347,7 +344,7 @@ def render_file_view(
             f'<div class="html-preview-panel html-preview-panel-text active" data-preview-panel="text">{text_panel_markup(gutter_rows, code_rows)}</div>'
             f'</div><script>{toggle_js}</script></div></body></html>'
         )
-    if is_text_like and ext != ".md" and (bool(force_progressive_text) or size > INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES):
+    if is_text_like and ext != ".md" and (force_progressive_text or size > INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES):
         chunk_bytes = PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES
         gutter_width, title_offset = build_gutter_metrics(
             max(1, int(size / 32)),
@@ -425,7 +422,7 @@ def render_file_view(
         file_link_parse_js = _timeline_file_link_parse_js()
         markdown_render_js = _timeline_markdown_render_js()
         markdown_tables_js = (_REPO_ROOT / "web/timeline/markdown-tables.js").read_text(encoding="utf-8")
-        initial_preview_theme = "light" if str((theme_palette or {}).get("theme") or "").lower() == "light" else "dark"
+        initial_preview_theme = "light" if is_light_theme else "dark"
         dark_preview_fg_channels = TEXT_PRIMARY_MOBILE_DARK_CHANNELS.replace(" ", "")
         dark_preview_fg = f"rgb({dark_preview_fg_channels})"
         light_preview_fg_channels = TEXT_PRIMARY_MOBILE_LIGHT_CHANNELS.replace(" ", "")
