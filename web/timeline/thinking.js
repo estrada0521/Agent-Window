@@ -135,6 +135,7 @@
         requestAnimationFrame(() => {
           button.classList.remove("thinking-scroll-btn-swapping");
           delete button.dataset.swapState;
+          scheduleThinkingFloatingIcons();
         });
       }, 80);
     };
@@ -186,18 +187,21 @@
         ].join(":");
       }).join("|");
 
-      const sourceAnchor = sources[0].wrap.closest(".message-thinking-icons") || sources[0].wrap;
-      const sourceRect = sourceAnchor.getBoundingClientRect();
-      const timelineRect = messagesEl.getBoundingClientRect();
-      if (!sourceRect.width || !sourceRect.height || !timelineRect.width || !timelineRect.height) {
-        restoreThinkingScrollButton();
-        return;
+      let shouldStick;
+      if (document.documentElement.dataset.mobile !== "1") {
+        const height = messagesEl.clientHeight;
+        const bottomSpacer = parseFloat(getComputedStyle(messagesEl, "::after").minHeight);
+        const distance = messagesEl.scrollHeight - messagesEl.scrollTop - height;
+        shouldStick = distance > height * 1.1 - bottomSpacer;
+      } else {
+        const sourceAnchor = sources[0].wrap.closest(".message-thinking-icons") || sources[0].wrap;
+        const sourceRect = sourceAnchor.getBoundingClientRect();
+        const timelineRect = messagesEl.getBoundingClientRect();
+        const stickyTop = timelineRect.bottom - 14 - Math.max(24, sourceRect.height);
+        shouldStick = !!sourceRect.width && !!sourceRect.height && !!timelineRect.width && !!timelineRect.height
+          && !_stickyToBottom && (sourceRect.top > stickyTop || sourceRect.bottom < timelineRect.top);
       }
-      const bottomInset = 14;
-      const expectedHeight = Math.max(24, sourceRect.height);
-      const stickyTop = timelineRect.bottom - bottomInset - expectedHeight;
-      const shouldStick = sourceRect.top > stickyTop || sourceRect.bottom < timelineRect.top;
-      if (!shouldStick || _stickyToBottom) {
+      if (!shouldStick) {
         restoreThinkingScrollButton();
         return;
       }

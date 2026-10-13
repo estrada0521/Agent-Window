@@ -288,6 +288,7 @@ __INCLUDE:../scroll-btn.js__
           refreshViewportCenterAnchor();
           _stickyToBottom = isNearBottom();
           updateScrollBtn();
+          scheduleThinkingFloatingIcons();
           return;
         }
         requestAnimationFrame(() => apply(remaining - 1));
