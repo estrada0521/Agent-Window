@@ -3,16 +3,16 @@
       return gitSummaryRowHtml(data, { leadingHtml: pinBtn });
     };
     const buildSummaryState = (data) => {
-      const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
-      const worktreeAdded = Math.max(0, parseInt(data?.worktree_added) || 0);
-      const worktreeDeleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
+      const changedPaths = data.worktree_changed_paths;
+      const worktreeAdded = data.worktree_added;
+      const worktreeDeleted = data.worktree_deleted;
       const summaryBits = changedPaths
         ? ["Uncommitted changes", gitPathCountText(changedPaths), `+${worktreeAdded}`, `-${worktreeDeleted}`]
         : ["Working tree clean"];
       return {
         text: summaryBits.join(" · "),
         subject: changedPaths ? "Uncommitted changes" : "Working tree clean",
-        clickable: !!data?.worktree_has_diff,
+        clickable: data.worktree_has_diff,
         counts: [worktreeAdded, worktreeDeleted],
         rowHtml: buildSummaryHtml(data),
       };

@@ -1,50 +1,38 @@
     const GIT_WORKTREE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M6.60 8.36L8.75 5.38C9.08 4.93 8.86 4.57 8.32 4.56L5.20 4.51C4.76 4.50 4.52 4.82 4.67 5.24L5.67 8.19C5.85 8.71 6.26 8.82 6.60 8.36ZM11.31 18.81C11.31 19.20 11.62 19.50 12.00 19.50C12.37 19.50 12.68 19.20 12.68 18.81L12.68 14.14C12.68 10.62 10.71 7.58 7.24 5.69C6.83 5.46 6.46 5.68 6.30 6.00C6.17 6.30 6.22 6.68 6.58 6.89C9.65 8.56 11.31 11.15 11.31 14.14ZM17.39 8.36C17.73 8.82 18.14 8.71 18.31 8.19L19.32 5.24C19.48 4.82 19.23 4.50 18.80 4.51L15.67 4.56C15.13 4.57 14.91 4.93 15.24 5.38ZM12.68 18.81L12.68 14.14C12.68 11.15 14.35 8.56 17.42 6.89C17.78 6.68 17.83 6.30 17.70 6.00C17.54 5.68 17.17 5.46 16.76 5.69C13.29 7.58 11.31 10.62 11.31 14.14L11.31 18.81C11.31 19.20 11.62 19.50 12.00 19.50C12.37 19.50 12.68 19.20 12.68 18.81Z"/></svg>';
     const GIT_SUMMARY_PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="pin-head" d="M9 4h6l-1 6 3 3v2H7v-2l3-3z"/><path d="M12 15v6"/></svg>';
     const gitCountsHtml = (ins, dels) => {
-      const safeIns = Math.max(0, parseInt(ins) || 0);
-      const safeDels = Math.max(0, parseInt(dels) || 0);
-      const cleanClass = (safeIns || safeDels) ? "" : " clean";
-      return `<span class="git-summary-counts${cleanClass}"><span class="git-summary-count ins" data-count-prefix="+" data-count-value="${safeIns}">+${safeIns}</span><span class="git-summary-count del" data-count-prefix="-" data-count-value="${safeDels}">-${safeDels}</span></span>`;
+      const cleanClass = (ins || dels) ? "" : " clean";
+      return `<span class="git-summary-counts${cleanClass}"><span class="git-summary-count ins" data-count-prefix="+" data-count-value="${ins}">+${ins}</span><span class="git-summary-count del" data-count-prefix="-" data-count-value="${dels}">-${dels}</span></span>`;
     };
-    const gitPathCountText = (count) => {
-      const safeCount = Math.max(0, parseInt(count) || 0);
-      return `${safeCount} ${safeCount === 1 ? "path" : "paths"}`;
-    };
+    const gitPathCountText = (count) => `${count} ${count === 1 ? "path" : "paths"}`;
     const gitCommitChevronSvg = '<svg class="git-commit-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
     const gitSummaryRowHtml = (data, { leadingHtml = "" } = {}) => {
-      const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
-      const worktreeAdded = Math.max(0, parseInt(data?.worktree_added) || 0);
-      const worktreeDeleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
-      const worktreeClickable = !!data?.worktree_has_diff;
+      const changedPaths = data.worktree_changed_paths;
+      const worktreeClickable = data.worktree_has_diff;
       const worktreeMeta = changedPaths
         ? `<span class="git-summary-meta-text">${gitPathCountText(changedPaths)}</span>`
         : `<span class="git-summary-meta-text">No changes</span>`;
-      const worktreeCounts = gitCountsHtml(worktreeAdded, worktreeDeleted);
+      const worktreeCounts = gitCountsHtml(data.worktree_added, data.worktree_deleted);
       const chevron = worktreeClickable ? gitCommitChevronSvg : "";
       return `<div class="git-summary-row${worktreeClickable ? " clickable" : ""}"${worktreeClickable ? ' data-diff-kind="worktree"' : ""}>${leadingHtml}<div class="git-commit-info"><div class="git-commit-meta">${worktreeMeta}${worktreeCounts}</div></div>${chevron}</div>`;
     };
     const gitCommitFileListHtml = (files, rowOptions = {}) =>
-      `<div class="git-commit-file-list">${(files || []).map((entry) => gitCommitFileRowHtml(entry, rowOptions)).join("")}</div>`;
+      `<div class="git-commit-file-list">${files.map((entry) => gitCommitFileRowHtml(entry, rowOptions)).join("")}</div>`;
     const gitCommitFileStatsSectionHtml = (section, rowOptions = {}) =>
       `<section class="git-commit-file-section" data-scope="${escapeHtml(section.kind)}"><div class="git-commit-file-section-title">${escapeHtml(section.title)}</div>${gitCommitFileListHtml(section.files, { ...rowOptions, scope: section.kind })}</section>`;
     const gitCommitFileStatsSectionsHtml = (sections, rowOptions = {}) =>
-      `<div class="git-commit-file-sections">${(sections || []).map((section) => gitCommitFileStatsSectionHtml(section, rowOptions)).join("")}</div>`;
+      `<div class="git-commit-file-sections">${sections.map((section) => gitCommitFileStatsSectionHtml(section, rowOptions)).join("")}</div>`;
     const gitCommitRowHtml = (commit, { animate = false } = {}) => {
-      const dotClass = `git-commit-dot${commit?.is_origin_main ? " is-origin-main" : ""}${commit?.has_body ? " has-body" : ""}`;
+      const dotClass = `git-commit-dot${commit.is_origin_main ? " is-origin-main" : ""}${commit.has_body ? " has-body" : ""}`;
       const iconInner = `<span class="${dotClass}" aria-hidden="true"></span>`;
-      const subjHtml = `<div class="git-commit-subject">${escapeHtml(commit?.subject || "")}</div>`;
-      const paths = Math.max(0, parseInt(commit?.changed_paths) || 0);
-      const ins = Math.max(0, parseInt(commit?.ins) || 0);
-      const dels = Math.max(0, parseInt(commit?.dels) || 0);
+      const subjHtml = `<div class="git-commit-subject">${escapeHtml(commit.subject)}</div>`;
       const animClass = animate ? " new-commit-slide" : "";
-      return `<div class="git-commit-row sheet-list-row${animClass}" data-hash="${escapeHtml(commit?.hash || "")}"><span class="git-commit-icon-wrap">${iconInner}</span><div class="git-commit-info">${subjHtml}<div class="git-commit-meta"><span class="git-commit-paths">${paths}</span>${gitCountsHtml(ins, dels)}</div></div></div>`;
+      return `<div class="git-commit-row sheet-list-row${animClass}" data-hash="${escapeHtml(commit.hash)}"><span class="git-commit-icon-wrap">${iconInner}</span><div class="git-commit-info">${subjHtml}<div class="git-commit-meta"><span class="git-commit-paths">${commit.changed_paths}</span>${gitCountsHtml(commit.ins, commit.dels)}</div></div></div>`;
     };
     const gitCommitFileRowHtml = (entry, { animate = false } = {}) => {
-      const path = String(entry?.path || "").trim();
-      const oldPath = String(entry?.old_path || "").trim();
-      const ins = Math.max(0, parseInt(entry?.ins) || 0);
-      const dels = Math.max(0, parseInt(entry?.dels) || 0);
-      const isUntracked = !!entry?.untracked;
+      const path = entry.path;
+      const oldPath = entry.old_path || "";
+      const isUntracked = !!entry.untracked;
       const iconHtml = fileIconHtml(path, { classNames: "git-commit-file-icon" });
       const slashIdx = path.lastIndexOf("/");
       const fileName = slashIdx >= 0 ? path.slice(slashIdx + 1) : path;
@@ -52,25 +40,24 @@
       const pathHtml = `<span class="git-commit-file-name">${escapeHtml(fileName)}</span>` + (oldPath
         ? `<span class="git-commit-file-dir">← ${escapeHtml(oldPath)}</span>`
         : dirPath ? `<span class="git-commit-file-dir">${escapeHtml(dirPath)}</span>` : "");
-      const fileMetaHtml = `<div class="git-commit-file-meta">${gitCountsHtml(ins, dels)}</div>`;
-      const actionsHtml = fileMetaHtml ? `<div class="git-commit-file-actions">${fileMetaHtml}</div>` : "";
+      const actionsHtml = `<div class="git-commit-file-actions"><div class="git-commit-file-meta">${gitCountsHtml(entry.ins, entry.dels)}</div></div>`;
       const animClass = animate ? " new-file-slide" : "";
       const untrackedAttr = isUntracked ? ' data-untracked="1"' : "";
       const oldPathAttr = oldPath ? ` data-old-path="${escapeHtml(oldPath)}"` : "";
       return `<div class="git-commit-file-row clickable${animClass}" data-path="${escapeHtml(path)}"${oldPathAttr}${untrackedAttr}><div class="git-commit-file-header sheet-list-row">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(oldPath ? `${path} ← ${oldPath}` : path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
     };
     const shouldAnimateGitCounts = () =>
-      !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const gitWorktreeCountsKey = (data) =>
-      `${data?.worktree_changed_paths} ${data?.worktree_added} ${data?.worktree_deleted}`;
+      `${data.worktree_changed_paths} ${data.worktree_added} ${data.worktree_deleted}`;
     const gitCountSnapshot = (root) =>
       root
         ? Array.from(root.querySelectorAll(".git-summary-counts .git-summary-count"))
-            .map((el) => Math.max(0, parseInt(el.dataset.countValue || el.textContent || "0") || 0))
+            .map((el) => Number(el.dataset.countValue))
         : [];
     const alignGitCountDigits = (from, to) => {
-      const fromStr = String(Math.max(0, parseInt(from) || 0));
-      const toStr = String(Math.max(0, parseInt(to) || 0));
+      const fromStr = String(from);
+      const toStr = String(to);
       const maxLen = Math.max(fromStr.length, toStr.length);
       const cols = [];
       for (let i = 0; i < maxLen; i++) {
@@ -84,13 +71,11 @@
       return cols;
     };
     const visibleGitCountRollColumns = (cols, to) => {
-      const toNum = Math.max(0, parseInt(to) || 0);
-      if (!cols.length) return cols;
-      if (toNum === 0) {
+      if (to === 0) {
         const firstNonZero = cols.findIndex((col) => col.start !== 0);
         return [cols[firstNonZero >= 0 ? firstNonZero : cols.length - 1]];
       }
-      const toLen = String(toNum).length;
+      const toLen = String(to).length;
       return cols.slice(-Math.min(cols.length, toLen));
     };
     const buildGitCountRollHtml = (prefix, columns) => {
@@ -102,10 +87,8 @@
       }).join("");
       return `<span class="git-count-roll"><span class="git-count-roll-prefix">${prefix}</span><span class="git-count-roll-digits">${digitHtml}</span></span>`;
     };
-    const animateGitCount = (el, fromValue, toValue, { animate = true } = {}) => {
-      const prefix = el.dataset.countPrefix || "";
-      const from = Math.max(0, parseInt(fromValue) || 0);
-      const to = Math.max(0, parseInt(toValue) || 0);
+    const animateGitCount = (el, from, to, { animate = true } = {}) => {
+      const prefix = el.dataset.countPrefix;
       const token = `${Date.now()}:${Math.random()}`;
       el.dataset.countAnimationToken = token;
       const finish = () => {
@@ -119,7 +102,7 @@
         return;
       }
       const columns = visibleGitCountRollColumns(alignGitCountDigits(from, to), to);
-      if (!columns.length || columns.every((col) => col.start === col.end)) {
+      if (columns.every((col) => col.start === col.end)) {
         finish();
         return;
       }
@@ -145,6 +128,6 @@
       if (!root || !previous?.length) return;
       root.querySelectorAll(".git-summary-counts .git-summary-count").forEach((el, idx) => {
         if (idx >= previous.length) return;
-        animateGitCount(el, previous[idx], el.dataset.countValue || el.textContent || "0");
+        animateGitCount(el, previous[idx], Number(el.dataset.countValue));
       });
     };

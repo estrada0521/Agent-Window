@@ -36,8 +36,8 @@
           existingCounts.forEach((countEl, idx) => {
             const nextCount = nextCounts[idx];
             if (!nextCount) return;
-            const nextValue = Math.max(0, parseInt(nextCount.dataset.countValue || nextCount.textContent || "0") || 0);
-            const prevValue = Math.max(0, parseInt(countEl.dataset.countValue || countEl.textContent || "0") || 0);
+            const nextValue = Number(nextCount.dataset.countValue);
+            const prevValue = Number(countEl.dataset.countValue);
             countEl.dataset.countValue = String(nextValue);
             animateGitCount(countEl, prevValue, nextValue, { animate: animateCounts });
           });

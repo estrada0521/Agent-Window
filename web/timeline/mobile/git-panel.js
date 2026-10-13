@@ -96,10 +96,8 @@ __INCLUDE:../git-panel-controller.js__
       if (btn) btn.hidden = gitTreeButton.hidden = gitMoreButton.hidden = true;
     };
     const gitWorktreeSummaryHtml = (data) => {
-      const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
-      const added = Math.max(0, parseInt(data?.worktree_added) || 0);
-      const deleted = Math.max(0, parseInt(data?.worktree_deleted) || 0);
-      return `<span class="git-worktree-button-label">${changedPaths ? gitPathCountText(changedPaths) : "No changes"}</span>${gitCountsHtml(added, deleted)}`;
+      const changedPaths = data.worktree_changed_paths;
+      return `<span class="git-worktree-button-label">${changedPaths ? gitPathCountText(changedPaths) : "No changes"}</span>${gitCountsHtml(data.worktree_added, data.worktree_deleted)}`;
     };
     const renderGitSummaryHud = (data, { animate = true } = {}) => {
       const previous = gitCountSnapshot(gitSummaryHud);
@@ -156,7 +154,7 @@ __INCLUDE:../git-panel-controller.js__
         btn.className = "git-worktree-button mobile-bottom-sheet-button";
         sheetPanel.append(btn, gitTreeButton, gitMoreButton);
       }
-      const hasDiff = !!data?.worktree_has_diff;
+      const hasDiff = data.worktree_has_diff;
       btn.disabled = !hasDiff;
       btn.classList.toggle("clickable", hasDiff);
       if (hasDiff) btn.dataset.diffKind = "worktree";
@@ -178,7 +176,7 @@ __INCLUDE:../git-panel-controller.js__
       titleEl.classList.add("git-sheet-detail-title", "git-sheet-title");
       titleEl.replaceChildren(subjectEl);
       if (countsEl) {
-        const [ins, dels] = [...countsEl.querySelectorAll(".git-summary-count")].map((el) => el.dataset.countValue);
+        const [ins, dels] = [...countsEl.querySelectorAll(".git-summary-count")].map((el) => Number(el.dataset.countValue));
         titleEl.insertAdjacentHTML("beforeend", gitCountsHtml(ins, dels));
       }
       titleEl.title = subject;
@@ -321,9 +319,8 @@ __INCLUDE:../git-panel-controller.js__
       const titleEl = gitSheetTitleEl();
       if (!titleEl?.classList.contains("git-sheet-detail-title")) return;
       const previous = gitCountSnapshot(titleEl);
-      const changedPaths = Math.max(0, parseInt(data?.worktree_changed_paths) || 0);
-      const subject = changedPaths ? "Uncommitted changes" : "No changes";
-      _gitDetailChrome = { rowHtml: gitSummaryRowHtml(data || {}), subject };
+      const subject = data.worktree_changed_paths ? "Uncommitted changes" : "No changes";
+      _gitDetailChrome = { rowHtml: gitSummaryRowHtml(data), subject };
       applyGitDetailChrome(_gitDetailChrome);
       animateGitCountsFromSnapshot(titleEl, previous);
     };

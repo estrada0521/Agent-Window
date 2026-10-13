@@ -4,24 +4,24 @@
       return [...data.status_lines].sort().join("\n");
     };
     const gitOverviewFingerprint = (data) => [
-      data?.worktree_changed_paths ?? "",
-      data?.worktree_added ?? "",
-      data?.worktree_deleted ?? "",
-      data?.worktree_staged_changed_paths ?? "",
-      data?.worktree_staged_added ?? "",
-      data?.worktree_staged_deleted ?? "",
-      data?.worktree_unstaged_changed_paths ?? "",
-      data?.worktree_unstaged_added ?? "",
-      data?.worktree_unstaged_deleted ?? "",
-      data?.worktree_has_diff ? "1" : "0",
-      data?.total_commits ?? "",
+      data.worktree_changed_paths,
+      data.worktree_added,
+      data.worktree_deleted,
+      data.worktree_staged_changed_paths,
+      data.worktree_staged_added,
+      data.worktree_staged_deleted,
+      data.worktree_unstaged_changed_paths,
+      data.worktree_unstaged_added,
+      data.worktree_unstaged_deleted,
+      data.worktree_has_diff ? "1" : "0",
+      data.total_commits,
       data.recent_commits.map((commit) =>
         [
-          commit?.hash || "",
-          commit?.subject || "",
-          commit?.ins ?? "",
-          commit?.dels ?? "",
-          commit?.is_origin_main ? "1" : "0",
+          commit.hash,
+          commit.subject,
+          commit.ins,
+          commit.dels,
+          commit.is_origin_main ? "1" : "0",
         ].join(":")
       ).join(","),
       gitStatusLinesDigest(data),
@@ -191,18 +191,11 @@
       } else {
         delete row.dataset.untracked;
       }
-      const nextIns = Math.max(0, parseInt(entry?.ins) || 0);
-      const nextDels = Math.max(0, parseInt(entry?.dels) || 0);
-      const countEls = Array.from(row.querySelectorAll(".git-commit-file-meta .git-summary-count"));
+      const [insEl, delsEl] = row.querySelectorAll(".git-commit-file-meta .git-summary-count");
       const updates = [
-        { idx: 0, value: nextIns },
-        { idx: 1, value: nextDels },
-      ].map(({ idx, value }) => {
-        const el = countEls[idx];
-        if (!el) return null;
-        const prev = Math.max(0, parseInt(el.dataset.countValue || el.textContent || "0") || 0);
-        return { el, prev, value };
-      }).filter(Boolean);
+        { el: insEl, prev: Number(insEl.dataset.countValue), value: entry.ins },
+        { el: delsEl, prev: Number(delsEl.dataset.countValue), value: entry.dels },
+      ];
       if (updates.some(({ prev, value }) => prev !== value)) {
         const token = String(Date.now());
         row.dataset.statsUpdateToken = token;
