@@ -13,7 +13,7 @@
         body: JSON.stringify({}),
       });
       const data = await res.json().catch(() => ({}));
-      if (data.ok && data.path) return String(data.path || "");
+      if (data.ok && data.path) return data.path;
       if (data.canceled) return "";
       throw new Error(data.error || "Workspace picker failed.");
     }
@@ -21,7 +21,7 @@
     async function startDeskNewTimelineFlow() {
       if (_deskNewTimelineStarting) return;
       _deskNewTimelineStarting = true;
-      _deskNewTimelineToggle?.classList.add("archived");
+      _deskNewTimelineToggle.classList.add("archived");
       setStatus("");
       try {
         const workspace = await pickWorkspaceForNewTimeline();
@@ -48,22 +48,14 @@
         setError("Open failed", err);
       } finally {
         _deskNewTimelineStarting = false;
-        _deskNewTimelineToggle?.classList.remove("archived");
+        _deskNewTimelineToggle.classList.remove("archived");
       }
     }
 
     function navigateDeskTimelineFrame(url) {
       const target = String(url || "") || "about:blank";
       _deskTimelineFrameLoadedUrl = target === "about:blank" ? "" : target;
-      const win = _deskTimelineFrame && _deskTimelineFrame.contentWindow;
-      if (win) {
-        try {
-          win.location.replace(target);
-          return;
-        } catch (_) {
-        }
-      }
-      if (_deskTimelineFrame) _deskTimelineFrame.src = target;
+      _deskTimelineFrame.contentWindow.location.replace(target);
     }
 
     function clearDeskTimelineFrame() {
@@ -83,7 +75,6 @@
     }
 
     function openTimelineInDesk(url, name) {
-      if (!_deskTimelineFrame) return;
       if (document.documentElement.dataset.emptyStart === "1") {
         delete document.documentElement.dataset.emptyStart;
         _deskTimelineShell.append(document.getElementById("hubHud"));
@@ -123,7 +114,7 @@
         failDeskOpen("Timeline not found");
         return;
       }
-      const needsReviveTransition = /^\/revive-timeline(?:[/?]|$)/.test(String(openHref || ""));
+      const needsReviveTransition = /^\/revive-timeline(?:[/?]|$)/.test(openHref);
       if (!needsReviveTransition && name === _deskSelectedTimelineName && _deskTimelineFrameLoadedUrl) return;
       const archived = !!findTimelineRecord(name)?.archived;
       const closeOnOpen = isPhoneViewport();
@@ -152,25 +143,18 @@
     }
 
     function getDeskTimelineRows() {
-      if (!_deskTimelineList) return [];
       return Array.from(_deskTimelineList.querySelectorAll(".desk-timeline-row[data-open-href][data-timeline-name]"))
-        .filter((row) => row && row.getClientRects().length > 0);
+        .filter((row) => row.getClientRects().length > 0);
     }
 
     function focusDeskTimelineRow(row) {
       if (!row) return;
-      try {
-        row.focus({ preventScroll: true });
-      } catch (_) {
-        try { row.focus(); } catch (_) {}
-      }
-      try {
-        row.scrollIntoView({ block: "nearest" });
-      } catch (_) {}
+      row.focus({ preventScroll: true });
+      row.scrollIntoView({ block: "nearest" });
     }
 
     function focusDeskTimelineByName(name) {
-      if (!_deskTimelineList || !name) return;
+      if (!name) return;
       const row = _deskTimelineList.querySelector(`.desk-timeline-row[data-timeline-name="${cssEsc(name)}"]`);
       focusDeskTimelineRow(row);
     }
@@ -231,7 +215,7 @@
         showDeskHubList({ open: true });
         return;
       }
-      const active = _hubTimelinesCache.active || [];
+      const active = _hubTimelinesCache.active;
       if (active.length) {
         openTimelineFrame(buildTimelineOpenHref(active[0].name), active[0].name);
         return;
