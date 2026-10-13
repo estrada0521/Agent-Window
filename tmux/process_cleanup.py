@@ -14,7 +14,7 @@ def pane_pid_for_target(*, target: str) -> int | None:
     res = run_tmux(["display-message", "-p", "-t", pane, "#{pane_pid}"])
     if res.returncode != 0:
         return None
-    value = (res.stdout or "").strip()
+    value = res.stdout.strip()
     if not value.isdigit():
         return None
     return int(value)
@@ -30,7 +30,7 @@ def pane_pids_for_target(*, target: str) -> list[int]:
         return [pid] if pid else []
     pids: list[int] = []
     seen: set[int] = set()
-    for line in (res.stdout or "").splitlines():
+    for line in res.stdout.splitlines():
         value = line.strip()
         if not value.isdigit():
             continue
@@ -52,8 +52,8 @@ def cleanup_process_groups_for_pids(
     current_pgrp = os.getpgrp()
     for pid in pids:
         try:
-            pgid = os.getpgid(int(pid))
-        except (ProcessLookupError, PermissionError, OSError):
+            pgid = os.getpgid(pid)
+        except OSError:
             continue
         if pgid <= 1 or pgid == current_pgrp or pgid in seen:
             continue
@@ -76,7 +76,7 @@ def _signal_process_groups(pgids: list[int], sig: int) -> None:
     for pgid in pgids:
         try:
             os.kill(-pgid, sig)
-        except (ProcessLookupError, PermissionError, OSError):
+        except OSError:
             continue
 
 
