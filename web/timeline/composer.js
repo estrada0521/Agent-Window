@@ -3,15 +3,15 @@
     const messageInput = document.getElementById("message");
     const sendBtn = document.querySelector(".send-btn");
     const attachBtn = document.getElementById("attachBtn");
-    attachBtn?.addEventListener("mousedown", (e) => {
+    attachBtn.addEventListener("mousedown", (e) => {
       e.preventDefault();
     });
-    const clearSendPressed = () => sendBtn?.classList.remove("is-pressed");
-    sendBtn?.addEventListener("pointerdown", (event) => {
+    const clearSendPressed = () => sendBtn.classList.remove("is-pressed");
+    sendBtn.addEventListener("pointerdown", (event) => {
       if (event.button !== 0 || sendBtn.disabled) return;
       sendBtn.classList.add("is-pressed");
     });
-    sendBtn?.addEventListener("pointerleave", clearSendPressed);
+    sendBtn.addEventListener("pointerleave", clearSendPressed);
     document.addEventListener("pointerup", clearSendPressed, true);
     document.addEventListener("pointercancel", clearSendPressed, true);
     if (isMobileComposer) {
@@ -22,10 +22,10 @@
           composerBlurCloseTimer = null;
         }
       };
-      messageInput?.addEventListener("focus", () => {
+      messageInput.addEventListener("focus", () => {
         clearComposerBlurCloseTimer();
       });
-      messageInput?.addEventListener("blur", () => {
+      messageInput.addEventListener("blur", () => {
         clearComposerBlurCloseTimer();
         composerBlurCloseTimer = setTimeout(() => {
           if (!isComposerOverlayOpen()) return;
@@ -72,14 +72,14 @@
       attachPreviewRow.style.setProperty("--attach-preview-fade-right", max > 1 && attachPreviewRow.scrollLeft < max - 1 ? "8px" : "0px");
     };
     const repositionOpenComposerMenu = () => {
-      if (!isMobileComposer || typeof positionComposerDropdown !== "function") return;
+      if (!isMobileComposer) return;
       const openMenu = document.querySelector("#fileDropdown.visible, #cmdDropdown.visible");
       if (openMenu) positionComposerDropdown(openMenu);
     };
     if (isMobileComposer && attachPreviewRow) document.body.appendChild(attachPreviewRow);
     if (attachPreviewRow) {
       attachPreviewRow.addEventListener("scroll", syncAttachPreviewScroll, { passive: true });
-      if (typeof ResizeObserver === "function") new ResizeObserver(syncAttachPreviewScroll).observe(attachPreviewRow);
+      new ResizeObserver(syncAttachPreviewScroll).observe(attachPreviewRow);
     }
     if (attachBtn && attachInput && attachPreviewRow) {
       const beginAttachCard = (file) => {
@@ -105,7 +105,7 @@
           syncAttachPreviewScroll();
           if (!attachPreviewRow.children.length) attachPreviewRow.style.display = "none";
           repositionOpenComposerMenu();
-          if (typeof positionComposerDropdown === "function") positionComposerDropdown(attachPreviewRow);
+          positionComposerDropdown(attachPreviewRow);
         };
         card.addEventListener("mousedown", (event) => event.preventDefault());
         if (isMobileComposer) card.addEventListener("contextmenu", (event) => event.preventDefault());
@@ -133,7 +133,7 @@
         attachPreviewRow.style.display = "flex";
         syncAttachPreviewScroll();
         repositionOpenComposerMenu();
-        if (typeof positionComposerDropdown === "function") positionComposerDropdown(attachPreviewRow);
+        positionComposerDropdown(attachPreviewRow);
         return {
           signal: abort.signal,
           get cancelled() { return cancelled; },
@@ -368,5 +368,5 @@ __INCLUDE:upload-attached-files.js__
     }
     restoreComposerDraft();
     queueMicrotask(() => {
-      if (typeof autoResizeTextarea === "function") autoResizeTextarea();
+      autoResizeTextarea();
     });
