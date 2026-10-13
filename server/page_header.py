@@ -84,21 +84,11 @@ PAGE_HEADER_CSS = """
     }
 """
 
-DEFAULT_HUB_HEADER_ACTIONS = """
-<button class="page-menu-btn" id="pageMenuBtn">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
-</button>
-<select id="pageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;color:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true" tabindex="-1">
-  <option value="" disabled selected>Menu</option>
-  <option value="restart-hub">Reload</option>
-</select>
-"""
-
 MOBILE_HUB_HEADER_ACTIONS = """
 <button class="page-menu-btn" id="pageMenuBtn">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="10" y1="15" x2="20" y2="15"/></svg>
 </button>
-<select id="pageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;color:transparent;font-size:13px;z-index:220;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true" tabindex="-1">
+<select id="pageNativeMenuBridge" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:auto;appearance:none;-webkit-appearance:none;border:none;outline:none;background:transparent;color:transparent;font-size:13px;z-index:999;cursor:pointer;-webkit-tap-highlight-color:transparent;" aria-hidden="true" tabindex="-1">
   <option value="" disabled selected>Menu</option>
   <option value="theme">Theme</option>
   <option value="hand">Hand</option>
@@ -117,7 +107,7 @@ def render_page_header(
     title_id: str = "pageTitleLink",
     title_aria_label: str = APP_DISPLAY_NAME,
     title_alt: str = APP_DISPLAY_NAME,
-    actions_html: str = DEFAULT_HUB_HEADER_ACTIONS,
+    actions_html: str,
     panels_html: str = DEFAULT_HUB_HEADER_PANELS,
 ) -> str:
     return (
@@ -151,70 +141,55 @@ PAGE_HEADER_JS = """
     var bridge = document.getElementById("pageNativeMenuBridge");
 __HUB_RESTART_NAV_JS__
 
-    if (titleLink) {
-      titleLink.addEventListener("click", function() {
-        sessionStorage.removeItem("hub_timeline_frame");
-      });
-    }
-    
-    if (menuBtn && bridge) {
-      var _syncBridge = function() {
-        if (!menuBtn || menuBtn.offsetParent === null) return;
-        var rect = menuBtn.getBoundingClientRect();
-        var padX = 4;
-        var padY = 4;
-        var left = Math.max(0, rect.left - padX);
-        var top = Math.max(0, rect.top - padY);
-        var width = rect.width + (padX * 2);
-        var height = rect.height + (padY * 2);
-        var viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
-        var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-        if (viewportWidth > 0 && left + width > viewportWidth) {
-          left = Math.max(0, viewportWidth - width);
-        }
-        if (viewportHeight > 0 && top + height > viewportHeight) {
-          top = Math.max(0, viewportHeight - height);
-        }
-        bridge.style.left = left + "px";
-        bridge.style.top = top + "px";
-        bridge.style.width = width + "px";
-        bridge.style.height = height + "px";
-        // opacity:0 so focus ring is invisible; pointer-events:auto keeps it tappable
-        bridge.style.opacity = "0";
-        bridge.style.pointerEvents = "auto";
-        bridge.style.zIndex = "999";
-        bridge.style.background = "transparent";
-        bridge.style.color = "transparent";
-        bridge.style.border = "0";
-        bridge.style.outline = "none";
-        bridge.style.webkitTapHighlightColor = "transparent";
-      };
+    titleLink.addEventListener("click", function() {
+      sessionStorage.removeItem("hub_timeline_frame");
+    });
+
+    var _syncBridge = function() {
+      if (menuBtn.offsetParent === null) return;
+      var rect = menuBtn.getBoundingClientRect();
+      var padX = 4;
+      var padY = 4;
+      var left = Math.max(0, rect.left - padX);
+      var top = Math.max(0, rect.top - padY);
+      var width = rect.width + (padX * 2);
+      var height = rect.height + (padY * 2);
+      if (left + width > window.innerWidth) {
+        left = Math.max(0, window.innerWidth - width);
+      }
+      if (top + height > window.innerHeight) {
+        top = Math.max(0, window.innerHeight - height);
+      }
+      bridge.style.left = left + "px";
+      bridge.style.top = top + "px";
+      bridge.style.width = width + "px";
+      bridge.style.height = height + "px";
+    };
+    _syncBridge();
+    window.addEventListener("resize", _syncBridge, { passive: true });
+    window.addEventListener("scroll", _syncBridge, { passive: true });
+    window.visualViewport.addEventListener("resize", _syncBridge, { passive: true });
+    window.visualViewport.addEventListener("scroll", _syncBridge, { passive: true });
+    menuBtn.addEventListener("pointerdown", _syncBridge, { passive: true });
+
+    bridge.addEventListener("change", function(e) {
+      var action = e.target.value;
+      e.target.value = "";
+      if (!action) return;
+      if (action === "restart-hub") {
+        beginHubRestart();
+      }
+    });
+
+    menuBtn.addEventListener("click", function(e) {
       _syncBridge();
-      window.addEventListener("resize", _syncBridge, { passive: true });
-      window.addEventListener("scroll", _syncBridge, { passive: true });
-      window.visualViewport && window.visualViewport.addEventListener("resize", _syncBridge, { passive: true });
-      window.visualViewport && window.visualViewport.addEventListener("scroll", _syncBridge, { passive: true });
-      menuBtn.addEventListener("pointerdown", _syncBridge, { passive: true });
-
-      bridge.addEventListener("change", function(e) {
-        var action = e.target.value;
-        e.target.value = "";
-        if (!action) return;
-        if (action === "restart-hub") {
-          beginHubRestart();
-        }
-      });
-
-      menuBtn.addEventListener("click", function(e) {
-        _syncBridge();
-        if (bridge.showPicker) {
-          try { bridge.showPicker(); e.preventDefault(); e.stopPropagation(); return; } catch (err) {}
-        }
-        e.preventDefault();
-        e.stopPropagation();
-        try { bridge.focus({ preventScroll: true }); } catch (_) { try { bridge.focus(); } catch (_) {} }
-        try { bridge.click(); } catch (_) {}
-      });
-    }
+      if (bridge.showPicker) {
+        try { bridge.showPicker(); e.preventDefault(); e.stopPropagation(); return; } catch (err) {}
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      bridge.focus({ preventScroll: true });
+      bridge.click();
+    });
   })();
 """.replace("__HUB_RESTART_NAV_JS__", _HUB_RESTART_NAV_JS)
