@@ -88,11 +88,11 @@
       },
       commitRowOptions: (commit, newHashes) => ({ animate: !!(newHashes && newHashes.has(commit.hash)) }),
       onOverview: (data) => {
-        gitHeaderSummaryState = buildSummaryState(data || {});
+        gitHeaderSummaryState = buildSummaryState(data);
         applyGitOverviewHeader();
       },
       onPage: (data) => {
-        gitHeaderSummaryState = buildSummaryState(data || {});
+        gitHeaderSummaryState = buildSummaryState(data);
         syncSummaryWrap();
       },
     });

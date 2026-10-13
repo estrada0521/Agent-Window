@@ -83,7 +83,7 @@
         ensureObserver();
       };
       const applyPage = (data, { reset = false, newHashes = null } = {}) => {
-        if (reset) host.renderShell(data || {});
+        if (reset) host.renderShell(data);
         host.onPage?.(data, { reset });
         applyPaging(gitOverviewPagingFromResponse(data, state.commits, { reset }), { reset, newHashes });
         if (reset) resetListScroll();
@@ -320,12 +320,12 @@
         host.onOverview?.(data);
         const nextSig = gitOverviewFingerprint(data);
         if (nextSig !== state.overviewSig) {
-          const newHashes = state.overviewSig ? gitNewCommitHashes(state.commits, data?.recent_commits) : null;
+          const newHashes = state.overviewSig ? gitNewCommitHashes(state.commits, data.recent_commits) : null;
           applyPaging(gitOverviewPagingFromResponse(data, [], { reset: true }), { reset: true, newHashes });
           host.onFingerprintChanged?.(data);
         }
         if (state.detailContext?.kind === "worktree" && state.detailContext?.wrapEl) {
-          if (!data?.worktree_has_diff) {
+          if (!data.worktree_has_diff) {
             closeDetail({ refreshList: false });
           } else {
             await renderFileStatsInto(state.detailContext.wrapEl, "", {

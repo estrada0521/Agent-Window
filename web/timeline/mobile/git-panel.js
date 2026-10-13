@@ -413,9 +413,9 @@ __INCLUDE:../git-panel-controller.js__
       onFingerprintChanged: (data) => {
         collapseWorktreeDiffs();
         const previous = gitCountSnapshot(gitWorktreeButton());
-        renderGitWorktreeButton(data || {});
+        renderGitWorktreeButton(data);
         animateGitCountsFromSnapshot(gitWorktreeButton(), previous);
-        if (gitPinned()) renderGitSummaryHud(data || {}, { animate: false });
+        if (gitPinned()) renderGitSummaryHud(data, { animate: false });
       },
     });
     document.addEventListener("git-tree-changed", () => {
