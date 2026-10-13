@@ -1,6 +1,5 @@
     const filePathFromLinkAnchor = (anchor) => {
-      if (!anchor) return "";
-      const fromDataset = String(anchor.dataset?.filepath || "").trim();
+      const fromDataset = (anchor.dataset.filepath || "").trim();
       const raw = fromDataset || pathFromLocalHref(anchor.getAttribute("href") || "");
       return normalizeWorkspaceFilePath(raw);
     };

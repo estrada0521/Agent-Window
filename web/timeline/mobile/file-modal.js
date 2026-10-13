@@ -364,8 +364,7 @@
       frame.src = fileViewHrefForPath(normalizedPath, { embed: true });
     };
     const filePathFromLinkAnchor = (anchor) => {
-      if (!anchor) return "";
-      const fromDataset = String(anchor.dataset?.filepath || "").trim();
+      const fromDataset = (anchor.dataset.filepath || "").trim();
       if (fromDataset) return fromDataset;
       return pathFromLocalHref(anchor.getAttribute("href") || "");
     };

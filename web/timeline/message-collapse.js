@@ -14,11 +14,11 @@
       return !!normalized && normalized !== "system";
     };
     const isCollapsibleMessageRow = (row) =>
-      !!(row && row.classList?.contains("message-row") && isCollapsibleMessageSender(row.dataset?.sender));
+      row.classList.contains("message-row") && isCollapsibleMessageSender(row.dataset.sender);
     const syncMessageCollapse = (scope = document) => {
-      const rows = scope?.matches?.("article.message-row")
+      const rows = scope.matches?.("article.message-row")
         ? (isCollapsibleMessageRow(scope) ? [scope] : [])
-        : Array.from(scope?.querySelectorAll?.("article.message-row") || []).filter(isCollapsibleMessageRow);
+        : Array.from(scope.querySelectorAll("article.message-row")).filter(isCollapsibleMessageRow);
       rows.forEach((row) => {
         const bodyRow = row.querySelector(".message-body-row");
         const body = row.querySelector(".md-body");
