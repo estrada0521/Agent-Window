@@ -2,24 +2,24 @@
     const composerOverlay = document.getElementById("composerOverlay");
     const composerForm = document.getElementById("composer");
     const composerDockBtn = document.getElementById("composerDockBtn");
-    const isComposerOverlayOpen = () => !!composerOverlay && !composerOverlay.hidden && composerOverlay.classList.contains("visible");
+    const isComposerOverlayOpen = () => !composerOverlay.hidden && composerOverlay.classList.contains("visible");
     const setComposerDocked = (on) => {
       composerOverlay.classList.toggle("docked", on);
       const label = on ? "Center composer" : "Move composer to bottom";
       composerDockBtn.setAttribute("aria-label", label);
       composerDockBtn.title = `${label} [${on ? "⌃⌘↑" : "⌃⌘↓"}]`;
       composerDockBtn.setAttribute("aria-pressed", on ? "true" : "false");
-      if (typeof autoResizeTextarea === "function") autoResizeTextarea();
+      autoResizeTextarea();
     };
     if (document.documentElement.dataset.mobile === "1" && document.documentElement.dataset.hubIframeTimeline === "1") {
       const mobileComposerInput = document.getElementById("message");
-      composerOverlay?.addEventListener("touchstart", (event) => {
+      composerOverlay.addEventListener("touchstart", (event) => {
         if (event.target !== composerOverlay) return;
         event.preventDefault();
         if (composing && document.activeElement === mobileComposerInput) return;
         closeComposerOverlay();
       }, { passive: false });
-      composerOverlay?.addEventListener("touchmove", (event) => {
+      composerOverlay.addEventListener("touchmove", (event) => {
         if (mobileComposerInput && mobileComposerInput.selectionStart !== mobileComposerInput.selectionEnd) return;
         const target = event.target;
         if (target instanceof Element) {
@@ -37,24 +37,14 @@
       lockComposerMenuPan(document.getElementById("cmdDropdown"));
     }
     const setComposerCaretToEnd = () => {
-      if (!messageInput) return;
       const end = messageInput.value.length;
-      if (typeof messageInput.setSelectionRange === "function") {
-        try {
-          messageInput.setSelectionRange(end, end);
-        } catch (_) {}
-      }
+      messageInput.setSelectionRange(end, end);
       messageInput.scrollTop = messageInput.scrollHeight;
     };
     const focusComposerTextarea = (onReady = null) => {
-      if (!messageInput) return;
-      const isMobileComposer = document.documentElement.dataset.mobile === "1" && composerForm;
+      const isMobileComposer = document.documentElement.dataset.mobile === "1";
       if (isMobileComposer) composerForm.classList.add("composer-focus-hack");
-      try {
-        messageInput.focus({ preventScroll: true });
-      } catch (_) {
-        messageInput.focus();
-      }
+      messageInput.focus({ preventScroll: true });
       setComposerCaretToEnd();
       if (!isMobileComposer) {
         if (onReady) onReady();
@@ -72,7 +62,6 @@
       setTimeout(restore, 120);
     };
     const openComposerOverlay = ({ immediateFocus = false } = {}) => {
-      if (!composerOverlay) return;
       const canFocus = immediateFocus && canCompose();
       if (isComposerOverlayOpen()) {
         if (canFocus) focusComposerTextarea();
@@ -85,11 +74,11 @@
       composerOverlay.hidden = false;
       document.body.classList.add("composer-overlay-open");
       updateScrollBtn();
-      if (typeof updateSendBtnVisibility === "function") updateSendBtnVisibility();
+      updateSendBtnVisibility();
       const isMobileComposer = document.documentElement.dataset.mobile === "1";
       const reveal = () => {
-        composerForm?.classList.remove("composer-opening-ready");
-        if (typeof autoResizeTextarea === "function") autoResizeTextarea();
+        composerForm.classList.remove("composer-opening-ready");
+        autoResizeTextarea();
         setComposerCaretToEnd();
         armFitComposerHold();
         composerOverlay.classList.add("visible");
@@ -106,7 +95,7 @@
       }
     };
     const armFitComposerHold = () => {
-      if (!composerOverlay || document.documentElement.dataset.autoWindowHeight !== "1") return;
+      if (document.documentElement.dataset.autoWindowHeight !== "1") return;
       composerOverlay.classList.add("fit-arming");
       let done = false;
       const disarm = () => {
@@ -120,31 +109,25 @@
       window.addEventListener("resize", disarm);
     };
     const closeComposerOverlay = ({ restoreFocus = false } = {}) => {
-      if (!composerOverlay || composerOverlay.hidden) return;
+      if (composerOverlay.hidden) return;
       const isMobileComposer = document.documentElement.dataset.mobile === "1";
       if (isMobileComposer && document.activeElement === messageInput) {
         messageInput.blur();
       }
       document.dispatchEvent(new CustomEvent("composer-overlay-close-start"));
-      composerForm?.classList.remove("composer-opening-ready");
+      composerForm.classList.remove("composer-opening-ready");
       composerOverlay.classList.remove("visible", "fit-arming");
       if (composerOverlay.classList.contains("docked")) setComposerDocked(false);
       document.body.classList.remove("composer-overlay-open");
       composerOverlay.hidden = true;
       updateScrollBtn();
-      if (!isMobileComposer && restoreFocus && composerFabBtn && typeof composerFabBtn.focus === "function") {
-        try {
-          composerFabBtn.focus({ preventScroll: true });
-        } catch (_) {
-          composerFabBtn.focus();
-        }
-      }
+      if (!isMobileComposer && restoreFocus) composerFabBtn.focus({ preventScroll: true });
     };
-    composerFabBtn?.addEventListener("click", () => {
+    composerFabBtn.addEventListener("click", () => {
       openComposerOverlay({ immediateFocus: canCompose() });
     });
     if (document.documentElement.dataset.mobile !== "1") {
-      composerDockBtn?.addEventListener("click", () => {
+      composerDockBtn.addEventListener("click", () => {
         if (!isComposerOverlayOpen() || document.documentElement.dataset.autoWindowHeight === "1") return;
         composerDockBtn.classList.add("suppress-hover");
         window.addEventListener("pointermove", () => composerDockBtn.classList.remove("suppress-hover"), { once: true });
@@ -166,7 +149,7 @@
         }
       }, true);
     }
-    composerOverlay?.addEventListener("click", (event) => {
+    composerOverlay.addEventListener("click", (event) => {
       if (event.target === composerOverlay) {
         closeComposerOverlay({ restoreFocus: true });
       }
@@ -182,7 +165,7 @@
       closeComposerOverlay({ restoreFocus: true });
     }, true);
     if (document.documentElement.dataset.mobile !== "1") {
-      const shouldIgnoreComposerMouseShortcut = (target) => !!target?.closest?.("a, button, input, textarea, select, summary, label, [contenteditable='true'], #fileDropdown, #cmdDropdown");
+      const shouldIgnoreComposerMouseShortcut = (target) => !!target.closest("a, button, input, textarea, select, summary, label, [contenteditable='true'], #fileDropdown, #cmdDropdown");
       document.addEventListener("mousedown", (event) => {
         if (event.button !== 1) return;
         if (shouldIgnoreComposerMouseShortcut(event.target)) return;
@@ -200,7 +183,7 @@
         if (event.isComposing || event.keyCode === 229) return;
         if (isComposerOverlayOpen() || !canCompose()) return;
         const active = document.activeElement;
-        if (active && active.matches && active.matches("input, textarea, select, button, a, summary, [contenteditable='true']")) return;
+        if (active?.matches("input, textarea, select, button, a, summary, [contenteditable='true']")) return;
         event.preventDefault();
         openComposerOverlay({ immediateFocus: true });
       });
