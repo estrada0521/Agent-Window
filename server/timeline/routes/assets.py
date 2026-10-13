@@ -18,7 +18,7 @@ from server.timeline.syntax import add_syntax_highlighting
 def _get_app_manifest(handler, _parsed, ctx) -> None:
     base_path = handler.timeline_base_path
     palette = resolve_theme_palette()
-    bg = str(palette["dark_bg"])
+    bg = palette["dark_bg"]
     timeline_name = ctx["state"].timeline_name
     body = json.dumps(
         {
@@ -81,7 +81,7 @@ def _get_file_icon_theme(handler, _parsed, ctx) -> None:
     del ctx
     try:
         payload = load_file_icon_theme_document()
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError) as exc:
         handler.send_error(500, str(exc))
         return
     body = json.dumps(payload, ensure_ascii=True).encode("utf-8")
@@ -98,10 +98,10 @@ def _get_file_icon_theme_icon(handler, parsed, ctx) -> None:
     except FileNotFoundError:
         handler.send_error(404, f"unknown icon id: {icon_id}")
         return
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError) as exc:
         handler.send_error(500, str(exc))
         return
-    content_type = "image/svg+xml" if body.lstrip().startswith(b"<") or body.lstrip().startswith(b"<?xml") else "application/octet-stream"
+    content_type = "image/svg+xml" if body.lstrip().startswith(b"<") else "application/octet-stream"
     _send_bytes(handler, 200, body, content_type=content_type, cache_control="private, max-age=31536000, immutable")
 
 

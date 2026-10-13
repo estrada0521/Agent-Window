@@ -136,7 +136,6 @@ class NativeLogWatcher:
             rebind_agents: list[str] = []
             for event in pending:
                 if event.fflags & (select.KQ_NOTE_DELETE | select.KQ_NOTE_RENAME):
-                    agent = None
                     with self._lock:
                         agent = self._agent_by_fd.get(event.ident)
                         if agent:
@@ -154,11 +153,7 @@ class NativeLogWatcher:
                         except Exception as exc:
                             self._projector.failed(agent, f"projection failed: {exc}")
             if rebind_agents:
-                seen: set[str] = set()
-                for agent in rebind_agents:
-                    if agent in seen:
-                        continue
-                    seen.add(agent)
+                for agent in dict.fromkeys(rebind_agents):
                     try:
                         self._projector.rebind(agent)
                     except Exception as exc:
