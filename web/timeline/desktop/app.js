@@ -480,7 +480,6 @@ __INCLUDE:git-panel/events.js__
         window.parent.postMessage({
           type: "side-bar-state",
           mode: sideBarOpen ? "open" : "",
-          view: activeSideBarView,
           width: currentSideBarWidthPx(),
           reservedWidth: Number.parseFloat(document.documentElement.style.getPropertyValue("--side-bar-reserved-width")),
           side: document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right",
@@ -1034,7 +1033,7 @@ __INCLUDE:git-panel/events.js__
       }
       if (event.data.type === "hub-fit-collapsed") {
         _fitCollapsed = !!event.data.on;
-        if (_fitCollapsed && typeof isComposerOverlayOpen === "function" && isComposerOverlayOpen()) {
+        if (_fitCollapsed && isComposerOverlayOpen()) {
           closeComposerOverlay();
         }
         return;
