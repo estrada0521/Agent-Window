@@ -41,6 +41,7 @@
     };
     const gitCommitFileRowHtml = (entry, { animate = false } = {}) => {
       const path = String(entry?.path || "").trim();
+      const oldPath = String(entry?.old_path || "").trim();
       const ins = Math.max(0, parseInt(entry?.ins) || 0);
       const dels = Math.max(0, parseInt(entry?.dels) || 0);
       const isUntracked = !!entry?.untracked;
@@ -48,15 +49,15 @@
       const slashIdx = path.lastIndexOf("/");
       const fileName = slashIdx >= 0 ? path.slice(slashIdx + 1) : path;
       const dirPath = slashIdx >= 0 ? path.slice(0, slashIdx) : "";
-      const pathHtml = dirPath
-        ? `<span class="git-commit-file-name">${escapeHtml(fileName)}</span><span class="git-commit-file-dir">${escapeHtml(dirPath)}</span>`
-        : `<span class="git-commit-file-name">${escapeHtml(fileName)}</span>`;
+      const pathHtml = `<span class="git-commit-file-name">${escapeHtml(fileName)}</span>` + (oldPath
+        ? `<span class="git-commit-file-dir">← ${escapeHtml(oldPath)}</span>`
+        : dirPath ? `<span class="git-commit-file-dir">${escapeHtml(dirPath)}</span>` : "");
       const fileMetaHtml = `<div class="git-commit-file-meta">${gitCountsHtml(ins, dels)}</div>`;
       const actionsHtml = fileMetaHtml ? `<div class="git-commit-file-actions">${fileMetaHtml}</div>` : "";
       const animClass = animate ? " new-file-slide" : "";
       const untrackedAttr = isUntracked ? ' data-untracked="1"' : "";
-      const oldPathAttr = entry?.old_path ? ` data-old-path="${escapeHtml(entry.old_path)}"` : "";
-      return `<div class="git-commit-file-row clickable${animClass}" data-path="${escapeHtml(path)}"${oldPathAttr}${untrackedAttr}><div class="git-commit-file-header sheet-list-row">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
+      const oldPathAttr = oldPath ? ` data-old-path="${escapeHtml(oldPath)}"` : "";
+      return `<div class="git-commit-file-row clickable${animClass}" data-path="${escapeHtml(path)}"${oldPathAttr}${untrackedAttr}><div class="git-commit-file-header sheet-list-row">${iconHtml}<div class="git-commit-file-path" title="${escapeHtml(oldPath ? `${path} ← ${oldPath}` : path)}">${pathHtml}</div>${actionsHtml}</div></div>`;
     };
     const shouldAnimateGitCounts = () =>
       !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);

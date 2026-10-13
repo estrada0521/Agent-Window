@@ -125,6 +125,7 @@
         (section.files || []).map((entry) => [
           section.kind || "",
           entry?.path || "",
+          entry?.old_path || "",
           entry?.ins ?? "",
           entry?.dels ?? "",
           entry?.untracked ? "1" : "0",
@@ -179,7 +180,7 @@
       const data = await fetchGitDiffFiles({ hash, scope });
       return { mode: "list", files: data.files, data };
     };
-    const gitFileStatsRowKey = (scope, entry) => `${String(scope || "")}\u001f${String(entry?.path || "").trim()}`;
+    const gitFileStatsRowKey = (scope, entry) => `${String(scope || "")}\u001f${String(entry?.path || "").trim()}\u001f${String(entry?.old_path || "").trim()}`;
     const gitCssEscape = (value) => {
       if (window.CSS?.escape) return CSS.escape(String(value || ""));
       return String(value || "").replace(/["\\]/g, "\\$&");
@@ -276,7 +277,7 @@
         }
         const desiredKeys = new Set(section.files.map((entry) => gitFileStatsRowKey(section.kind, entry)));
         listEl.querySelectorAll(".git-commit-file-row").forEach((row) => {
-          const key = gitFileStatsRowKey(section.kind, { path: row.dataset.path || "" });
+          const key = gitFileStatsRowKey(section.kind, { path: row.dataset.path || "", old_path: row.dataset.oldPath || "" });
           if (!desiredKeys.has(key)) row.remove();
         });
         section.files.forEach((entry) => {
