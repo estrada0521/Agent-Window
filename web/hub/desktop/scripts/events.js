@@ -164,24 +164,6 @@
         toggleDeskSideBarOutward();
         return;
       }
-      if (event.data && event.data.type === "hub-open-timeline") {
-        const timelineUrl = typeof event.data.timelineUrl === "string" ? event.data.timelineUrl : "";
-        const timelineName = typeof event.data.timelineName === "string" ? event.data.timelineName : "";
-        if (timelineUrl && timelineName) {
-          openTimelineInDesk(timelineUrl, timelineName);
-          if (isPhoneViewport()) {
-            setDeskHubOpen(false);
-          } else {
-            showDeskHubList({ open: true });
-          }
-          void refreshHubTimelines(true, { skipRestore: true });
-        }
-        return;
-      }
-      if (event.data && event.data.type === "hub-theme-changed") {
-        applyIncomingThemeDesktop(event.data.themeDesktop || event.data.theme);
-        return;
-      }
       if (event.data && event.data.type === "text-size-shortcut") {
         if (event.data.reset) {
           applyDeskTextSizeAndBroadcast(DESK_TEXT_SIZE_DEFAULT);
