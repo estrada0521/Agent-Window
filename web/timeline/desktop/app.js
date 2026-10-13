@@ -226,16 +226,6 @@ __INCLUDE:../scroll-btn.js__
       apply(2);
     }).observe(messagesEl);
 
-    {
-      const header = document.querySelector(".page-header");
-      if (header) header.classList.remove("header-hidden");
-      messagesEl.addEventListener("scroll", () => {
-        if (header?.classList.contains("header-hidden")) {
-          header.classList.remove("header-hidden");
-        }
-      }, { passive: true });
-    }
-
 __INCLUDE:../messages.js__
 __INCLUDE:../transcript-render.js__
 __INCLUDE:../transcript-actions.js__

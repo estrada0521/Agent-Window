@@ -201,25 +201,6 @@
       height: var(--chrome-icon-size);
       stroke-width: var(--chrome-icon-stroke);
     }
-    .page-header-actions {
-      display: flex;
-      align-items: center;
-      gap: var(--chrome-icon-gap);
-      padding-right: 0;
-    }
-
-    @media (min-width: 1024px) {
-      .page-header-top {
-        padding-top: 2px;
-        padding-bottom: 2px;
-        padding-right: var(--page-side-pad);
-      }
-      .shell > .page-header.header-hidden {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-    }
     .file-item:not(:last-child) {
       background-image: linear-gradient(var(--composer-menu-row-border), var(--composer-menu-row-border));
       background-repeat: no-repeat;
