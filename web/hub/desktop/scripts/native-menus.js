@@ -3,7 +3,7 @@
     let _deskTimelineSwitcherOpen = false;
     async function openDeskNativeTimelineSwitcher() {
       const invoke = getNativeInvoke();
-      if (typeof invoke !== "function" || !_deskTimelineList || !_deskAppSidebarToggle) return;
+      if (typeof invoke !== "function") return;
       if (_deskTimelineSwitcherOpen) return;
       const items = [];
       for (const child of Array.from(_deskTimelineList.children)) {
@@ -11,13 +11,11 @@
           items.push({ label: child.textContent.trim(), section: true });
         } else if (child.classList.contains("desk-swipe-row")) {
           const row = child.querySelector(".desk-timeline-row");
-          const href = row?.dataset.openHref || "";
-          if (!row || !href) continue;
           items.push({
-            label: (row.querySelector(".desk-row-name")?.textContent || row.dataset.timelineName || "").trim(),
+            label: row.querySelector(".desk-row-name").textContent.trim(),
             current: row.classList.contains("is-selected"),
-            href,
-            name: row.dataset.timelineName || "",
+            href: row.dataset.openHref,
+            name: row.dataset.timelineName,
           });
         }
       }
@@ -28,8 +26,8 @@
       try {
         await invoke("show_timeline_switcher_menu", {
           payload: {
-            x: Math.round(rect.right || 0),
-            y: Math.round(rect.top || 0),
+            x: Math.round(rect.right),
+            y: Math.round(rect.top),
             items: items.map(({ label, section, current }) => ({ label, section: !!section, current: !!current })),
           },
         });
@@ -43,7 +41,7 @@
       const detail = event.detail || {};
       if (detail.action === "switchTimeline") {
         const item = _deskTimelineSwitcherItems[Number(detail.mode)];
-        if (item && item.href) openTimelineFrame(item.href, item.name);
+        if (item) openTimelineFrame(item.href, item.name);
         return;
       }
       if (detail.action === "renameTimeline") {
