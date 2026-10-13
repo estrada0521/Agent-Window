@@ -43,7 +43,7 @@ __INCLUDE:markdown-tables.js__
     let stableCodeBlocksRaf = 0;
     const stableCodeBlockScopes = new Set();
     const queueStableCodeBlockSync = (scope = document) => {
-      if (scope) stableCodeBlockScopes.add(scope);
+      stableCodeBlockScopes.add(scope);
       if (stableCodeBlocksRaf) return;
       stableCodeBlocksRaf = requestAnimationFrame(() => {
         stableCodeBlocksRaf = 0;
@@ -52,18 +52,15 @@ __INCLUDE:markdown-tables.js__
         const seen = new Set();
         const pres = [];
         scopes.forEach((target) => {
-          if (!target) return;
-          const list = target?.matches?.(".md-body pre")
-            ? [target]
-            : Array.from(target.querySelectorAll?.(".md-body pre") || []);
+          const list = target.matches?.(".md-body pre") ? [target] : target.querySelectorAll(".md-body pre");
           list.forEach((pre) => {
-            if (!pre || !pre.isConnected || seen.has(pre)) return;
+            if (!pre.isConnected || seen.has(pre)) return;
             seen.add(pre);
             pres.push(pre);
           });
         });
         pres.forEach((pre) => {
-          const width = pre.clientWidth || 0;
+          const width = pre.clientWidth;
           const prevWidth = Number.parseFloat(pre.dataset.stableWidth || "0");
           const widthChanged = Math.abs(width - prevWidth) > 0.5;
           if (widthChanged) {
@@ -90,13 +87,11 @@ __INCLUDE:markdown-tables.js__
       queueStableCodeBlockSync(document);
       syncMessageCollapse(document);
     });
-    if (document.fonts?.ready) {
-      document.fonts.ready.then(() => {
-        syncWideBlockRows(document);
-        queueStableCodeBlockSync(document);
-        syncMessageCollapse(document);
-      }).catch(() => {});
-    }
+    document.fonts.ready.then(() => {
+      syncWideBlockRows(document);
+      queueStableCodeBlockSync(document);
+      syncMessageCollapse(document);
+    });
     const ALL_BASE_AGENTS = __ALL_BASE_AGENTS_JS_ARRAY__;
     const AGENT_ICON_NAMES = new Set(ALL_BASE_AGENTS);
     const agentBaseName = (name) => (name || "").toLowerCase().replace(/-\d+$/, "");

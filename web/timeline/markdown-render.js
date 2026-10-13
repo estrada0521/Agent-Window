@@ -1,18 +1,16 @@
-    const normalizeEscapedLineBreaks = (text) => {
-      const value = String(text ?? "");
+    const normalizeEscapedLineBreaks = (value) => {
       if (!/\\[rn]/.test(value)) return value;
-      const matches = value.match(/\\r\\n|\\n|\\r/g) || [];
+      const matches = value.match(/\\r\\n|\\n|\\r/g);
       if (matches.length < 2 && !/\\n\\n|\\n\s*(?:[-*]|\d+\.|#{1,6}\s)/.test(value)) return value;
       return value.replace(/\\r\\n|\\n|\\r/g, "\n");
     };
     const applyWrittenOrderedListNumbers = (root, source) => {
-      if (!root || typeof marked?.lexer !== "function") return;
       const values = [];
       const walk = (tokens) => {
-        for (const token of tokens || []) {
+        for (const token of tokens) {
           if (token.type === "list" && token.ordered) {
-            for (const item of token.items || []) {
-              const match = String(item.raw || "").match(/^\s*(\d{1,9})[.)]/);
+            for (const item of token.items) {
+              const match = item.raw.match(/^\s*(\d{1,9})[.)]/);
               values.push(match ? match[1] : "");
               walk(item.tokens);
             }
@@ -21,22 +19,17 @@
           }
         }
       };
-      walk(marked.lexer(String(source ?? ""), { breaks: true, gfm: true }));
+      walk(marked.lexer(source, { breaks: true, gfm: true }));
       const items = root.querySelectorAll("ol > li");
       if (!values.length || values.length !== items.length) return;
       items.forEach((item, index) => {
         if (values[index]) item.setAttribute("value", values[index]);
       });
     };
-    const markdownEscapeHtml = (value) => String(value || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;");
     const markMarkdownLocalFileCandidates = (root) => {
-      if (!root?.querySelectorAll) return;
       root.querySelectorAll("a[href]").forEach((anchor) => {
-        if (!anchor || anchor.classList.contains("inline-file-link")) return;
-        const href = String(anchor.getAttribute("href") || "").trim();
+        if (anchor.classList.contains("inline-file-link")) return;
+        const href = anchor.getAttribute("href").trim();
         if (!pathFromLocalHref(href)) return;
         anchor.classList.add("local-file-candidate");
         anchor.dataset.localFileHref = href;
@@ -64,7 +57,7 @@
           error = `Markdown rendering failed: ${err.message}`;
         }
       }
-      return `<div class="markdown-plain-text" data-markdown-error="${markdownEscapeHtml(librariesPending ? "" : error).replaceAll('"', '&quot;')}">${markdownEscapeHtml(text)}</div>`;
+      return `<div class="markdown-plain-text" data-markdown-error="${escapeHtml(librariesPending ? "" : error).replaceAll('"', '&quot;')}">${escapeHtml(text)}</div>`;
     };
     const renderMarkdownContent = (text) => {
       let frontmatterHtml = "";
@@ -83,7 +76,7 @@
 
       const codeBlocks = [];
       let codeCount = 0;
-      let processedText = String(text ?? "").replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
+      let processedText = text.replace(/(```[\s\S]*?```|`[^`\n]+`)/g, (match) => {
         const id = `code-placeholder-${codeCount++}`;
         codeBlocks.push({ id, content: match });
         return `\x00CODE:${id}\x00`;
@@ -102,7 +95,6 @@
         return block ? block.content : "";
       });
 
-      const escapeAttr = (typeof escapeHtml === "function" ? escapeHtml : markdownEscapeHtml);
       const renderer = new marked.Renderer();
       renderer.table = function (token) {
         let raw = token.raw;
@@ -110,7 +102,7 @@
           raw = raw.replaceAll(`<span class="MATH_SAFE_BLOCK" data-id="${block.id}"></span>`, block.content);
         }
         return marked.Renderer.prototype.table.call(this, token)
-          .replace("<table>", `<table data-copy-text="${escapeAttr(raw).replaceAll('"', "&quot;")}">`);
+          .replace("<table>", `<table data-copy-text="${escapeHtml(raw).replaceAll('"', "&quot;")}">`);
       };
       let html = marked.parse(processedText, { breaks: true, gfm: true, renderer });
       if (typeof rewriteMarkdownHtml === "function") {
@@ -141,7 +133,7 @@
       }
       const copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
       const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-      const copyButtonHtml = `<button class="code-copy-btn" type="button" title="Copy" aria-label="Copy" data-copy-icon="${escapeAttr(copySvg).replaceAll('"', "&quot;")}" data-check-icon="${escapeAttr(checkSvg).replaceAll('"', "&quot;")}">${copySvg}</button>`;
+      const copyButtonHtml = `<button class="code-copy-btn" type="button" title="Copy" aria-label="Copy" data-copy-icon="${escapeHtml(copySvg).replaceAll('"', "&quot;")}" data-check-icon="${escapeHtml(checkSvg).replaceAll('"', "&quot;")}">${copySvg}</button>`;
       tempDiv.querySelectorAll("pre, table").forEach((block) => {
         const wrap = document.createElement("div");
         wrap.className = block.matches("table") ? "table-copy-wrap" : "code-block-wrap";
