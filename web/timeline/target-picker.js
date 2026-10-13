@@ -49,7 +49,7 @@
       const el = document.getElementById("targetPicker");
       if (el) {
         el.addEventListener("scroll", syncTargetPickerFade, { passive: true });
-        if (typeof ResizeObserver === "function") new ResizeObserver(syncTargetPickerFade).observe(el);
+        new ResizeObserver(syncTargetPickerFade).observe(el);
         if (document.documentElement.dataset.mobile === "1") {
           const clearChipPressed = () => {
             el.querySelectorAll(".target-chip.is-pressed").forEach((node) => node.classList.remove("is-pressed"));
