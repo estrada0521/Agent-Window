@@ -62,7 +62,6 @@
       }
     }
     const syncAttachPreviewScroll = () => {
-      if (!attachPreviewRow) return;
       if (attachPreviewControls) attachPreviewControls.hidden = !attachPreviewRow.children.length;
       const max = attachPreviewRow.scrollWidth - attachPreviewRow.clientWidth;
       attachScrollButtons.forEach((button, index) => {

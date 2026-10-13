@@ -1,6 +1,5 @@
     let repoPreviewBaseTheme = document.documentElement.dataset.theme === "light" ? "light" : "dark";
     let repoPreviewMode = "text";
-    let repoPreviewControlsWired = false;
     let filePreviewLoadSeq = 0;
     let cancelFilePreviewLoading = () => {};
     let pendingPathCopy = null;
@@ -92,10 +91,7 @@
       postPreviewModeToFrame(frame, repoPreviewExt(), repoPreviewMode);
     };
     const wireRepoPreviewControls = (sheetFooter) => {
-      if (repoPreviewControlsWired || !sheetFooter) return;
       const closeBtn = sheetFooter.querySelector(".mobile-bottom-sheet-close");
-      if (!closeBtn) return;
-      repoPreviewControlsWired = true;
       const shareBtn = document.createElement("button");
       shareBtn.type = "button";
       shareBtn.className = "repo-preview-share mobile-bottom-sheet-button";

@@ -200,7 +200,7 @@ __INCLUDE:file-autocomplete.js__
         const menu = document.querySelector("#fileDropdown.visible, #cmdDropdown.visible");
         if (menu) menu.style.maxHeight = "";
         const menuHeight = menu ? menu.offsetHeight + 8 : 0;
-        const attachHeight = attachPreviewRow?.children.length
+        const attachHeight = attachPreviewRow.children.length
           ? attachPreviewRow.getBoundingClientRect().height + 8
           : 0;
         maxHeight = Math.max(baseHeight, messageInput.getBoundingClientRect().bottom - topLimit - menuHeight - attachHeight);
@@ -209,7 +209,7 @@ __INCLUDE:file-autocomplete.js__
         maxHeight = parseFloat(inputStyle.maxHeight);
       }
       if (!isMobileComposer && !fitComposer
-        && (attachPreviewRow?.offsetHeight || document.querySelector("#fileDropdown.visible, #cmdDropdown.visible"))) {
+        && (attachPreviewRow.offsetHeight || document.querySelector("#fileDropdown.visible, #cmdDropdown.visible"))) {
         const aboveInput = composerShellEl.querySelector(".composer-above-input");
         maxHeight = Math.max(baseHeight, maxHeight + aboveInput.offsetTop);
         messageInput.style.maxHeight = maxHeight + "px";
@@ -230,7 +230,7 @@ __INCLUDE:file-autocomplete.js__
         messageInput.scrollTop = messageInput.scrollHeight;
       }
       if (isMobileComposer && isComposerOverlayOpen()) {
-        if (attachPreviewRow?.children.length) positionMobileComposerDropdown(attachPreviewRow);
+        if (attachPreviewRow.children.length) positionMobileComposerDropdown(attachPreviewRow);
         const menu = document.querySelector("#fileDropdown.visible, #cmdDropdown.visible");
         if (menu) positionMobileComposerDropdown(menu);
       }
@@ -246,7 +246,7 @@ __INCLUDE:file-autocomplete.js__
       const taTop = taRect.top - composerOffsetY;
       const aboveInput = document.querySelector(".composer-above-input");
       let aboveInputHeight = aboveInput ? Math.max(0, Math.ceil(aboveInput.getBoundingClientRect().height)) : 0;
-      if (dropdown !== attachPreviewRow && attachPreviewRow?.children.length) {
+      if (dropdown !== attachPreviewRow && attachPreviewRow.children.length) {
         aboveInputHeight += Math.max(0, Math.ceil(attachPreviewRow.getBoundingClientRect().height));
       }
       const gap = 8;
@@ -278,7 +278,7 @@ __INCLUDE:file-autocomplete.js__
       positionMobileComposerDropdown(dropdown);
     };
     document.addEventListener("composer-overlay-open", () => {
-      if (!isMobileComposer || !attachPreviewRow?.children.length) return;
+      if (!isMobileComposer || !attachPreviewRow.children.length) return;
       const reposition = () => positionComposerDropdown(attachPreviewRow);
       if (composerForm?.classList.contains("composer-focus-hack")) requestAnimationFrame(reposition);
       else reposition();
