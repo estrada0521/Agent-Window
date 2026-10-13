@@ -275,7 +275,6 @@ _hub_pages = build_hub_html_pages(
     pwa_icon_192_url="/pwa-icon-192.png",
     pwa_apple_touch_icon_url="/apple-touch-icon.png",
     hub_header_css=PAGE_HEADER_CSS,
-    hub_header_html=render_page_header(),
     hub_header_html_mobile=render_page_header(actions_html=MOBILE_HUB_HEADER_ACTIONS),
     hub_header_js=PAGE_HEADER_JS,
 )

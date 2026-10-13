@@ -550,4 +550,3 @@
       if (sessionStorage.getItem(DESK_AUTO_HEIGHT_KEY) === "1") setDeskAutoWindowHeight(true);
     }
     refreshHubTimelines(true);
-  __HUB_HEADER_JS__

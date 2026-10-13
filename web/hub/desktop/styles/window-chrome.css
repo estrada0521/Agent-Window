@@ -66,95 +66,11 @@
       --desk-inner-top-radius: calc(var(--text-size, 13px) * 16 / 13);
       --fit-chrome-mark-height: 0.38em;
     }
-    .page-header {
-      --page-side-pad: 0.92em;
-      --chrome-icon-btn-size: round(nearest, calc(var(--text-size, 13px) * 24 / 13), 1px);
-      --chrome-icon-size: round(nearest, calc(var(--text-size, 13px) * 15 / 13), 1px);
-      --chrome-icon-gap: 0.15em;
-      font-size: var(--text-size, 13px);
-    }
-    .page-menu-btn,
     .desk-settings-icon-btn,
     .timeline-control-btn,
     .desk-app-sidebar-toggle {
       font-size: inherit;
     }
-    html[data-native-app="1"] .shell > .page-header {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 0;
-      min-height: var(--native-chrome-band-h);
-      z-index: 1001;
-      background: transparent;
-      border: 0;
-      box-shadow: none;
-    }
-    .page-header .page-header-top {
-      min-height: 32px;
-      padding-top: 4px;
-      padding-bottom: 4px;
-      padding-left: 104px;
-    }
-    html[data-native-app="1"] .shell > .page-header > .page-header-top {
-      min-height: var(--native-chrome-band-h);
-    }
-    .page-title {
-      display: none;
-    }
-    .page-header .page-header-actions {
-      gap: 0;
-      margin-left: auto;
-    }
-    html[data-native-app="1"][data-native-root-window="1"] .page-header .page-header-actions {
-      position: fixed;
-      top: env(safe-area-inset-top, 0px);
-      right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
-      width: var(--chrome-icon-btn-size);
-      height: var(--native-chrome-band-h);
-      margin: 0;
-      padding: 0;
-      gap: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1306;
-      pointer-events: auto;
-      line-height: 0;
-    }
-    .page-header .page-header-actions .page-menu-btn {
-      background: transparent;
-      border: none;
-      box-shadow: none;
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
-      -webkit-tap-highlight-color: transparent;
-      transition: none;
-      color: var(--fg);
-      justify-content: flex-end;
-      padding-right: 0;
-    }
-    .page-header .page-header-actions .page-menu-btn svg {
-      transform: translateY(-2px);
-    }
-    html[data-native-app="1"][data-native-root-window="1"] .page-header .page-header-actions .page-menu-btn {
-      width: var(--chrome-icon-btn-size);
-      height: var(--chrome-icon-btn-size);
-      margin: 0;
-      padding: 0;
-      opacity: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    html[data-native-app="1"][data-native-root-window="1"] .page-header .page-header-actions .page-menu-btn svg {
-      width: var(--chrome-icon-size);
-      height: var(--chrome-icon-size);
-      margin: 0 auto;
-      transform: none;
-    }
-    html[data-native-app="1"][data-auto-window-height="1"] .page-menu-btn,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn,
     html[data-native-app="1"][data-auto-window-height="1"] .timeline-control-btn,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle {
@@ -167,13 +83,11 @@
     html[data-native-app="1"][data-auto-window-height="1"] .timeline-tree-label {
       display: none;
     }
-    html[data-native-app="1"][data-auto-window-height="1"] .page-menu-btn svg,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn svg,
     html[data-native-app="1"][data-auto-window-height="1"] .timeline-control-btn svg,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle svg {
       display: none !important;
     }
-    html[data-native-app="1"][data-auto-window-height="1"] .page-menu-btn::after,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-settings-icon-btn::after,
     html[data-native-app="1"][data-auto-window-height="1"] .timeline-control-btn::after,
     html[data-native-app="1"][data-auto-window-height="1"] .desk-app-sidebar-toggle::after {
@@ -350,10 +264,6 @@
       white-space: nowrap;
       pointer-events: none;
       user-select: none;
-    }
-    .page-header .page-header-actions .page-menu-btn:active {
-      background: transparent;
-      transform: none;
     }
 
     html[data-native-app="1"][data-native-root-window="1"] :is(.desk-floating-controls, .desk-top-right-controls, .desk-window-traffic, .fit-window-dots, .native-top-drag-strip, .desk-launch-shell) {

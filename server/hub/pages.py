@@ -24,7 +24,6 @@ def build_hub_html_pages(
     pwa_icon_192_url: str,
     pwa_apple_touch_icon_url: str,
     hub_header_css: str,
-    hub_header_html: str,
     hub_header_html_mobile: str,
     hub_header_js: str,
 ) -> dict[str, str]:
@@ -44,7 +43,7 @@ def build_hub_html_pages(
         )
         return html.replace("__APP_DISPLAY_NAME__", APP_DISPLAY_NAME).replace("__PAGE_TITLE__", APP_DISPLAY_NAME)
 
-    hub_home_desktop_html = _render_hub_home_html(desktop_template_dir, header_html=hub_header_html)
+    hub_home_desktop_html = _render_hub_home_html(desktop_template_dir, header_html="")
     hub_home_mobile_html = _render_hub_home_html(mobile_template_dir, header_html=hub_header_html_mobile)
     return {
         "hub_home_html_desktop": hub_home_desktop_html,
