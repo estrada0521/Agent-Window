@@ -9,12 +9,12 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from server.same_origin import reject_cross_origin
-from server.hub.state import HubState
+from server.state import ServerState
 from server.appearance.colors import apply_color_tokens, resolve_theme_palette
 from server.appearance.colors import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from server.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
-from server.hub.timeline_routes import dispatch_timeline_route
+from server.timeline.routes import dispatch_timeline_route
 from server.page_header import (
     PAGE_HEADER_CSS,
     PAGE_HEADER_JS,
@@ -51,31 +51,31 @@ _initialized = False
 repo_root = Path()
 script_path = Path()
 port = 0
-hub = None
+server_state = None
 restart_lock = threading.Lock()
 restart_pending = False
 _restart_release_event = threading.Event()
-hub_server = None
+http_server = None
 
 
 def initialize_from_argv(argv: list[str] | None = None) -> None:
     global _initialized
-    global repo_root, script_path, port, hub
-    global restart_pending, hub_server
+    global repo_root, script_path, port, server_state
+    global restart_pending, http_server
 
     if _initialized:
         return
 
     args = list(sys.argv[1:] if argv is None else argv)
     if len(args) != 2:
-        raise SystemExit("usage: python -m server.hub.server <repo_root> <script_path>")
+        raise SystemExit("usage: python -m server.main <repo_root> <script_path>")
 
     root_arg, script_arg = args
     repo_root = Path(root_arg).resolve()
     script_path = Path(script_arg).resolve()
-    port = int((repo_root / "server" / "hub" / "port").read_text().strip())
-    hub = HubState()
-    restart_pending, hub_server = False, None
+    port = int((repo_root / "server" / "port").read_text().strip())
+    server_state = ServerState()
+    restart_pending, http_server = False, None
 
     _initialized = True
 
@@ -83,10 +83,10 @@ def initialize_from_argv(argv: list[str] | None = None) -> None:
 PROCESS_HANDOFF_TIMEOUT_SEC = 8.0
 
 
-def launch_hub_restart(*, script_path, repo_root, hub_server) -> str:
-    hub_server.shutdown()
-    hub_server.server_close()
-    hub.close()
+def launch_server_restart(*, script_path, repo_root, http_server) -> str:
+    http_server.shutdown()
+    http_server.server_close()
+    server_state.close()
     try:
         completed = subprocess.run(
             ["bash", str(script_path)],
@@ -98,17 +98,17 @@ def launch_hub_restart(*, script_path, repo_root, hub_server) -> str:
             timeout=PROCESS_HANDOFF_TIMEOUT_SEC,
         )
     except subprocess.TimeoutExpired:
-        return f"server/hub/start did not finish within {PROCESS_HANDOFF_TIMEOUT_SEC:g}s"
-    return "" if completed.returncode == 0 else completed.stderr.strip() or f"server/hub/start exited {completed.returncode}"
+        return f"server/start did not finish within {PROCESS_HANDOFF_TIMEOUT_SEC:g}s"
+    return "" if completed.returncode == 0 else completed.stderr.strip() or f"server/start exited {completed.returncode}"
 
 
-def queue_hub_restart():
+def queue_server_restart():
     global restart_pending
     with restart_lock:
         if restart_pending:
             return False, "restart already pending", False
         restart_pending = True
-    detail = launch_hub_restart(script_path=script_path, repo_root=repo_root, hub_server=hub_server)
+    detail = launch_server_restart(script_path=script_path, repo_root=repo_root, http_server=http_server)
     return not detail, detail, True
 
 
@@ -125,7 +125,7 @@ _HUB_LAUNCH_SHELL_BODY_HTML = (
     '<span class="launch-shell-title">Agent Window</span>'
     "</div>"
 )
-_HUB_LAUNCH_SHELL_CSS = (Path(__file__).resolve().parents[2] / "web" / "hub" / "launch-shell.css").read_text()
+_HUB_LAUNCH_SHELL_CSS = (Path(__file__).resolve().parents[1] / "web" / "hub" / "launch-shell.css").read_text()
 HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
 <html lang="en" data-theme-desktop="__THEME_DESKTOP__" data-theme-mobile="__THEME_MOBILE__" data-view="__VIEW_VARIANT__">
 <head>
@@ -276,8 +276,8 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
 </body>
 </html>"""
 
-_HUB_DESKTOP_TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "web" / "hub" / "desktop"
-_HUB_MOBILE_TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "web" / "hub" / "mobile"
+_HUB_DESKTOP_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "web" / "hub" / "desktop"
+_HUB_MOBILE_TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "web" / "hub" / "mobile"
 _hub_pages = build_hub_html_pages(
     desktop_template_dir=_HUB_DESKTOP_TEMPLATE_DIR,
     mobile_template_dir=_HUB_MOBILE_TEMPLATE_DIR,
@@ -295,8 +295,8 @@ HUB_HOME_MOBILE_HTML = _hub_pages["hub_home_html_mobile"]
 
 def _hub_action_context() -> dict[str, object]:
     return {
-        "hub": hub,
-        "queue_hub_restart_fn": queue_hub_restart,
+        "hub": server_state,
+        "queue_hub_restart_fn": queue_server_restart,
         "release_restart_hold_fn": release_restart_hold,
     }
 
@@ -391,9 +391,9 @@ class Handler(BaseHTTPRequestHandler):
         self._send_html(200, apply_color_tokens(page))
 
     def _get_timelines(self, _parsed, _ctx):
-        live = live_timelines_query(hub)
+        live = live_timelines_query(server_state)
         self._send_json(200, {
-            "server_instance": hub.server_instance,
+            "server_instance": server_state.server_instance,
             "active_timelines": active_timeline_records(live),
             "archived_timelines": archived_timeline_records(live),
             "tmux_state": live.state,
@@ -409,7 +409,7 @@ class Handler(BaseHTTPRequestHandler):
         after_seq = 0
         try:
             while True:
-                seq = hub.wait_for_timeline_messages_changed(after_seq, timeout=15.0)
+                seq = server_state.wait_for_timeline_messages_changed(after_seq, timeout=15.0)
                 if seq is None:
                     self.wfile.write(b": keepalive\n\n")
                 else:
@@ -428,7 +428,7 @@ class Handler(BaseHTTPRequestHandler):
             page = page.replace("__TEXT_SIZE_DEFAULT__", str(DESKTOP_TEXT_SIZE))
             page = page.replace("__TEXT_SIZE_MIN__", str(TEXT_SIZE_MIN))
             page = page.replace("__TEXT_SIZE_MAX__", str(TEXT_SIZE_MAX))
-        page = apply_font_tokens(page.replace("__SERVER_INSTANCE__", hub.server_instance))
+        page = apply_font_tokens(page.replace("__SERVER_INSTANCE__", server_state.server_instance))
         self._send_html(
             200,
             apply_color_tokens(page, mobile_theme_default=MOBILE_THEME_DEFAULT),
@@ -442,7 +442,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         try:
-            if dispatch_timeline_route(self, "GET", parsed, hub):
+            if dispatch_timeline_route(self, "GET", parsed, server_state):
                 return
         except Exception as exc:
             self.log_error("Timeline request failed: %s", exc)
@@ -460,7 +460,7 @@ class Handler(BaseHTTPRequestHandler):
             return
         parsed = urlparse(self.path)
         try:
-            if dispatch_timeline_route(self, "POST", parsed, hub):
+            if dispatch_timeline_route(self, "POST", parsed, server_state):
                 return
         except Exception as exc:
             self.log_error("Timeline request failed: %s", exc)
@@ -498,16 +498,16 @@ _POST_ROUTE_HANDLERS = {
 
 
 def main(argv: list[str] | None = None) -> None:
-    global hub_server
+    global http_server
 
     initialize_from_argv(argv)
 
     ThreadingHTTPServer.allow_reuse_address = True
     ThreadingHTTPServer.request_queue_size = 128
-    hub_server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    threading.Thread(target=hub.start_timelines, daemon=True, name="timeline-startup").start()
+    http_server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    threading.Thread(target=server_state.start_timelines, daemon=True, name="timeline-startup").start()
     print(f"http://127.0.0.1:{port}/", flush=True)
-    hub_server.serve_forever()
+    http_server.serve_forever()
     if restart_pending:
         _restart_release_event.wait()
 

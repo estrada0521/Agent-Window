@@ -140,7 +140,7 @@ def resolve_agent_instance(requested: str, available: list[str]) -> str:
 
 
 def notify_delivered_agents(agents: list[str], workspace: str) -> None:
-    port = int((Path(__file__).resolve().parents[2] / "server/hub/port").read_text())
+    port = int((Path(__file__).resolve().parents[2] / "server/port").read_text())
     body = json.dumps({"targets": agents}).encode("utf-8")
     connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
     try:

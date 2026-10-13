@@ -24,7 +24,7 @@ class TmuxRunResult:
     timed_out: bool = False
 
 
-class HubState:
+class ServerState:
     def __init__(self):
         self.server_instance = uuid.uuid4().hex
         self.assets = TimelineAssets()
@@ -46,7 +46,7 @@ class HubState:
         workspace = normalize_workspace(workspace)
         with self._get_timeline_lock(workspace):
             if self._closed:
-                raise RuntimeError("Hub is restarting")
+                raise RuntimeError("Server is restarting")
             state = self._timelines.get(workspace)
             if state is None:
                 state = TimelineState(
@@ -57,7 +57,7 @@ class HubState:
                 with self._timeline_locks_master:
                     if self._closed:
                         state.close()
-                        raise RuntimeError("Hub is restarting")
+                        raise RuntimeError("Server is restarting")
                     self._timelines[workspace] = state
                 if state.session_is_active:
                     state.start()

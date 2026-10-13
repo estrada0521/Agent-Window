@@ -285,6 +285,6 @@ The source code is about 1.6 MB and 40,000 lines.
 
 The app is a native launcher that uses the local repo directly, under 200 KB in size. No telemetry. The only network dependencies besides the Agent CLIs are `marked`, `DOMPurify`, `katex`, and (when a syntax theme is configured) `highlight.js` from `cdn.jsdelivr.net`. Vendor them yourself if you want it fully local.
 
-The Hub occupies the port in the `server/hub/port` file (default `8788`); edit the file to change it.
+The server listens on the port in the `server/port` file (default `8788`); edit the file to change it.
 
 Agent Window itself writes filesystem data only under `~/.agent-window/` and `<workspace>/.agent-window/`.
