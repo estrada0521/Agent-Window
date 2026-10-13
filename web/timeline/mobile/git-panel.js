@@ -243,25 +243,34 @@ __INCLUDE:../git-panel-controller.js__
     const gitDiffLinesHtml = (text) => {
       const out = [];
       let inHunk = false;
+      let oldLine = 0;
+      let newLine = 0;
       for (const line of String(text || "").replace(/\n$/, "").split("\n")) {
         if (line.startsWith("diff --git ")) {
           inHunk = false;
           continue;
         }
         if (line.startsWith("@@")) {
+          const ranges = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+          oldLine = Number(ranges[1]);
+          newLine = Number(ranges[2]);
           inHunk = true;
-          out.push(`<div class="git-diff-line is-hunk">${escapeHtml(line)}</div>`);
+          out.push(`<tr class="git-diff-line is-hunk"><td colspan="4">${escapeHtml(line)}</td></tr>`);
           continue;
         }
         if (!inHunk) {
-          if (line.startsWith("Binary files")) out.push(`<div class="git-diff-line is-hunk">${escapeHtml(line)}</div>`);
+          if (line.startsWith("Binary files")) out.push(`<tr class="git-diff-line is-hunk"><td colspan="4">${escapeHtml(line)}</td></tr>`);
           continue;
         }
         if (line.startsWith("\\")) continue;
-        const kind = line.startsWith("+") ? " is-add" : line.startsWith("-") ? " is-del" : "";
-        out.push(`<div class="git-diff-line${kind}">${escapeHtml(line.slice(0, 1))}<span class="git-diff-code">${escapeHtml(line.slice(1))}</span></div>`);
+        const added = line.startsWith("+");
+        const deleted = line.startsWith("-");
+        const kind = added ? " is-add" : deleted ? " is-del" : "";
+        out.push(`<tr class="git-diff-line${kind}"><td class="git-diff-number">${added ? "" : oldLine}</td><td class="git-diff-number">${deleted ? "" : newLine}</td><td>${escapeHtml(line.slice(0, 1))}</td><td class="git-diff-code">${escapeHtml(line.slice(1))}</td></tr>`);
+        if (!added) oldLine += 1;
+        if (!deleted) newLine += 1;
       }
-      return out.length ? `<div class="git-diff-scroll"><div class="git-diff-lines">${out.join("")}</div></div>` : '<div class="git-diff-line is-hunk">No textual changes</div>';
+      return out.length ? `<div class="git-diff-scroll"><table class="git-diff-lines"><tbody>${out.join("")}</tbody></table></div>` : '<div class="git-diff-line is-hunk">No textual changes</div>';
     };
     const renderGitFileDiffs = () => {
       const context = gitPanel.detailContext;

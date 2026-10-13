@@ -100,6 +100,7 @@
     .git-diff-scroll {
       overflow-x: auto;
       overflow-y: hidden;
+      overscroll-behavior-x: none;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       background: rgba(var(--fg-rgb), 0.03);
@@ -112,11 +113,10 @@
     .git-diff-lines {
       width: max-content;
       min-width: 100%;
+      border-collapse: collapse;
     }
 
     .git-diff-line {
-      min-width: max-content;
-      padding: 0 calc(var(--sheet-list-padding-inline) + var(--sheet-list-row-padding-inline));
       white-space: pre;
       font-family: var(--font-code);
       font-size: var(--git-diff-code-size, 11px);
@@ -124,8 +124,32 @@
       color: var(--fg);
     }
 
-    .git-diff-code {
-      margin-left: 1ch;
+    .git-diff-line > td {
+      padding: 0;
+    }
+
+    .git-diff-line > td:first-child,
+    div.git-diff-line {
+      padding-left: calc(var(--sheet-list-padding-inline) + var(--sheet-list-row-padding-inline));
+    }
+
+    .git-diff-line > td:last-child,
+    div.git-diff-line {
+      padding-right: calc(var(--sheet-list-padding-inline) + var(--sheet-list-row-padding-inline));
+    }
+
+    .git-diff-line > .git-diff-number {
+      width: 1%;
+      padding-right: 1ch;
+      text-align: right;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .git-diff-line > .git-diff-code {
+      padding-left: 1ch;
     }
 
     .git-diff-line.is-add {
@@ -139,6 +163,10 @@
     .git-diff-line.is-hunk {
       color: var(--muted);
       background: rgba(var(--fg-rgb), 0.06);
+    }
+
+    .git-diff-line.is-hunk > td,
+    div.git-diff-line.is-hunk {
       padding-top: 6px;
       padding-bottom: 2px;
     }
