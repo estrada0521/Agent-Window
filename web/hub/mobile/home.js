@@ -98,11 +98,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
       if (channels) root.style.setProperty("--mob-top-gradient-rgb", channels);
     };
     applyMobThemeGradientVars();
-    new MutationObserver((mutations) => {
-      if (mutations.some((mutation) => mutation.attributeName === "data-theme")) {
-        applyMobThemeGradientVars();
-      }
-    }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    new MutationObserver(applyMobThemeGradientVars).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     const MOBILE_THEME_KEY = "agent_window_theme_mobile";
     const currentMobileThemeSetting = () => {
       const value = document.documentElement.dataset.themeMobile;
@@ -114,7 +110,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
       const setting = currentMobileThemeSetting();
       if (setting !== "system") return setting;
       if (observedTheme === "light" || observedTheme === "dark") return observedTheme;
-      try { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } catch (_) { return "dark"; }
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     };
     const publishMobileTheme = (observedTheme = "") => {
       const theme = resolveMobileTheme(observedTheme);
@@ -122,7 +118,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
       root.dataset.theme = theme;
       root.style.colorScheme = theme;
       applyMobThemeGradientVars();
-      _timelineFrame?.contentWindow?.postMessage({
+      _timelineFrame.contentWindow.postMessage({
         type: "hub-theme-changed",
         theme,
         themeMobile: currentMobileThemeSetting(),
@@ -193,12 +189,10 @@ __INCLUDE:../../mobile-edge-swipe.js__
       _overlaySettleTimer = setTimeout(settle, Math.max(0, TIMELINE_OVERLAY_SLIDE_MS - TIMELINE_OVERLAY_SETTLE_LEAD_MS));
     }
     function showLaunchShell() {
-      if (!_launchShell) return;
       _launchShell.hidden = false;
       _launchShell.classList.add("visible");
     }
     function hideLaunchShell() {
-      if (!_launchShell) return;
       _launchShell.classList.remove("visible");
       _launchShell.hidden = true;
       _launchShell.removeAttribute("data-reload-stage");
@@ -489,7 +483,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
       select.innerHTML = `<option value="" disabled selected>${title}</option>` + choices.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
       settingNativeMenuPick = pick;
       const menuButton = document.getElementById("pageMenuBtn");
-      const rect = menuButton?.getBoundingClientRect() || { left: 0, top: 0, width: 1, height: 1 };
+      const rect = menuButton.getBoundingClientRect();
       select.value = "";
       select.style.left = `${Math.max(0, Math.round(rect.left))}px`;
       select.style.top = `${Math.max(0, Math.round(rect.top))}px`;
@@ -681,10 +675,6 @@ __INCLUDE:../../mobile-edge-swipe.js__
         return;
       }
       if (e.data === "hub_close_timeline") closeTimelineFrame();
-      if (e.data && e.data.type === "toggle-hub") {
-        closeTimelineFrame();
-        return;
-      }
       if (e.data && e.data.type === "open-hub-path") {
         const nextUrl = typeof e.data.url === "string" ? e.data.url : "";
         if (nextUrl) {
@@ -719,13 +709,6 @@ __INCLUDE:../../mobile-edge-swipe.js__
       if (e.data && e.data.type === "hub-mobile-system-theme-observed" && currentMobileThemeSetting() === "system") {
         const theme = e.data.theme === "light" ? "light" : (e.data.theme === "dark" ? "dark" : "");
         if (theme) publishMobileTheme(theme);
-        return;
-      }
-      if (e.data && e.data.type === "hub-theme-changed") {
-        if (e.data.theme !== "light" && e.data.theme !== "dark") return;
-        const theme = e.data.theme;
-        document.documentElement.dataset.theme = theme;
-        _timelineFrame?.contentWindow?.postMessage({ type: "hub-theme-changed", theme }, "*");
         return;
       }
     });
@@ -1039,41 +1022,37 @@ __INCLUDE:../../mobile-edge-swipe.js__
     (function () {
       var bridge = document.getElementById("pageNativeMenuBridge");
       var menuButton = document.getElementById("pageMenuBtn");
-      if (bridge) {
-        bridge.addEventListener("pointerdown", function (e) {
-          if (!settingNativeMenuIsArmed()) return;
-          e.preventDefault();
+      bridge.addEventListener("pointerdown", function (e) {
+        if (!settingNativeMenuIsArmed()) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        skipSettingMenuBlur = false;
+        showArmedSettingNativeMenu();
+      });
+      bridge.addEventListener("change", function (e) {
+        var val = bridge.value;
+        if (!val) return;
+        if (val === "theme") {
           e.stopImmediatePropagation();
-          skipSettingMenuBlur = false;
-          showArmedSettingNativeMenu();
-        });
-        bridge.addEventListener("change", function (e) {
-          var val = bridge.value;
-          if (!val) return;
-          if (val === "theme") {
-            e.stopImmediatePropagation();
-            bridge.value = "";
-            openSettingNativeMenu("Theme", [["system", "System"], ["light", "Light"], ["dark", "Dark"]], applyMobileThemeSetting);
-          } else if (val === "hand") {
-            e.stopImmediatePropagation();
-            bridge.value = "";
-            openSettingNativeMenu("Hand", [["right", "Right"], ["left", "Left"]], applyMobileHand);
-          } else if (val === "agent-sound") {
-            e.stopImmediatePropagation();
-            bridge.value = "";
-            toggleAgentSound();
-          }
-        });
-      }
-      if (menuButton) {
-        menuButton.addEventListener("click", function (e) {
-          if (!settingNativeMenuIsArmed()) return;
-          e.preventDefault();
+          bridge.value = "";
+          openSettingNativeMenu("Theme", [["system", "System"], ["light", "Light"], ["dark", "Dark"]], applyMobileThemeSetting);
+        } else if (val === "hand") {
           e.stopImmediatePropagation();
-          skipSettingMenuBlur = false;
-          showArmedSettingNativeMenu();
-        });
-      }
+          bridge.value = "";
+          openSettingNativeMenu("Hand", [["right", "Right"], ["left", "Left"]], applyMobileHand);
+        } else if (val === "agent-sound") {
+          e.stopImmediatePropagation();
+          bridge.value = "";
+          toggleAgentSound();
+        }
+      });
+      menuButton.addEventListener("click", function (e) {
+        if (!settingNativeMenuIsArmed()) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        skipSettingMenuBlur = false;
+        showArmedSettingNativeMenu();
+      });
       document.addEventListener("click", function () {
         if (skipSettingMenuBlur) setTimeout(function () { skipSettingMenuBlur = false; }, 0);
       });
