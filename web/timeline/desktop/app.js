@@ -1246,11 +1246,8 @@ __INCLUDE:git-panel/events.js__
         }
         if (event.metaKey && !event.altKey && !event.shiftKey && event.code === "KeyE") {
           event.preventDefault();
-          if (document.documentElement.dataset.autoWindowHeight === "1") {
-            window.parent?.postMessage({ type: "toggle-side-bar" }, "*");
-          } else {
-            toggleSideBar();
-          }
+          toggleSideBar();
+          if (document.documentElement.dataset.autoWindowHeight === "1") window.focus();
           return;
         }
         if (event.metaKey && !event.altKey && !event.shiftKey && !event.ctrlKey && event.code === "KeyT") {

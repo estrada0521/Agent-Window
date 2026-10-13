@@ -156,10 +156,6 @@
         toggleDeskHub();
         return;
       }
-      if (event.data && event.data.type === "toggle-side-bar") {
-        toggleDeskSideBar();
-        return;
-      }
       if (event.data && event.data.type === "toggle-hub-outward" && event.source === _deskTimelineFrame?.contentWindow) {
         toggleDeskHubOutward();
         return;
