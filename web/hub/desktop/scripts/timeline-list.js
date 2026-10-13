@@ -30,8 +30,8 @@
     function renderDeskTimelineRow(timeline, archived) {
       const timelineName = String(timeline.name);
       const archivedClass = archived ? " archived" : "";
-      const selectedClass = _deskSelectedTimelineName === timelineName ? " is-selected" : "";
       const isSelected = _deskSelectedTimelineName === timelineName;
+      const selectedClass = isSelected ? " is-selected" : "";
       const unreadClass = !isSelected && _deskUnreadTimelines.has(timelineName) ? " is-unread" : "";
       const swipeActionLabel = archived ? "Revive" : "Archive";
       const swipeActionRoute = archived ? "revive" : "kill";
@@ -93,11 +93,9 @@
     }
 
     function applyDeskTimelineSelection() {
-      _deskAppSidebarToggle?.classList.toggle("is-unread", _deskUnreadTimelines.size > 0);
-      if (!_deskTimelineList) return;
+      _deskAppSidebarToggle.classList.toggle("is-unread", _deskUnreadTimelines.size > 0);
       for (const wrap of _deskTimelineList.querySelectorAll(".desk-swipe-row")) {
         const row = wrap.querySelector(".desk-timeline-row");
-        if (!row) continue;
         const name = row.dataset.timelineName || "";
         const isSelected = name === _deskSelectedTimelineName;
         row.classList.toggle("is-selected", isSelected);
@@ -274,7 +272,7 @@
 
     function beginDeskTimelineRename(timelineName) {
       if (_deskTimelineRename) _deskTimelineRename.cancel();
-      const row = Array.from(_deskTimelineList?.querySelectorAll(".desk-action-timeline-row") || [])
+      const row = Array.from(_deskTimelineList.querySelectorAll(".desk-action-timeline-row"))
         .find((candidate) => candidate.dataset.timelineName === timelineName);
       const nameEl = row?.querySelector(".desk-row-name");
       if (!row || !nameEl) return;
@@ -435,10 +433,9 @@
     }
 
     function renderDesktopTimelines(active, archived) {
-      if (!_deskTimelineList) return;
       const rowKey = (wrap) => wrap.dataset.timelineName || "";
       const firstRects = captureListRowRects(_deskTimelineList, ".desk-swipe-row", rowKey);
-      const newTimelineSection = _deskNewTimelineToggle?.closest(".desk-new-timeline-section") || null;
+      const newTimelineSection = _deskNewTimelineToggle.closest(".desk-new-timeline-section");
       let html = "";
       if (active.length) {
         html += `<div class="desk-section-label">Active</div>`;
@@ -449,7 +446,7 @@
         html += archived.map((timeline) => renderDeskTimelineRow(timeline, true)).join("");
       }
       _deskTimelineList.innerHTML = html;
-      if (newTimelineSection) _deskTimelineList.prepend(newTimelineSection);
+      _deskTimelineList.prepend(newTimelineSection);
       _deskTimelineList.querySelectorAll(".desk-swipe-row").forEach(initDeskSwipeRow);
       updateDeskTimelineListFade();
       flipListRows(_deskTimelineList, ".desk-swipe-row", rowKey, firstRects);
@@ -495,7 +492,6 @@
     }
     function updateDeskChromeOverflow() {
       fitDeskTreeLabel();
-      if (!_deskFloatingControls || !_deskTopRightControls || !_deskWindowTraffic) return;
       _deskFloatingControls.classList.remove("is-title-hidden", "is-buttons-hidden");
       _deskTopRightControls.classList.remove("is-buttons-hidden");
       const trafficLeft = _deskWindowTraffic.getBoundingClientRect().left;
@@ -510,7 +506,6 @@
     }
 
     function updateDeskTimelineListFade() {
-      if (!_deskTimelineList) return;
       _deskTimelineList.dataset.scrollFade = computeScrollFadeState(_deskTimelineList);
     }
 
@@ -538,7 +533,7 @@
         if (!activeNames.has(name)) _deskUnreadTimelines.delete(name);
       });
       _deskPreviewRevisions = nextRevisions;
-      _deskAppSidebarToggle?.classList.toggle("is-unread", _deskUnreadTimelines.size > 0);
+      _deskAppSidebarToggle.classList.toggle("is-unread", _deskUnreadTimelines.size > 0);
     }
 
     async function refreshHubTimelines(force = false, options = {}) {
