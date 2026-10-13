@@ -309,8 +309,8 @@ __INCLUDE:../hud.js__
     const anchorSubMenu = (select, anchor = null) => {
       const baseAnchor = rightMenuBtn || document.activeElement || document.body;
       if (document.documentElement.dataset.mobile === "1") {
-        const baseRect = baseAnchor.getBoundingClientRect ? baseAnchor.getBoundingClientRect() : { left: 0, top: 0, width: 1, height: 1 };
-        const anchorRect = anchor?.getBoundingClientRect ? anchor.getBoundingClientRect() : null;
+        const baseRect = baseAnchor.getBoundingClientRect();
+        const anchorRect = anchor ? anchor.getBoundingClientRect() : null;
         const left = anchorRect ? anchorRect.left : baseRect.left;
         const width = anchorRect ? anchorRect.width : baseRect.width;
         select.style.left = `${Math.max(0, Math.round(left))}px`;
@@ -320,7 +320,7 @@ __INCLUDE:../hud.js__
         return;
       }
       const anchorEl = anchor || baseAnchor;
-      const rect = anchorEl.getBoundingClientRect ? anchorEl.getBoundingClientRect() : { left: 0, top: 0, right: 0, width: 1, height: 1 };
+      const rect = anchorEl.getBoundingClientRect();
       const gap = 8;
       const vw = window.innerWidth || document.documentElement.clientWidth || 0;
       const width = 220;
@@ -362,30 +362,26 @@ __INCLUDE:../hud.js__
     const fetchWithTimeout = async (url, options = {}, timeoutMs = 5000) => {
       let timer = null;
       let timedOut = false;
-      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      const controller = new AbortController();
       const requestOptions = {
         cache: "no-store",
         ...options,
+        signal: controller.signal,
       };
-      const upstreamSignal = options?.signal || null;
-      if (controller) {
-        requestOptions.signal = controller.signal;
-        if (upstreamSignal) {
-          if (upstreamSignal.aborted) {
-            controller.abort();
-          } else if (typeof upstreamSignal.addEventListener === "function") {
-            upstreamSignal.addEventListener("abort", () => controller.abort(), { once: true });
-          }
+      const upstreamSignal = options.signal;
+      if (upstreamSignal) {
+        if (upstreamSignal.aborted) {
+          controller.abort();
+        } else {
+          upstreamSignal.addEventListener("abort", () => controller.abort(), { once: true });
         }
-      } else if (upstreamSignal) {
-        requestOptions.signal = upstreamSignal;
       }
       const fetchPromise = fetch(url, requestOptions);
       if (!(timeoutMs > 0)) return fetchPromise;
       const timeoutPromise = new Promise((_, reject) => {
         timer = setTimeout(() => {
           timedOut = true;
-          try { controller?.abort(); } catch (_) {}
+          controller.abort();
           reject(new Error("request timeout"));
         }, timeoutMs);
       });
