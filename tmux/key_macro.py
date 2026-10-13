@@ -38,8 +38,9 @@ def run_key_macro(
                 return 400, {"ok": False, "error": f"pane not found for {target_item}"}
             if macro_id in PANE_TEXT_MACROS or macro_id == TERMINAL_INPUT:
                 text = arg if macro_id == TERMINAL_INPUT else macro_id
-                if not deliver_text_to_pane(run_tmux, pane_id, text):
-                    return 400, {"ok": False, "error": f"send-keys failed for {target_item}"}
+                error = deliver_text_to_pane(run_tmux, pane_id, text)
+                if error:
+                    return 400, {"ok": False, "error": f"{target_item}: {error}"}
                 continue
             key = macro_id.upper() if macro_id.startswith("f") else (_ARROW_KEYS[macro_id] if arrow else _SINGLE_KEYS[macro_id])
             for _ in range(arrow or 1):

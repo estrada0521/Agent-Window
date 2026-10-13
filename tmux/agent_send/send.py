@@ -59,8 +59,9 @@ class AgentSender:
         if any(target.strip().lower() == "terminal" for target in target_spec.split(",")):
             if target_spec.strip().lower() != "terminal":
                 raise RuntimeError("terminal must be the only target")
-            if not deliver_text_to_pane(run_tmux, self.terminal_pane_id(), payload):
-                raise RuntimeError("Failed to deliver to terminal.")
+            error = deliver_text_to_pane(run_tmux, self.terminal_pane_id(), payload)
+            if error:
+                raise RuntimeError(f"terminal: {error}")
             print("Sent to terminal.")
             return True
 
@@ -78,10 +79,14 @@ class AgentSender:
 
         delivered: list[str] = []
         for agent, pane_id in panes_by_target.items():
-            if deliver_text_to_pane(run_tmux, pane_id, delivery_payload):
-                delivered.append(agent)
+            try:
+                error = deliver_text_to_pane(run_tmux, pane_id, delivery_payload)
+            except Exception as exc:
+                error = str(exc)
+            if error:
+                print(f"{agent}: {error}", file=sys.stderr)
             else:
-                print(f"Failed to deliver to: {agent}", file=sys.stderr)
+                delivered.append(agent)
         if not delivered:
             raise RuntimeError("Message delivery failed for all targets.")
 

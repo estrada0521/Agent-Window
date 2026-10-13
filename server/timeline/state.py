@@ -149,11 +149,11 @@ class TimelineState:
                     return
                 failed = self.deliver_message(job["targets"], job["message"])
                 if failed:
-                    self.mark_agents_idle(failed)
-                    self.append_system_entry(f"Send failed: Failed to deliver to: {', '.join(failed)}")
+                    self.mark_agents_idle(list(failed))
+                    self.publish_event("hud-error", "; ".join(f"{agent}: {error}" for agent, error in failed.items()))
             except Exception as exc:
                 self.mark_agents_idle(job["targets"])
-                self.append_system_entry(f"Send failed: {exc}")
+                self.publish_event("hud-error", f"Send failed: {exc}")
             finally:
                 self.send_queue.task_done()
 
@@ -326,13 +326,17 @@ class TimelineState:
         if was_running or cleared:
             self.publish_event("state")
 
-    def deliver_message(self, targets: list[str], message: str) -> list[str]:
+    def deliver_message(self, targets: list[str], message: str) -> dict[str, str]:
         panes_by_agent = self.agent_panes()
-        failed: list[str] = []
+        failed: dict[str, str] = {}
         for agent in targets:
             pane_id = panes_by_agent.get(agent, "")
-            if not pane_id or not deliver_text_to_pane(run_tmux, pane_id, message):
-                failed.append(agent)
+            try:
+                error = deliver_text_to_pane(run_tmux, pane_id, message)
+            except Exception as exc:
+                error = str(exc)
+            if error:
+                failed[agent] = error
                 continue
             self.mark_agents_delivered([agent])
         return failed
