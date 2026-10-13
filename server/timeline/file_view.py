@@ -165,31 +165,14 @@ def render_file_view(
         f"html,body{{margin:0;background:{embed_bg};color:{pane_fg};font-family:sans-serif;display:flex;flex-direction:column;height:100vh;font-size:var(--text-size);line-height:var(--text-line-height);font-weight:var(--body-weight);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-synthesis:none}}"
     )
 
-    def build_gutter_metrics(line_count: int) -> tuple[int, int]:
+    def build_gutter_width(line_count: int) -> int:
         gutter_content_width = len(str(max(1, line_count))) * 8 + 4
-        gutter_column_width = gutter_content_width + gutter_padding_left + gutter_padding_right
-        title_offset = gutter_column_width + code_cell_padding_left
-        return gutter_column_width, title_offset
+        return gutter_content_width + gutter_padding_left + gutter_padding_right
 
-    def preview_shell_attrs(
-        *,
-        gutter_width: int = 0,
-        title_offset: int = 0,
-    ) -> str:
-        if gutter_width <= 0 and title_offset <= 0:
-            return ""
-        attrs = [
-            f'data-preview-gutter-width="{max(0, int(gutter_width))}"',
-            f'data-preview-title-offset="{max(0, int(title_offset))}"',
-            f'data-preview-gutter-bg="{html_escape(pane_gutter_bg)}"',
-            f'data-preview-gutter-divider="{html_escape(pane_gutter_divider)}"',
-        ]
-        return " " + " ".join(attrs)
-
-    def build_text_table_markup(text_content: str) -> tuple[str, str, int, int]:
+    def build_text_table_markup(text_content: str) -> tuple[str, str, int]:
         lines = html_escape(text_content).split("\n")
         line_count = len(lines)
-        gutter_width, title_offset = build_gutter_metrics(line_count)
+        gutter_width = build_gutter_width(line_count)
         gutter_rows = "".join(
             f'<tr data-line="{idx}"><td class="ln">{idx}</td></tr>'
             for idx in range(1, line_count + 1)
@@ -198,7 +181,7 @@ def render_file_view(
             f'<tr data-line="{idx}"><td class="lc"><pre>{line or "<br>"}</pre></td></tr>'
             for idx, line in enumerate(lines, start=1)
         )
-        return gutter_rows, code_rows, gutter_width, title_offset
+        return gutter_rows, code_rows, gutter_width
 
     def text_panel_css(gutter_width: int) -> str:
         return (
@@ -265,7 +248,7 @@ def render_file_view(
     if ext in {".html", ".htm"}:
         progressive_html = force_progressive_text or size > INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES
         if progressive_html:
-            gutter_width, title_offset = build_gutter_metrics(
+            gutter_width = build_gutter_width(
                 max(1, int(size / 32)),
             )
             gutter_rows = ""
@@ -282,7 +265,7 @@ def render_file_view(
         else:
             with open(full, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
-            gutter_rows, code_rows, gutter_width, title_offset = build_text_table_markup(
+            gutter_rows, code_rows, gutter_width = build_text_table_markup(
                 content,
             )
             html_progressive_loader_js = ""
@@ -322,7 +305,7 @@ def render_file_view(
             + 'renderedFrame.addEventListener("load",()=>wireLinkPresentation(renderedFrame.contentDocument,{press:true}));'
         )
         return (
-            f'<!DOCTYPE html><html data-preview-mode="text"{preview_shell_attrs(gutter_width=gutter_width, title_offset=title_offset)}><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
+            f'<!DOCTYPE html><html data-preview-mode="text"><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}'
             f'.html-preview-shell{{flex:1;min-height:0;display:flex;flex-direction:column;background:{embed_bg}}}'
             f'html[data-preview-mode="text"] .html-preview-shell{{background:transparent}}'
@@ -346,7 +329,7 @@ def render_file_view(
         )
     if is_text_like and ext != ".md" and (force_progressive_text or size > INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES):
         chunk_bytes = PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES
-        gutter_width, title_offset = build_gutter_metrics(
+        gutter_width = build_gutter_width(
             max(1, int(size / 32)),
         )
         height = "100vh" if embed else "calc(100vh - 43px)"
@@ -360,7 +343,7 @@ def render_file_view(
             code_body_id="codeBody",
         )
         return (
-            f'<!DOCTYPE html><html{preview_shell_attrs(gutter_width=gutter_width, title_offset=title_offset)}><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
+            f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}body{{background:{embed_bg};color:{pane_fg}}}'
             f'.view-container{{--preview-gutter-width:{scaled_px(gutter_width)};height:{height};display:flex;min-width:0;position:relative;overflow:hidden;background:{embed_bg}}}'
             '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--code-tpad);padding-bottom:var(--bpad,0px)}'
@@ -384,12 +367,12 @@ def render_file_view(
     if is_text_like and ext != ".md":
         with open(full, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
-        gutter_rows, code_rows, gutter_width, title_offset = build_text_table_markup(
+        gutter_rows, code_rows, gutter_width = build_text_table_markup(
             content,
         )
         height = "100vh" if embed else "calc(100vh - 43px)"
         return (
-            f'<!DOCTYPE html><html{preview_shell_attrs(gutter_width=gutter_width, title_offset=title_offset)}><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
+            f'<!DOCTYPE html><html><head><meta charset="utf-8"><title>{html_escape(filename)}</title>'
             f'<style>{base_css}body{{background:{embed_bg};color:{pane_fg}}}'
             f'.view-container{{--preview-gutter-width:{scaled_px(gutter_width)};height:{height};display:flex;min-width:0;position:relative;overflow:hidden;background:{embed_bg}}}'
             '.code-gutter{position:relative;flex:0 0 var(--preview-gutter-width);min-width:var(--preview-gutter-width);overflow:hidden;border-right:1px solid var(--preview-gutter-divider);background:var(--preview-gutter-bg);padding-top:var(--code-tpad);padding-bottom:var(--bpad,0px)}'
@@ -450,7 +433,7 @@ def render_file_view(
         markdown_layout_css = (
             f'.md-preview-shell>.md-body{{padding:{markdown_top_padding} 16px {markdown_bottom_padding}}}'
         )
-        text_gutter_rows, text_code_rows, text_gutter_width, text_title_offset = build_text_table_markup(content)
+        text_gutter_rows, text_code_rows, text_gutter_width = build_text_table_markup(content)
         markdown_mode_css = (
             f'{text_panel_css(text_gutter_width)}'
             'html:not([data-preview-mode="text"]) .preview-text-wrap{display:none}'
@@ -463,7 +446,7 @@ def render_file_view(
             + text_panel_js
         )
         return (
-            f'<!DOCTYPE html><html data-preview-mode="web"{preview_shell_attrs(gutter_width=text_gutter_width, title_offset=text_title_offset)} data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-mobile-timeline="1" data-mobile="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
+            f'<!DOCTYPE html><html data-preview-mode="web" data-preview-theme="{initial_preview_theme}" data-theme="{initial_preview_theme}" data-mobile-timeline="1" data-mobile="1"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>{html_escape(filename)}</title>'
             f'{markdown_head_libs}'
             f'<style>{base_css}{markdown_theme_css}{markdown_preview_css}{markdown_typography_css}{markdown_layout_css}{markdown_mode_css}'
             '</style></head>'
