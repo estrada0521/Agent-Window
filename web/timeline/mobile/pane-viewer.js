@@ -64,7 +64,7 @@
     const _paneSlideAtBottom = (el) => !el || el.scrollHeight - el.scrollTop - el.clientHeight < 48;
     const fetchPaneViewerSlide = async (agent, slide, scrollToBottomAfter) => {
       if (!slide) return;
-      if (!paneViewerEl?.classList?.contains("visible")) return;
+      if (!paneViewerEl.classList.contains("visible")) return;
       if (document.hidden) return;
       const body = slide.querySelector(".pane-viewer-body");
       if (!body) return;
@@ -73,7 +73,7 @@
         const res = await fetch(`/trace?agent=${encodeURIComponent(agent)}&lines=160&ts=${Date.now()}`);
         if (!res.ok) return;
         const data = await res.json();
-        if (!paneViewerEl?.classList?.contains("visible")) return;
+        if (!paneViewerEl.classList.contains("visible")) return;
         if (document.hidden) return;
         const content = String(data.content || "");
         const atBottom = _paneSlideAtBottom(body);
@@ -95,7 +95,7 @@
       if (agent && slide) fetchPaneViewerSlide(agent, slide, scrollToBottomAfter);
     };
     const fetchVisiblePaneViewerSlide = (scrollToBottomAfter = false) => {
-      if (!paneViewerEl?.classList?.contains("visible")) return;
+      if (!paneViewerEl.classList.contains("visible")) return;
       if (document.hidden) return;
       if (!paneViewerCarousel || !paneViewerAgents.length) return;
       const width = paneViewerCarousel.offsetWidth;
@@ -268,7 +268,7 @@
     };
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) return;
-      if (!paneViewerEl?.classList?.contains("visible")) return;
+      if (!paneViewerEl.classList.contains("visible")) return;
       fetchVisiblePaneViewerSlide(false);
     });
     refreshTimelineState();

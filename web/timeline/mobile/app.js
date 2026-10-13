@@ -97,7 +97,7 @@ __INCLUDE:../conversation-state.js__
       const onVVResize = () => {
         syncMainAfterHeight();
         updateScrollBtnPos();
-        if (typeof autoResizeTextarea === "function" && document.body.classList.contains("composer-overlay-open")) {
+        if (document.body.classList.contains("composer-overlay-open")) {
           autoResizeTextarea();
         }
         if (_stickyToBottom && messagesEl) {
@@ -105,8 +105,8 @@ __INCLUDE:../conversation-state.js__
           _pollScrollAnchor = null;
           messagesEl.scrollTop = messagesEl.scrollHeight;
         }
-        if (typeof repositionOpenComposerMenu === "function") repositionOpenComposerMenu();
-        if (typeof positionComposerDropdown === "function" && attachPreviewRow?.children.length) {
+        repositionOpenComposerMenu();
+        if (attachPreviewRow.children.length) {
           positionComposerDropdown(attachPreviewRow);
         }
       };
@@ -267,7 +267,7 @@ __INCLUDE:../target-picker.js__
         anchor.className = "target-picker-anchor";
         picker.replaceWith(anchor);
         document.body.appendChild(picker);
-        if (typeof ResizeObserver === "function") new ResizeObserver(positionPicker).observe(anchor);
+        new ResizeObserver(positionPicker).observe(anchor);
       };
       document.addEventListener("composer-overlay-open", () => {
         const revealPicker = () => {

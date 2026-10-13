@@ -126,7 +126,7 @@
     };
     let thinkingFloatingIconFrame = 0;
     const animateScrollButtonContentSwap = (button, apply) => {
-      if (!button || typeof apply !== "function") return;
+      if (!button) return;
       if (button.dataset.swapState === "1") return;
       button.dataset.swapState = "1";
       button.classList.add("thinking-scroll-btn-swapping");
