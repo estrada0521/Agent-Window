@@ -121,7 +121,7 @@ DEFAULT_TRACE_TAIL_LINES = 160
 def _get_trace(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
     agent = qs.get("agent", [""])[0].lower()
-    tail_raw = (qs.get("lines", [""])[0] or "").strip()
+    tail_raw = qs.get("lines", [""])[0].strip()
     tail_lines = DEFAULT_TRACE_TAIL_LINES
     if tail_raw:
         try:
@@ -178,7 +178,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
             _send_bytes(handler, 200, b'{}', content_type="application/json")
             return
         preview_text_size = MOBILE_TEXT_SIZE
-        requested_text_size = str(qs.get("agent_text_size", [""])[0] or "").strip()
+        requested_text_size = qs.get("agent_text_size", [""])[0].strip()
         if requested_text_size:
             preview_text_size = int(requested_text_size)
         page = render_file_view(
@@ -186,7 +186,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
             rel,
             embed=embed,
             base_path=handler.timeline_base_path,
-            preview_base_theme=str(qs.get("base_theme", [""])[0] or "").strip(),
+            preview_base_theme=qs.get("base_theme", [""])[0].strip(),
             agent_text_size=preview_text_size,
             force_progressive_text=force_progressive_text,
         )
@@ -206,7 +206,7 @@ def _get_file_view(handler, parsed, ctx) -> None:
 
 def _get_files_dir(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
-    rel = (qs.get("path", [""])[0] or "").strip()
+    rel = qs.get("path", [""])[0].strip()
     try:
         entries = ctx["files"].list_dir(rel)
     except PermissionError:
@@ -228,7 +228,7 @@ def _get_files_dir(handler, parsed, ctx) -> None:
 
 def _get_files_search(handler, parsed, ctx) -> None:
     qs = parse_qs(parsed.query)
-    query = (qs.get("q", [""])[0] or "").strip()
+    query = qs.get("q", [""])[0].strip()
     limit = int(qs["limit"][0])
     try:
         files = ctx["files"].search_files(query, limit=limit)
@@ -296,7 +296,7 @@ def _get_events(handler, _parsed, ctx) -> None:
 
 def _send_git_json(handler, parsed, ctx, read) -> None:
     qs = parse_qs(parsed.query)
-    arg = lambda name: (qs.get(name, [""])[0] or "").strip()
+    arg = lambda name: qs.get(name, [""])[0].strip()
     try:
         body = json.dumps(read(workspace_git.git_tree_root(ctx["state"].workspace, arg("tree")), arg), ensure_ascii=True).encode("utf-8")
     except LookupError as exc:
@@ -337,8 +337,8 @@ def _get_log_slice(handler, parsed, ctx) -> None:
     try:
         body = log_slice(
             ctx["state"].log_path,
-            start_hash=(qs.get("from", [""])[0] or "").strip(),
-            end_hash=(qs.get("to", [""])[0] or "").strip(),
+            start_hash=qs.get("from", [""])[0].strip(),
+            end_hash=qs.get("to", [""])[0].strip(),
         )
     except LookupError as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
