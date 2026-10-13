@@ -1,8 +1,7 @@
     const GIT_PANEL_BATCH = 50;
     const GIT_PANEL_FETCH_MS = 5000;
     const gitStatusLinesDigest = (data) => {
-      const lines = Array.isArray(data?.status_lines) ? data.status_lines : [];
-      return lines.map((s) => String(s || "")).sort().join("\n");
+      return [...data.status_lines].sort().join("\n");
     };
     const gitOverviewFingerprint = (data) => [
       data?.worktree_changed_paths ?? "",
@@ -16,7 +15,7 @@
       data?.worktree_unstaged_deleted ?? "",
       data?.worktree_has_diff ? "1" : "0",
       data?.total_commits ?? "",
-      (Array.isArray(data?.recent_commits) ? data.recent_commits : []).map((commit) =>
+      data.recent_commits.map((commit) =>
         [
           commit?.hash || "",
           commit?.subject || "",
@@ -101,13 +100,13 @@
       return res.json();
     };
     const gitOverviewPagingFromResponse = (data, previousCommits = [], { reset = false } = {}) => {
-      const pageCommits = Array.isArray(data?.recent_commits) ? data.recent_commits : [];
+      const pageCommits = data.recent_commits;
       const commits = reset ? pageCommits.slice() : previousCommits.concat(pageCommits);
       return {
         pageCommits,
         commits,
-        nextOffset: Math.max(0, parseInt(data?.next_offset) || commits.length),
-        hasMore: !!data?.has_more,
+        nextOffset: data.next_offset,
+        hasMore: data.has_more,
         fingerprint: gitOverviewFingerprint(data),
       };
     };
@@ -156,9 +155,9 @@
         fetchGitJson("/git-diff-files?scope=untracked"),
       ]);
       const sections = [
-        { title: "Staged", kind: "staged", files: Array.isArray(stagedData?.files) ? stagedData.files : [] },
-        { title: "Unstaged", kind: "unstaged", files: Array.isArray(unstagedData?.files) ? unstagedData.files : [] },
-        { title: "Untracked", kind: "untracked", files: Array.isArray(untrackedData?.files) ? untrackedData.files : [] },
+        { title: "Staged", kind: "staged", files: stagedData.files },
+        { title: "Unstaged", kind: "unstaged", files: unstagedData.files },
+        { title: "Untracked", kind: "untracked", files: untrackedData.files },
       ].filter((section) => section.files.length);
       return {
         sections,
@@ -169,8 +168,7 @@
       const params = new URLSearchParams({ hash: String(hash || "") });
       if (!hash && scope) params.set("scope", scope);
       const data = await fetchGitJson(`/git-diff-files?${params.toString()}`);
-      const files = Array.isArray(data?.files) ? data.files : [];
-      return { ...data, files };
+      return data;
     };
     const loadGitDiffFileStats = async ({ hash = "", scope = "" } = {}) => {
       if (!hash && !scope) {
