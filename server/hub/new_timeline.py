@@ -48,22 +48,12 @@ def _timeline_name_for_workspace(workspace: str) -> tuple[str, str]:
 
 
 def post_pick_workspace(handler, _parsed, _ctx) -> None:
-    data, err = read_json_body(handler)
+    _data, err = read_json_body(handler)
     if err:
         handler._send_json(400, {"ok": False, "error": err})
         return
-    start_path = str(data.get("path") or "").strip()
-    start_clause = ""
-    if start_path:
-        candidate = Path(start_path).expanduser().resolve()
-        if not candidate.exists():
-            handler._send_json(400, {"ok": False, "error": "Workspace not found"})
-            return
-        escaped = str(candidate).replace("\\", "\\\\").replace('"', '\\"')
-        start_clause = f' default location POSIX file "{escaped}"'
     script = (
-        'set chosenFolder to choose folder with prompt "Choose workspace folder"'
-        f"{start_clause}\n"
+        'set chosenFolder to choose folder with prompt "Choose workspace folder"\n'
         "return POSIX path of chosenFolder"
     )
     try:
@@ -76,7 +66,7 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
     except subprocess.TimeoutExpired:
         handler._send_json(504, {"ok": False, "error": "workspace picker timed out"})
         return
-    stderr_text = str(proc.stderr or "").strip()
+    stderr_text = proc.stderr.strip()
     if proc.returncode != 0:
         if "-128" in stderr_text or "User canceled" in stderr_text:
             handler._send_json(200, {"ok": False, "canceled": True})
@@ -85,7 +75,7 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
             handler.log_error("Workspace picker failed: %s", stderr_text)
         handler._send_json(500, {"ok": False, "error": "Workspace picker failed"})
         return
-    chosen = str(proc.stdout or "").strip()
+    chosen = proc.stdout.strip()
     if not chosen:
         handler._send_json(500, {"ok": False, "error": "workspace picker returned an empty path"})
         return
