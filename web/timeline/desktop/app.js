@@ -264,7 +264,6 @@ __INCLUDE:../pointer-capability.js__
     if (localStorage.getItem(SIDE_BAR_POSITION_KEY) === "left") document.documentElement.dataset.sideBarPosition = "left";
     const GIT_REPO_POSITION_KEY = "agent_window_desktop_git_repo_position";
     if (localStorage.getItem(GIT_REPO_POSITION_KEY) === "repo-top") document.documentElement.dataset.gitRepoPosition = "repo-top";
-    const SIDE_BAR_GAP = 0;
     let sideBarOpen = false;
     const sideBarOpenStorageKey = () => `agent_window_desktop_side_bar_open:${currentTimelineName}`;
     let sideBarRestoredFor = "";
@@ -377,10 +376,6 @@ __INCLUDE:../pointer-capability.js__
     if (Number.isFinite(storedPanelWidth) && storedPanelWidth > 0) {
       sideBarWidthAtDefaultTextSize = storedPanelWidth;
     }
-    const outwardSideBarWidthPx = () => {
-      if (sideBarOpen) return currentSideBarWidthPx();
-      return scaleSideBarWidth(clampSideBarWidthAtDefaultTextSize(sideBarWidthAtDefaultTextSize));
-    };
     const persistSideBarWidthAtDefaultTextSize = () => {
       if (sideBarWidthAtDefaultTextSize > 0) {
         localStorage.setItem(SIDE_BAR_WIDTH_KEY, String(sideBarWidthAtDefaultTextSize));
@@ -468,7 +463,7 @@ __INCLUDE:../pointer-capability.js__
     window.addEventListener("pagehide", restoreSideBarWindow);
     const applySideBarWidth = (panelWidth = sideBarOpen && !sideBarWindow ? currentSideBarWidthPx() : 0) => {
       document.documentElement.style.setProperty("--side-bar-width", `${panelWidth}px`);
-      document.documentElement.style.setProperty("--side-bar-reserved-width", `${panelWidth > 0 ? panelWidth + SIDE_BAR_GAP : 0}px`);
+      document.documentElement.style.setProperty("--side-bar-reserved-width", `${panelWidth}px`);
     };
 __INCLUDE:../../list-flip.js__
 __INCLUDE:../git-panel-html.js__
@@ -486,7 +481,7 @@ __INCLUDE:git-panel/events.js__
           type: "side-bar-state",
           mode: sideBarOpen ? "open" : "",
           view: activeSideBarView,
-          width: outwardSideBarWidthPx(),
+          width: currentSideBarWidthPx(),
           reservedWidth: Number.parseFloat(document.documentElement.style.getPropertyValue("--side-bar-reserved-width")),
           side: document.documentElement.dataset.sideBarPosition === "left" ? "left" : "right",
         }, "*");
