@@ -62,7 +62,7 @@
       event.preventDefault();
       event.stopPropagation();
       if (row.dataset.diffKind !== "worktree") {
-        void openSideBar({ view: "git", reset: false });
+        void openSideBar({ view: "git" });
         return;
       }
       const aside = document.getElementById("gitPinnedSummaryAside");
@@ -81,7 +81,7 @@
         instant: true,
         seed: useSeed ? { mode: "sections", sections: seedSections } : null,
       });
-      void openSideBar({ view: "git", reset: false });
+      void openSideBar({ view: "git" });
     });
 
     (function initPinnedSummaryExpand() {

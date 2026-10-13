@@ -499,12 +499,10 @@ __INCLUDE:git-panel/events.js__
       activeSideBarView = view === "git" ? "git" : "repo";
       return activeSideBarView;
     };
-    const loadSideBarView = ({ reset = false, animateRepo = true } = {}) => {
+    const loadSideBarView = () => {
       if (!sideBarOpen) return Promise.resolve();
-      const hasGitShell = gitPanel.hasShell();
-      if (reset && hasGitShell) closeGitDetail();
-      const gitP = gitContent.hidden ? Promise.resolve() : hasGitShell ? refreshGitOverview() : loadGitPage({ reset: true });
-      loadRepoDir(repoBrowserPath || "", { animate: animateRepo });
+      const gitP = gitContent.hidden ? Promise.resolve() : gitPanel.hasShell() ? refreshGitOverview() : loadGitPage({ reset: true });
+      loadRepoDir(repoBrowserPath || "", { animate: false });
       return Promise.resolve(gitP);
     };
     const fetchWorkspaceState = async () => {
@@ -521,7 +519,7 @@ __INCLUDE:git-panel/events.js__
       splitPanel.classList.toggle("workspace-only", !data.git);
       if (!data.git) setSideBarView("repo");
     };
-    const openSideBar = async ({ view = null, reset = false, resizeWindow = null } = {}) => {
+    const openSideBar = async ({ view = null, resizeWindow = null } = {}) => {
       if (!sideBar) return;
       try {
         await updateSideBarWorkspace();
@@ -547,7 +545,7 @@ __INCLUDE:git-panel/events.js__
         syncSideBarWindow();
         reportSideBarFitHeight();
         syncSplitGitHeightForMode();
-        const loadP = loadSideBarView({ reset, animateRepo: false });
+        const loadP = loadSideBarView();
         syncPanelState();
         return loadP;
       };
@@ -1111,15 +1109,7 @@ __INCLUDE:git-panel/events.js__
       }
       if (event.data.type !== "side-bar") return;
       const mode = String(event.data.mode || "");
-      if (mode === "close") {
-        closeSideBar();
-      } else if (mode === "open") {
-        toggleSideBar();
-      } else if (mode === "git") {
-        openSideBar({ view: "git", reset: true });
-      } else if (mode === "repo") {
-        openSideBar({ view: "repo" });
-      } else if (mode === "swap") {
+      if (mode === "swap") {
         swapSideBarPosition();
       } else if (mode === "swap-git-repo") {
         swapGitRepoPosition();
