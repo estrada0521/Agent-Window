@@ -7,9 +7,9 @@
       if (typeof renderMathInElement === "function") return true;
       if (katexLoadPromise) return katexLoadPromise;
       katexLoadPromise = (async () => {
-        const cssReady = await loadExternalStylesheetOnce(KATEX_CSS);
-        const katexReady = await loadExternalScriptOnce(KATEX_JS);
-        const autoRenderReady = katexReady ? await loadExternalScriptOnce(KATEX_AUTO_RENDER) : false;
+        const cssReady = await loadExternalResource(KATEX_CSS, { stylesheet: true });
+        const katexReady = await loadExternalResource(KATEX_JS);
+        const autoRenderReady = katexReady ? await loadExternalResource(KATEX_AUTO_RENDER) : false;
         return cssReady && katexReady && autoRenderReady && typeof renderMathInElement === "function";
       })().catch(() => false);
       return katexLoadPromise;
@@ -20,8 +20,8 @@
         if (typeof renderMathInElement === "undefined") return;
         renderMathInElement(node, mathRenderOptions);
         clearMathMarkers(node);
-        if (typeof syncWideBlockRows === "function") syncWideBlockRows(node);
-        if (typeof syncMessageCollapse === "function") syncMessageCollapse(node);
+        syncWideBlockRows(node);
+        syncMessageCollapse(node);
       };
       if (typeof renderMathInElement === "function") {
         applyMath();

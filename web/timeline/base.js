@@ -33,53 +33,20 @@
       }
       return __origFetch(input, init);
     };
-    const loadExternalScriptOnce = (() => {
-      const pending = new Map();
-      return (resource) => {
-        const raw = String(resource.url).trim();
-        if (!raw) return Promise.resolve(false);
-        const href = new URL(raw, window.location.href).href;
-        for (const script of document.scripts) {
-          if ((script.src || "") === href) return Promise.resolve(true);
-        }
-        if (pending.has(href)) return pending.get(href);
-        const promise = new Promise((resolve, reject) => {
-          const script = document.createElement("script");
-          script.src = href;
-          script.integrity = resource.integrity;
-          script.crossOrigin = "anonymous";
-          script.onload = () => resolve(true);
-          script.onerror = () => reject(new Error(`failed to load ${href}`));
-          document.head.appendChild(script);
-        }).catch(() => false);
-        pending.set(href, promise);
-        return promise;
-      };
-    })();
-    const loadExternalStylesheetOnce = (() => {
-      const pending = new Map();
-      return (resource) => {
-        const raw = String(resource.url).trim();
-        if (!raw) return Promise.resolve(false);
-        const absHref = new URL(raw, window.location.href).href;
-        for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {
-          if ((link.href || "") === absHref) return Promise.resolve(true);
-        }
-        if (pending.has(absHref)) return pending.get(absHref);
-        const promise = new Promise((resolve, reject) => {
-          const link = document.createElement("link");
-          link.rel = "stylesheet";
-          link.href = absHref;
-          link.integrity = resource.integrity;
-          link.crossOrigin = "anonymous";
-          link.onload = () => resolve(true);
-          link.onerror = () => reject(new Error(`failed to load ${absHref}`));
-          document.head.appendChild(link);
-        }).catch(() => false);
-        pending.set(absHref, promise);
-        return promise;
-      };
-    })();
+    const loadExternalResource = (resource, { stylesheet = false } = {}) => new Promise((resolve, reject) => {
+      const el = document.createElement(stylesheet ? "link" : "script");
+      if (stylesheet) {
+        el.rel = "stylesheet";
+        el.href = resource.url;
+      } else {
+        el.src = resource.url;
+      }
+      el.integrity = resource.integrity;
+      el.crossOrigin = "anonymous";
+      el.onload = () => resolve(true);
+      el.onerror = () => reject(new Error(`failed to load ${resource.url}`));
+      document.head.appendChild(el);
+    }).catch(() => false);
     const KATEX_CSS = window.cdnResources.katex_css;
     const KATEX_JS = window.cdnResources.katex;
     const KATEX_AUTO_RENDER = window.cdnResources.katex_auto;
