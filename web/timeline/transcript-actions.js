@@ -8,18 +8,19 @@ __INCLUDE:transcript-refresh.js__
       if (!historyWindow || historyLoading) return;
       historyLoading = true;
       const current = historyWindow;
+      const freezeScroll = before && document.documentElement.dataset.mobile === "1";
       clearPollScrollLock();
-      if (before) {
+      if (freezeScroll) {
         messagesEl.style.scrollbarGutter = "stable";
         messagesEl.style.overflowY = "hidden";
       }
-      const top = messagesEl.scrollTop;
-      const height = messagesEl.scrollHeight;
       try {
         const res = await fetchWithTimeout(messagesFetchUrl({ cursor: before ? current.before : current.after, direction: before ? "before" : "after", limit }));
         if (!res.ok) throw new Error("History unavailable");
         const data = await res.json();
         if (historyWindow !== current) return;
+        const top = messagesEl.scrollTop;
+        const height = messagesEl.scrollHeight;
         current.entries = before ? [...data.entries, ...current.entries] : [...current.entries, ...data.entries];
         if (before) {
           current.before = data.before;
@@ -36,7 +37,7 @@ __INCLUDE:transcript-refresh.js__
       } catch (error) {
         if (historyWindow === current) setError("History unavailable", error);
       } finally {
-        if (before) {
+        if (freezeScroll) {
           messagesEl.style.removeProperty("overflow-y");
           messagesEl.style.removeProperty("scrollbar-gutter");
         }

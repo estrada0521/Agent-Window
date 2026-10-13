@@ -19,7 +19,8 @@
       if (historyWindow?.has_newer && !historyLoading && !_programmaticScroll && isNearBottom()) {
         void loadHistoryPage(false);
       }
-      if (!olderAutoloadArmed || !movingUp || historyLoading || _programmaticScroll || !hasOlderMessages()) return;
+      if (historyLoading || _programmaticScroll || !hasOlderMessages()) return;
+      if (document.documentElement.dataset.mobile === "1" && (!olderAutoloadArmed || !movingUp)) return;
       if (top > Math.max(OLDER_AUTOLOAD_MIN_THRESHOLD, messagesEl.clientHeight * (document.documentElement.dataset.mobile === "1" ? 1.5 : 2.5))) return;
       olderAutoloadArmed = false;
       void loadOlderMessages();
