@@ -5,23 +5,16 @@ const scopeUrl = new URL(self.registration.scope);
 const scopePath = scopeUrl.pathname.replace(/\/$/, "");
 const scriptPath = new URL(self.location.href).pathname;
 const isHubScope = scriptPath.endsWith("/hub-service-worker.js");
-const prefix = scopePath || "";
+const prefix = scopePath;
 const cacheNamespace = `agent-window-${isHubScope ? "hub" : "room"}`;
 const cacheName = `${cacheNamespace}-${SW_VERSION}`;
 
-const staticPaths = isHubScope
-  ? [
-      `${prefix}/hub.webmanifest`,
-      `${prefix}/pwa-icon-192.png`,
-      `${prefix}/pwa-icon-512.png`,
-      `${prefix}/apple-touch-icon.png`,
-    ]
-  : [
-      `${prefix}/app.webmanifest`,
-      `${prefix}/pwa-icon-192.png`,
-      `${prefix}/pwa-icon-512.png`,
-      `${prefix}/apple-touch-icon.png`,
-    ];
+const staticPaths = [
+  `${prefix}/${isHubScope ? "hub" : "app"}.webmanifest`,
+  `${prefix}/pwa-icon-192.png`,
+  `${prefix}/pwa-icon-512.png`,
+  `${prefix}/apple-touch-icon.png`,
+];
 
 function shouldHandle(url) {
   if (url.origin !== scopeUrl.origin) return false;
@@ -35,7 +28,7 @@ function shouldHandle(url) {
 }
 
 async function putIfOk(cache, request, response) {
-  if (response && response.ok) {
+  if (response.ok) {
     await cache.put(request, response.clone());
   }
   return response;
@@ -58,12 +51,9 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.map((key) => {
-      if (key.startsWith(cacheNamespace) && key !== cacheName) {
-        return caches.delete(key);
-      }
-      return Promise.resolve(false);
-    }));
+    await Promise.all(keys
+      .filter((key) => key.startsWith(cacheNamespace) && key !== cacheName)
+      .map((key) => caches.delete(key)));
     await self.clients.claim();
   })());
 });
