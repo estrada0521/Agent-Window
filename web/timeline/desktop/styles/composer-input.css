@@ -161,6 +161,16 @@
       opacity: 0;
       pointer-events: none;
     }
+    @keyframes attachCardReveal {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
     .attach-card {
       position: relative;
       width: calc(var(--text-size, 13px) * 80 / 13);
@@ -180,6 +190,7 @@
       user-select: none;
       -webkit-user-select: none;
       transition: transform 120ms ease;
+      animation: attachCardReveal 180ms ease-out;
     }
     html[data-theme="dark"] .attach-card {
       background: rgba(28, 28, 28, 0.5);
