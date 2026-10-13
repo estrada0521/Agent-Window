@@ -28,18 +28,7 @@
       img.src = src;
     });
     const openNativeHeaderMenu = async (anchorRect = null) => {
-      const fallbackRect = rightMenuBtn?.getBoundingClientRect?.() || null;
-      const hasExplicitAnchor = !!(anchorRect && typeof anchorRect === "object");
-      const rectSource = hasExplicitAnchor ? anchorRect : fallbackRect;
-      if (!rectSource) return false;
-      const rect = {
-        left: Number(rectSource.left || 0),
-        top: Number(rectSource.top || 0),
-        right: Number(rectSource.right || 0),
-        bottom: Number(rectSource.bottom || 0),
-        width: Number(rectSource.width || 24),
-        height: Number(rectSource.height || 24),
-      };
+      const rect = anchorRect || rightMenuBtn.getBoundingClientRect();
 
       const worktrees = await fetchGitWorktrees().catch(() => []);
       if (window.parent === window) {
@@ -52,7 +41,7 @@
           gitFollow: gitFollow(),
           gitSummaryPinned,
         }, (action) => void handleTimelineMenuAction(action));
-        return true;
+        return;
       }
       const agentIcons = {};
       const allAgentNames = [...new Set([
@@ -72,8 +61,8 @@
       }));
 
       const payload = {
-        x: Math.round(rect.left || 0),
-        y: Math.round((rect.bottom || ((rect.top || 0) + (rect.height || 28))) + 2),
+        x: Math.round(rect.left),
+        y: Math.round(rect.bottom + 2),
         sessionActive: !!sessionActive,
         addAgents: ALL_BASE_AGENTS,
         removeAgents: agentActionCandidates("remove"),
@@ -87,7 +76,6 @@
         type: "show-timeline-header-menu",
         payload,
       }, "*");
-      return true;
     };
     const handleTimelineMenuAction = async (payload) => {
       const data = payload || {};
@@ -152,19 +140,8 @@
     });
     window.addEventListener("message", (event) => {
       if (!(event.data && event.data.type === "open-timeline-header-menu")) return;
-      const anchorData = event.data.anchor || null;
-      const anchorRect = anchorData && typeof anchorData === "object"
-        ? {
-            left: Number(anchorData.left || 0),
-            top: Number(anchorData.top || 0),
-            right: Number(anchorData.right || 0),
-            bottom: Number(anchorData.bottom || 0),
-            width: Number(anchorData.width || 24),
-            height: Number(anchorData.height || 24),
-          }
-        : null;
       closeHeaderMenus();
-      openNativeHeaderMenu(anchorRect).catch((err) => setError("Menu failed", err));
+      openNativeHeaderMenu(event.data.anchor).catch((err) => setError("Menu failed", err));
     });
     window.addEventListener("native-menu-action", (event) => {
       void handleTimelineMenuAction(event.detail || {});
