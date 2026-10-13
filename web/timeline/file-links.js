@@ -24,10 +24,9 @@ __INCLUDE:file-autocomplete.js__
     let _linkifyDebouncedScope = null;
     const LINKIFY_POST_RENDER_DEBOUNCE_MS = 50;
     const linkifyInlineCodeFileRefsImmediate = (scope = document) => {
-      if (!scope?.querySelectorAll) return;
       const snapshot = [];
       scope.querySelectorAll(".md-body code").forEach((codeEl) => {
-        if (!codeEl || codeEl.closest("pre")) return;
+        if (codeEl.closest("pre")) return;
         if (codeEl.closest("a")) return;
         if (codeEl.closest(".streaming-body-reveal")) return;
         snapshot.push(codeEl);
@@ -81,21 +80,19 @@ __INCLUDE:file-autocomplete.js__
       });
     };
     const linkifyInlineCodeFileRefs = (scope = document) => {
-      if (!scope?.querySelectorAll) return;
       _linkifyDebouncedScope = scope;
       if (_linkifyDebounceTimer) return;
       _linkifyDebounceTimer = setTimeout(() => {
         _linkifyDebounceTimer = null;
         const s = _linkifyDebouncedScope;
         _linkifyDebouncedScope = null;
-        if (s?.querySelectorAll) linkifyInlineCodeFileRefsImmediate(s);
+        linkifyInlineCodeFileRefsImmediate(s);
       }, LINKIFY_POST_RENDER_DEBOUNCE_MS);
     };
     const decorateLocalFileLinks = (scope = document) => {
-      if (!scope?.querySelectorAll) return;
       const candidates = [];
       scope.querySelectorAll(".md-body a.local-file-candidate").forEach((anchor) => {
-        if (!anchor || anchor.classList.contains("inline-file-link")) return;
+        if (anchor.classList.contains("inline-file-link")) return;
         if (anchor.dataset.filepath) return;
         const href = anchor.dataset.localFileHref || "";
         const path = normalizeWorkspaceFilePath(pathFromLocalHref(href));
@@ -136,7 +133,7 @@ __INCLUDE:file-autocomplete.js__
       });
     };
     const buildAutocompleteFileItem = (entry) => {
-      const path = String(entry?.path || "");
+      const path = entry.path;
       const label = (fileNameFromPath(path) || path).trim() || path;
       const relDir = composerAutocompleteRelativeDir(path);
       const row = document.createElement("div");
@@ -151,7 +148,7 @@ __INCLUDE:file-autocomplete.js__
       pathEl.innerHTML = pathInner;
       const sizeEl = document.createElement("span");
       sizeEl.className = "file-item-size";
-      sizeEl.textContent = formatFileSize(entry?.size);
+      sizeEl.textContent = formatFileSize(entry.size);
       row.append(pathEl, sizeEl);
       return row;
     };

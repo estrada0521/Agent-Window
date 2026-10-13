@@ -1,20 +1,3 @@
-    const normalizeFileEntry = (entry) => {
-      if (!entry) return null;
-      if (typeof entry === "string") return { path: entry, size: null };
-      const path = typeof entry.path === "string" ? entry.path : "";
-      if (!path) return null;
-      let size = null;
-      if (Object.prototype.hasOwnProperty.call(entry, "size")) {
-        const rawSize = entry.size;
-        if (rawSize !== null && rawSize !== undefined && rawSize !== "") {
-          const parsedSize = Number(rawSize);
-          if (Number.isFinite(parsedSize) && parsedSize >= 0) {
-            size = parsedSize;
-          }
-        }
-      }
-      return { path, size };
-    };
     const loadFileSearchMatches = async (rawQuery, limit) => {
       const query = String(rawQuery || "").trim();
       try {
@@ -23,10 +6,7 @@
         params.set("limit", String(limit));
         const response = await fetchWithTimeout(`/files-search?${params.toString()}`, {}, 2500);
         if (response.ok) {
-          const raw = await response.json();
-          return (Array.isArray(raw) ? raw : [])
-            .map(normalizeFileEntry)
-            .filter(Boolean);
+          return await response.json();
         }
       } catch (_) { }
       return [];

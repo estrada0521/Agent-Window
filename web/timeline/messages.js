@@ -7,7 +7,7 @@
       return m ? `${Number(m[4])}:${m[5]}, ${m[1]}/${Number(m[2])}/${Number(m[3])}` : "";
     };
     const syncMessageTimeWidth = (scope) => {
-      scope?.querySelectorAll?.(".message-time").forEach((time) => {
+      scope.querySelectorAll(".message-time").forEach((time) => {
         const em = time.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(time).fontSize);
         if (em > 0) time.closest(".message-body-row").style.setProperty("--message-time-em", em.toFixed(2));
       });
