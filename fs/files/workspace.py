@@ -322,10 +322,7 @@ class WorkspaceFiles:
                     try:
                         is_dir = entry.is_dir(follow_symlinks=False)
                     except OSError:
-                        try:
-                            is_dir = entry.is_dir(follow_symlinks=True)
-                        except OSError:
-                            is_dir = False
+                        is_dir = False
                     if is_dir:
                         pending.append(rel)
                         continue
@@ -456,14 +453,10 @@ class WorkspaceFiles:
                 child_rel = os.path.join(rel, entry.name)
                 if self.file_index_path_is_ignored(child_rel):
                     continue
-                is_dir = False
                 try:
                     is_dir = entry.is_dir(follow_symlinks=False)
                 except OSError:
-                    try:
-                        is_dir = entry.is_dir(follow_symlinks=True)
-                    except OSError:
-                        is_dir = False
+                    is_dir = False
                 item = {
                     "name": entry.name,
                     "path": child_rel,

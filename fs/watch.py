@@ -35,7 +35,7 @@ _GIT_HEAD_METADATA_PREFIXES = (
 
 
 def _is_git_head_metadata_path(rel: str) -> bool:
-    normalized = str(rel or "").strip("/")
+    normalized = rel.strip("/")
     if normalized in _GIT_HEAD_METADATA_PATHS:
         return True
     return any(normalized.startswith(prefix) for prefix in _GIT_HEAD_METADATA_PREFIXES)
