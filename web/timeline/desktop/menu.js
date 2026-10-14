@@ -38,9 +38,9 @@
         { value: "openShell", label: "Terminal" },
         { value: "openFinder", label: "Finder" },
         { value: "revealLog", label: "Reveal Log" },
-        { value: "search", label: "Search…" },
-        { value: "exportHtml", label: "Export as HTML…" },
-        { value: "exportJsonl", label: "Export as JSONL…" },
+        { value: "search", label: "Search" },
+        { value: "exportHtml", label: "Export as HTML" },
+        { value: "exportJsonl", label: "Export as JSONL" },
       ], (action) => {
         if (action === "worktree") {
           openMenuSelect(anchor, "Worktree", payload.worktrees.map((tree) => ({

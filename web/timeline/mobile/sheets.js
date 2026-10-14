@@ -950,6 +950,10 @@ __INCLUDE:git-panel.js__
         openSubMenu("Export", [["html", "As HTML"], ["jsonl", "As JSONL"]], (format) => beginExportRange(format));
         return;
       }
+      if (action === "search") {
+        beginSearch();
+        return;
+      }
       if (action === "openPaneTraceWindow") {
         togglePaneViewer();
         return;

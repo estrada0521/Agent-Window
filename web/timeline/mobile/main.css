@@ -142,8 +142,8 @@ __INCLUDE:../markdown-code.css__
       background-size: 15px 15px;
     }
 
-    .hub-native-menu-select option[data-menu-icon="reload"] {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 2v6h-6'/%3E%3Cpath d='M20 12a8 8 0 1 1-2.1-5.3L21 8'/%3E%3C/svg%3E");
+    .hub-native-menu-select option[data-menu-icon="search"] {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000000' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m16 16 5 5'/%3E%3C/svg%3E");
     }
 
     .hub-native-menu-select option[data-menu-icon="pane"] {

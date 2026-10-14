@@ -147,7 +147,7 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | Open tmux terminal pane | `⌘T` | On mobile, operable from `Pane Trace` |
 | Open log in Finder | `⌥⌘L` | |
 | Open timeline in browser | `⌥⌘O` | |
-| Search the full timeline | `⌘F` / Search... | Hold `⇧` to jump 10 matches at a time |
+| Search the full timeline | `⌘F` / Search | Hold `⇧` to jump 10 matches at a time |
 | Export timeline as HTML / JSONL | | |
 
 <p align="center">
