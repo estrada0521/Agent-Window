@@ -15,6 +15,7 @@ from server.appearance.colors import DESKTOP_THEME_DEFAULT, MOBILE_THEME_DEFAULT
 from server.appearance.typography import DESKTOP_TEXT_SIZE, TEXT_SIZE_MAX, TEXT_SIZE_MIN, apply_font_tokens
 from server.pwa import PWA_FILES, pwa_icon_entries, serve_pwa_file
 from server.timeline.routes import dispatch_timeline_route
+from server.timeline.routes.assets import _get_font_asset
 from server.page_header import (
     PAGE_HEADER_CSS,
     PAGE_HEADER_JS,
@@ -423,6 +424,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path.startswith("/font/"):
+            _get_font_asset(self, parsed, {"assets": server_state.assets})
+            return
         try:
             if dispatch_timeline_route(self, "GET", parsed, server_state):
                 return

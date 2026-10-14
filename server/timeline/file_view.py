@@ -49,7 +49,7 @@ from server.timeline.file_view_scripts import (
 )
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_FONT_FACES_CSS = (_REPO_ROOT / "web" / "timeline" / "font-faces.css").read_text()
+_FONT_FACES_CSS = (_REPO_ROOT / "web" / "font-faces.css").read_text()
 INLINE_PROGRESSIVE_PREVIEW_MAX_BYTES = 512 * 1024
 PROGRESSIVE_TEXT_PREVIEW_CHUNK_BYTES = 32 * 1024
 
@@ -152,7 +152,7 @@ def render_file_view(
         f'document.documentElement.style.setProperty("--text-line-height",(s*{TEXT_LINE_HEIGHT_RATIO})+"px");'
         '});'
     )
-    font_face_css = apply_font_tokens(_FONT_FACES_CSS.replace("__TIMELINE_BASE_PATH__", prefix))
+    font_face_css = apply_font_tokens(_FONT_FACES_CSS)
     preview_top_offset = "max(32px, calc(10px + env(safe-area-inset-top)))" if embed else "0px"
     preview_top_gap = "14px"
     code_top_offset = f"calc({preview_top_gap} + {preview_top_offset})" if embed else "0px"

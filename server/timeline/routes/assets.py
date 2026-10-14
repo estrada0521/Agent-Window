@@ -144,9 +144,6 @@ def dispatch_get_assets_route(handler, parsed, ctx) -> bool:
     if parsed.path.startswith("/icon/"):
         _get_icon_asset(handler, parsed, ctx)
         return True
-    if parsed.path.startswith("/font/"):
-        _get_font_asset(handler, parsed, ctx)
-        return True
     if parsed.path.startswith("/file-icon-theme/icon/"):
         _get_file_icon_theme_icon(handler, parsed, ctx)
         return True

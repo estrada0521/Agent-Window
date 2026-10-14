@@ -1,5 +1,5 @@
     [hidden] { display: none; }
-__INCLUDE:../../font-faces.css__
+__INCLUDE:../../../font-faces.css__
 __INCLUDE:../../markdown-theme-vars.css__
     :root {
       --app-shell-height: 100dvh;
