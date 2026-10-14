@@ -6,7 +6,6 @@
       --desk-chrome-edge: round(nearest, calc(var(--text-size, 13px) * 10 / 13), 1px);
       --browser-band-h: calc(var(--desk-chrome-size) + 2 * var(--desk-chrome-top));
       --desk-chrome-gap: round(nearest, calc(var(--text-size, 13px) * 6 / 13), 1px);
-      --desk-chrome-hover-rgb: 0, 0, 0;
       --desk-chrome-hover-a: 0.8;
       --desk-chrome-hover-bg: rgba(var(--desk-chrome-hover-rgb), var(--desk-chrome-hover-a));
       --desk-chrome-dot-top: 0.23em;
@@ -14,6 +13,9 @@
     }
     html[data-theme="light"] {
       --desk-chrome-hover-rgb: 255, 255, 255;
+    }
+    html[data-theme="dark"] {
+      --desk-chrome-hover-rgb: 0, 0, 0;
     }
     .timeline-tree-label {
       display: inline-flex;

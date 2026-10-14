@@ -45,6 +45,9 @@
       --composer-send-text-gap: 14px;
       --composer-pad-top: calc(var(--composer-row-h) - var(--composer-btn-bottom) - var(--composer-btn-d) / 2 - var(--composer-line-h) / 2);
       border-radius: var(--composer-corner-radius);
+    }
+
+    html[data-theme="dark"] .composer-field {
       background: var(--panel-row-selected-bg);
     }
 
@@ -150,8 +153,8 @@
       flex-shrink: 0;
       -webkit-appearance: none;
       appearance: none;
-      background: rgba(28, 28, 28, 0.5);
-      border: 0.5px solid rgba(255, 255, 255, 0.22);
+      border-width: 0.5px;
+      border-style: solid;
       box-shadow:
         inset 0 0.5px 0 rgba(255, 255, 255, 0.06),
         0 1px 2px rgba(0, 0, 0, 0.12);
@@ -164,6 +167,11 @@
       -webkit-user-select: none;
       -webkit-touch-callout: none;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    html[data-theme="dark"] .attach-card {
+      background: rgba(28, 28, 28, 0.5);
+      border-color: rgba(255, 255, 255, 0.22);
     }
 
     html[data-theme="light"] .attach-card {

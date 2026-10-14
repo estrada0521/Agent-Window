@@ -221,7 +221,6 @@
       left: calc(-1 * var(--agent-message-rule-offset));
       top: 0;
       bottom: 0;
-      width: 1px;
       border-radius: 1px;
       background: var(--fg);
       opacity: 0;
@@ -343,6 +342,9 @@ __AGENT_ROW_MESSAGE_SELECTORS__ {
       min-width: 0;
     }
 
+html[data-theme="dark"] .message-row:not(.user) .message::before {
+      width: 1px;
+    }
 html[data-theme="light"] .message-row:not(.user) .message::before {
       width: 1.5px;
     }
