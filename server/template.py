@@ -20,12 +20,6 @@ _COMPOSER_DROPDOWNS_HTML = (
 )
 
 
-def _read_text(path: Path) -> str:
-    if not path.is_file():
-        raise FileNotFoundError(f"Template fragment not found: {path}")
-    return path.read_text()
-
-
 def _style_block(css: str) -> str:
     return f"  <style>\n{css}  </style>\n"
 
@@ -34,16 +28,10 @@ def _script_block(js: str) -> str:
     return f"  <script>\n{js}  </script>\n"
 
 
-def expand_includes(path: Path, stack: tuple[Path, ...] = ()) -> str:
-    path = path.resolve()
-    if _WEB_ROOT.resolve() not in path.parents:
-        raise ValueError(f"Template include escapes web/: {path}")
-    if path in stack:
-        chain = " -> ".join(str(item) for item in (*stack, path))
-        raise ValueError(f"Template include cycle detected: {chain}")
+def expand_includes(path: Path) -> str:
     return _INCLUDE_RE.sub(
-        lambda match: expand_includes(path.parent / match.group(1), (*stack, path)),
-        _read_text(path),
+        lambda match: expand_includes(path.parent / match.group(1)),
+        path.read_text(),
     )
 
 

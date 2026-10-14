@@ -54,7 +54,7 @@ def load_file_icon_theme_document() -> dict:
 
 def file_icon_bytes(icon_id: str) -> bytes:
     theme_json, document, _inline, _warning = _file_icon_theme()
-    raw = (document.get("iconDefinitions") or {}).get(icon_id)
+    raw = document["iconDefinitions"].get(icon_id)
     if raw is None:
         raise FileNotFoundError(f"unknown icon id: {icon_id}")
     return _icon_file(theme_json, icon_id, raw).read_bytes()

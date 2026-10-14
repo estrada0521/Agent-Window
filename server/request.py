@@ -44,7 +44,7 @@ def request_view_variant(*, headers, query_string: str = "", default: str = "des
 def read_json_body(handler) -> tuple[dict | None, str | None]:
     raw = handler.rfile.read(int(handler.headers["Content-Length"]))
     try:
-        data = json.loads(raw.decode("utf-8") or "{}")
+        data = json.loads(raw)
     except json.JSONDecodeError:
         return None, "invalid json"
     return (data, None) if isinstance(data, dict) else (None, "invalid json")

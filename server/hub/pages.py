@@ -29,8 +29,6 @@ def build_hub_html_pages(
 ) -> dict[str, str]:
     def _render_hub_home_html(own_dir: Path, *, header_html: str) -> str:
         template_path = own_dir / "home.html"
-        if not template_path.is_file():
-            raise FileNotFoundError(f"Hub home template not found: {template_path}")
         html = expand_includes(template_path)
         html = (
             html
