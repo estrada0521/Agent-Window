@@ -59,17 +59,20 @@ __INCLUDE:../../transcript.css__
       --user-bubble-side-space: 0.2em;
       padding: 0.55em calc(0.9em + var(--user-bubble-side-space));
       border-radius: 1.5em;
-      --fg-rgb: var(--bg-rgb);
-      --fg: rgb(var(--fg-rgb));
-      --fg-bold: var(--bg);
-      --muted: rgba(var(--bg-rgb), 0.65);
-      --icon-fg: var(--bg);
       color: var(--fg);
       background: var(--user-bubble-bg);
       width: calc(100% + 2 * var(--user-bubble-side-space));
       max-width: calc(100% + 2 * var(--user-bubble-side-space));
       margin-left: calc(-1 * var(--user-bubble-side-space));
       margin-right: auto;
+    }
+
+    html[data-theme="light"] .message.user .message-body-row {
+      --fg-rgb: var(--bg-rgb);
+      --fg: rgb(var(--fg-rgb));
+      --fg-bold: var(--bg);
+      --muted: rgba(var(--bg-rgb), 0.65);
+      --icon-fg: var(--bg);
     }
 
     html[data-theme="dark"] .message.user .message-body-row {

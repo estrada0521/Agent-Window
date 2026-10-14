@@ -52,9 +52,11 @@
     }
     .export-hud .export-hud-export {
       padding-inline: 0.6em;
-      background: var(--fg);
       color: var(--surface);
       font-variant-numeric: tabular-nums;
+    }
+    html[data-theme="light"] .export-hud-export {
+      background: var(--fg);
     }
     html[data-theme="dark"] .export-hud-export {
       background: var(--control-active-color);

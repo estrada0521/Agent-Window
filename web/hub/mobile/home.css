@@ -453,11 +453,14 @@
       color: var(--row-preview-fg);
       font-family: var(--font-main);
       font-size: 13px;
-      font-weight: 430;
       line-height: 1.2;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    html[data-theme="light"] .mob-row-preview {
+      font-weight: 430;
     }
 
     html[data-theme="dark"] .mob-row-preview {
@@ -576,8 +579,8 @@
       height: 76%;
     }
 
-    .swipe-act-btn.is-danger,
-    .swipe-act-btn.is-warn {
+    html[data-theme="dark"] .swipe-act-btn.is-danger,
+    html[data-theme="dark"] .swipe-act-btn.is-warn {
       background: rgb(255, 69, 58);
     }
 

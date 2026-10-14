@@ -31,7 +31,7 @@
       width: calc(var(--pill-row-height) * 0.6);
       height: calc(var(--pill-row-height) * 0.6);
     }
-    ::highlight(timeline-search) {
+    html[data-theme="light"] ::highlight(timeline-search) {
       background-color: rgba(255, 196, 0, 0.55);
       color: inherit;
     }

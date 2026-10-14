@@ -344,12 +344,14 @@
       z-index: 10;
     }
     .target-chip.active .agent-icon-slot--chip {
-      color: var(--icon-fg);
       transform: scale(1.12);
     }
     .target-chip.active .target-icon {
-      color: var(--icon-fg);
       opacity: 1;
+    }
+    html[data-theme="light"] .target-chip.active .agent-icon-slot--chip,
+    html[data-theme="light"] .target-chip.active .target-icon {
+      color: var(--icon-fg);
     }
     html[data-theme="dark"] .target-chip.active .agent-icon-slot--chip,
     html[data-theme="dark"] .target-chip.active .target-icon {
