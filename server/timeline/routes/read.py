@@ -321,7 +321,10 @@ def _get_git_overview(handler, parsed, ctx) -> None:
 
 def _get_git_worktrees(handler, parsed, ctx) -> None:
     def read(_root, _arg):
-        trees = workspace_git.git_worktrees(ctx["state"].workspace)
+        try:
+            trees = workspace_git.git_worktrees(ctx["state"].workspace)
+        except workspace_git.NotGitRepository:
+            return {"worktrees": [], "followTree": None}
         linked = sorted(trees[1:], key=lambda tree: (Path(tree["path"]) / ".git").stat().st_birthtime, reverse=True)
         worktrees = [{"path": "", "branch": trees[0]["branch"]}, *linked]
         follow_tree = ctx["state"].last_changed_git_tree()
