@@ -207,8 +207,8 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         item.state = [theme isEqualToString:pair[0]] ? NSControlStateValueOn : NSControlStateValueOff;
         [themes addObject:item];
     }
-    NSMenuItem *actualSize = [self item:@"Actual Size" payload:@{ @"action": @"textSize", @"mode": @"actual" } key:@"0" mods:cmd];
-    actualSize.enabled = [p[@"textSize"] integerValue] != [p[@"textSizeDefault"] integerValue];
+    NSMenuItem *resetZoom = [self item:@"Reset Zoom" payload:@{ @"action": @"textSize", @"mode": @"actual" } key:@"0" mods:cmd];
+    resetZoom.enabled = [p[@"textSize"] integerValue] != [p[@"textSizeDefault"] integerValue];
     BOOL sideBarAvailable = [p[@"sideBarAvailable"] boolValue];
     NSMenuItem *sideBarItem = [self action:@"toggleSideBar" title:@"Toggle Side Bar" key:@"e" mods:cmd];
     sideBarItem.enabled = sideBarAvailable;
@@ -236,7 +236,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     [self popUp:@[
         [self submenu:@"Theme" items:themes],
         NSMenuItem.separatorItem,
-        actualSize,
+        resetZoom,
         [self item:@"Zoom In" payload:@{ @"action": @"textSize", @"mode": @"increase" } key:@"=" mods:cmd],
         [self item:@"Zoom Out" payload:@{ @"action": @"textSize", @"mode": @"decrease" } key:@"-" mods:cmd],
         NSMenuItem.separatorItem,

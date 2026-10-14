@@ -432,7 +432,7 @@
       const titles = { theme: "Theme", sidePanels: "Side Panels", timeline: "Timeline" };
       openMenuSelect(_deskSettingsBtn, "Settings", [
         { value: "theme", label: "Theme" },
-        { value: "actual", label: "Actual Size", disabled: currentDeskTextSizePx() === DESK_TEXT_SIZE_DEFAULT },
+        { value: "actual", label: "Reset Zoom", disabled: currentDeskTextSizePx() === DESK_TEXT_SIZE_DEFAULT },
         { value: "increase", label: "Zoom In" },
         { value: "decrease", label: "Zoom Out" },
         { value: "timeline", label: "Timeline" },

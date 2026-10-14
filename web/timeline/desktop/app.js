@@ -1059,6 +1059,10 @@ __INCLUDE:git-panel/events.js__
         syncPanelState();
         return;
       }
+      if (event.data.type === "timeline-menu-error") {
+        setError(event.data.message, event.data.detail);
+        return;
+      }
       if (event.data.type === "file-context-menu-error") {
         setError("File menu failed", event.data.message);
         return;

@@ -38,7 +38,7 @@
         });
         return;
       }
-      if (event.data && event.data.type === "show-timeline-header-menu") {
+      if (event.data && event.data.type === "show-timeline-header-menu" && event.source === _deskTimelineFrame?.contentWindow) {
         const invoke = getNativeInvoke();
         const childPayload = event.data.payload || {};
         if (typeof invoke !== "function") {
@@ -54,7 +54,7 @@
             x: Math.round(Number(childPayload.x || 0) + Number(frameRect.left || 0)),
             y: Math.round(Number(childPayload.y || 0) + Number(frameRect.top || 0)),
           },
-        }).catch((err) => setError("Menu failed", err));
+        }).catch((err) => event.source.postMessage({ type: "timeline-menu-error", message: "Menu failed", detail: String(err) }, "*"));
         return;
       }
       if (event.data && event.data.type === "show-message-context-menu" && event.source === _deskTimelineFrame?.contentWindow) {
@@ -62,12 +62,12 @@
         const payload = event.data.payload;
         const frameRect = _deskTimelineFrame.getBoundingClientRect();
         if (typeof invoke !== "function") {
-          setError("Menu unavailable");
+          event.source.postMessage({ type: "timeline-menu-error", message: "Menu unavailable" }, "*");
           return;
         }
         invoke("show_message_context_menu", { payload: {
           ...payload, x: payload.x + frameRect.left, y: payload.y + frameRect.top,
-        } }).catch((error) => setError("Menu failed", error));
+        } }).catch((error) => event.source.postMessage({ type: "timeline-menu-error", message: "Menu failed", detail: String(error) }, "*"));
         return;
       }
       if (event.data && event.data.type === "show-link-context-menu" && event.source === _deskTimelineFrame?.contentWindow) {
