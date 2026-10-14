@@ -30,7 +30,7 @@
       --timeline-success-fg: rgb(36, 157, 66);
       --row-preview-fg: var(--muted);
       --timeline-dim-fg: rgb(__TEXT_TIMELINE_DIM_MOBILE_LIGHT_CHANNELS__);
-      --row-name-weight: 700;
+      --row-name-weight: 630;
       --footer-fg: rgb(209.4, 209.4, 207.7);
       --hud-weight: __MOBILE_LIGHT_BODY_WEIGHT__;
     }
@@ -54,7 +54,7 @@
       --row-preview-fg: rgb(130.05, 130.05, 130.05);
       --footer-fg: rgb(49.25, 49.25, 49.25);
       --timeline-dim-fg: rgb(__TEXT_TIMELINE_DIM_MOBILE_DARK_CHANNELS__);
-      --row-name-weight: 600;
+      --row-name-weight: 530;
       --hud-weight: __MOBILE_DARK_BODY_WEIGHT__;
     }
 
@@ -404,7 +404,7 @@
 
     .mob-row-name {
       font-family: var(--font-main);
-      font-size: 15px;
+      font-size: 16px;
       font-weight: var(--row-name-weight);
       letter-spacing: 0;
       line-height: 1.2;
