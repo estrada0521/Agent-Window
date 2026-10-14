@@ -31,7 +31,6 @@
             items: items.map(({ label, section, current }) => ({ label, section: !!section, current: !!current })),
           },
         });
-      } catch (_) {
       } finally {
         _deskTimelineSwitcherOpen = false;
       }

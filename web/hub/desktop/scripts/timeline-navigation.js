@@ -12,7 +12,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = await res.json();
       if (data.ok && data.path) return data.path;
       if (data.canceled) return "";
       throw new Error(data.error || "Workspace picker failed.");
@@ -31,7 +31,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ workspace }),
         });
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json();
         if (!res.ok || !data.ok || !data.timeline_url) {
           throw new Error(data.error || "Failed to open draft timeline");
         }

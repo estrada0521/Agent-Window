@@ -166,7 +166,7 @@
           body: new URLSearchParams({ old_name: oldName, new_name: newName }).toString(),
           cache: "no-store",
         });
-        const data = await response.json().catch(() => ({}));
+        const data = await response.json();
         if (!response.ok || !data.ok) {
           throw new Error(data.error || "Failed to rename timeline");
         }
@@ -205,7 +205,7 @@
           body: "{}",
           cache: "no-store",
         });
-        picked = await res.json().catch(() => ({}));
+        picked = await res.json();
         if (!res.ok) throw new Error(picked.error || "Workspace picker failed");
       } catch (err) {
         setError("Picker failed", err);
@@ -219,7 +219,7 @@
           body: new URLSearchParams({ timeline: timelineName, workspace: picked.path }).toString(),
           cache: "no-store",
         });
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || "Failed to change workspace");
       } catch (err) {
         setError(["Archive first", "Close timeline first"].includes(err.message) ? err.message : "Workspace change failed", err);
@@ -234,7 +234,7 @@
       setStatus("");
       try {
         const res = await fetch(`/timeline-workspace?timeline=${encodeURIComponent(timelineName)}`, { cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json();
         const workspace = String(data.workspace || "").trim();
         if (!res.ok || !data.ok || !workspace) {
           throw new Error(data.error || "Workspace path is unavailable.");
@@ -257,7 +257,7 @@
           body: new URLSearchParams({ timeline: timelineName }).toString(),
           cache: "no-store",
         });
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || "Failed to reset agents");
       } catch (err) {
         setError("Reset failed", err);

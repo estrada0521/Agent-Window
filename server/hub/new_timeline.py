@@ -79,12 +79,7 @@ def post_pick_workspace(handler, _parsed, _ctx) -> None:
     if not chosen:
         handler._send_json(500, {"ok": False, "error": "workspace picker returned an empty path"})
         return
-    try:
-        resolved = Path(chosen).expanduser().resolve()
-    except Exception as exc:
-        handler.log_error("Workspace picker failed: %s", exc)
-        handler._send_json(500, {"ok": False, "error": "Workspace picker failed"})
-        return
+    resolved = Path(chosen).resolve()
     if not resolved.is_dir():
         handler._send_json(400, {"ok": False, "error": "Workspace not found"})
         return
