@@ -127,11 +127,13 @@ class _DebouncedWorkspaceRefresh:
         self._tree_change_order[key] = None
 
     def _classify_git_metadata_locked(self, path: str) -> bool | None:
-        if not self._trees:
-            return None
-        common = self._trees[0][2]
+        common = self._trees[0][2] if self._trees else os.path.realpath(os.path.join(self._files.workspace, ".git"))
         if not _is_under(path, common):
             return None
+        if not self._trees:
+            self._trees_pending = True
+            self._git_head_pending = True
+            return True
         rel = os.path.relpath(path, common)
         parts = rel.split("/")
         if parts[0] == "worktrees":
