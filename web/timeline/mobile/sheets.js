@@ -663,6 +663,10 @@ __INCLUDE:git-panel.js__
         setError("Worktrees unavailable", err);
         return;
       }
+      if (!gitWorktreeList.length) {
+        setError("Not a git repository");
+        return;
+      }
       ensureSheetDom();
       closePaneTraceSheet({ immediate: true });
       closeSheetPreview();
