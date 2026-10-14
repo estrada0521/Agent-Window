@@ -210,7 +210,7 @@ def _get_files_dir(handler, parsed, ctx) -> None:
     try:
         entries = ctx["files"].list_dir(rel)
     except PermissionError:
-        handler.send_error(403)
+        _send_bytes(handler, 403, b'{"error":"Permission denied"}', content_type="application/json; charset=utf-8")
         return
     except FileNotFoundError:
         _send_bytes(handler, 404, b'{"error":"Workspace not found"}', content_type="application/json; charset=utf-8")
@@ -401,6 +401,7 @@ _GET_ROUTES = {
     "/git-worktrees": _get_git_worktrees,
     "/slash-commands": _get_slash_commands,
 }
+JSON_GET_PATHS = frozenset(_GET_ROUTES) - {"/file-raw", "/file-view", "/events"}
 
 
 def dispatch_get_read_route(handler, parsed, ctx) -> bool:
