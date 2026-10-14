@@ -185,9 +185,9 @@ __INCLUDE:../target-selection.js__
 __INCLUDE:../composer-draft.js__
 __INCLUDE:../scroll-lock.js__
     const updateStickyState = () => {
+      refreshViewportCenterAnchor();
       if (_programmaticScroll || _pinStickyThroughWidthChange) return;
       _stickyToBottom = isNearBottom();
-      refreshViewportCenterAnchor();
     };
 __INCLUDE:../scroll-btn.js__
     let _timelineLayoutWidth = messagesEl.clientWidth;
