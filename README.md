@@ -149,7 +149,6 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | Open timeline in browser | `⌥⌘O` | |
 | Search the full timeline | `⌘F` / Search... | Hold `⇧` to jump 10 matches at a time |
 | Export timeline as HTML / JSONL | | |
-| Reload timeline page | `⌘R` | |
 
 <p align="center">
   <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">

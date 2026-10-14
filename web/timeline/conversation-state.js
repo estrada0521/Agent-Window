@@ -1,6 +1,5 @@
     let refreshInFlight = false;
     let pendingRefreshOptions = null;
-    let reloadInFlight = false;
     const AGENT_ICON_DATA = __ICON_DATA_URIS__;
     const SERVER_INSTANCE_SEED = "__SERVER_INSTANCE__";
     let currentServerInstance = SERVER_INSTANCE_SEED;

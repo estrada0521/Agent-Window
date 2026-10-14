@@ -631,12 +631,6 @@ __INCLUDE:../../mobile-edge-swipe.js__
         if (document.documentElement.classList.contains("hub-timeline-ui-active")) void playAgentSound();
         return;
       }
-      if (e.data?.type === "timeline-reloading" && e.source === _timelineFrame.contentWindow) {
-        startTimelineRenderWait();
-        _launchShell.dataset.reloadStage = "rendering";
-        showLaunchShell();
-        return;
-      }
       if (e.data && e.data.type === "timeline-render-error" && e.source === _timelineFrame.contentWindow) {
         _timelineFrameRenderReady = false;
         if (!_awaitingTimelineRenderReady) {

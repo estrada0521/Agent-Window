@@ -403,19 +403,6 @@ __INCLUDE:../hud.js__
     const waitForLaunchStage = () => new Promise((resolve) => {
       requestAnimationFrame(() => setTimeout(resolve, LAUNCH_STAGE_MIN_MS));
     });
-    const reloadTimeline = () => {
-      if (reloadInFlight) return;
-      reloadInFlight = true;
-      if (document.body.classList.contains("side-bar-open")) closeSideBar();
-      document.documentElement.dataset.launchShell = "rendering";
-      if (document.documentElement.hasAttribute("data-mobile-timeline") && window.parent !== window) {
-        window.parent.postMessage({ type: "timeline-reloading" }, "*");
-      }
-      const params = new URLSearchParams(window.location.search);
-      params.set("ts", String(Date.now()));
-      window.location.replace(`${window.location.pathname}?${params.toString()}`);
-    };
-
     const mergeRefreshOptions = (current = {}, next = {}) => {
       const currentOptions = current || {};
       const nextOptions = next || {};

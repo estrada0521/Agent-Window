@@ -13,7 +13,6 @@
     const _deskTimelineList = document.getElementById("deskTimelineList");
     const _deskTimelineFrame = document.getElementById("deskTimelineFrame");
     const _deskTimelineMenuBtn = document.getElementById("timelineMenuBtn");
-    const _deskTimelineReloadBtn = document.getElementById("timelineReloadBtn");
     const _deskSideBarToggle = document.getElementById("sideBarToggle");
     const _deskTimelineShell = document.querySelector(".desk-timeline-shell");
     const _deskMain = document.querySelector(".desk-main");

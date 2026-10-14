@@ -34,6 +34,6 @@
       handleWorkspaceGitChanged();
     };
     timelineEvents.onerror = () => {
-      if (reloadInFlight || document.documentElement.dataset.archiving === "1") return;
+      if (document.documentElement.dataset.archiving === "1") return;
       setResidentError("disconnected", "Disconnected");
     };

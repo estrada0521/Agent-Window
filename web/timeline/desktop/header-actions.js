@@ -152,7 +152,6 @@
       closeHeaderMenus();
       openNativeHeaderMenu().catch((err) => setError("Menu failed", err));
     });
-    document.getElementById("timelineReloadBtn").addEventListener("click", () => void reloadTimeline());
     document.getElementById("sideBarToggle").addEventListener("click", () => toggleSideBar());
     document.addEventListener("click", (event) => {
 
@@ -167,10 +166,6 @@
       if (!action) return;
       if (action === "esc" || action === "restart" || action === "ctrlc" || action === "enter") {
         await postAgentCommand({ command_id: action, path: action === "restart" ? "/restart-agent" : "/key-macro" });
-        return;
-      }
-      if (action === "reloadTimeline") {
-        await reloadTimeline();
         return;
       }
       if (action === "revealLog") {

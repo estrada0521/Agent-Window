@@ -1244,9 +1244,9 @@ __INCLUDE:git-panel/events.js__
           window.parent?.postMessage({ type: "desktop-menu-shortcut", action: "openPane" }, "*");
           return;
         }
-        if (event.metaKey && !event.altKey && !event.ctrlKey && event.code === "KeyR") {
+        if (event.metaKey && event.shiftKey && !event.altKey && !event.ctrlKey && event.code === "KeyR") {
           event.preventDefault();
-          window.parent?.postMessage({ type: "reload-shortcut", scope: event.shiftKey ? "hub" : "timeline" }, "*");
+          window.parent?.postMessage({ type: "reload-hub-shortcut" }, "*");
           return;
         }
         if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyN") {

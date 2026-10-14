@@ -938,10 +938,6 @@ __INCLUDE:git-panel.js__
         await postAgentCommand({ command_id: action, path: action === "restart" ? "/restart-agent" : "/key-macro" });
         return;
       }
-      if (action === "reloadTimeline") {
-        await reloadTimeline();
-        return;
-      }
       if (action === "openGitMenu") {
         openGitSheet();
         return;

@@ -179,9 +179,8 @@
         else window.dispatchEvent(new CustomEvent("native-menu-action", { detail: { action: String(event.data.action || "") } }));
         return;
       }
-      if (event.data && event.data.type === "reload-shortcut") {
-        if (event.data.scope === "hub") triggerDeskHubReload();
-        else sendDeskTimelineAction("reloadTimeline");
+      if (event.data && event.data.type === "reload-hub-shortcut") {
+        triggerDeskHubReload();
         return;
       }
       if (event.data && event.data.type === "new-timeline-shortcut") {
@@ -387,11 +386,6 @@
       event.preventDefault();
       event.stopPropagation();
       openDeskTimelineHeaderMenu();
-    });
-    _deskTimelineReloadBtn && _deskTimelineReloadBtn.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      sendDeskTimelineAction("reloadTimeline");
     });
     _deskSideBarToggle && _deskSideBarToggle.addEventListener("click", (event) => {
       event.preventDefault();

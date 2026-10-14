@@ -149,7 +149,6 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | ブラウザでtimelineを開く | `⌥⌘O` |  |
 | timelineの全文検索 | `⌘F` / Search... | `⇧`併用で10件ずつ飛び |
 | timelineをHTML / JSONLとしてExport | | |
-| timelineページの再読込 | `⌘R` | |
 
 <p align="center">
   <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">

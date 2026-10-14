@@ -366,10 +366,9 @@
         sendDeskTimelineAction("search");
         return;
       }
-      if (event.metaKey && !event.altKey && !event.ctrlKey && event.code === "KeyR") {
+      if (event.metaKey && event.shiftKey && !event.altKey && !event.ctrlKey && event.code === "KeyR") {
         event.preventDefault();
-        if (event.shiftKey) triggerDeskHubReload();
-        else sendDeskTimelineAction("reloadTimeline");
+        triggerDeskHubReload();
         return;
       }
       if (event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyN") {

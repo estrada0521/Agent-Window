@@ -146,12 +146,10 @@ __INCLUDE:../conversation-state.js__
       window.parent.postMessage("hub_close_timeline", "*");
     };
     const notifyHubTimelineRenderReady = () => {
-      if (reloadInFlight) return;
       const reveal = async () => {
         await initialLaunchMinimum;
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            if (reloadInFlight) return;
             document.documentElement.removeAttribute("data-launch-shell");
             if (isEmbeddedHubTimeline) window.parent.postMessage({ type: "timeline-render-ready" }, "*");
           });
