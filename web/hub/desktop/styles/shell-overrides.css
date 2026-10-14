@@ -71,16 +71,12 @@
       background: transparent;
     }
     .desk-timeline-title-text {
-      text-box-trim: trim-both;
-      text-box-edge: cap alphabetic;
       color: var(--fg);
       font-size: 1em;
       letter-spacing: 0.01em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      padding-bottom: 0.25em;
-      margin-bottom: -0.25em;
       max-width: 16.92em;
       line-height: 1.2;
       pointer-events: none;
