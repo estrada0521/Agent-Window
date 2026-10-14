@@ -363,6 +363,7 @@ def _get_git_file_diff(handler, parsed, ctx) -> None:
         old_path=arg("old_path"),
         commit_hash=arg("hash"),
         untracked=arg("untracked") == "1",
+        scope=arg("scope"),
     ))
 
 

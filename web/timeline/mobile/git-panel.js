@@ -270,33 +270,101 @@ __INCLUDE:../git-panel-controller.js__
       }
       return out.length ? `<div class="git-diff-scroll"><table class="git-diff-lines"><tbody>${out.join("")}</tbody></table></div>` : '<div class="git-diff-line is-hunk">No textual changes</div>';
     };
-    const renderGitFileDiffs = () => {
+    const GIT_DIFF_LINE_LIMIT = 10000;
+    let gitDiffRequest = null;
+    const canExpandGitDiffs = (rows) => {
+      const lines = rows.flatMap((row) => gitCountSnapshot(row)).reduce((sum, count) => sum + count, 0);
+      if (lines < GIT_DIFF_LINE_LIMIT) return true;
+      setError("Diff too large");
+      return false;
+    };
+    const fetchGitFileDiff = async (row, context, signal) => {
+      const scope = row.closest(".git-commit-file-section")?.dataset.scope || context.kind;
+      const params = new URLSearchParams({ path: row.dataset.path, hash: context.hash, scope });
+      if (row.dataset.oldPath) params.set("old_path", row.dataset.oldPath);
+      if (row.dataset.untracked === "1") params.set("untracked", "1");
+      const data = await fetchGitJson(`/git-file-diff?${params}`, { signal });
+      const block = document.createElement("div");
+      block.className = "git-file-diff";
+      block.innerHTML = gitDiffLinesHtml(data.diff);
+      return block;
+    };
+    const renderGitFileDiffs = async () => {
       const context = gitPanel.detailContext;
       if (!gitDiffsExpanded || !context?.wrapEl) return;
-      context.wrapEl.querySelectorAll(".git-commit-file-row").forEach((row) => {
-        if (row.nextElementSibling?.classList.contains("git-file-diff")) return;
-        const block = document.createElement("div");
-        block.className = "git-file-diff";
-        block.dataset.path = row.dataset.path || "";
-        row.after(block);
-        const params = new URLSearchParams({ path: row.dataset.path || "", hash: context.hash || "" });
-        if (row.dataset.oldPath) params.set("old_path", row.dataset.oldPath);
-        if (row.dataset.untracked === "1") params.set("untracked", "1");
-        fetchGitJson(`/git-file-diff?${params.toString()}`)
-          .then((data) => { block.innerHTML = gitDiffLinesHtml(data?.diff); })
-          .catch((err) => { block.remove(); setError("Failed to load diff", err); });
-      });
+      const rows = [...context.wrapEl.querySelectorAll(".git-commit-file-row")]
+        .filter((row) => !row.nextElementSibling?.classList.contains("git-file-diff"));
+      if (!rows.length) {
+        syncGitDiffToggle();
+        return;
+      }
+      if (!canExpandGitDiffs(rows)) {
+        gitDiffsExpanded = false;
+        syncGitDiffToggle();
+        return;
+      }
+      syncGitDiffToggle();
+      gitDiffRequest?.abort();
+      const request = new AbortController();
+      gitDiffRequest = request;
+      gitDiffToggle.disabled = true;
+      try {
+        await Promise.all(rows.map(async (row) => {
+          const block = await fetchGitFileDiff(row, context, request.signal);
+          if (gitPanel.detailContext !== context || request.signal.aborted) return;
+          if (!row.nextElementSibling?.classList.contains("git-file-diff")) row.after(block);
+        }));
+      } catch (err) {
+        if (gitPanel.detailContext !== context || request.signal.aborted) return;
+        request.abort();
+        gitDiffsExpanded = false;
+        syncGitDiffToggle();
+        setError("Failed to load diff", err);
+      } finally {
+        if (gitDiffRequest === request) {
+          gitDiffRequest = null;
+          gitDiffToggle.disabled = false;
+        }
+      }
+    };
+    const toggleGitFileDiff = async (row) => {
+      const context = gitPanel.detailContext;
+      if (!context || row._gitDiffRequest || gitDiffRequest) return;
+      const existing = row.nextElementSibling;
+      if (existing?.classList.contains("git-file-diff")) {
+        existing.remove();
+        return;
+      }
+      if (!canExpandGitDiffs([row])) return;
+      const request = new AbortController();
+      row._gitDiffRequest = request;
+      try {
+        const block = await fetchGitFileDiff(row, context, request.signal);
+        if (!request.signal.aborted && gitPanel.detailContext === context && row.isConnected && !row.nextElementSibling?.classList.contains("git-file-diff")) {
+          row.after(block);
+        }
+      } catch (err) {
+        if (!request.signal.aborted && gitPanel.detailContext === context && row.isConnected) setError("Failed to load diff", err);
+      } finally {
+        if (row._gitDiffRequest === request) delete row._gitDiffRequest;
+      }
     };
     const syncGitDiffToggle = () => {
       gitDiffToggle.hidden = !gitPanel.detailContext;
       gitDiffToggle.classList.toggle("is-active", gitDiffsExpanded);
       gitDiffToggle.setAttribute("aria-pressed", gitDiffsExpanded ? "true" : "false");
-      mobileSheet.classList.toggle("git-diffs-expanded", gitDiffsExpanded);
+    };
+    const removeGitFileDiffs = () => {
+      gitDiffRequest?.abort();
+      gitPanel.detailContext?.wrapEl.querySelectorAll(".git-commit-file-row").forEach((row) => {
+        row._gitDiffRequest?.abort();
+        if (row.nextElementSibling?.classList.contains("git-file-diff")) row.nextElementSibling.remove();
+      });
     };
     const collapseWorktreeDiffs = () => {
       const context = gitPanel.detailContext;
-      if (!gitDiffsExpanded || !context || context.kind === "commit") return;
-      context.wrapEl?.querySelectorAll(".git-file-diff").forEach((block) => block.remove());
+      if (!context || context.kind === "commit") return;
+      removeGitFileDiffs();
       gitDiffsExpanded = false;
       syncGitDiffToggle();
     };
@@ -304,8 +372,11 @@ __INCLUDE:../git-panel-controller.js__
       event.preventDefault();
       event.stopPropagation();
       gitDiffsExpanded = !gitDiffsExpanded;
-      syncGitDiffToggle();
-      renderGitFileDiffs();
+      if (gitDiffsExpanded) void renderGitFileDiffs();
+      else {
+        removeGitFileDiffs();
+        syncGitDiffToggle();
+      }
     });
     const setGitDetailChrome = ({ rowHtml = "", subject = "Git", hash = "", isWorktree = false } = {}) => {
       _gitDetailChrome = { rowHtml, subject };
@@ -326,6 +397,8 @@ __INCLUDE:../git-panel-controller.js__
     };
     const resetGitDetailChrome = ({ hadDetail = false } = {}) => {
       _gitDetailChrome = null;
+      gitDiffRequest?.abort();
+      gitDiffsExpanded = false;
       syncGitDiffToggle();
       if (gitSheetTitleEl()) {
         setGitSheetTitle();
@@ -426,12 +499,44 @@ __INCLUDE:../git-panel-controller.js__
       }
       await gitPanel.loadPage({ reset: true });
     };
+    const gitFileMenu = document.createElement("select");
+    gitFileMenu.className = "hub-native-menu-select is-ios-active";
+    gitFileMenu.setAttribute("aria-label", "File actions");
+    document.body.append(gitFileMenu);
+    let gitFilePress = null;
+    let gitMenuPath = "";
+    mobileSheet.addEventListener("touchstart", (event) => {
+      const row = event.target.closest(".git-commit-file-row");
+      const touch = event.touches[0];
+      gitFilePress = row && event.touches.length === 1
+        ? { row, x: touch.clientX, y: touch.clientY, started: performance.now() } : null;
+    }, { passive: true });
+    mobileSheet.addEventListener("touchmove", (event) => {
+      const touch = event.touches[0];
+      if (gitFilePress && (!touch || Math.hypot(touch.clientX - gitFilePress.x, touch.clientY - gitFilePress.y) > 10)) gitFilePress = null;
+    }, { passive: true });
+    mobileSheet.addEventListener("touchcancel", () => { gitFilePress = null; }, { passive: true });
+    mobileSheet.addEventListener("contextmenu", (event) => {
+      if (event.target.closest(".git-commit-file-row")) event.preventDefault();
+    });
+    mobileSheet.addEventListener("touchend", (event) => {
+      const press = gitFilePress;
+      gitFilePress = null;
+      if (!press || performance.now() - press.started < 450) return;
+      event.preventDefault();
+      event.stopPropagation();
+      gitMenuPath = gitTreePath(press.row.dataset.path);
+      gitFileMenu.innerHTML = '<option value="" disabled selected>File</option><option value="open">Open File</option>';
+      const rect = press.row.getBoundingClientRect();
+      Object.assign(gitFileMenu.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+      openNativeSelect(gitFileMenu);
+    }, { passive: false });
+    gitFileMenu.addEventListener("change", () => {
+      if (gitFileMenu.value === "open") void openSheetPreview(gitMenuPath, extFromPath(gitMenuPath), { kind: "git" });
+      gitFileMenu.value = "";
+    });
     mobileSheet.addEventListener("click", (event) => {
       void gitPanel.handleClick(event, {
-        onFileRow: async (fileRow) => {
-          const path = String(fileRow.dataset.path || "").trim();
-          if (!path) return;
-          await openSheetPreview(gitTreePath(path), extFromPath(path), { kind: "git" });
-        },
+        onFileRow: toggleGitFileDiff,
       });
     });

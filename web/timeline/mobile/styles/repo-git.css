@@ -73,28 +73,8 @@
     }
 
     .git-file-diff {
-      display: none;
-      margin: calc(-1 * var(--sheet-list-item-gap)) calc(-1 * var(--sheet-list-padding-inline)) 10px;
-    }
-
-    #mobileSheet.git-diffs-expanded .git-file-diff {
-      display: block;
-    }
-
-    #mobileSheet.git-diffs-expanded .git-detail-view {
-      margin-top: var(--mobile-sheet-content-offset);
-      padding-top: 0;
-      border-top: 1px solid var(--line);
-    }
-
-    #mobileSheet.git-diffs-expanded .git-commit-file-row {
-      position: sticky;
-      top: -1px;
-      z-index: 1;
-      margin-inline: calc(-1 * var(--sheet-list-padding-inline));
-      padding: calc(var(--sheet-list-item-gap) + 1px) var(--sheet-list-padding-inline) var(--sheet-list-item-gap);
-      background: var(--bg);
-      border-bottom: 1px solid var(--line);
+      margin: 0 calc(-1 * var(--sheet-list-padding-inline)) 10px;
+      padding-top: var(--sheet-list-item-gap);
     }
 
     .git-diff-scroll {

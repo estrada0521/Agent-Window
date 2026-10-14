@@ -400,7 +400,7 @@ def git_diff_files(workspace: str, *, commit_hash: str = "", scope: str = ""):
     }
 
 
-def git_file_diff(workspace: str, *, path: str, old_path: str = "", commit_hash: str = "", untracked: bool = False) -> dict:
+def git_file_diff(workspace: str, *, path: str, old_path: str = "", commit_hash: str = "", untracked: bool = False, scope: str = "") -> dict:
     root = _git_root(workspace)
     pathspecs = [str(item).strip().lstrip("/") for item in (old_path, path) if str(item or "").strip()]
     if not pathspecs:
@@ -412,6 +412,9 @@ def git_file_diff(workspace: str, *, path: str, old_path: str = "", commit_hash:
         ok = res.returncode in (0, 1)
     elif commit_hash:
         res = _run_git(root, "show", "--format=", "--no-color", "-M", str(commit_hash).strip(), "--", *pathspecs)
+        ok = res.returncode == 0
+    elif scope in ("staged", "unstaged"):
+        res = _run_git(root, "diff", *(["--cached"] if scope == "staged" else []), "--no-color", "-M", "--", *pathspecs)
         ok = res.returncode == 0
     else:
         res = _run_git(root, "diff-index", "-p", "--no-color", "-M", "HEAD", "--", *pathspecs)

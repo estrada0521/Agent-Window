@@ -130,8 +130,8 @@
           entry?.untracked ? "1" : "0",
         ].join("\u001f"))
       ).join("\n");
-    const fetchGitJson = async (url) => {
-      const res = await fetchWithTimeout(withGitTree(url), {}, GIT_PANEL_FETCH_MS);
+    const fetchGitJson = async (url, options = {}) => {
+      const res = await fetchWithTimeout(withGitTree(url), options, GIT_PANEL_FETCH_MS);
       if (!res.ok) {
         failIfGitTreeRemoved(res);
         throw new Error("Failed to load git files");
