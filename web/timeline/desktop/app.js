@@ -718,7 +718,7 @@ __INCLUDE:git-panel/events.js__
         return path.startsWith(`${workspaceRoot}/`) ? path.slice(workspaceRoot.length + 1) : path;
       }).map((path) => `\`${path}\``).join("\n");
       await doCopyText(text);
-      setStatus(absolute ? "Copied absolute path" : "Copied relative path");
+      setStatus(absolute ? "Copied absolute file path" : "Copied relative file path");
     };
     const copyFiles = async (paths) => {
       const normalized = paths.map(normalizeWorkspaceFilePath).filter(Boolean);
@@ -764,7 +764,7 @@ __INCLUDE:git-panel/events.js__
       void (async () => {
         const info = await gitCommitInfo(hash);
         await doCopyText(action === "copyCommitHash" ? info.hash : info.message);
-        setStatus(action === "copyCommitHash" ? "Copied hash" : "Copied message");
+        setStatus(action === "copyCommitHash" ? "Copied commit hash" : "Copied commit message");
       })().catch((err) => {
         setError("Commit action failed", err);
       });

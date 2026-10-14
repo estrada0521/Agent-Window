@@ -238,7 +238,7 @@
         setError("Copy failed", err);
         return;
       }
-      setStatus("Copied path");
+      setStatus("Copied workspace path");
     }
 
     async function resetDeskTimelineAgents(timelineName) {

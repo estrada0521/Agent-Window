@@ -62,7 +62,7 @@
         copy.resolve(new Blob([text], { type: "text/plain" }));
         const error = await copy.result;
         if (error) throw error;
-        setStatus(action === "copyMessage" ? "Copied" : action === "copyLogEntry" ? "Copied log entry" : "Copied native log entry");
+        setStatus(action === "copyMessage" ? "Copied message" : action === "copyLogEntry" ? "Copied log entry" : "Copied native log entry");
       } catch (error) {
         copy.reject(error);
         setError(action === "copyNativeLogEntry" ? "Native log unavailable" : "Copy failed", error);

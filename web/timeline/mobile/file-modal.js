@@ -153,7 +153,7 @@
             copy.resolve(new Blob([`\`${text}\``], { type: "text/plain" }));
             const error = await copy.result;
             if (error) throw error;
-            setStatus(action === "copyAbsolutePath" ? "Copied absolute path" : "Copied relative path");
+            setStatus(action === "copyAbsolutePath" ? "Copied absolute file path" : "Copied relative file path");
           } catch (error) {
             copy.reject(error);
             setError("Copy failed", error);

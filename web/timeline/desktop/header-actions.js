@@ -83,7 +83,7 @@
         try {
           const text = await messageCopyText(data.contextHash, data.action);
           await doCopyText(text);
-          setStatus(data.action === "copyMessage" ? "Copied" : data.action === "copyLogEntry" ? "Copied log entry" : "Copied native log entry");
+          setStatus(data.action === "copyMessage" ? "Copied message" : data.action === "copyLogEntry" ? "Copied log entry" : "Copied native log entry");
         } catch (error) {
           setError(data.action === "copyNativeLogEntry" ? "Native log unavailable" : "Copy failed", error);
         }
