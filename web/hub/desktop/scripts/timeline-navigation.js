@@ -191,28 +191,14 @@
     }
 
     function maybeRestoreDeskSelection() {
-      if (_deskSelectedTimelineName) {
-        if (findTimelineRecord(_deskSelectedTimelineName)) return;
-        clearDeskSelection();
-        showDeskHubList({ open: true });
-        return;
-      }
-      const requested = getPersistedDeskSelection();
-      if (requested) {
-        const match = findTimelineRecord(requested);
-        if (match && !match.archived) {
-          openTimelineFrame(match.timeline.timeline_url, requested);
-          return;
-        }
-        clearDeskSelection();
-        showDeskHubList({ open: true });
-        return;
-      }
+      if (_deskSelectedTimelineName && findTimelineRecord(_deskSelectedTimelineName)) return;
       const active = _hubTimelinesCache.active;
-      if (active.length) {
-        openTimelineFrame(active[0].timeline_url, active[0].name);
+      const requested = getPersistedDeskSelection();
+      const timeline = active.find((item) => item.name === requested) || active[0];
+      if (timeline) {
+        openTimelineFrame(timeline.timeline_url, timeline.name);
         return;
       }
+      clearDeskSelection();
       showDeskHubList({ open: true });
-      clearDeskTimelineFrame();
     }

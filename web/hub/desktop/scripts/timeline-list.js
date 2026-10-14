@@ -125,8 +125,7 @@
           : confirm("Archive " + timelineName + "?"));
       if (!confirmed) return;
       const route = isDelete ? "/delete-archived-timeline" : "/archive-timeline";
-      const isSelected = _deskSelectedTimelineName === timelineName;
-      const archivingDocument = !isDelete && isSelected ? _deskTimelineFrame?.contentDocument : null;
+      const archivingDocument = !isDelete && _deskSelectedTimelineName === timelineName ? _deskTimelineFrame?.contentDocument : null;
       if (archivingDocument) archivingDocument.documentElement.dataset.archiving = "1";
       try {
         const response = await fetch(
@@ -137,16 +136,13 @@
         if (!response.ok || !data.ok) {
           throw new Error(data.error || (isDelete ? "Failed to delete timeline" : "Failed to archive timeline"));
         }
-        if (isSelected) {
+        if (_deskSelectedTimelineName === timelineName) {
           _deskOpenToken += 1;
           _deskSelectedTimelineName = "";
           updateDeskWindowTitle("");
           persistDeskSelection("");
         }
-        await refreshHubTimelines(true, { skipRestore: true });
-        if (!isSelected) return;
-        clearDeskSelection();
-        showDeskHubList({ open: true });
+        await refreshHubTimelines(true);
       } catch (err) {
         if (archivingDocument) delete archivingDocument.documentElement.dataset.archiving;
         setError(isDelete ? "Delete failed" : "Archive failed", err);
