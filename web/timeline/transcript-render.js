@@ -15,7 +15,11 @@
         updateMessageProjectionUI(displayEntries);
 
         const renderSig = displayEntries.map((entry) => entryRenderKey(entry)).join("\u0002");
-        if (!forceScroll && renderSig === lastMessagesSig) return;
+        if (!forceScroll && renderSig === lastMessagesSig) {
+          renderThinkingIndicator();
+          updateScrollBtn();
+          return;
+        }
         lastMessagesSig = renderSig;
 
         const root = document.getElementById("messages");

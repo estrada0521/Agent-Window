@@ -348,3 +348,7 @@ html[data-theme="dark"] .message-row:not(.user) .message::before {
 html[data-theme="light"] .message-row:not(.user) .message::before {
       width: 1.5px;
     }
+
+.message-thinking-container[hidden] {
+      display: none;
+    }

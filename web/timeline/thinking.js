@@ -190,9 +190,10 @@
       let shouldStick;
       if (document.documentElement.dataset.mobile !== "1") {
         const height = messagesEl.clientHeight;
-        const bottomSpacer = parseFloat(getComputedStyle(messagesEl, "::after").minHeight);
         const distance = messagesEl.scrollHeight - messagesEl.scrollTop - height;
-        shouldStick = distance > height * 1.1 - bottomSpacer;
+        shouldStick = distance >= height * 0.6;
+      } else if (historyWindow?.has_newer) {
+        shouldStick = true;
       } else {
         const sourceAnchor = sources[0].wrap.closest(".message-thinking-icons") || sources[0].wrap;
         const sourceRect = sourceAnchor.getBoundingClientRect();
@@ -238,7 +239,7 @@
         removeThinkingFloatingIcons();
         return;
       }
-      const runningAgents = historyWindow ? [] : Object.keys(currentAgentStatuses).filter((agent) => currentAgentStatuses[agent] === "running");
+      const runningAgents = Object.keys(currentAgentStatuses).filter((agent) => currentAgentStatuses[agent] === "running");
       const hasRunningRunning = runningAgents.length > 0;
       document.body?.classList.toggle("agent-running", hasRunningRunning);
       const existingContainer = root.querySelector(".message-thinking-container");
@@ -254,6 +255,8 @@
         return;
       }
 
+      const container = existingContainer || document.createElement("div");
+      container.hidden = !!historyWindow?.has_newer;
       const agentRunningSig = JSON.stringify(
         runningAgents.map((agent) => [
           agent,
@@ -275,7 +278,6 @@
       const prevRowCount = existingContainer
         ? existingContainer.querySelectorAll(".message-thinking-row[data-agent]").length
         : 0;
-      const container = existingContainer || document.createElement("div");
       container.className = "message-thinking-container";
 
       const ensureAgentRow = (agent) => {

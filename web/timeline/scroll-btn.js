@@ -33,7 +33,7 @@
       }
       const overlayOpen = isComposerOverlayOpen();
       const emptyPlaceholder = !!document.querySelector("#messages .conversation-empty");
-      const showComposerFab = !historyWindow && (emptyPlaceholder || isNearBottom());
+      const showComposerFab = !historyWindow?.has_newer && (emptyPlaceholder || isNearBottom());
       scrollToBottomBtn.classList.toggle("visible", !showComposerFab && !overlayOpen);
       composerFabBtn.classList.toggle("visible", showComposerFab && !overlayOpen);
     };
