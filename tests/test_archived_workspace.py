@@ -4,12 +4,10 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
-from server.hub.actions import post_open_timeline
 from fs.log.paths import workspace_timeline_path
-from urllib.parse import urlparse
-from server.hub.timeline_query import LiveTimelines, archived_timeline_records
+from server.hub.timeline_query import LiveTimelines, archived_timeline_records, build_timeline_record
 from git import repo as workspace_git
 
 
@@ -41,22 +39,14 @@ class ArchivedWorkspaceTests(unittest.TestCase):
             self.assertNotEqual(timelines[0]["workspace"], hub_repo)
             self.assertFalse((workspace / ".git").exists())
 
-    def test_archived_open_passes_saved_workspace_not_hub_root(self) -> None:
+    def test_archived_record_points_to_saved_workspace_not_hub_root(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "Even-Parity"
             workspace.mkdir()
-            with (
-                patch(
-                    "server.hub.actions.read_log_meta",
-                    return_value={"workspace": str(workspace), "agents": []},
-                ),
-            ):
-                handler = Mock()
-                post_open_timeline(handler, urlparse("/open-timeline?timeline=Even-Parity&format=json"), {})
-        status, body = handler._send_json.call_args.args
-        self.assertEqual(status, 200)
-        self.assertTrue(body["timeline_url"].startswith(workspace_timeline_path(workspace) + "/?"))
-        self.assertFalse(body["timeline_url"].startswith(workspace_timeline_path("/Users/okadaharuto/workspace/Agent-Window") + "/"))
+            with patch("server.hub.timeline_query.latest_message_preview", return_value={"sender": "", "text": "", "revision": ""}):
+                record = build_timeline_record(name="Even-Parity", workspace=str(workspace))
+        self.assertEqual(record["timeline_url"], workspace_timeline_path(workspace) + "/")
+        self.assertFalse(record["timeline_url"].startswith(workspace_timeline_path("/Users/okadaharuto/workspace/Agent-Window") + "/"))
 
     def test_git_overview_does_not_use_hub_repo_as_the_project(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "git workspace is not configured"):

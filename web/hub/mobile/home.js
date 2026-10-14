@@ -82,16 +82,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
     const HUB_TIMELINE_FRAME_KEY = "hub_timeline_frame";
     const HUB_LAST_TIMELINE_KEY = "agent_window_hub_last_timeline_name";
     const HUB_PENDING_ERROR_KEY = "agent_window_hub_pending_error";
-    const HUB_TIMELINE_URL_CACHE_TTL_MS = 180000;
-    const HUB_TIMELINE_URL_CACHE_LIMIT = 3;
     const HUB_LAUNCH_SHELL_PARAM = "launch_shell";
-    const hubTimelineUrls = createHubTimelineUrlResolver({
-      cacheLimit: HUB_TIMELINE_URL_CACHE_LIMIT,
-      ttlMs: HUB_TIMELINE_URL_CACHE_TTL_MS,
-      cacheKey: (openHref, name) => String(name || "").trim() || String(openHref || "").trim(),
-      wrapUrl: (url) => hubFrameTimelineUrl(url),
-      errorMessage: "open timeline failed",
-    });
     const applyMobThemeGradientVars = () => {
       const root = document.documentElement;
       const channels = getComputedStyle(root).getPropertyValue("--bg-rgb").trim();
@@ -337,9 +328,6 @@ __INCLUDE:../../mobile-edge-swipe.js__
       });
       return urls[0] === urls[1];
     }
-    function cacheTimelineUrl(name, url) {
-      hubTimelineUrls.write(name, url);
-    }
     function _bumpHubTimelineParentLayoutMax() {
       if (_timelineOverlay.hidden) return;
       const ih = window.innerHeight || 0;
@@ -503,7 +491,6 @@ __INCLUDE:../../mobile-edge-swipe.js__
       startTimelineRenderWait();
       const normalizedName = String(name || "").trim();
       const normalizedUrl = hubFrameTimelineUrl(url);
-      cacheTimelineUrl(normalizedName, normalizedUrl);
       clearPersistedTimelineFrameState();
       _currentTimelineUrl = normalizedUrl;
       _hubMinParentChromeGap = Infinity;
@@ -627,20 +614,17 @@ __INCLUDE:../../mobile-edge-swipe.js__
       if (!timelineUrl || timelineUrl === "about:blank") return;
       openTimelineInFrame(timelineUrl, _currentTimelineName);
     });
-    function openTimelineFrame(openHref, name) {
+    async function openTimelineFrame(openHref, name) {
       rememberLastTimeline(name);
-      const needsReviveTransition = /^\/revive-timeline(?:[/?]|$)/.test(String(openHref || ""));
+      const needsReviveTransition = /^\/revive-timeline(?:[/?]|$)/.test(openHref);
       if (needsReviveTransition) showLaunchShell();
-      return hubTimelineUrls.resolve(openHref, name, { force: needsReviveTransition })
-        .then((timelineUrl) => {
-          openTimelineInFrame(timelineUrl, name);
-          if (needsReviveTransition) {
-            if (refreshMobTimelines) void refreshMobTimelines(true);
-          }
-        })
-        .catch((err) => {
-          failHubReadyWait(err?.message || "open timeline failed");
-        });
+      try {
+        const timelineUrl = needsReviveTransition ? await reviveTimeline(name) : openHref;
+        openTimelineInFrame(timelineUrl, name);
+        if (needsReviveTransition && refreshMobTimelines) void refreshMobTimelines(true);
+      } catch (err) {
+        failHubReadyWait(err.message);
+      }
     }
     window.addEventListener("message", function (e) {
       if (e.data?.type === "timeline-agent-message" && e.source === _timelineFrame.contentWindow) {
@@ -914,7 +898,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
           html += active.map((s) => {
             const preview = `<div class="mob-row-preview">${s.latest_message_preview ? `<span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}` : ""}</div>`;
             return `<div class="swipe-row" data-timeline-name="${esc(s.name)}" data-swipe-right="kill">` +
-              `<div class="mob-timeline-row" data-timeline-name="${esc(s.name)}" data-open-href="/open-timeline?timeline=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
+              `<div class="mob-timeline-row" data-timeline-name="${esc(s.name)}" data-open-href="${esc(s.timeline_url)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
               `</div>` +
@@ -927,7 +911,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
           html += archived.map((s) => {
             const preview = `<div class="mob-row-preview">${s.latest_message_preview ? `<span class="sender">${esc(s.latest_message_sender || "latest")}</span> ${esc(s.latest_message_preview)}` : ""}</div>`;
             return `<div class="swipe-row" data-timeline-name="${esc(s.name)}" data-swipe-right="revive,delete-archived">` +
-              `<div class="mob-timeline-row archived-row" data-timeline-name="${esc(s.name)}" data-open-href="/open-timeline?timeline=${encodeURIComponent(s.name)}" role="link" tabindex="0">` +
+              `<div class="mob-timeline-row archived-row" data-timeline-name="${esc(s.name)}" data-open-href="${esc(s.timeline_url)}" role="link" tabindex="0">` +
               `<div class="mob-row-head">` +
               `<div class="mob-row-name">${esc(s.name)}</div>` +
               `</div>` +
@@ -1001,7 +985,7 @@ __INCLUDE:../../mobile-edge-swipe.js__
           _mobTimelinesRenderedOnce = true;
           if (launchTimeline?.name) {
             void openTimelineFrame(
-              `/open-timeline?timeline=${encodeURIComponent(launchTimeline.name)}`,
+              launchTimeline.timeline_url,
               launchTimeline.name,
             ).finally(releaseHubLaunchShellAfterRender);
           } else {

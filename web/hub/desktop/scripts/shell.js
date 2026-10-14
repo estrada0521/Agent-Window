@@ -243,14 +243,10 @@
       return null;
     }
 
-    function buildTimelineOpenHref(timelineName) {
-      return `/open-timeline?timeline=${encodeURIComponent(timelineName)}`;
-    }
-
     function switchToDeskActiveTimeline(index) {
       const target = _hubTimelinesCache.active[index];
       if (!target || !target.name || target.name === _deskSelectedTimelineName) return;
-      openTimelineFrame(buildTimelineOpenHref(target.name), target.name);
+      openTimelineFrame(target.timeline_url, target.name);
     }
 
     function systemPrefersDark() {
@@ -314,10 +310,6 @@
         let q = raw + (raw.includes("?") ? "&" : "?") + "hub_shell=1";
         return q;
       }
-    }
-
-    function cacheDeskTimelineUrl(cacheKey, timelineUrl) {
-      hubTimelineUrls.write(cacheKey, timelineUrl);
     }
 
     function syncDeskTimelineShellState() {

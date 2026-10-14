@@ -14,8 +14,9 @@ from fs.log.paths import (
     META_FILENAME,
     agent_window_log_root,
     log_jsonl_path,
+    normalize_workspace,
+    workspace_timeline_path,
 )
-from fs.log.paths import normalize_workspace
 from fs.log.jsonl import iter_log_entries_reversed
 
 
@@ -57,6 +58,7 @@ def build_timeline_record(*, name: str, workspace: str) -> dict:
     return {
         "name": name,
         "workspace": workspace,
+        "timeline_url": workspace_timeline_path(workspace) + "/",
         "latest_message_sender": preview["sender"],
         "latest_message_preview": preview["text"],
         "latest_message_revision": preview["revision"],

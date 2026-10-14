@@ -86,9 +86,6 @@
       _deskUnreadTimelines.delete(_deskSelectedTimelineName);
       updateDeskWindowTitle(_deskSelectedTimelineName);
       persistDeskSelection(_deskSelectedTimelineName);
-      if (_deskSelectedTimelineName) {
-        cacheDeskTimelineUrl(buildTimelineOpenHref(_deskSelectedTimelineName), url);
-      }
       const frameUrl = buildDeskTimelineFrameUrl(url);
       if (frameUrl) {
         const currentUrl = normalizeComparableUrl(_deskTimelineFrameLoadedUrl);
@@ -105,10 +102,6 @@
       applyDeskTimelineSelection();
     }
 
-    function resolveTimelineUrl(openHref, { force = false } = {}) {
-      return hubTimelineUrls.resolve(openHref, "", { force });
-    }
-
     async function openTimelineFrame(openHref, name) {
       if (!name) {
         failDeskOpen("Timeline not found");
@@ -116,7 +109,6 @@
       }
       const needsReviveTransition = /^\/revive-timeline(?:[/?]|$)/.test(openHref);
       if (!needsReviveTransition && name === _deskSelectedTimelineName && _deskTimelineFrameLoadedUrl) return;
-      const archived = !!findTimelineRecord(name)?.archived;
       const closeOnOpen = isPhoneViewport();
       _deskSelectedTimelineName = name;
       _deskTreeLabelText = "";
@@ -128,9 +120,10 @@
       setDeskTimelineLoading(true);
       const openToken = ++_deskOpenToken;
       try {
-        const timelineUrl = await resolveTimelineUrl(openHref, { force: archived || needsReviveTransition });
-        if (openToken !== _deskOpenToken) return;
+        let timelineUrl = openHref;
         if (needsReviveTransition) {
+          timelineUrl = await reviveTimeline(name);
+          if (openToken !== _deskOpenToken) return;
           await refreshHubTimelines(true, { skipRestore: true });
           if (openToken !== _deskOpenToken) return;
         }
@@ -208,7 +201,7 @@
       if (requested) {
         const match = findTimelineRecord(requested);
         if (match && !match.archived) {
-          openTimelineFrame(buildTimelineOpenHref(requested), requested);
+          openTimelineFrame(match.timeline.timeline_url, requested);
           return;
         }
         clearDeskSelection();
@@ -217,7 +210,7 @@
       }
       const active = _hubTimelinesCache.active;
       if (active.length) {
-        openTimelineFrame(buildTimelineOpenHref(active[0].name), active[0].name);
+        openTimelineFrame(active[0].timeline_url, active[0].name);
         return;
       }
       showDeskHubList({ open: true });

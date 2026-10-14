@@ -57,19 +57,6 @@ def _back_to_hub(handler, fmt: str, timeline_name: str, action: str) -> None:
         handler._redirect("/")
 
 
-def post_open_timeline(handler, parsed, _ctx) -> None:
-    timeline_name, fmt = _timeline_query(parsed)
-    if not timeline_name:
-        _fail(handler, fmt, 404, "That timeline is not available in this repo.")
-        return
-    try:
-        workspace = read_log_meta(timeline_name)["workspace"]
-    except FileNotFoundError:
-        _fail(handler, fmt, 404, "That timeline is not available in this repo.")
-        return
-    _open_timeline(handler, fmt, workspace)
-
-
 def post_revive_timeline(handler, parsed, ctx) -> None:
     timeline_name, fmt = _timeline_query(parsed)
     if not timeline_name:

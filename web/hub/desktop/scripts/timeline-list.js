@@ -51,7 +51,7 @@
           `</button>` +
         `</div>` +
         `<div class="desk-swipe-track">` +
-          `<div class="desk-timeline-row desk-action-timeline-row${archivedClass}${selectedClass}${unreadClass}" data-timeline-name="${esc(timelineName)}" data-open-href="${buildTimelineOpenHref(timelineName)}" data-revision="${esc(timeline.latest_message_revision || "")}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
+          `<div class="desk-timeline-row desk-action-timeline-row${archivedClass}${selectedClass}${unreadClass}" data-timeline-name="${esc(timelineName)}" data-open-href="${esc(timeline.timeline_url)}" data-revision="${esc(timeline.latest_message_revision || "")}" tabindex="0" role="button" aria-current="${selectedClass ? "page" : "false"}">` +
             `<div class="desk-row-head">` +
                 `<div class="desk-row-main">` +
                   `<span class="desk-row-bullet" aria-hidden="true"><i></i></span>` +
@@ -137,7 +137,6 @@
         if (!response.ok || !data.ok) {
           throw new Error(data.error || (isDelete ? "Failed to delete timeline" : "Failed to archive timeline"));
         }
-        hubTimelineUrls.forget(buildTimelineOpenHref(timelineName));
         if (isSelected) {
           _deskOpenToken += 1;
           _deskSelectedTimelineName = "";
@@ -171,7 +170,6 @@
           throw new Error(data.error || "Failed to rename timeline");
         }
         const renamed = String(data.new_name || newName);
-        hubTimelineUrls.forget(buildTimelineOpenHref(oldName));
         if (_deskUnreadTimelines.delete(oldName)) _deskUnreadTimelines.add(renamed);
         if (_deskSelectedTimelineName === oldName) {
           _deskSelectedTimelineName = renamed;
@@ -225,7 +223,7 @@
         setError(["Archive first", "Close timeline first"].includes(err.message) ? err.message : "Workspace change failed", err);
         return;
       }
-      hubTimelineUrls.forget(buildTimelineOpenHref(timelineName));
+      await refreshHubTimelines(true, { skipRestore: true });
       setStatus("Workspace updated");
     }
 

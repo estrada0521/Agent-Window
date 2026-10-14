@@ -39,13 +39,6 @@
     const DESK_SWIPE_OPEN_THRESHOLD = 40;
     const DESK_HUB_CLOSE_SWIPE_EDGE_PX = 36;
     const DESK_HUB_CLOSE_SWIPE_THRESHOLD = 54;
-    const DESK_TIMELINE_URL_CACHE_LIMIT = 3;
-    const hubTimelineUrls = createHubTimelineUrlResolver({
-      cacheLimit: DESK_TIMELINE_URL_CACHE_LIMIT,
-      cacheKey: (openHref) => String(openHref || "").trim(),
-      wrapUrl: (url) => String(url || "").trim(),
-      errorMessage: "timeline url unavailable",
-    });
     let _deskSideBarActiveMode = "";
     let _deskSideBarWidth = 0;
     let _deskOutwardResizeInFlight = false;

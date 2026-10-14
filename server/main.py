@@ -35,7 +35,6 @@ from server.hub.new_timeline import (
 from server.hub.actions import (
     post_delete_archived_timeline,
     post_archive_timeline,
-    post_open_timeline,
     post_revive_timeline,
     get_timeline_workspace,
     get_timeline_stats,
@@ -467,7 +466,6 @@ _GET_ROUTE_HANDLERS = {
 }
 
 _POST_ROUTE_HANDLERS = {
-    "/open-timeline": post_open_timeline,
     "/revive-timeline": post_revive_timeline,
     "/archive-timeline": post_archive_timeline,
     "/delete-archived-timeline": post_delete_archived_timeline,
