@@ -2,64 +2,32 @@
 __INCLUDE:../../font-faces.css__
 __INCLUDE:../../markdown-theme-vars.css__
     :root {
-      color-scheme: __COLOR_SCHEME__;
       --app-shell-height: 100dvh;
       --message-user-indent: min(28%, 280px);
       --chrome-icon-btn-size: 26px;
       --chrome-icon-size: 16px;
       --chrome-icon-stroke: 1.5;
       --chrome-icon-gap: 2px;
-      --bg-rgb: __DARK_BG_CHANNELS__;
       --bg: rgb(var(--bg-rgb));
       --side-bar-reserved-width: 0px;
       --side-reserve-left: 0px;
       --side-reserve-right: var(--side-bar-reserved-width);
-      --line: __LINE__;
-      --line-strong: __LINE_STRONG__;
-      --fg-rgb: __LIGHT_FG_CHANNELS__;
       --fg: rgb(var(--fg-rgb));
-      --muted: __GRAY_MUTED__;
       --icon-fg: var(--fg);
-      --icon-muted-rgb: __ICON_MUTED_CHANNELS__;
       --icon-muted: rgb(var(--icon-muted-rgb));
       --spinner-ring-color: rgba(var(--icon-muted-rgb), 0.5);
-      --icon-hover: __ICON_HOVER__;
-      --chip-color: __CHIP_COLOR__;
-      --chip-hover-color: __CHIP_HOVER_COLOR__;
       --control-active-color: rgb(180, 180, 180);
-      --panel-row-bg: __PANEL_ROW_BG__;
-      --panel-head-bg: var(--panel-row-bg);
-      --list-row-hover-bg: var(--panel-row-bg);
-      --floating-bg: rgba(48, 48, 48, 0.5);
       --pill-bg-rgb: var(--bg-rgb);
-      --panel-row-border: __PANEL_ROW_BORDER__;
-      --panel-row-hover-bg: __PANEL_ROW_HOVER_BG__;
-      --panel-row-active-bg: __PANEL_ROW_ACTIVE_BG__;
-      --composer-menu-row-border: rgba(255, 255, 255, 0.05);
-      --composer-menu-row-hover-bg: rgba(255, 255, 255, 0.05);
-      --composer-menu-row-active-bg: rgba(255, 255, 255, 0.07);
-      --surface: __GRAY_SURFACE__;
-      --inline-code-border: __GRAY_INLINE_BORDER__;
-      --error: rgb(__TEXT_ERROR_DESKTOP_DARK_CHANNELS__);
-      --file-link-fg: rgb(__TEXT_FILE_LINK_DARK_CHANNELS__);
       --code-copy-bg: transparent;
-      --code-copy-hover-bg: __CODE_COPY_HOVER_BG__;
-      --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_DARK_CHANNELS__);
-
-      --git-ins-green-channels: __TEXT_DIFF_INSERT_DARK_CHANNELS__;
       --git-ins-green: rgb(var(--git-ins-green-channels));
-      --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
       --git-del-red: rgb(var(--git-del-red-channels));
     }
     html[data-theme="light"] {
       color-scheme: light;
       --bg-rgb: __DESKTOP_TIMELINE_LIGHT_BG_CHANNELS__;
       --fg-rgb: __TEXT_PRIMARY_DESKTOP_LIGHT_CHANNELS__;
-      --fg: rgb(var(--fg-rgb));
       --muted: rgb(__TEXT_MUTED_LIGHT_CHANNELS__);
-      --icon-fg: var(--fg);
       --icon-muted-rgb: __TEXT_MUTED_LIGHT_CHANNELS__;
-      --icon-muted: rgb(var(--icon-muted-rgb));
       --icon-hover: __DESKTOP_LIGHT_ICON_HOVER__;
       --resizer: __DESKTOP_RESIZER_LIGHT__;
       --resizer-active: __DESKTOP_RESIZER_ACTIVE_LIGHT__;
@@ -82,42 +50,42 @@ __INCLUDE:../../markdown-theme-vars.css__
       --code-copy-hover-bg: rgba(0, 0, 0, 0.08);
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_LIGHT_CHANNELS__);
       --error: rgb(__TEXT_ERROR_DESKTOP_LIGHT_CHANNELS__);
-
       --file-link-fg: rgb(__TEXT_FILE_LINK_LIGHT_CHANNELS__);
       --git-ins-green-channels: __TEXT_DIFF_INSERT_LIGHT_CHANNELS__;
-      --git-ins-green: rgb(var(--git-ins-green-channels));
       --git-del-red-channels: __TEXT_DIFF_DELETE_LIGHT_CHANNELS__;
-      --git-del-red: rgb(var(--git-del-red-channels));
       --scrollbar-thumb: __DESKTOP_SCROLLBAR_THUMB_LIGHT__;
     }
     html[data-theme="dark"] {
       color-scheme: dark;
       --bg-rgb: __DESKTOP_TIMELINE_DARK_BG_CHANNELS__;
       --fg-rgb: __TEXT_PRIMARY_DESKTOP_DARK_CHANNELS__;
-      --fg: rgb(var(--fg-rgb));
       --muted: rgb(__TEXT_MUTED_DARK_CHANNELS__);
-      --icon-fg: var(--fg);
       --icon-muted-rgb: __TEXT_MUTED_DARK_CHANNELS__;
-      --icon-muted: rgb(var(--icon-muted-rgb));
       --icon-hover: __DESKTOP_DARK_ICON_HOVER__;
       --resizer: var(--line);
       --resizer-active: __DESKTOP_RESIZER_ACTIVE_DARK__;
       --chip-color: rgb(70, 70, 70);
       --chip-hover-color: __CHIP_HOVER_DARK__;
       --panel-row-bg: rgba(180, 180, 180, 0.10);
+      --panel-head-bg: var(--panel-row-bg);
+      --list-row-hover-bg: var(--panel-row-bg);
+      --floating-bg: rgba(48, 48, 48, 0.5);
       --panel-row-border: rgba(180, 180, 180, 0.14);
       --panel-row-hover-bg: rgba(180, 180, 180, 0.13);
       --panel-row-active-bg: rgba(180, 180, 180, 0.16);
-
-      --git-ins-green-channels: __TEXT_DIFF_INSERT_DARK_CHANNELS__;
-      --git-ins-green: rgb(var(--git-ins-green-channels));
-      --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
-      --git-del-red: rgb(var(--git-del-red-channels));
+      --composer-menu-row-border: rgba(255, 255, 255, 0.05);
+      --composer-menu-row-hover-bg: rgba(255, 255, 255, 0.05);
+      --composer-menu-row-active-bg: rgba(255, 255, 255, 0.07);
       --surface: rgb(10, 10, 10);
       --inline-code-border: rgb(54, 54, 54);
       --line: rgba(180, 180, 180, 0.07);
       --line-strong: rgba(180, 180, 180, 0.12);
       --code-copy-hover-bg: rgba(180, 180, 180, 0.09);
+      --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_DARK_CHANNELS__);
+      --error: rgb(__TEXT_ERROR_DESKTOP_DARK_CHANNELS__);
+      --file-link-fg: rgb(__TEXT_FILE_LINK_DARK_CHANNELS__);
+      --git-ins-green-channels: __TEXT_DIFF_INSERT_DARK_CHANNELS__;
+      --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
       --scrollbar-thumb: __DESKTOP_SCROLLBAR_THUMB_DARK__;
     }
     :root {
