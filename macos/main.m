@@ -3,6 +3,14 @@
 #import <WebKit/WebKit.h>
 #include <sys/stat.h>
 
+@interface _WKInspector : NSObject
+- (void)show;
+@end
+
+@interface WKWebView (AWInspector)
+@property (nonatomic, readonly) _WKInspector *_inspector;
+@end
+
 static const CGFloat kDefaultWindowSize = 896;
 static const CGFloat kMinWindowWidth = 160;
 static const CGFloat kMinWindowHeight = 103;
@@ -828,6 +836,10 @@ static BOOL HubReady(NSInteger port) {
     return YES;
 }
 
+- (void)showWebInspector:(id)sender {
+    [self.webView._inspector show];
+}
+
 - (void)buildMainMenu {
     NSString *name = @"Agent Window";
     NSEventModifierFlags cmd = NSEventModifierFlagCommand;
@@ -859,6 +871,10 @@ static BOOL HubReady(NSInteger port) {
 
     NSMenu *view = [[NSMenu alloc] initWithTitle:@"View"];
     [view addItemWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"].keyEquivalentModifierMask = cmd | NSEventModifierFlagControl;
+
+    [view addItem:NSMenuItem.separatorItem];
+    NSMenuItem *inspector = [view addItemWithTitle:@"Show Web Inspector" action:@selector(showWebInspector:) keyEquivalent:@""];
+    inspector.target = self;
 
     NSMenu *window = [[NSMenu alloc] initWithTitle:@"Window"];
     [window addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];

@@ -1,4 +1,5 @@
 (() => {
+  document.addEventListener("contextmenu", (event) => event.preventDefault());
   const root = document.documentElement;
   root.dataset.nativeApp = "1";
   root.dataset.nativeRootWindow = "0";
