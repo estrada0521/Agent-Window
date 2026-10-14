@@ -716,9 +716,6 @@
       transform: rotate(90deg) translateZ(0);
     }
     .git-commit-detail-body {
-      flex: 1;
-      overflow-y: auto;
-      min-height: 0;
       animation: git-detail-body-unfold 0.25s ease-out both;
       transform-origin: top;
     }
@@ -757,7 +754,6 @@
     }
     .git-commit-detail-head .git-commit-chevron {
       transform: rotate(90deg) translateZ(0);
-      color: var(--icon-muted);
     }
     .git-commit-detail-head .git-summary-pin {
       cursor: default;

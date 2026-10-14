@@ -147,13 +147,6 @@ __INCLUDE:../../markdown-theme-vars.css__
       pointer-events: none;
       box-sizing: border-box;
     }
-    .git-commit-detail-body {
-      flex: 1 1 auto;
-      min-height: 0;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
     * { box-sizing: border-box; }
     :root { --scrollbar-size: 6px; }
     ::-webkit-scrollbar { width: var(--scrollbar-size); height: var(--scrollbar-size); }

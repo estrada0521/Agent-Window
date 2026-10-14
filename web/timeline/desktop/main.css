@@ -35,12 +35,6 @@ __INCLUDE:../search.css__
       background: transparent;
     }
     .copy-btn.copied { color: var(--fg); }
-    .message.user .md-body {
-      background: transparent;
-      background-image: none;
-      border: none;
-      color: var(--fg);
-    }
 __INCLUDE:../markdown-code.css__
     .composer-attach-btn:active,
     .composer-dock-btn:active {

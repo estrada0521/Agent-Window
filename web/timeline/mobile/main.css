@@ -59,26 +59,10 @@ __INCLUDE:styles/thinking.css__
       color: var(--fg);
     }
 
-    .message.user .md-body {
-      background: transparent;
-      background-image: none;
-      border: none;
-      color: var(--fg);
-    }
-
 __INCLUDE:../markdown-code.css__
 
 
     #fileDropdown {
-      background: transparent;
-    }
-
-    .attach-card-ext {
-      background: var(--surface);
-    }
-
-
-    .composer-attach-btn:active {
       background: transparent;
     }
 

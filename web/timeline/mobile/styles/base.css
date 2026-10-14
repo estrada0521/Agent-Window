@@ -165,7 +165,6 @@ __INCLUDE:../../markdown-theme-vars.css__
 __INCLUDE:../../../mobile-launch-status.css__
 
     .shell>.page-header {
-      position: absolute;
       overflow: visible;
       z-index: 155;
     }

@@ -84,7 +84,6 @@
     }
 
     body {
-      padding: 0 0 env(safe-area-inset-bottom) 0;
     }
 
     .shell {
@@ -122,7 +121,6 @@
       padding: 0;
     }
 
-    __HUB_HEADER_CSS__
 
 
     .page-header {
@@ -150,9 +148,6 @@
       min-height: var(--chrome-icon-btn-size);
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      padding: 0;
-      border-radius: 999px;
     }
 
     .page-header .page-title {
@@ -336,13 +331,11 @@
     .mob-timeline-row {
       display: block;
       padding: 12px 20px;
-      border-bottom: none;
       cursor: pointer;
       text-decoration: none;
       color: inherit;
       -webkit-tap-highlight-color: transparent;
       transition: background 80ms ease, transform var(--liquid-glass-press-out);
-      position: relative;
       isolation: isolate;
     }
 

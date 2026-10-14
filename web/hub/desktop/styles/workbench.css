@@ -308,7 +308,6 @@
       z-index: auto;
     }
     .desk-top-right-controls {
-      display: none;
       position: fixed;
       right: calc(var(--desk-chrome-edge) + env(safe-area-inset-right, 0px));
       top: var(--desk-chrome-top);
