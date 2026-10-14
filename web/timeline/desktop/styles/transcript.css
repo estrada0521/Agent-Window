@@ -189,7 +189,7 @@ __INCLUDE:../../transcript.css__
 
     .message.user .message-hover-copy-zone {
       right: 0.9em;
-      bottom: calc(0.65em + var(--message-copy-bottom));
+      bottom: calc(0.65em + var(--message-copy-bottom) - 1px);
     }
 
     .message-row .message-time {
