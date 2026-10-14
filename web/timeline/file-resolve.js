@@ -29,7 +29,7 @@
     const fetchRepoDir = async (path) => {
       const res = await fetchWithTimeout(`/files-dir?path=${encodeURIComponent(path)}`, {}, 12000);
       if (!res.ok) {
-        const message = (await res.json().catch(() => ({}))).error || "Failed to load directory";
+        const message = (await res.json()).error || "Failed to load directory";
         if (path && res.status === 404 && message === "Directory not found") {
           return { ...await fetchRepoDir(""), missingPath: path };
         }

@@ -176,7 +176,7 @@
       if (action === "revealLog") {
         const res = await fetch("/reveal-log", { method: "POST" });
         if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
+          const data = await res.json();
           setError("Reveal failed", data.error);
         }
         return;
@@ -214,7 +214,7 @@
         try {
           const res = await fetch("/open-shell", { method: "POST" });
           if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
+            const data = await res.json();
             setError("Terminal unavailable", data.error);
           }
         } catch (err) {

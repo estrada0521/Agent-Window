@@ -674,7 +674,7 @@ __INCLUDE:git-panel.js__
     const openRepoSheet = async () => {
       try {
         const res = await fetchWithTimeout("/files-dir?path=", {}, 12000);
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load workspace");
+        if (!res.ok) throw new Error((await res.json()).error || "Failed to load workspace");
       } catch (err) {
         setError(err.message === "Workspace not found" ? err.message : "Workspace unavailable", err);
         return;

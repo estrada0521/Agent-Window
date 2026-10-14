@@ -121,7 +121,7 @@
               body: JSON.stringify({ path }),
             }).then(async (res) => {
               if (res.ok) return;
-              const data = await res.json().catch(() => ({}));
+              const data = await res.json();
               throw new Error(data.error || `HTTP ${res.status}`);
             }).catch((err) => {
               setError("Upload delete failed", err);

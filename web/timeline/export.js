@@ -205,7 +205,7 @@ ${katex}<style>${css}</style>
         if (exportRange.format === "jsonl") {
           const params = new URLSearchParams({ from: rows[0].dataset.contextHash || "", to: rows[rows.length - 1].dataset.contextHash || "" });
           const res = await fetch(`/log-slice?${params.toString()}`);
-          if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
+          if (!res.ok) throw new Error((await res.json()).error || `HTTP ${res.status}`);
           file = new File([await res.blob()], `${name}.jsonl`, { type: "application/x-ndjson" });
         } else {
           file = new File([await buildExportHtml(rows)], `${name}.html`, { type: "text/html" });

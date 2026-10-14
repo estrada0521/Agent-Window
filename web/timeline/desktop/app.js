@@ -735,7 +735,7 @@ __INCLUDE:git-panel/events.js__
         body: JSON.stringify({ path }),
       }, 12000);
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
+        const data = await response.json();
         throw new Error(data?.error || "Reveal failed");
       }
     };

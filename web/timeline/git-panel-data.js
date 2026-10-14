@@ -82,7 +82,7 @@
     };
     const fetchGitWorktreeState = async () => {
       const res = await fetchWithTimeout("/git-worktrees", {}, GIT_PANEL_FETCH_MS);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Failed to load worktrees");
+      if (!res.ok) throw new Error((await res.json()).error || "Failed to load worktrees");
       return res.json();
     };
     const fetchGitWorktrees = async () => (await fetchGitWorktreeState()).worktrees;
@@ -94,7 +94,7 @@
       );
       if (!res.ok) {
         failIfGitTreeRemoved(res);
-        const error = (await res.json().catch(() => ({}))).error;
+        const error = (await res.json()).error;
         throw new Error(error || (offset > 0 ? "Failed to load more commits" : "Failed to load git overview"));
       }
       return res.json();
