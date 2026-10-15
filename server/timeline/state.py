@@ -61,7 +61,8 @@ class TimelineState:
             log_path=lambda: self.log_path,
             agent_panes=self.agent_panes,
             publish_state=lambda: self.publish_event("state"),
-            report_failure=lambda agent, detail: self.publish_event("native-log-failed", {"agent": agent, "detail": detail}),
+            report_failure=self.report_failure,
+            report_binding_failure=lambda agent, detail: self.publish_event("native-log-failed", {"agent": agent, "detail": detail}),
             mark_idle=self._mark_idle,
             mark_running=self._mark_running_from_native_activity,
         )

@@ -276,7 +276,7 @@ def git_overview(workspace: str, *, offset=0, limit=50, include_commits: bool = 
 
 def git_commit_info(workspace: str, *, commit_hash: str) -> dict:
     root = _git_root(workspace)
-    res = _run_git(root, "show", "--shortstat", "--format=%H%x1f%an%x1f%aI%x1f%B%x1e", str(commit_hash or "").strip(), "--")
+    res = _run_git(root, "show", "--shortstat", "--format=%H%x1f%an%x1f%aI%x1f%B%x1e", "--end-of-options", str(commit_hash or "").strip(), "--")
     if res.returncode != 0:
         raise RuntimeError((res.stderr or res.stdout or "git show failed").strip())
     head, _, stat = (res.stdout or "").partition("\x1e")
@@ -363,7 +363,7 @@ def git_diff_files(workspace: str, *, commit_hash: str = "", scope: str = ""):
     out = ""
     include_untracked = False
     if commit_hash:
-        out = _diff_out("show", "--numstat", "-z", "--format=", "--find-renames", "--find-copies", commit_hash, "--")
+        out = _diff_out("show", "--numstat", "-z", "--format=", "--find-renames", "--find-copies", "--end-of-options", commit_hash, "--")
     elif scope == "staged":
         out = _diff_out("diff", "--numstat", "-z", "--cached", "--")
     elif scope == "unstaged":
@@ -403,7 +403,7 @@ def git_file_diff(workspace: str, *, path: str, old_path: str = "", commit_hash:
         res = _run_git(root, "diff", "--no-index", "--no-color", "--", "/dev/null", pathspecs[-1])
         ok = res.returncode in (0, 1)
     elif commit_hash:
-        res = _run_git(root, "show", "--format=", "--no-color", "-M", str(commit_hash).strip(), "--", *pathspecs)
+        res = _run_git(root, "show", "--format=", "--no-color", "-M", "--end-of-options", str(commit_hash).strip(), "--", *pathspecs)
         ok = res.returncode == 0
     elif scope in ("staged", "unstaged"):
         res = _run_git(root, "diff", *(["--cached"] if scope == "staged" else []), "--no-color", "-M", "--", *pathspecs)
