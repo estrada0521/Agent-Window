@@ -206,7 +206,7 @@ class TimelineState:
 
     def _announce_commit(self, commit: dict) -> None:
         self.append_system_entry(
-            f"Commit: {commit['short']} {commit['subject']}",
+            f"Git: {commit['short']} {commit['message']}",
             commit_hash=commit["hash"],
             commit_short=commit["short"],
         )

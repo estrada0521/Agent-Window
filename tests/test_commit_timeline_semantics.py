@@ -49,7 +49,7 @@ class CommitTimelineSemanticsTests(unittest.TestCase):
             commits.observe()
             self.assertEqual(announced, [])
 
-    def test_observed_advance_announces_only_the_new_head(self) -> None:
+    def test_observed_commits_are_announced_in_order(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace, commits, announced = self._repo(tmp)
             _commit(workspace, "base.txt", "base")
@@ -60,10 +60,10 @@ class CommitTimelineSemanticsTests(unittest.TestCase):
             head = _head(workspace)
 
             commits.observe()
-            self.assertEqual(len(announced), 1)
-            self.assertEqual(announced[0]["hash"], head)
+            self.assertEqual([entry["message"] for entry in announced], ["commit: a", "commit: b"])
+            self.assertEqual(announced[-1]["hash"], head)
 
-    def test_diverged_branch_switch_is_announced_like_any_advance(self) -> None:
+    def test_diverged_branch_switch_and_commit_are_both_announced(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace, commits, announced = self._repo(tmp)
             _commit(workspace, "base.txt", "base")
@@ -81,8 +81,10 @@ class CommitTimelineSemanticsTests(unittest.TestCase):
             self.assertNotEqual(other_hash, main_hash)
 
             commits.observe()
-            self.assertEqual(len(announced), 1)
-            self.assertEqual(announced[0]["hash"], other_hash)
+            self.assertEqual(len(announced), 2)
+            self.assertEqual(announced[0]["hash"], base_hash)
+            self.assertTrue(announced[0]["message"].startswith("checkout: "))
+            self.assertEqual(announced[1]["hash"], other_hash)
 
 
 if __name__ == "__main__":
