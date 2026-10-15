@@ -83,7 +83,7 @@ def render_timeline_html(
         "__TIMELINE_MANIFEST_URL__": pwa_url("/app.webmanifest", base_path),
         "__TIMELINE_PWA_ICON_192_URL__": pwa_url("/pwa-icon-192.png", base_path),
         "__TIMELINE_APPLE_TOUCH_ICON_URL__": pwa_url("/apple-touch-icon.png", base_path),
-        "__TIMELINE_SERVICE_WORKER_HTML__": TIMELINE_SERVICE_WORKER_HTML,
+        "__TIMELINE_SERVICE_WORKER_HTML__": "" if variant == "desktop" else TIMELINE_SERVICE_WORKER_HTML,
         "__SERVER_INSTANCE__": server_instance,
         "__TEXT_SIZE_DEFAULT__": str(DESKTOP_TEXT_SIZE),
         "__SESSION_WIDTH__": str(SESSION_WIDTH),
