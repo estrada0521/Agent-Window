@@ -27,7 +27,7 @@ def _projector(has_log_binding):
         log_path=lambda: Path("/tmp/.log.jsonl"),
         agent_panes=lambda: {"codex": "%1"},
         publish_state=lambda: None,
-        report_failure=lambda _text: None,
+        report_failure=lambda _agent, _detail: None,
         mark_idle=lambda _agent: None,
         mark_running=lambda _agent: None,
     )

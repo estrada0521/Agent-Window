@@ -51,7 +51,7 @@ class NativeLogProjector:
         log_path: Callable[[], Path],
         agent_panes: Callable[[], dict[str, str]],
         publish_state: Callable[[], None],
-        report_failure: Callable[[str], None],
+        report_failure: Callable[[str, str], None],
         mark_idle: Callable[[str], None],
         mark_running: Callable[[str], None],
     ) -> None:
@@ -144,7 +144,7 @@ class NativeLogProjector:
     def failed(self, agent: str, detail: str) -> None:
         self.remove_binding(agent)
         self.mark_idle(agent)
-        self.report_failure(f"Native log failed: {agent}: {detail}")
+        self.report_failure(agent, detail)
 
     def rebind(self, agent: str) -> None:
         if self._agent_panes().get(agent):

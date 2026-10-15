@@ -46,7 +46,7 @@ class TimelineState:
         self._agent_running = set()
         self._events = threading.Condition()
         self._event_counts = dict.fromkeys(EVENT_KINDS, 0)
-        self._event_data: dict[str, str] = {}
+        self._event_data: dict[str, str | dict] = {}
         self._latest_failure = ""
         self._stopped_threads: dict[str, str] = {}
         self.files = WorkspaceFiles(workspace=self.workspace, repositories=self.repository_roots)
@@ -61,7 +61,7 @@ class TimelineState:
             log_path=lambda: self.log_path,
             agent_panes=self.agent_panes,
             publish_state=lambda: self.publish_event("state"),
-            report_failure=self.report_failure,
+            report_failure=lambda agent, detail: self.publish_event("native-log-failed", {"agent": agent, "detail": detail}),
             mark_idle=self._mark_idle,
             mark_running=self._mark_running_from_native_activity,
         )
@@ -320,7 +320,7 @@ class TimelineState:
             commit_repo=repo,
         )
 
-    def publish_event(self, kind: str, data: str = "") -> None:
+    def publish_event(self, kind: str, data: str | dict = "") -> None:
         with self._events:
             self._event_data[kind] = data
             self._event_counts[kind] = self._event_counts.get(kind, 0) + 1
@@ -346,7 +346,7 @@ class TimelineState:
             self._event_counts["state"] += 1
             self._events.notify_all()
 
-    def wait_for_events(self, seen: dict[str, int], timeout: float) -> list[tuple[str, str]]:
+    def wait_for_events(self, seen: dict[str, int], timeout: float) -> list[tuple[str, str | dict]]:
         with self._events:
             self._events.wait_for(lambda: self.closed or self._event_counts != seen, timeout=timeout)
             changed = [

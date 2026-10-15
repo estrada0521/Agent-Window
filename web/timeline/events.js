@@ -24,6 +24,10 @@
     timelineEvents.addEventListener("git", (event) => {
       if (JSON.parse(event.data) === gitTree()) handleWorkspaceGitChanged();
     });
+    timelineEvents.addEventListener("native-log-failed", (event) => {
+      const { agent, detail } = JSON.parse(event.data);
+      setError(`Failed to identify ${agent}’s native log`, detail);
+    });
     timelineEvents.addEventListener("hud-error", (event) => { setError(JSON.parse(event.data)); });
     timelineEvents.addEventListener("failure", (event) => { setError("Update failed", JSON.parse(event.data)); });
     timelineEvents.onopen = () => {
