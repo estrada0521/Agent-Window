@@ -83,6 +83,10 @@
     };
     const handleTimelineMenuAction = async (payload) => {
       const data = payload || {};
+      if (data.action === "pasteAsFile") {
+        messageInput.dispatchEvent(new CustomEvent("paste-as-file", { detail: data.text }));
+        return;
+      }
       if (["copyMessage", "copyLogEntry", "copyNativeLogEntry"].includes(data.action)) {
         try {
           const text = await messageCopyText(data.contextHash, data.action);

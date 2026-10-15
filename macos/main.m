@@ -138,6 +138,16 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     [self dispatchMenuAction:sender.representedObject];
 }
 
+- (void)pasteAsFile:(id)sender {
+    NSPasteboard *pasteboard = NSPasteboard.generalPasteboard;
+    if ([pasteboard availableTypeFromArray:@[NSPasteboardTypeFileURL, NSPasteboardTypeTIFF, NSPasteboardTypePNG]]) {
+        [NSApp sendAction:@selector(paste:) to:nil from:sender];
+        return;
+    }
+    NSString *text = [pasteboard stringForType:NSPasteboardTypeString];
+    if (text.length) [self dispatchMenuAction:@{ @"action": @"pasteAsFile", @"text": text }];
+}
+
 - (void)showTimelineHeaderMenu:(NSDictionary *)p {
     BOOL active = [p[@"sessionActive"] boolValue];
     NSDictionary *icons = p[@"agentIcons"] ?: @{};
@@ -882,6 +892,9 @@ static BOOL HubReady(NSInteger port) {
     [edit addItemWithTitle:@"Cut" action:@selector(cut:) keyEquivalent:@"x"];
     [edit addItemWithTitle:@"Copy" action:@selector(copy:) keyEquivalent:@"c"];
     [edit addItemWithTitle:@"Paste" action:@selector(paste:) keyEquivalent:@"v"];
+    NSMenuItem *pasteAsFile = [edit addItemWithTitle:@"Paste as File" action:@selector(pasteAsFile:) keyEquivalent:@"v"];
+    pasteAsFile.keyEquivalentModifierMask = cmd | NSEventModifierFlagOption;
+    pasteAsFile.target = self;
     [edit addItemWithTitle:@"Select All" action:@selector(selectAll:) keyEquivalent:@"a"];
 
     NSMenu *view = [[NSMenu alloc] initWithTitle:@"View"];

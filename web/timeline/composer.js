@@ -172,6 +172,11 @@ __INCLUDE:upload-attached-files.js__
       const maybeOpenComposerForAttachDrag = () => {
         if (!isComposerOverlayOpen()) openComposerOverlay({ immediateFocus: false });
       };
+      messageInput.addEventListener("paste-as-file", async (event) => {
+        if (document.activeElement !== messageInput || isTerminalMode() || !event.detail) return;
+        maybeOpenComposerForAttachDrag();
+        await uploadPastedText(event.detail);
+      });
       let attachDragClearTimer = 0;
       const showComposerAttachDrag = () => {
         if (attachDragClearTimer) {
@@ -296,7 +301,7 @@ __INCLUDE:upload-attached-files.js__
         if (text.length <= LARGE_PASTE_TEXT_CHARS) return;
         e.preventDefault();
         maybeOpenComposerForAttachDrag();
-        await uploadLargePastedText(text);
+        await uploadPastedText(text);
       });
     }
 

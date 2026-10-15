@@ -46,8 +46,8 @@
         }
       };
 
-      const uploadLargePastedText = async (text) => {
-        if (typeof text !== "string" || text.length <= LARGE_PASTE_TEXT_CHARS) return false;
+      const uploadPastedText = async (text) => {
+        if (!text) return false;
         const file = new File([text], "pasted.txt", { type: "text/plain" });
         return uploadAttachedFiles([file]);
       };
