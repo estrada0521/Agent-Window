@@ -37,7 +37,7 @@
     let gitRepositories = [];
     let gitAllWorktrees = [];
     const gitRepository = () => gitAllWorktrees.find((tree) => tree.path === gitTree())?.repo || "";
-    const gitTreeLabel = (branch) => gitRepository() ? `${gitRepository()} / ${branch}` : branch;
+    const gitTreeLabel = (branch) => gitRepository() ? `${gitRepository()} · ${branch}` : branch;
     const setGitRepository = (repo) => {
       const main = gitAllWorktrees.find((tree) => tree.repo === repo);
       setGitTree(main?.path || "");
@@ -67,7 +67,7 @@
         notice.className = "hud-worktree";
         notice.innerHTML = GIT_WORKTREE_SVG;
         const repo = worktrees.find((item) => item.path === tree)?.repo;
-        notice.append(repo ? `${repo} / ${branch}` : branch);
+        notice.append(repo ? `${repo} · ${branch}` : branch);
         setStatus(notice);
       }
       setGitTree(tree, { preserveFollow: true });
