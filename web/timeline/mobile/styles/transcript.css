@@ -230,6 +230,16 @@ __INCLUDE:../../transcript.css__
       letter-spacing: 0.02em;
     }
 
+    .sysmsg-row[data-commit-hash] .sysmsg-text {
+      overflow-x: auto;
+      text-overflow: clip;
+      scrollbar-width: none;
+    }
+
+    .sysmsg-row[data-commit-hash] .sysmsg-text::-webkit-scrollbar {
+      display: none;
+    }
+
     .message-thinking-container {
       position: relative;
       align-self: flex-start;

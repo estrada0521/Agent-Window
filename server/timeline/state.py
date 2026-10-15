@@ -156,7 +156,8 @@ class TimelineState:
         )
 
     def _add_commit_watcher(self, root: str, repo: str) -> None:
-        self.commits[root] = (repo, CommitAnnouncer(root, lambda commit: self._announce_commit(commit, repo)))
+        worktree = "" if root == str(Path(self.workspace) / repo) else Path(root).name
+        self.commits[root] = (repo, CommitAnnouncer(root, lambda commit: self._announce_commit(commit, repo, worktree)))
 
     def _sync_commits(self, trees) -> None:
         with self._git_lock:
@@ -308,9 +309,12 @@ class TimelineState:
             entry["agent"] = agent
         return self._append_entry({**entry, **extra})
 
-    def _announce_commit(self, commit: dict, repo: str = "") -> None:
+    def _announce_commit(self, commit: dict, repo: str = "", worktree: str = "") -> None:
+        operation, separator, message = commit["message"].partition(": ")
+        label = f"{operation}({commit['short']})" if separator else commit["short"]
+        text = ": " + message if separator else (": " + operation if operation else "")
         self.append_system_entry(
-            f"Git{' (' + repo + ')' if repo else ''}: {commit['short']} {commit['message']}",
+            " ".join(part for part in (repo, worktree, label) if part) + text,
             commit_hash=commit["hash"],
             commit_short=commit["short"],
             commit_repo=repo,
