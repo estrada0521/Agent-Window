@@ -45,7 +45,7 @@
       ], (action) => {
         if (action === "repository") {
           openMenuSelect(anchor, "Repository", payload.repositories.map((repo) => ({
-            value: repo.path, label: `${repo.path === payload.gitRepository ? "✓ " : ""}${repo.path || "Workspace"}`,
+            value: repo.path, label: `${repo.path === payload.gitRepository ? "✓ " : ""}${repo.path || "Root"}`,
           })), (repo) => onAction({ action: "gitRepository", repo }));
           return;
         }

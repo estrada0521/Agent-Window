@@ -75,7 +75,7 @@ __INCLUDE:../git-panel-controller.js__
       _ignoreGlobalClick = true;
       if (action === "repository") {
         const repositories = gitRepositories;
-        openSubMenu("Repository", repositories.map((repo, index) => [String(index), `${repo.path === gitRepository() ? "✓ " : ""}${repo.path || "Workspace"}`]), (index) => setGitRepository(repositories[Number(index)].path), gitTreeButton);
+        openSubMenu("Repository", repositories.map((repo, index) => [String(index), `${repo.path === gitRepository() ? "✓ " : ""}${repo.path || "Root"}`]), (index) => setGitRepository(repositories[Number(index)].path), gitTreeButton);
       } else if (action === "worktree") {
         const trees = gitAllWorktrees.filter((tree) => tree.repo === gitRepository());
         openSubMenu("Worktree", trees.map((tree, index) => [String(index), `${tree.path === gitTree() ? "✓ " : ""}${tree.branch}`]), (index) => setGitTree(trees[Number(index)].path), gitTreeButton);

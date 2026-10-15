@@ -179,7 +179,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSMutableArray *repositories = [NSMutableArray array];
     for (NSDictionary *repo in p[@"repositories"]) {
         NSString *path = repo[@"path"];
-        NSMenuItem *item = [self item:(path.length ? path : @"Workspace") payload:@{ @"action": @"gitRepository", @"repo": path } key:nil mods:0];
+        NSMenuItem *item = [self item:(path.length ? path : @"Root") payload:@{ @"action": @"gitRepository", @"repo": path } key:nil mods:0];
         item.state = [path isEqualToString:p[@"gitRepository"]] ? NSControlStateValueOn : NSControlStateValueOff;
         [repositories addObject:item];
     }
