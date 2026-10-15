@@ -72,9 +72,7 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 
 Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax-light.css` and `~/.agent-window/syntax-dark.css`.
 
-On desktop, right-click a repository folder in Workspace to add or remove it from the timeline. Repository and Worktree in the menu switch the Git view; added repositories are shared across devices and their commits appear in the log with the repository path.
-
-**Follow changes** automatically switches Git to the worktree whose change was detected last, across added repositories.
+**Follow changes** automatically switches Git to the worktree whose change was detected last.
 
 <p align="center">
   <img src="media/agent-window-hero-3.png" width="100%" alt="Agent Window workspace, light theme">
@@ -187,8 +185,9 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | Copy commit hash |  | |
 | Copy commit message |  | |
 | Show commit info | hover | |
-| Switch worktree |  | From the timeline menu |
-| Follow changes |  | ON by default |
+| Add / remove repository | Right-click folder | Desktop Workspace |
+| Switch repository / worktree |  | Timeline menu; branch button on mobile |
+| Follow changes |  | Across repositories and worktrees; ON by default |
 | Pin changes | `⇧⌘P` / pin button | |
 
 https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea

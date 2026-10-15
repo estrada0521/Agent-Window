@@ -72,9 +72,7 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 構文色は、highlight.jsのtheme CSSへのsymlinkを `~/.agent-window/syntax-light.css` と `~/.agent-window/syntax-dark.css` に置くと使える。
 
-desktopでは、Workspace内のrepoフォルダを右クリックしてtimelineへの追加・解除ができる。メニューのRepositoryとWorktreeでGit表示を切り替える。追加repoは端末間で共有され、commitはrepoのpath付きでlogに投影される。
-
-**Follow changes**では、追加repoを跨いで、最後に変更を検知したworktreeへGit表示が自動で切り替わる。
+**Follow changes**では、最後に変更を検知したworktreeへGit表示が自動で切り替わる。
 
 <p align="center">
   <img src="media/agent-window-hero-3.png" width="100%" alt="Agent Window workspace, light theme">
@@ -187,8 +185,9 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | commit hashをcopy |  | |
 | commit messageをcopy |  | |
 | commitのinfo表示 | hover |  |
-| worktreeの切り替え |  | timeline menuから |
-| Follow changes |  | 既定でON |
+| repoの追加 / 解除 | フォルダを右クリック | desktopのWorkspace |
+| repo / worktreeの切り替え |  | timeline menu・mobileのbranchボタンから |
+| Follow changes |  | repo・worktreeを跨いで追従。既定でON |
 | Pin changes | `⇧⌘P` / pinボタン | |
 
 https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
