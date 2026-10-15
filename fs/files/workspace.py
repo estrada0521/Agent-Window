@@ -44,7 +44,8 @@ class WorkspaceFiles:
     AUDIO_EXTS = {ext for ext, mime in MIME_TYPES.items() if mime.startswith("audio/")}
     SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", ".mypy_cache"}
 
-    def __init__(self, *, workspace: str):
+    def __init__(self, *, workspace: str, repositories=lambda: ()):
+        self._repositories = repositories
         self.workspace = workspace
         self._file_index_ignore = FileIndexIgnoreRules(workspace)
 
@@ -278,13 +279,16 @@ class WorkspaceFiles:
 
     def _search_paths(self) -> list[dict]:
         try:
-            return self._git_search_paths()
+            files = self._git_search_paths(self.workspace)
         except _WorkspaceNotAGitRepo:
-            return self._scandir_search_paths()
+            files = self._scandir_search_paths()
+        for root in self._repositories():
+            files.extend(self._git_search_paths(root))
+        return sorted({entry["path"]: entry for entry in files}.values(), key=lambda item: item["path"].casefold())
 
-    def _git_search_paths(self) -> list[dict]:
+    def _git_search_paths(self, root: str) -> list[dict]:
         result = subprocess.run(
-            ["git", "-C", self.workspace, "ls-files", "-z", "-c", "-o", "--exclude-standard"],
+            ["git", "-C", root, "ls-files", "-z", "-c", "-o", "--exclude-standard"],
             check=False,
             capture_output=True,
         )
@@ -297,11 +301,10 @@ class WorkspaceFiles:
         for raw in result.stdout.split(b"\0"):
             if not raw:
                 continue
-            rel = raw.decode("utf-8", "replace")
+            rel = os.path.relpath(os.path.join(root, raw.decode("utf-8", "replace")), self.workspace)
             if self.file_index_path_is_ignored(rel):
                 continue
             files.append({"path": rel, "size": None})
-        files.sort(key=lambda item: item["path"].casefold())
         return files
 
     def _scandir_search_paths(self) -> list[dict]:
@@ -327,7 +330,6 @@ class WorkspaceFiles:
                         pending.append(rel)
                         continue
                     files.append({"path": rel, "size": None})
-        files.sort(key=lambda item: item["path"].casefold())
         return files
 
     def list_files(self):
