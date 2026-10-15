@@ -658,14 +658,17 @@
 __INCLUDE:git-panel.js__
     const openGitSheet = async () => {
       try {
-        await loadGitWorktreeList();
+        await fetchGitWorktrees();
       } catch (err) {
         setError("Worktrees unavailable", err);
         return;
       }
-      if (!gitWorktreeList.length) {
+      if (!gitAllWorktrees.length) {
         setError("Not a git repository");
         return;
+      }
+      if (!gitAllWorktrees.some((tree) => tree.path === gitTree())) {
+        setGitTree(gitAllWorktrees[0].path, { preserveFollow: true });
       }
       ensureSheetDom();
       closePaneTraceSheet({ immediate: true });
@@ -893,7 +896,7 @@ __INCLUDE:git-panel.js__
       openNativeHeaderMenuPicker();
     });
     mobileSheet.addEventListener("click", (event) => {
-      if (event.target !== mobileSheet) return;
+      if (event.target !== mobileSheet || _ignoreGlobalClick) return;
       event.preventDefault();
       event.stopPropagation();
       closeSheet();

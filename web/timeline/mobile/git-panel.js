@@ -9,7 +9,7 @@ __INCLUDE:../git-panel-controller.js__
       const titleEl = gitSheetTitleEl();
       if (!titleEl) return;
       titleEl.classList.remove("git-sheet-detail-title", "git-sheet-title");
-      titleEl.textContent = gitSheetBranch || "Git";
+      titleEl.textContent = gitTreeLabel(gitSheetBranch) || "Git";
       titleEl.title = titleEl.textContent;
       if (gitFollow()) {
         const dot = document.createElement("span");
@@ -50,36 +50,40 @@ __INCLUDE:../git-panel-controller.js__
         gitMoreButton,
       );
     });
-    let gitWorktreeList = [];
     const gitTreeButton = document.createElement("button");
     gitTreeButton.type = "button";
     gitTreeButton.className = "git-tree-switch mobile-bottom-sheet-button";
-    gitTreeButton.setAttribute("aria-label", "Switch worktree");
+    gitTreeButton.setAttribute("aria-label", "Repository / Worktree");
     gitTreeButton.innerHTML = GIT_WORKTREE_SVG;
-    const loadGitWorktreeList = async () => {
-      gitWorktreeList = await fetchGitWorktrees();
-    };
-    document.addEventListener("git-worktrees-changed", async () => {
-      if (openMobileSheetKind() !== "git") return;
-      try {
-        await loadGitWorktreeList();
-      } catch (err) {
-        gitWorktreeList = [];
-        setError("Worktrees unavailable", err);
+    const gitTreeMenu = document.createElement("select");
+    gitTreeMenu.className = "hub-native-menu-select is-ios-active";
+    gitTreeMenu.setAttribute("aria-label", "Repository / Worktree");
+    gitTreeMenu.innerHTML = '<option value="" disabled selected>Git</option><option value="repository">Repository</option><option value="worktree">Worktree</option>';
+    document.body.append(gitTreeMenu);
+    gitTreeButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      resetSubMenu({ clearOptions: true });
+      gitTreeMenu.value = "";
+      const rect = gitTreeButton.getBoundingClientRect();
+      Object.assign(gitTreeMenu.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+      openNativeSelect(gitTreeMenu);
+    });
+    gitTreeMenu.addEventListener("change", () => {
+      const action = gitTreeMenu.value;
+      gitTreeMenu.value = "";
+      _ignoreGlobalClick = true;
+      if (action === "repository") {
+        const repositories = gitRepositories;
+        openSubMenu("Repository", repositories.map((repo, index) => [String(index), `${repo.path === gitRepository() ? "✓ " : ""}${repo.path || "Workspace"}`]), (index) => setGitRepository(repositories[Number(index)].path), gitTreeButton);
+      } else if (action === "worktree") {
+        const trees = gitAllWorktrees.filter((tree) => tree.repo === gitRepository());
+        openSubMenu("Worktree", trees.map((tree, index) => [String(index), `${tree.path === gitTree() ? "✓ " : ""}${tree.branch}`]), (index) => setGitTree(trees[Number(index)].path), gitTreeButton);
       }
     });
-    gitTreeButton.addEventListener("click", () => {
-      if (gitWorktreeList.length < 2) {
-        setError("No other worktrees");
-        return;
-      }
-      const trees = gitWorktreeList;
-      openSubMenu(
-        "Worktree",
-        trees.map((tree, index) => [String(index), tree.branch]),
-        (index) => setGitTree(trees[Number(index)].path),
-        gitTreeButton,
-      );
+    document.addEventListener("git-worktrees-changed", () => {
+      if (!gitAllWorktrees.some((tree) => tree.path === gitTree()) && openMobileSheetKind() === "git") closeSheet();
+      refreshGitSheetTitle();
     });
     const gitSummaryHud = document.createElement("button");
     gitSummaryHud.type = "button";
@@ -489,6 +493,11 @@ __INCLUDE:../git-panel-controller.js__
       },
     });
     document.addEventListener("git-tree-changed", () => {
+      if (!gitAllWorktrees.some((tree) => tree.path === gitTree())) {
+        if (openMobileSheetKind() === "git") closeSheet();
+        setBackgroundStatus(null);
+        return;
+      }
       if (gitPanel.hasShell()) void gitPanel.loadPage({ reset: true });
       void refreshGitSummaryHud();
     });

@@ -398,7 +398,7 @@
           e.stopPropagation();
           window.getSelection()?.removeAllRanges();
           if (row.dataset.commitHash) {
-            openCommitContextMenu(row.dataset.commitHash, e, row.dataset.contextHash);
+            openCommitContextMenu(row.dataset.commitHash, e, row.dataset.contextHash, row.dataset.commitRepo);
             return;
           }
           const entry = displayEntriesForData(latestPayloadData).find((entry) => entry.context_hash === row.dataset.contextHash);

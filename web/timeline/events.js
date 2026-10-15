@@ -3,14 +3,19 @@
     timelineEvents.addEventListener("messages", () => { void refresh(); });
     timelineEvents.addEventListener("state", () => { void refreshTimelineState(); });
     timelineEvents.addEventListener("files", handleWorkspaceFilesChanged);
-    const notifyWorktreesChanged = () => document.dispatchEvent(new CustomEvent("git-worktrees-changed"));
+    const notifyWorktreesChanged = async () => {
+      try {
+        await fetchGitWorktreeState();
+        document.dispatchEvent(new CustomEvent("git-worktrees-changed"));
+      } catch (err) { setError("Failed to load repositories", err); }
+    };
     timelineEvents.addEventListener("worktrees", notifyWorktreesChanged);
     timelineEvents.addEventListener("git-follow", async (event) => {
       const revision = ++gitFollowRevision;
       const tree = JSON.parse(event.data);
       if (!gitFollow() || tree === gitTree()) return;
       try {
-        const worktrees = await fetchGitWorktrees();
+        const { worktrees } = await fetchGitWorktreeState();
         if (revision === gitFollowRevision && gitFollow() && tree !== gitTree()) applyFollowTree(tree, worktrees);
       } catch (err) {
         if (revision === gitFollowRevision) setError("Worktrees unavailable", err);

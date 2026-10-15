@@ -72,7 +72,9 @@ File icons: put a symlink to a file icon theme's definition JSON (VS Code and si
 
 Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax-light.css` and `~/.agent-window/syntax-dark.css`.
 
-**Follow changes** automatically switches Git to the worktree whose change was detected last.
+On desktop, right-click a repository folder in Workspace to add or remove it from the timeline. Repository and Worktree in the menu switch the Git view; added repositories are shared across devices and their commits appear in the log with the repository path.
+
+**Follow changes** automatically switches Git to the worktree whose change was detected last, across added repositories.
 
 <p align="center">
   <img src="media/agent-window-hero-3.png" width="100%" alt="Agent Window workspace, light theme">

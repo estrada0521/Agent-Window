@@ -176,6 +176,15 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         item.state = [tree[@"path"] isEqualToString:p[@"gitTree"]] ? NSControlStateValueOn : NSControlStateValueOff;
         [trees addObject:item];
     }
+    NSMutableArray *repositories = [NSMutableArray array];
+    for (NSDictionary *repo in p[@"repositories"]) {
+        NSString *path = repo[@"path"];
+        NSMenuItem *item = [self item:(path.length ? path : @"Workspace") payload:@{ @"action": @"gitRepository", @"repo": path } key:nil mods:0];
+        item.state = [path isEqualToString:p[@"gitRepository"]] ? NSControlStateValueOn : NSControlStateValueOff;
+        [repositories addObject:item];
+    }
+    NSMenuItem *repositoryMenu = [self submenu:@"Repository" items:repositories];
+    repositoryMenu.enabled = repositories.count > 1;
     NSMenuItem *treeMenu = [self submenu:@"Worktree" items:trees];
     treeMenu.enabled = trees.count > 1;
     [self setImage:MenuImage([NSImage imageWithSystemSymbolName:@"arrow.triangle.branch" accessibilityDescription:nil]) on:treeMenu];
@@ -183,7 +192,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     NSEventModifierFlags cmd = NSEventModifierFlagCommand, opt = NSEventModifierFlagOption;
     NSMenuItem *follow = [self action:@"gitFollow" title:@"Follow changes" key:nil mods:0];
     follow.state = [p[@"gitFollow"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
-    follow.enabled = trees.count > 0;
+    follow.enabled = repositories.count > 0;
     NSMenuItem *pin = [self action:@"gitPin" title:@"Pin changes" key:@"p" mods:cmd | NSEventModifierFlagShift];
     pin.state = [p[@"gitSummaryPinned"] boolValue] ? NSControlStateValueOn : NSControlStateValueOff;
     pin.enabled = trees.count > 0;
@@ -195,7 +204,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 
     [self popUp:@[
         addMenu, removeMenu, paneMenu, NSMenuItem.separatorItem,
-        treeMenu, follow, pin, NSMenuItem.separatorItem,
+        follow, pin, NSMenuItem.separatorItem, repositoryMenu, treeMenu, NSMenuItem.separatorItem,
         shell, finder,
         [self action:@"revealLog" title:@"Reveal Log" key:@"l" mods:cmd | opt],
         [self action:@"openInBrowser" title:@"Open in Browser" key:@"o" mods:cmd | opt],
@@ -314,6 +323,12 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
         [self action:@"copyAbsoluteFilePath" title:@"Copy Absolute Path" key:@"c" mods:cmd | opt],
         copyRelative,
     ]];
+    NSString *repositoryAction = p[@"repositoryAction"];
+    if ([repositoryAction isEqualToString:@"add"] || [repositoryAction isEqualToString:@"remove"]) {
+        [items addObject:NSMenuItem.separatorItem];
+        BOOL add = [repositoryAction isEqualToString:@"add"];
+        [items addObject:[self action:(add ? @"addRepository" : @"removeRepository") title:(add ? @"Add Repository" : @"Remove Repository") key:nil mods:0]];
+    }
     [self popUp:items at:p];
 }
 

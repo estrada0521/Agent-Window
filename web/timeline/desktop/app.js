@@ -498,7 +498,7 @@ __INCLUDE:git-panel/events.js__
       return Promise.resolve(gitP);
     };
     const fetchWorkspaceState = async () => {
-      const response = await fetchWithTimeout("/workspace-state", { cache: "no-store" }, 12000);
+      const response = await fetchWithTimeout(withGitTree("/workspace-state"), { cache: "no-store" }, 12000);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       return data;
@@ -665,7 +665,7 @@ __INCLUDE:git-panel/events.js__
     let fileContextPaths = [];
     let fileContextTriggerPath = "";
     let workspaceRoot = "";
-    const openFileContextMenu = async (rawPathOrPaths, event, { openFile = false, triggerPath = "" } = {}) => {
+    const openFileContextMenu = async (rawPathOrPaths, event, { openFile = false, triggerPath = "", directory = false } = {}) => {
       const paths = (Array.isArray(rawPathOrPaths) ? rawPathOrPaths : [rawPathOrPaths])
         .map(normalizeWorkspaceFilePath)
         .filter(Boolean);
@@ -676,6 +676,15 @@ __INCLUDE:git-panel/events.js__
         try { await loadWorkspaceRoot(); }
         catch (error) { setError("Failed to read workspace path", error); return; }
       }
+      let repositoryAction = "";
+      if (directory && paths.length === 1) {
+        try {
+          const res = await fetchWithTimeout(`/git-repository?path=${encodeURIComponent(paths[0])}`);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          repositoryAction = data.action;
+        } catch (err) { setError("Repository check failed", err); }
+      }
       fileContextPaths = paths;
       fileContextTriggerPath = normalizeWorkspaceFilePath(triggerPath) || paths[0];
       window.parent?.postMessage({
@@ -684,16 +693,19 @@ __INCLUDE:git-panel/events.js__
           x: Math.round(Number(event.clientX) || 0),
           y: Math.round(Number(event.clientY) || 0),
           openFile,
+          repositoryAction,
           canCopyRelativePath: paths.every((path) => !path.startsWith("/") || path.startsWith(`${workspaceRoot}/`)),
           sidebarWindow: event.target.ownerDocument !== document,
         },
       }, "*");
     };
     let commitContextHash = "";
-    const openCommitContextMenu = (hash, event, contextHash = "") => {
+    let commitContextRepo;
+    const openCommitContextMenu = (hash, event, contextHash = "", repo) => {
       event.preventDefault();
       event.stopPropagation();
       commitContextHash = hash;
+      commitContextRepo = repo ?? gitRepository();
       window.parent?.postMessage({
         type: "show-commit-context-menu",
         payload: { x: Math.round(Number(event.clientX) || 0), y: Math.round(Number(event.clientY) || 0), contextHash, sidebarWindow: event.target.ownerDocument !== document },
@@ -762,7 +774,7 @@ __INCLUDE:git-panel/events.js__
       const hash = commitContextHash;
       if (!hash) return true;
       void (async () => {
-        const info = await gitCommitInfo(hash);
+        const info = await gitCommitInfo(hash, commitContextRepo);
         await doCopyText(action === "copyCommitHash" ? info.hash : info.message);
         setStatus(action === "copyCommitHash" ? "Copied commit hash" : "Copied commit message");
       })().catch((err) => {
@@ -772,6 +784,17 @@ __INCLUDE:git-panel/events.js__
     }
     function handleDesktopFileContextMenuAction(payload) {
       const action = String(payload?.action || "");
+      if (action === "addRepository" || action === "removeRepository") {
+        void (async () => {
+          const res = await fetchWithTimeout("/git-repository", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: fileContextTriggerPath, add: action === "addRepository" }),
+          });
+          if (!res.ok) throw new Error((await res.json()).error);
+          setStatus(action === "addRepository" ? "Added repository" : "Removed repository");
+        })().catch((err) => setError("Repository update failed", err));
+        return true;
+      }
       if (!["openFile", "quickLook", "revealFileInFinder", "copyFiles", "copyAbsoluteFilePath", "copyRelativeFilePath"].includes(action)) return false;
       const paths = fileContextPaths;
       if (!paths.length) return true;
@@ -841,7 +864,7 @@ __INCLUDE:git-panel/events.js__
         });
       }
       btn.addEventListener("contextmenu", (e) => {
-        void openFileContextMenu(resolveContextMenuTargets(repoSel, entry.path), e, { triggerPath: entry.path });
+        void openFileContextMenu(resolveContextMenuTargets(repoSel, entry.path), e, { triggerPath: entry.path, directory: isDir });
       });
       return btn;
     };
@@ -1357,11 +1380,16 @@ __INCLUDE:git-panel/events.js__
     const postGitTreeLabel = async () => {
       if (window.parent === window) return;
       const worktrees = await fetchGitWorktrees().catch(() => []);
-      const label = worktrees.find((item) => item.path === gitTree())?.branch || "";
+      const branch = worktrees.find((item) => item.path === gitTree())?.branch || "";
+      const label = gitTreeLabel(branch);
       window.parent.postMessage({ type: "git-tree-label", label, follow: gitFollow() }, "*");
     };
     void postGitTreeLabel();
     document.addEventListener("git-follow-changed", () => void postGitTreeLabel());
+    document.addEventListener("git-worktrees-changed", () => {
+      void postGitTreeLabel();
+      if (sideBarOpen) void restoreSideBarGit();
+    });
     document.addEventListener("git-tree-changed", () => {
       void postGitTreeLabel();
       gitPanel.invalidateFingerprint();

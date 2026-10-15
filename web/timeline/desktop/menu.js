@@ -32,8 +32,9 @@
         { value: "add", label: "Add Agent", disabled: !payload.sessionActive || !agents.add.length },
         { value: "remove", label: "Remove Agent", disabled: !payload.sessionActive || !agents.remove.length },
         { value: "pane", label: "tmux pane", disabled: !payload.sessionActive },
+        { value: "repository", label: "Repository", disabled: payload.repositories.length < 2 },
         { value: "worktree", label: "Worktree", disabled: payload.worktrees.length < 2 },
-        { value: "gitFollow", label: `${payload.gitFollow ? "✓ " : ""}Follow changes`, disabled: !payload.worktrees.length },
+        { value: "gitFollow", label: `${payload.gitFollow ? "✓ " : ""}Follow changes`, disabled: !payload.repositories.length },
         { value: "gitPin", label: `${payload.gitSummaryPinned ? "✓ " : ""}Pin changes`, disabled: !payload.worktrees.length },
         { value: "openShell", label: "Terminal" },
         { value: "openFinder", label: "Finder" },
@@ -42,6 +43,12 @@
         { value: "exportHtml", label: "Export as HTML" },
         { value: "exportJsonl", label: "Export as JSONL" },
       ], (action) => {
+        if (action === "repository") {
+          openMenuSelect(anchor, "Repository", payload.repositories.map((repo) => ({
+            value: repo.path, label: `${repo.path === payload.gitRepository ? "✓ " : ""}${repo.path || "Workspace"}`,
+          })), (repo) => onAction({ action: "gitRepository", repo }));
+          return;
+        }
         if (action === "worktree") {
           openMenuSelect(anchor, "Worktree", payload.worktrees.map((tree) => ({
             value: tree.path,

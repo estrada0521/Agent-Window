@@ -34,6 +34,14 @@
       if (summary) params.set("summary", "1");
       return params;
     };
+    let gitRepositories = [];
+    let gitAllWorktrees = [];
+    const gitRepository = () => gitAllWorktrees.find((tree) => tree.path === gitTree())?.repo || "";
+    const gitTreeLabel = (branch) => gitRepository() ? `${gitRepository()} / ${branch}` : branch;
+    const setGitRepository = (repo) => {
+      const main = gitAllWorktrees.find((tree) => tree.repo === repo);
+      setGitTree(main?.path || "");
+    };
     const gitTreeStorageKey = `agent_window_git_tree:${TIMELINE_BASE_PATH}`;
     const gitTree = () => sessionStorage.getItem(gitTreeStorageKey) || "";
     const gitFollowStorageKey = `agent_window_git_follow:${TIMELINE_BASE_PATH}`;
@@ -58,7 +66,8 @@
         const notice = document.createElement("span");
         notice.className = "hud-worktree";
         notice.innerHTML = GIT_WORKTREE_SVG;
-        notice.append(branch);
+        const repo = worktrees.find((item) => item.path === tree)?.repo;
+        notice.append(repo ? `${repo} / ${branch}` : branch);
         setStatus(notice);
       }
       setGitTree(tree, { preserveFollow: true });
@@ -83,9 +92,18 @@
     const fetchGitWorktreeState = async () => {
       const res = await fetchWithTimeout("/git-worktrees", {}, GIT_PANEL_FETCH_MS);
       if (!res.ok) throw new Error((await res.json()).error || "Failed to load worktrees");
-      return res.json();
+      const data = await res.json();
+      gitRepositories = data.repositories;
+      gitAllWorktrees = data.worktrees;
+      if (gitTree() && !gitAllWorktrees.some((tree) => tree.path === gitTree())) {
+        setGitTree("", { preserveFollow: true });
+      }
+      return data;
     };
-    const fetchGitWorktrees = async () => (await fetchGitWorktreeState()).worktrees;
+    const fetchGitWorktrees = async () => {
+      await fetchGitWorktreeState();
+      return gitAllWorktrees.filter((tree) => tree.repo === gitRepository());
+    };
     const fetchGitOverview = async ({ offset = 0, limit = GIT_PANEL_BATCH, summary = false } = {}) => {
       const res = await fetchWithTimeout(
         withGitTree(`/git-overview?${gitOverviewQuery({ offset, limit, summary })}`),
@@ -139,14 +157,20 @@
       return res.json();
     };
     const gitCommitInfos = new Map();
-    const gitCommitInfo = (hash) => {
-      if (!gitCommitInfos.has(hash)) {
-        gitCommitInfos.set(hash, fetchGitJson(`/git-commit-info?hash=${encodeURIComponent(hash)}`).catch((err) => {
-          gitCommitInfos.delete(hash);
+    const gitCommitInfo = (hash, repo) => {
+      const key = `${repo ?? gitRepository()}:${hash}`;
+      const url = `/git-commit-info?hash=${encodeURIComponent(hash)}`;
+      if (!gitCommitInfos.has(key)) {
+        const request = repo === undefined ? fetchGitJson(url) : fetchWithTimeout(`${url}&repo=${encodeURIComponent(repo)}`, {}, GIT_PANEL_FETCH_MS).then(async (res) => {
+          if (!res.ok) throw new Error((await res.json()).error);
+          return res.json();
+        });
+        gitCommitInfos.set(key, request.catch((err) => {
+          gitCommitInfos.delete(key);
           throw err;
         }));
       }
-      return gitCommitInfos.get(hash);
+      return gitCommitInfos.get(key);
     };
     const fetchGitWorktreeFileSections = async () => {
       const [stagedData, unstagedData, untrackedData] = await Promise.all([

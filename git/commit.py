@@ -67,7 +67,7 @@ class CommitAnnouncer:
             while line := source.readline():
                 if not line.endswith(b"\n"):
                     raise RuntimeError("Incomplete HEAD reflog entry")
-                record, message = line[:-1].split(b"\t", 1)
+                record, _separator, message = line[:-1].partition(b"\t")
                 commit_hash = record.split(b" ", 2)[1].decode("ascii")
                 self._announce({"hash": commit_hash, "short": commit_hash[:7], "message": message.decode("utf-8")})
                 self._position = source.tell()

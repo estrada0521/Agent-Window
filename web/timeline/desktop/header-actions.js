@@ -36,6 +36,8 @@
           sessionActive: !!sessionActive,
           addAgents: ALL_BASE_AGENTS,
           removeAgents: agentActionCandidates("remove"),
+          repositories: gitRepositories,
+          gitRepository: gitRepository(),
           worktrees,
           gitTree: gitTree(),
           gitFollow: gitFollow(),
@@ -67,6 +69,8 @@
         addAgents: ALL_BASE_AGENTS,
         removeAgents: agentActionCandidates("remove"),
         agentIcons,
+        repositories: gitRepositories,
+        gitRepository: gitRepository(),
         worktrees,
         gitTree: gitTree(),
         gitFollow: gitFollow(),
@@ -118,6 +122,10 @@
       }
       if (data.action === "gitPin") {
         toggleGitSummaryPinned();
+        return;
+      }
+      if (data.action === "gitRepository") {
+        setGitRepository(data.repo);
         return;
       }
       if (data.action === "gitTree") {

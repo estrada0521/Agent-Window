@@ -246,7 +246,8 @@ def _get_workspace_state(handler, _parsed, ctx) -> None:
         _send_bytes(handler, 200, b'{"workspace":false,"git":false}', content_type="application/json")
         return
     try:
-        workspace_git.git_worktrees(workspace)
+        tree = parse_qs(_parsed.query).get("tree", [""])[0]
+        workspace_git.git_worktrees(ctx["state"].git_tree_root(tree))
         is_git = True
     except workspace_git.NotGitRepository:
         is_git = False
@@ -298,7 +299,7 @@ def _send_git_json(handler, parsed, ctx, read) -> None:
     qs = parse_qs(parsed.query)
     arg = lambda name: qs.get(name, [""])[0].strip()
     try:
-        body = json.dumps(read(workspace_git.git_tree_root(ctx["state"].workspace, arg("tree")), arg), ensure_ascii=True).encode("utf-8")
+        body = json.dumps(read((ctx["state"].git_repository_root(arg("repo")) if "repo" in qs else ctx["state"].git_tree_root(arg("tree"))), arg), ensure_ascii=True).encode("utf-8")
     except LookupError as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=True).encode("utf-8")
         _send_bytes(handler, 404, body, content_type="application/json; charset=utf-8")
@@ -319,20 +320,37 @@ def _get_git_overview(handler, parsed, ctx) -> None:
     ))
 
 
+def _get_git_repository(handler, parsed, ctx) -> None:
+    path = parse_qs(parsed.query).get("path", [""])[0]
+    try:
+        handler._send_json(200, {"action": ctx["state"].repository_action(path)})
+    except Exception as exc:
+        handler._send_json(400, {"error": str(exc)})
+
+
 def _get_git_worktrees(handler, parsed, ctx) -> None:
-    def read(_root, _arg):
-        try:
-            trees = workspace_git.git_worktrees(ctx["state"].workspace)
-        except workspace_git.NotGitRepository:
-            return {"worktrees": [], "followTree": None}
-        linked = sorted(trees[1:], key=lambda tree: (Path(tree["path"]) / ".git").stat().st_birthtime, reverse=True)
-        worktrees = [{"path": "", "branch": trees[0]["branch"]}, *linked]
-        follow_tree = ctx["state"].last_changed_git_tree()
-        return {
-            "worktrees": worktrees,
-            "followTree": follow_tree if any(tree["path"] == follow_tree for tree in worktrees) else None,
-        }
-    _send_git_json(handler, parsed, ctx, read)
+    state = ctx["state"]
+    try:
+        repositories = []
+        worktrees = []
+        for root in [state.workspace, *state.repository_roots()]:
+            rel = str(Path(root).relative_to(state.workspace))
+            rel = "" if rel == "." else rel
+            try:
+                trees = workspace_git.git_worktrees(root)
+            except workspace_git.NotGitRepository:
+                if rel:
+                    raise
+                continue
+            repositories.append({"path": rel, "root": root})
+            linked = sorted(trees[1:], key=lambda tree: (Path(tree["path"]) / ".git").stat().st_birthtime, reverse=True)
+            worktrees.extend({**tree, "path": "" if tree["path"] == state.workspace else tree["path"], "repo": rel}
+                             for tree in [trees[0], *linked])
+        follow = state.last_changed_git_tree()
+        handler._send_json(200, {"repositories": repositories, "worktrees": worktrees,
+                                 "followTree": follow if any(tree["path"] == follow for tree in worktrees) else None})
+    except Exception as exc:
+        handler._send_json(500, {"error": str(exc)})
 
 
 def _get_log_slice(handler, parsed, ctx) -> None:
@@ -400,6 +418,7 @@ _GET_ROUTES = {
     "/git-commit-info": _get_git_commit_info,
     "/git-worktree-stat": _get_git_worktree_stat,
     "/git-worktrees": _get_git_worktrees,
+    "/git-repository": _get_git_repository,
     "/slash-commands": _get_slash_commands,
 }
 JSON_GET_PATHS = frozenset(_GET_ROUTES) - {"/file-raw", "/file-view", "/events"}

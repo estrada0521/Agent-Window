@@ -8,7 +8,8 @@ from datetime import datetime
 from pathlib import Path
 
 from fs.log.jsonl import append_jsonl_entry, message_window
-from fs.log.meta import log_meta_agents
+from fs.log.meta import log_meta_agents, read_log_meta, write_json_atomically
+from git.repo import git_worktrees
 from fs.files.workspace import WorkspaceFiles
 from fs.watch import start_workspace_fsevents_watcher
 from tmux import run_tmux
@@ -64,20 +65,21 @@ class TimelineState:
             mark_idle=self._mark_idle,
             mark_running=self._mark_running_from_native_activity,
         )
-        self.commits = CommitAnnouncer(self.workspace, self._announce_commit)
+        self._git_lock = threading.RLock()
+        self.git_repositories = read_log_meta(self.timeline_name).get("repositories", [])
+        self.commits = {}
+        self._add_commit_watcher(self.workspace, "")
 
     def start(self) -> None:
         if self._log_thread:
             return
         try:
-            self.commits.adopt_baseline()
+            for _repo, commits in self.commits.values():
+                commits.adopt_baseline()
         except Exception as exc:
             self.report_failure(f"Commit tracking failed: {exc}")
         try:
-            self._watch_stop = start_workspace_fsevents_watcher(
-                self.files, publish_event=self.publish_event,
-                report_failure=self.report_failure, on_head_changed=self.commits.observe,
-            )
+            self._start_workspace_watch()
         except Exception as exc:
             self.report_thread_stopped("workspace-watch", str(exc))
         try:
@@ -98,6 +100,108 @@ class TimelineState:
         self._log_thread = start_thread(self._log_watcher)
         if self.session_is_active:
             self._send_thread = start_thread(self._queued_send_worker)
+
+    def _save_repositories(self) -> None:
+        meta = read_log_meta(self.timeline_name)
+        meta["repositories"] = self.git_repositories
+        write_json_atomically(self.log_dir / ".meta", meta)
+
+    def repository_roots(self) -> list[str]:
+        with self._git_lock:
+            existing = [rel for rel in self.git_repositories
+                        if (Path(self.workspace) / rel / ".git").exists()]
+            if existing != self.git_repositories:
+                self.git_repositories = existing
+                self._save_repositories()
+                self.publish_event("worktrees")
+            return [str(Path(self.workspace) / rel) for rel in existing]
+
+    def repository_action(self, path: str) -> str:
+        root = Path(self.workspace)
+        target = (root / path).resolve()
+        rel = target.relative_to(root).as_posix()
+        if rel in self.git_repositories:
+            return "remove"
+        if target == root or not (target / ".git").exists():
+            return ""
+        trees = git_worktrees(str(target))
+        return "add" if trees[0]["path"] == str(target) else ""
+
+    def set_repository(self, path: str, add: bool) -> None:
+        root = Path(self.workspace)
+        target = (root / path).resolve()
+        rel = target.relative_to(root).as_posix()
+        if rel == ".":
+            raise ValueError("Workspace repository is always included")
+        with self._git_lock:
+            if add:
+                if rel in self.git_repositories:
+                    return
+                if self.repository_action(rel) != "add":
+                    raise ValueError("Select an independent repository root")
+                self.git_repositories.append(rel)
+            else:
+                self.git_repositories.remove(rel)
+            self._save_repositories()
+        if self._watch_stop:
+            self._watch_stop()
+        self._start_workspace_watch()
+        self.publish_event("worktrees")
+
+    def _start_workspace_watch(self) -> None:
+        self._watch_stop = start_workspace_fsevents_watcher(
+            self.files, publish_event=self.publish_event,
+            report_failure=self.report_failure, on_head_changed=self._observe_commits,
+            repositories=self.repository_roots, on_trees_changed=self._sync_commits,
+        )
+
+    def _add_commit_watcher(self, root: str, repo: str) -> None:
+        self.commits[root] = (repo, CommitAnnouncer(root, lambda commit: self._announce_commit(commit, repo)))
+
+    def _sync_commits(self, trees) -> None:
+        with self._git_lock:
+            roots = {root for _key, root, _gitdir in trees}
+            repo_dirs = [(rel, gitdir) for rel in ["", *self.git_repositories]
+                         for _key, root, gitdir in trees if root == str(Path(self.workspace) / rel)]
+            for _key, root, gitdir in trees:
+                if root in self.commits:
+                    continue
+                repo = max((item for item in repo_dirs if gitdir == item[1] or gitdir.startswith(item[1] + "/")),
+                           key=lambda item: len(item[1]))[0]
+                self._add_commit_watcher(root, repo)
+                try:
+                    self.commits[root][1].adopt_baseline()
+                except Exception as exc:
+                    self.report_failure(f"Commit tracking failed: {exc}")
+            if self.workspace not in roots and self.commits[self.workspace][1]._identity is not None:
+                self._add_commit_watcher(self.workspace, "")
+                self.commits[self.workspace][1].adopt_baseline()
+            for root in list(self.commits):
+                if root not in roots and root != self.workspace:
+                    del self.commits[root]
+
+    def _observe_commits(self) -> None:
+        with self._git_lock:
+            for root, (repo, commits) in self.commits.items():
+                try:
+                    commits.observe()
+                except Exception as exc:
+                    self.report_failure(f"Commit tracking failed ({repo or '.'}): {exc}")
+
+    def git_tree_root(self, tree: str) -> str:
+        if not tree:
+            return self.workspace
+        if tree not in self.commits:
+            raise LookupError("Worktree not found")
+        return tree
+
+    def git_repository_root(self, repo: str) -> str:
+        root = Path(self.workspace)
+        target = (root / repo).resolve()
+        target.relative_to(root)
+        if not (target / ".git").exists():
+            raise LookupError("Repository not found")
+        return str(target)
 
     def close(self) -> None:
         with self._events:
@@ -204,11 +308,12 @@ class TimelineState:
             entry["agent"] = agent
         return self._append_entry({**entry, **extra})
 
-    def _announce_commit(self, commit: dict) -> None:
+    def _announce_commit(self, commit: dict, repo: str = "") -> None:
         self.append_system_entry(
-            f"Git: {commit['short']} {commit['message']}",
+            f"Git{' (' + repo + ')' if repo else ''}: {commit['short']} {commit['message']}",
             commit_hash=commit["hash"],
             commit_short=commit["short"],
+            commit_repo=repo,
         )
 
     def publish_event(self, kind: str, data: str = "") -> None:

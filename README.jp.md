@@ -72,7 +72,9 @@ file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.
 
 構文色は、highlight.jsのtheme CSSへのsymlinkを `~/.agent-window/syntax-light.css` と `~/.agent-window/syntax-dark.css` に置くと使える。
 
-**Follow changes**では、最後に変更を検知したworktreeへGit表示が自動で切り替わる。
+desktopでは、Workspace内のrepoフォルダを右クリックしてtimelineへの追加・解除ができる。メニューのRepositoryとWorktreeでGit表示を切り替える。追加repoは端末間で共有され、commitはrepoのpath付きでlogに投影される。
+
+**Follow changes**では、追加repoを跨いで、最後に変更を検知したworktreeへGit表示が自動で切り替わる。
 
 <p align="center">
   <img src="media/agent-window-hero-3.png" width="100%" alt="Agent Window workspace, light theme">

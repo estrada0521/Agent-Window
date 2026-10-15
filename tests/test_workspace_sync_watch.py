@@ -88,6 +88,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
     def test_git_ref_event_refreshes_commits(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
+            (workspace / ".git").mkdir()
             api = _FakeApi(workspace)
             refresh = _refresh(api)
 
@@ -121,6 +122,7 @@ class WorkspaceSyncWatchTests(unittest.TestCase):
     def test_git_object_event_is_ignored_entirely(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
+            (workspace / ".git").mkdir()
             api = _FakeApi(workspace)
             refresh = _refresh(api)
 

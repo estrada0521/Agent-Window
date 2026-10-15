@@ -298,6 +298,7 @@ __INCLUDE:../hud.js__
       select.addEventListener("change", () => {
         const value = String(select.value || "");
         const pick = subMenuPick;
+        if (document.documentElement.dataset.mobile === "1") _ignoreGlobalClick = true;
         resetSubMenu({ clearOptions: true });
         if (value && pick) pick(value);
       });
@@ -313,14 +314,11 @@ __INCLUDE:../hud.js__
     const anchorSubMenu = (select, anchor = null) => {
       const baseAnchor = rightMenuBtn || document.activeElement || document.body;
       if (document.documentElement.dataset.mobile === "1") {
-        const baseRect = baseAnchor.getBoundingClientRect();
-        const anchorRect = anchor ? anchor.getBoundingClientRect() : null;
-        const left = anchorRect ? anchorRect.left : baseRect.left;
-        const width = anchorRect ? anchorRect.width : baseRect.width;
-        select.style.left = `${Math.max(0, Math.round(left))}px`;
-        select.style.top = `${Math.max(0, Math.round(baseRect.top))}px`;
-        select.style.width = `${Math.max(1, Math.round(width || 1))}px`;
-        select.style.height = `${Math.max(1, Math.round(baseRect.height || 1))}px`;
+        const rect = (anchor || baseAnchor).getBoundingClientRect();
+        select.style.left = `${Math.max(0, Math.round(rect.left))}px`;
+        select.style.top = `${Math.max(0, Math.round(rect.top))}px`;
+        select.style.width = `${Math.max(1, Math.round(rect.width || 1))}px`;
+        select.style.height = `${Math.max(1, Math.round(rect.height || 1))}px`;
         return;
       }
       const anchorEl = anchor || baseAnchor;

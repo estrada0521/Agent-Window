@@ -443,6 +443,19 @@ def _post_quick_look(handler, _parsed, ctx) -> None:
     ))
 
 
+def _post_git_repository(handler, _parsed, ctx) -> None:
+    data, err = read_json_body(handler)
+    if err:
+        handler._send_json(400, {"ok": False, "error": err})
+        return
+    try:
+        ctx["state"].set_repository(data["path"], data["add"])
+    except (ValueError, KeyError) as exc:
+        handler._send_json(400, {"ok": False, "error": str(exc)})
+        return
+    handler._send_json(200, {"ok": True})
+
+
 def _post_open_diff(handler, _parsed, ctx) -> None:
     data, err = read_json_body(handler)
     if err:
@@ -455,7 +468,7 @@ def _post_open_diff(handler, _parsed, ctx) -> None:
     _send_workspace_result(
         handler,
         lambda: workspace_git.open_diff_tool(
-            workspace_git.git_tree_root(ctx["state"].workspace, (data.get("tree") or "").strip()),
+            ctx["state"].git_tree_root((data.get("tree") or "").strip()),
             rel, (data.get("hash") or "").strip(), (data.get("old_path") or "").strip()
         ),
     )
@@ -603,6 +616,7 @@ _POST_ROUTES = {
     "/reveal-log": _post_reveal_log,
     "/quick-look": _post_quick_look,
     "/open-diff": _post_open_diff,
+    "/git-repository": _post_git_repository,
     "/key-macro": _post_key_macro,
     "/restart-agent": _post_restart_agent,
     "/mark-idle": _post_mark_idle,

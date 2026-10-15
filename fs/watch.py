@@ -41,16 +41,17 @@ def _is_git_head_metadata_path(rel: str) -> bool:
     return any(normalized.startswith(prefix) for prefix in _GIT_HEAD_METADATA_PREFIXES)
 
 
-def _read_git_trees(workspace: str) -> list[tuple[str, str, str]]:
-    trees = [("", workspace, os.path.realpath(os.path.join(workspace, ".git")))]
-    for item in git_worktrees(workspace)[1:]:
+def _read_git_trees(repo: str) -> list[tuple[str, str]]:
+    trees = []
+    for item in git_worktrees(repo):
         root = os.path.realpath(item["path"])
-        try:
-            with open(os.path.join(root, ".git"), encoding="utf-8") as f:
-                gitdir = f.read().strip().removeprefix("gitdir: ")
-        except FileNotFoundError:
-            continue
-        trees.append((item["path"], root, os.path.realpath(gitdir)))
+        marker = os.path.join(root, ".git")
+        if os.path.isdir(marker):
+            gitdir = marker
+        else:
+            with open(marker, encoding="utf-8") as f:
+                gitdir = os.path.join(root, f.read().strip().removeprefix("gitdir: "))
+        trees.append((root, os.path.realpath(gitdir)))
     return trees
 
 
@@ -59,12 +60,13 @@ def _is_under(path: str, root: str) -> bool:
 
 
 class _DebouncedWorkspaceRefresh:
-    def __init__(self, files, *, publish_event, report_failure, on_head_changed, on_trees_changed=lambda _trees: None) -> None:
+    def __init__(self, files, *, publish_event, report_failure, on_head_changed, on_trees_changed=lambda _trees: None, repositories=lambda: []) -> None:
         self._files = files
         self._publish_event = publish_event
         self._report_failure = report_failure
         self._on_head_changed = on_head_changed
         self._on_trees_changed = on_trees_changed
+        self._repositories = repositories
         self._lock = threading.Lock()
         self._flush_lock = threading.Lock()
         self._trees = self._load_trees()
@@ -79,14 +81,16 @@ class _DebouncedWorkspaceRefresh:
         self._closed = False
 
     def _load_trees(self) -> list[tuple[str, str, str]]:
-        workspace = self._files.workspace
-        try:
-            return _read_git_trees(workspace)
-        except NotGitRepository:
-            return []
-        except RuntimeError as exc:
-            self._report_failure(f"git worktree list failed: {exc}")
-            return [("", workspace, os.path.realpath(os.path.join(workspace, ".git")))]
+        trees = []
+        for root in [self._files.workspace, *self._repositories()]:
+            try:
+                trees.extend(("" if path == self._files.workspace else path, path, gitdir)
+                             for path, gitdir in _read_git_trees(root))
+            except NotGitRepository:
+                continue
+            except RuntimeError as exc:
+                self._report_failure(f"git worktree list failed: {exc}")
+        return trees
 
     @property
     def trees(self) -> list[tuple[str, str, str]]:
@@ -102,6 +106,8 @@ class _DebouncedWorkspaceRefresh:
     def add_path(self, path: str) -> None:
         normalized = os.path.realpath(path)
         with self._lock:
+            if any(_is_under(tree[1], normalized) and not os.path.isdir(tree[1]) for tree in self._trees):
+                self._trees_pending = True
             marked = self._classify_git_metadata_locked(normalized)
             if marked is not None:
                 if marked:
@@ -127,37 +133,29 @@ class _DebouncedWorkspaceRefresh:
         self._tree_change_order[key] = None
 
     def _classify_git_metadata_locked(self, path: str) -> bool | None:
-        common = self._trees[0][2] if self._trees else os.path.realpath(os.path.join(self._files.workspace, ".git"))
-        if not _is_under(path, common):
+        matches = [tree for tree in self._trees if _is_under(path, tree[2])]
+        tree = max(matches, key=lambda item: len(item[2]), default=None)
+        if tree is None:
+            roots = [self._files.workspace, *self._repositories()]
+            if any(path == os.path.join(root, ".git") for root in roots):
+                self._trees_pending = self._git_head_pending = True
+                return True
             return None
-        if not self._trees:
-            self._trees_pending = True
-            self._git_head_pending = True
+        key, _root, gitdir = tree
+        rel = os.path.relpath(path, gitdir)
+        if rel == "." or rel == "worktrees" or rel.startswith("worktrees/"):
+            self._trees_pending = self._git_head_pending = True
             return True
-        rel = os.path.relpath(path, common)
-        parts = rel.split("/")
-        if parts[0] == "worktrees":
-            gitdir = os.path.join(common, *parts[:2])
-            key = next((tree[0] for tree in self._trees if tree[2] == gitdir), None)
-            sub = "/".join(parts[2:])
-            if key is None or len(parts) <= 2:
-                self._trees_pending = True
-                return True
-            if sub in ("HEAD", "index") or sub.startswith("logs/"):
-                self._mark_tree_changed_locked(key)
-                self._git_pending.add(key)
-                return True
-            return False
-        git_rel = ".git" if rel == "." else f".git/{rel}"
+        git_rel = f".git/{rel}"
         if _is_git_head_metadata_path(git_rel):
             self._git_head_pending = True
             if rel in ("HEAD", "logs/HEAD"):
-                self._mark_tree_changed_locked("")
-            self._git_pending.add("")
+                self._mark_tree_changed_locked(key)
+            self._git_pending.add(key)
             return True
-        if git_rel == ".git/index":
-            self._mark_tree_changed_locked("")
-            self._git_pending.add("")
+        if rel == "index":
+            self._mark_tree_changed_locked(key)
+            self._git_pending.add(key)
             return True
         return False
 
@@ -324,7 +322,7 @@ def _watch_paths(paths: list[str], on_path, on_rescan, report_failure, name: str
     return stop
 
 
-def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on_head_changed):
+def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on_head_changed, repositories=lambda: [], on_trees_changed=lambda _trees: None):
     workspace_root = files.workspace
     if not workspace_root or not os.path.isdir(workspace_root):
         return
@@ -332,6 +330,7 @@ def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on
     stops = []
 
     def watch_outside_trees(trees) -> None:
+        on_trees_changed(trees)
         for _key, root, _gitdir in trees:
             if root in watched_roots or _is_under(root, workspace_root):
                 continue
@@ -343,7 +342,7 @@ def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on
         publish_event=publish_event,
         report_failure=report_failure,
         on_head_changed=on_head_changed,
-        on_trees_changed=watch_outside_trees,
+        on_trees_changed=watch_outside_trees, repositories=repositories,
     )
     def stop():
         debouncer.close()

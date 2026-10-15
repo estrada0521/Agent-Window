@@ -79,6 +79,8 @@ def set_log_workspace(timeline_name: str, workspace: str) -> None:
     old_workspace = Path(raw["workspace"]).expanduser().resolve()
     ensure_workspace_log_link(name, ws)
     raw["workspace"] = ws
+    if old_workspace != Path(ws).expanduser().resolve():
+        raw.pop("repositories", None)
     write_json_atomically(path, raw)
     old_link = workspace_log_link_path(old_workspace)
     if old_workspace != Path(ws).expanduser().resolve() and old_link.is_symlink():

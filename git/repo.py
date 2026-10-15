@@ -54,14 +54,6 @@ def git_worktrees(workspace: str) -> list[dict]:
     return trees
 
 
-def git_tree_root(workspace: str, tree: str) -> str:
-    if not tree:
-        return workspace
-    if tree not in {item["path"] for item in git_worktrees(workspace)[1:]}:
-        raise LookupError(f"Worktree not found: {tree}")
-    return tree
-
-
 def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
     paths = [str(rel or "").replace("\\", "/").strip("/") for rel in rel_paths if str(rel or "").strip()]
     if not paths:
