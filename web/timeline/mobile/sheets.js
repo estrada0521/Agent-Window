@@ -656,16 +656,33 @@
       return list;
     };
 __INCLUDE:git-panel.js__
-    const openGitSheet = async () => {
+    const openGitSheet = async ({ commit = null } = {}) => {
+      let info;
+      let files;
       try {
         await fetchGitWorktrees();
+        if (commit) {
+          const params = new URLSearchParams({ hash: commit.hash, repo: commit.repo });
+          const response = await fetchWithTimeout(`/git-diff-files?${params}`, { cache: "no-store" }, GIT_PANEL_FETCH_MS);
+          if (!response.ok) throw new Error((await response.json()).error);
+          files = await response.json();
+          info = await gitCommitInfo(commit.hash, commit.repo);
+        }
       } catch (err) {
-        setError("Worktrees unavailable", err);
+        setError(commit ? "Failed to open commit" : "Worktrees unavailable", err);
         return;
       }
       if (!gitAllWorktrees.length) {
         setError("Not a git repository");
         return;
+      }
+      if (commit && commit.repo !== gitRepository()) {
+        const tree = gitAllWorktrees.find((tree) => tree.repo === commit.repo);
+        if (!tree) {
+          setError("Repository not found");
+          return;
+        }
+        setGitTree(tree.path, { preserveFollow: true });
       }
       if (!gitAllWorktrees.some((tree) => tree.path === gitTree())) {
         setGitTree(gitAllWorktrees[0].path, { preserveFollow: true });
@@ -676,7 +693,18 @@ __INCLUDE:git-panel.js__
       setSheetKind("git");
       restoreGitChromeAfterPreview();
       if (!sheetIsOpen()) workspaceSheet.open();
-      await updateGitPanel();
+      if (commit) {
+        await gitPanel.loadPage({ reset: true });
+        const subject = info.message.split("\n")[0];
+        await gitPanel.openDetail({
+          hash: info.hash,
+          subject,
+          rowHtml: gitCommitRowHtml({ hash: info.hash, subject, changed_paths: files.changed_paths, ins: files.total_ins, dels: files.total_dels }),
+          seed: { files: files.files },
+        });
+      } else {
+        await updateGitPanel();
+      }
     };
     const openRepoSheet = async () => {
       try {

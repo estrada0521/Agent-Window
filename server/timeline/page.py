@@ -77,6 +77,7 @@ def render_timeline_html(
             panels_html=TIMELINE_SHEET_PANELS_HTML,
         ))
     replacements = {
+        "__TIMELINE_NAME_JSON__": json.dumps(timeline_name, ensure_ascii=True).replace("<", "\\u003c"),
         "__ICON_DATA_URIS__": json.dumps(icon_data_uris, ensure_ascii=True),
         "__TIMELINE_BASE_PATH__": base_path,
         "__TIMELINE_MANIFEST_URL__": pwa_url("/app.webmanifest", base_path),

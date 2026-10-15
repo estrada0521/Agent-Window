@@ -5,7 +5,7 @@
     let pendingAttachments = [];
     let attachUploadsInFlight = 0;
     let availableTargets = [];
-    let currentTimelineName = "";
+    let currentTimelineName = __TIMELINE_NAME_JSON__;
     let _renderedIds = new Set();
     const MESSAGE_COLLAPSE_LINES = 40;
     const expandedMessageBodies = new Set();

@@ -259,7 +259,6 @@ __INCLUDE:../pointer-capability.js__
     if (localStorage.getItem(GIT_REPO_POSITION_KEY) === "repo-top") document.documentElement.dataset.gitRepoPosition = "repo-top";
     let sideBarOpen = false;
     const sideBarOpenStorageKey = () => `agent_window_desktop_side_bar_open:${currentTimelineName}`;
-    let sideBarRestoredFor = "";
     let activeSideBarView = "repo";
     let repoBrowserPath = "";
     let repoLoadSeq = 0;
@@ -567,11 +566,6 @@ __INCLUDE:git-panel/events.js__
       disconnectGitObserver();
       applyGitOverviewHeader();
       syncPanelState();
-    };
-    const restoreTimelineSideBar = () => {
-      if (sideBarRestoredFor === currentTimelineName) return;
-      sideBarRestoredFor = currentTimelineName;
-      if (localStorage.getItem(sideBarOpenStorageKey()) === "1") void openSideBar();
     };
     const toggleSideBar = () => {
       if (sideBarOpen) closeSideBar();
@@ -1398,6 +1392,7 @@ __INCLUDE:git-panel/events.js__
     });
     __INCLUDE:../events.js__
     onTimelineSummaryPinReload({ force: true });
+    if (localStorage.getItem(sideBarOpenStorageKey()) === "1") void openSideBar();
     applySideBarWidth();
     refresh({ forceScroll: true });
     document.addEventListener("visibilitychange", () => {

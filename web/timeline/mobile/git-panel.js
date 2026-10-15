@@ -135,6 +135,15 @@ __INCLUDE:../git-panel-controller.js__
       await openGitSheet();
       gitWorktreeButton()?.click();
     });
+    messagesEl.addEventListener("touchstart", (event) => {
+      const row = event.target.closest(".sysmsg-row[data-commit-hash]");
+      if (row) row.style.setProperty("--liquid-glass-press-scale", Math.min(1.03, 1 + 6 / row.getBoundingClientRect().width));
+    }, { passive: true });
+    messagesEl.addEventListener("click", (event) => {
+      const row = event.target.closest(".sysmsg-row[data-commit-hash]");
+      if (!row) return;
+      void openGitSheet({ commit: { hash: row.dataset.commitHash, repo: row.dataset.commitRepo } });
+    });
     const animateGitSheetList = (selector, transition) => {
       const list = gitHostEl()?.querySelector(selector);
       if (!list) return;
