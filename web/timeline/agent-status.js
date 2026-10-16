@@ -59,14 +59,11 @@
       if (typeof data.active === "boolean") {
         sessionActive = data.active;
       }
-      document.getElementById("message").disabled = !sessionActive;
-      const _attachBtn = document.getElementById("attachBtn");
-      if (_attachBtn) _attachBtn.disabled = !sessionActive;
       if (typeof data.timeline === "string" && data.timeline) {
         restoreComposerDraft();
       }
       updateSendBtnVisibility();
-      const resolvedTargets = normalizedTimelineTargets(data.targets);
+      const resolvedTargets = normalizedTimelineTargets(sessionActive ? data.targets : []);
       if (resolvedTargets.length) agentAdded = true;
       const picker = document.getElementById("targetPicker");
       if (!picker.dataset.loaded) {

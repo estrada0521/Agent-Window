@@ -1,7 +1,6 @@
       const LARGE_PASTE_TEXT_CHARS = 32_768;
 
       const uploadAttachedFiles = async (fileList) => {
-        if (!canCompose()) return false;
         if (isTerminalMode()) {
           setError("Exit Terminal mode");
           return false;

@@ -311,7 +311,7 @@ __INCLUDE:upload-attached-files.js__
       sendBtn.title = label;
       if (!isMobileComposer) {
         const hasContent = messageInput.value.trim().length > 0 || pendingAttachments.length > 0;
-        sendBtn.classList.toggle("visible", !!sessionActive && hasContent);
+        sendBtn.classList.toggle("visible", hasContent);
       }
     };
     messageInput.addEventListener("input", updateSendBtnVisibility);

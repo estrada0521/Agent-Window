@@ -329,7 +329,6 @@ __INCLUDE:transcript-refresh.js__
     };
     document.getElementById("composer").addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!canCompose()) return;
       const submitter = event.submitter;
       const closeOverlayOnStart = !!(submitter && submitter.classList && submitter.classList.contains("send-btn"));
       await submitMessage({ closeOverlayOnStart });

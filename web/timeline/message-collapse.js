@@ -1,7 +1,6 @@
     let selectedTargets = [];
     let sendLocked = false;
     let sessionActive = null;
-    const canCompose = () => sessionActive === true;
     let pendingAttachments = [];
     let attachUploadsInFlight = 0;
     let availableTargets = [];

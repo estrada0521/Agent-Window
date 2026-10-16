@@ -62,9 +62,8 @@
       setTimeout(restore, 120);
     };
     const openComposerOverlay = ({ immediateFocus = false } = {}) => {
-      const canFocus = immediateFocus && canCompose();
       if (isComposerOverlayOpen()) {
-        if (canFocus) focusComposerTextarea();
+        if (immediateFocus) focusComposerTextarea();
         return;
       }
       if (document.documentElement.dataset.mobile === "1") {
@@ -83,9 +82,9 @@
         armFitComposerHold();
         composerOverlay.classList.add("visible");
         document.dispatchEvent(new CustomEvent("composer-overlay-open"));
-        if (canFocus && !isMobileComposer) focusComposerTextarea();
+        if (immediateFocus && !isMobileComposer) focusComposerTextarea();
       };
-      if (canFocus && isMobileComposer) {
+      if (immediateFocus && isMobileComposer) {
         focusComposerTextarea(() => {
           composerForm.classList.add("composer-opening-ready");
           requestAnimationFrame(reveal);
@@ -124,7 +123,7 @@
       if (!isMobileComposer && restoreFocus) composerFabBtn.focus({ preventScroll: true });
     };
     composerFabBtn.addEventListener("click", () => {
-      openComposerOverlay({ immediateFocus: canCompose() });
+      openComposerOverlay({ immediateFocus: true });
     });
     if (document.documentElement.dataset.mobile !== "1") {
       composerDockBtn.addEventListener("click", () => {
@@ -170,7 +169,7 @@
         if (event.button !== 1) return;
         if (shouldIgnoreComposerMouseShortcut(event.target)) return;
         event.preventDefault();
-        openComposerOverlay({ immediateFocus: canCompose() });
+        openComposerOverlay({ immediateFocus: true });
       }, { capture: true });
       document.addEventListener("auxclick", (event) => {
         if (event.button !== 1) return;
@@ -181,7 +180,7 @@
         if (event.key !== "Enter") return;
         if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
         if (event.isComposing || event.keyCode === 229) return;
-        if (isComposerOverlayOpen() || !canCompose()) return;
+        if (isComposerOverlayOpen()) return;
         const active = document.activeElement;
         if (active?.matches("input, textarea, select, button, a, summary, [contenteditable='true']")) return;
         event.preventDefault();

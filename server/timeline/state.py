@@ -265,12 +265,14 @@ class TimelineState:
 
     def send_message(self, target: str, message: str, client: str | None = None) -> tuple[int, dict]:
         with self._events:
-            if self.closed or not self.session_is_active:
+            if self.closed:
                 return 409, {"ok": False, "error": "Timeline is not active"}
             message = str(message or "")
             if not message.strip():
                 return 400, {"ok": False, "error": "message is required"}
             targets = [item.strip() for item in str(target or "").split(",") if item.strip()]
+            if targets and not self.session_is_active:
+                return 409, {"ok": False, "error": "Timeline is not active"}
             entry = self.append_user_entry(message, targets=targets or ["user"], client=client)
             if not targets:
                 return 200, {"ok": True, "mode": "note", "entry": entry}
