@@ -326,16 +326,15 @@ def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on
     workspace_root = files.workspace
     if not workspace_root or not os.path.isdir(workspace_root):
         return
-    watched_roots: set[str] = set()
-    stops = []
+    stops = {}
 
     def watch_outside_trees(trees) -> None:
         on_trees_changed(trees)
-        for _key, root, _gitdir in trees:
-            if root in watched_roots or _is_under(root, workspace_root):
-                continue
-            watched_roots.add(root)
-            stops.append(_watch_paths([root], debouncer.add_path, debouncer.mark_full_rescan, report_failure, f"worktree-fsevents:{root}"))
+        roots = {root for _key, root, _gitdir in trees if not _is_under(root, workspace_root)}
+        for root in stops.keys() - roots - {workspace_root}:
+            stops.pop(root)()
+        for root in roots - stops.keys():
+            stops[root] = _watch_paths([root], debouncer.add_path, debouncer.mark_full_rescan, report_failure, f"worktree-fsevents:{root}")
 
     debouncer = _DebouncedWorkspaceRefresh(
         files,
@@ -346,11 +345,11 @@ def start_workspace_fsevents_watcher(files, *, publish_event, report_failure, on
     )
     def stop():
         debouncer.close()
-        for close in stops:
+        for close in stops.values():
             close()
 
     try:
-        stops.append(_watch_paths([workspace_root], debouncer.add_path, debouncer.mark_full_rescan, report_failure, "workspace-fsevents"))
+        stops[workspace_root] = _watch_paths([workspace_root], debouncer.add_path, debouncer.mark_full_rescan, report_failure, "workspace-fsevents")
         watch_outside_trees(debouncer.trees)
     except Exception:
         stop()

@@ -10,11 +10,13 @@ from fs.log.meta import (
     LogMetaError,
     create_log_dir,
     log_workspace,
-    write_log_meta_file,
+    read_log_meta,
+    write_json_atomically,
 )
 from fs.log.paths import (
     ensure_workspace_log_link,
     log_jsonl_path,
+    log_meta_path,
 )
 from agents.executables import agent_executable_path, agent_launch_cmd
 from agents import agent_base_name
@@ -73,10 +75,10 @@ def _instance_names(bases: list[str]) -> list[str]:
     return result
 
 
-def _write_meta(tmux_name: str, aw_name: str) -> None:
-    workspace = tmux_session_workspace(tmux_name)
-    agents = [pane.name for pane in agent_topology(tmux_name)]
-    write_log_meta_file(aw_name, workspace, agents)
+def _update_agents(tmux_name: str, aw_name: str) -> None:
+    meta = read_log_meta(aw_name)
+    meta["agents"] = [pane.name for pane in agent_topology(tmux_name)]
+    write_json_atomically(log_meta_path(aw_name), meta)
 
 
 def _append_log(timeline_name: str, message: str) -> None:
@@ -220,7 +222,7 @@ def create_session(
 
     _set_env(tmux_name, "PATH", os.environ["PATH"])
     _unset_env(tmux_name, "CLAUDECODE")
-    _write_meta(tmux_name, timeline_name)
+    _update_agents(tmux_name, timeline_name)
 
     if panes:
         for instance, pane_id in zip(instances, panes):
@@ -278,7 +280,7 @@ def add_agent(
     )
     if not pane_id:
         raise SessionControlError("Failed to create agent window")
-    _write_meta(tmux_name, timeline_name)
+    _update_agents(tmux_name, timeline_name)
     _start_agent(
         workspace=workspace,
         pane_id=pane_id,
@@ -305,6 +307,6 @@ def remove_agent(
         raise SessionControlError(f"No tmux window recorded for instance: {agent}")
     if not kill_window_target(window_target=window_target):
         raise SessionControlError(f"tmux kill-window failed for {window_target}")
-    _write_meta(tmux_name, timeline_name)
+    _update_agents(tmux_name, timeline_name)
     _append_log(timeline_name, f"Remove Agent: {agent}")
     return agent
