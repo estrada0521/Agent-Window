@@ -549,7 +549,12 @@
       overflow-wrap: anywhere;
     }
 
-    .git-commit-info-message > div + div {
+    .git-commit-info-message > strong {
+      display: block;
+      font-weight: var(--md-strong-weight);
+    }
+
+    .git-commit-info-message > * + div {
       margin-top: 1em;
     }
 

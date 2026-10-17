@@ -205,26 +205,30 @@ __INCLUDE:../git-panel-controller.js__
       const bodyEl = gitHostEl()?.querySelector(".git-commit-detail-body");
       if (!bodyEl || gitPanel.detailContext?.hash !== hash) return;
       const trailers = [];
-      const body = info.message.split("\n").slice(1).filter((line) => {
+      const [subject, ...lines] = info.message.split("\n");
+      const body = lines.filter((line) => {
         const isTrailer = /^co-authored-by:/i.test(line);
         if (isTrailer) trailers.push(line.trim());
         return !isTrailer;
       }).join("\n").trim();
       const blockEl = document.createElement("div");
       blockEl.className = "git-commit-info-block";
+      const messageEl = document.createElement("div");
+      messageEl.className = "git-commit-info-message";
+      const subjectEl = document.createElement("strong");
+      subjectEl.textContent = subject;
+      messageEl.append(subjectEl);
+      blockEl.append(messageEl);
       if (body) {
-        const messageEl = document.createElement("div");
-        messageEl.className = "git-commit-info-message";
         for (const paragraph of body.split(/\n{2,}/)) {
           const paragraphEl = document.createElement("div");
           paragraphEl.textContent = paragraph;
           messageEl.append(paragraphEl);
         }
-        blockEl.append(messageEl);
       }
       const metaEl = document.createElement("div");
       metaEl.className = "git-commit-info-meta";
-      metaEl.append(...[[info.hash.slice(0, 7), info.author, new Date(info.date).toLocaleString()].join(" · "), ...trailers].map((text) => {
+      metaEl.append(...[[info.author, new Date(info.date).toLocaleString()].join(" · "), ...trailers].map((text) => {
         const lineEl = document.createElement("div");
         lineEl.textContent = text;
         return lineEl;
@@ -392,7 +396,7 @@ __INCLUDE:../git-panel-controller.js__
       }
     });
     const setGitDetailChrome = ({ rowHtml = "", subject = "Git", hash = "", isWorktree = false } = {}) => {
-      _gitDetailChrome = { rowHtml, subject };
+      _gitDetailChrome = { rowHtml, subject: !isWorktree && hash ? hash.slice(0, 7) : subject };
       applyGitDetailChrome(_gitDetailChrome);
       syncGitDiffToggle();
       if (isWorktree || !hash) return;
