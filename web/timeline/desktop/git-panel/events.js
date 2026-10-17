@@ -34,7 +34,16 @@
       const hash = String((head ? gitPanel.detailContext?.hash : target?.dataset.hash) || "");
       if (!hash) return;
       const info = await gitCommitInfo(hash);
-      const text = [`${info.author}, ${new Date(info.date).toLocaleString()}`, info.message, info.stat, info.hash].filter(Boolean).join("\n\n");
+      const [subject, ...lines] = info.message.split("\n");
+      const trailers = [];
+      const body = lines.filter((line) => {
+        if (!/^co-authored-by:/i.test(line)) return true;
+        trailers.push(line.trim());
+        return false;
+      }).join("\n").trim();
+      const meta = [`${info.author} · ${new Date(info.date).toLocaleString()}`, ...trailers].join("\n");
+      const stats = [info.stat, info.hash].filter(Boolean).join("\n");
+      const text = [subject, body, meta, stats].filter(Boolean).join("\n\n");
       if (target.title !== text) target.title = text;
     });
     gitContent?.addEventListener("contextmenu", (event) => {
