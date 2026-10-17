@@ -1,16 +1,7 @@
 from __future__ import annotations
 
-import html
+from fs.log.paths import agent_window_root
 
-MESSAGE_FONT_FAMILY = "anthropicSans"
-CODE_FONT_FAMILY = "jetbrainsMono"
-MESSAGE_FONT = f'"{MESSAGE_FONT_FAMILY}", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif'
-CODE_FONT = f'"{CODE_FONT_FAMILY}", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", monospace'
-FONT_ASSET_FILES = {
-    "anthropic-sans-roman.ttf": "AnthropicSans-Romans-Variable-25x258.ttf",
-    "anthropic-sans-italic.ttf": "AnthropicSans-Italics-Variable-25x258.ttf",
-    "jetbrains-mono.ttf": "JetBrainsMono[wght].ttf",
-}
 DESKTOP_TEXT_SIZE = 13
 MOBILE_TEXT_SIZE = 13
 TEXT_SIZE_MIN = 8
@@ -46,7 +37,6 @@ CODE_BLOCK_LINE_HEIGHT_RATIO = 1.35
 
 MOBILE_DARK_INLINE_CODE_WEIGHT = 400
 
-FILE_PREVIEW_CODE_FONT = CODE_FONT
 FILE_PREVIEW_CODE_TEXT_SIZE = 12
 FILE_PREVIEW_CODE_LINE_HEIGHT_RATIO = 1.35
 FILE_PREVIEW_LINE_NUMBER_LIGHT_CHANNELS = "100, 100, 100"
@@ -69,18 +59,16 @@ def text_line_height_px(text_size: object) -> float:
 
 def apply_font_tokens(text: str) -> str:
     replacements = (
-        ("__MESSAGE_FONT_CSS__", MESSAGE_FONT),
-        ("__CODE_FONT_CSS__", CODE_FONT),
-        ("__MESSAGE_FONT__", html.escape(MESSAGE_FONT)),
-        ("__CODE_FONT__", html.escape(CODE_FONT)),
-        ("__MESSAGE_FONT_FAMILY__", html.escape(MESSAGE_FONT_FAMILY)),
-        ("__CODE_FONT_FAMILY__", html.escape(CODE_FONT_FAMILY)),
         ("__MOBILE_LIGHT_BODY_WEIGHT__", str(MOBILE_LIGHT_BODY_WEIGHT)),
         ("__MOBILE_DARK_BODY_WEIGHT__", str(MOBILE_DARK_BODY_WEIGHT)),
     )
     resolved = text
     for old, new in replacements:
         resolved = resolved.replace(old, new)
+    if "__CUSTOM_FONT_CSS__" in resolved:
+        path = agent_window_root() / "fonts.css"
+        css = path.read_text(encoding="utf-8") if path.is_symlink() or path.exists() else ""
+        resolved = resolved.replace("__CUSTOM_FONT_CSS__", css)
     return resolved
 
 
@@ -175,8 +163,6 @@ def timeline_font_style(*, text_size: object = DESKTOP_TEXT_SIZE) -> str:
       --text-line-height: {TEXT_LINE_HEIGHT_RATIO:g};
       --message-max-width: {MESSAGE_MAX_WIDTH_EM:g}em;
       --md-frontmatter-key-weight: {MD_FRONTMATTER_KEY_WEIGHT};
-      --font-main: {MESSAGE_FONT};
-      --font-code: {CODE_FONT};
       --git-diff-code-size: {GIT_DIFF_CODE_TEXT_SIZE}px;
       --git-diff-code-line-height: {GIT_DIFF_CODE_LINE_HEIGHT_RATIO:g};
     }}

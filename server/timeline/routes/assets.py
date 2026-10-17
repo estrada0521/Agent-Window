@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import mimetypes
 from urllib.parse import parse_qs
 
 from server.appearance.colors import resolve_theme_palette
@@ -73,7 +74,7 @@ def _get_font_asset(handler, parsed, ctx) -> None:
         handler,
         ctx["assets"].font_bytes,
         parsed.path[6:],
-        content_type="font/ttf",
+        content_type=mimetypes.guess_type(parsed.path)[0] or "application/octet-stream",
     )
 
 

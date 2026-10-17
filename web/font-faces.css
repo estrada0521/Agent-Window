@@ -1,29 +1,55 @@
+:root {
+  --font-main: "Hiragino Sans Japanese", system-ui, "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif;
+  --font-code: "Menlo", "SF Pro Text", "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "PingFang TC", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", monospace;
+}
     @font-face {
-      font-family: "__MESSAGE_FONT_FAMILY__";
-      src:
-        url("/font/anthropic-sans-roman.ttf") format("truetype-variations"),
-        url("/font/anthropic-sans-roman.ttf") format("truetype");
+      font-family: "Hiragino Sans Japanese";
+      src: local("HiraginoSans-W3");
+      font-weight: 300;
       font-style: normal;
-      font-weight: 300 800;
-      font-optical-sizing: auto;
-      font-display: swap;
+      unicode-range: U+2000-206F, U+2E80-30FF, U+31F0-31FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE30-FE4F, U+FF00-FFEF, U+20000-323AF;
     }
     @font-face {
-      font-family: "__MESSAGE_FONT_FAMILY__";
-      src:
-        url("/font/anthropic-sans-italic.ttf") format("truetype-variations"),
-        url("/font/anthropic-sans-italic.ttf") format("truetype");
-      font-style: italic;
-      font-weight: 300 800;
-      font-optical-sizing: auto;
-      font-display: swap;
-    }
-    @font-face {
-      font-family: "__CODE_FONT_FAMILY__";
-      src:
-        url("/font/jetbrains-mono.ttf") format("truetype-variations"),
-        url("/font/jetbrains-mono.ttf") format("truetype");
+      font-family: "Hiragino Sans Japanese";
+      src: local("HiraginoSans-W4"), local("HiraginoSans-W3");
+      font-weight: 400;
       font-style: normal;
-      font-weight: 100 800;
-      font-display: swap;
+      unicode-range: U+2000-206F, U+2E80-30FF, U+31F0-31FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE30-FE4F, U+FF00-FFEF, U+20000-323AF;
     }
+    @font-face {
+      font-family: "Hiragino Sans Japanese";
+      src: local("HiraginoSans-W5"), local("HiraginoSans-W3");
+      font-weight: 500;
+      font-style: normal;
+      unicode-range: U+2000-206F, U+2E80-30FF, U+31F0-31FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE30-FE4F, U+FF00-FFEF, U+20000-323AF;
+    }
+    @font-face {
+      font-family: "Hiragino Sans Japanese";
+      src: local("HiraginoSans-W6");
+      font-weight: 600;
+      font-style: normal;
+      unicode-range: U+2000-206F, U+2E80-30FF, U+31F0-31FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE30-FE4F, U+FF00-FFEF, U+20000-323AF;
+    }
+    @font-face {
+      font-family: "Hiragino Sans Japanese";
+      src: local("HiraginoSans-W7"), local("HiraginoSans-W6");
+      font-weight: 700;
+      font-style: normal;
+      unicode-range: U+2000-206F, U+2E80-30FF, U+31F0-31FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE30-FE4F, U+FF00-FFEF, U+20000-323AF;
+    }
+    @font-face {
+      font-family: "Hiragino Sans Japanese";
+      src: local("HiraginoSans-W8"), local("HiraginoSans-W6");
+      font-weight: 800;
+      font-style: normal;
+      unicode-range: U+2000-206F, U+2E80-30FF, U+31F0-31FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE30-FE4F, U+FF00-FFEF, U+20000-323AF;
+    }
+    @font-face {
+      font-family: "Hiragino Sans Japanese";
+      src: local("HiraginoSans-W9"), local("HiraginoSans-W6");
+      font-weight: 900;
+      font-style: normal;
+      unicode-range: U+2000-206F, U+2E80-30FF, U+31F0-31FF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FE30-FE4F, U+FF00-FFEF, U+20000-323AF;
+    }
+
+__CUSTOM_FONT_CSS__

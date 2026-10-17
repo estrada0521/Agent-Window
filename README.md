@@ -70,6 +70,8 @@ The side bar shows git status and a file tree. Diffs open in `git difftool`. Fil
 
 File icons: put a symlink to a file icon theme's definition JSON (VS Code and similar) at `~/.agent-window/file-icon-theme.json`.
 
+Fonts: customize `--font-main`, `--font-code` and `@font-face` in `~/.agent-window/fonts.css` (symlinks supported). Files in `~/.agent-window/fonts/` are served at `/font/{filename}` for all clients, including mobile.
+
 Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax-light.css` and `~/.agent-window/syntax-dark.css`.
 
 **Follow changes** automatically switches Git to the worktree whose change was detected last.
