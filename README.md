@@ -11,85 +11,39 @@ https://okadaharuto.com/agent-window/
 </div>
 
 <p align="center">
-  <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window hero 1">
-  <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window hero 2">
+  <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window, light theme">
+  <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window, dark theme">
 </p>
+
+<div align="center">
+
+Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
+
+</div>
 
 ---
 
-## Principles
+## Principle of Agent Window
 
-1. The unit is one log. Its file: `~/.agent-window/log/{timeline_name}/.log.jsonl`.
-2. An Agent is an ordinary CLI, running inside tmux. Any number of them.
-3. Both workspace and CLI can be swapped mid-timeline. The same log continues.
-4. Sending is `tmux send-keys`. Text from the input field goes into the Agent's pane.
-5. Receiving is watching each CLI's native log. Tool calls show on screen only while running, and aren't kept in the log.
-
-<p align="center">
-  <img src="media/agent-window-running.gif" width="392" alt="Claude's running tool calls in Agent Window">
-</p>
-
-https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
-
-*Open the CLI itself whenever needed.*
-
-## Setup
-
-Requires `python3`, `tmux`, Xcode Command Line Tools. Install and authenticate the Agent CLIs you'll use yourself.
-
-```bash
-./macos/build
-```
-
-The app builds in 1s, and is saved to `/Applications/Agent Window.app` and launched.
-
-## timeline
-
-`New Timeline` picks a workspace and starts a tmux session there.
-
-`Add / Remove Agent` adds and removes Agents. Adding the same CLI more than once gets an instance name like `Claude-2`. The CLI itself opens from `tmux pane`.
-
+1. The unit is a **Timeline**. Its file is `~/.agent-window/log/{timeline_name}/.log.jsonl`.
+2. An Agent is a CLI inside tmux. Sending uses `tmux send-keys`; receiving watches its native log.
+3. Agents and the workspace can be swapped mid-timeline.
 
 <details>
-<summary>State actions</summary>
+<summary>Timeline state actions</summary>
 
 | Action | Effect | Note |
 |---|---|---|
-| Archive | Kills the tmux session | Log stays |
-| Revive | Recreates the tmux session from the saved workspace and Agent set | Uses each CLI's resume |
-| Delete | Permanently deletes the timeline's saved data | Archived only |
-| Rename | Changes the timeline's name | `⌘Enter` on a focused timeline row |
+| Rename | Changes the timeline’s name | |
+| Archive | Ends the tmux session | The log stays |
+| Revive | Restarts the tmux session with the saved workspace and Agents | Resumes the CLIs |
+| Delete | Permanently deletes the timeline’s saved data | Archived only |
 | Change Workspace | Changes the workspace | Archived only |
-| Reset Agents | Clears the saved Agent set | The one used by Revive |
+| Reset Agents | Clears the saved Agent set | Archived only |
 
 </details>
 
-## workspace
-
-The side bar shows git status and a file tree. Diffs open in `git difftool`. Files open in the default app; on mobile, a built-in viewer.
-
-File icons: put a symlink to a file icon theme's definition JSON (VS Code and similar) at `~/.agent-window/file-icon-theme.json`.
-
-Fonts: customize `--font-main`, `--font-code` and `@font-face` in `~/.agent-window/fonts.css` (symlinks supported). Files in `~/.agent-window/fonts/` are served at `/font/{filename}` for all clients, including mobile.
-
-Syntax colors: put symlinks to highlight.js theme CSS at `~/.agent-window/syntax-light.css` and `~/.agent-window/syntax-dark.css`.
-
-**Follow changes** automatically switches Git to the worktree whose change was detected last.
-
-<p align="center">
-  <img src="media/agent-window-hero-3.png" width="100%" alt="Agent Window workspace, light theme">
-  <img src="media/agent-window-hero-4.png" width="100%" alt="Agent Window workspace, dark theme">
-</p>
-
-*In Fit Window mode, described next, git and workspace live in a window independent of the timeline, at any position and size you choose.*
-
-## Fit Window to Message
-
-`⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘[` / `⌥⌘]` decrease / increase the number of messages shown. `⌥⌘M` collapses the window to its minimum; a new message restores it.
-
-https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
-
-## Shortcuts
+## Catalog
 
 <details>
 <summary>Hub</summary>
@@ -103,9 +57,7 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 | Copy workspace path | | right-click menu |
 | Show timeline stats | hover | |
 
-<p align="center">
-  <img src="media/agent-window-hub-menu.png" width="100%" alt="Hub menu">
-</p>
+
 
 </details>
 
@@ -132,9 +84,8 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 | `/nativelog` | desktop | Reveals the Agent's native log in Finder | |
 | `/terminal <text>` | mobile | Sends text to the terminal pane | |
 
-https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 
-*The prompt box appears only when needed. It takes no space away from the timeline.*
+
 
 </details>
 
@@ -152,9 +103,7 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | Search the full timeline | `⌘F` / Search | Hold `⇧` to jump 10 matches at a time |
 | Export timeline as HTML / JSONL | | |
 
-<p align="center">
-  <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
-</p>
+
 
 </details>
 
@@ -176,7 +125,7 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 <details>
 <summary>git / workspace</summary>
 
-| Action | Key | Note |
+| **file** | | |
 |---|---|---|
 | Open file | `⌘O` | |
 | Quick Look | `⌘Y` / `⌥` + click | |
@@ -184,6 +133,8 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | Copy file | `⌘C` | |
 | Copy absolute path | `⌥⌘C` | |
 | Copy relative path | `⇧⌥⌘C` | |
+| **git** | | |
+|---|---|---|
 | Copy commit hash |  | |
 | Copy commit message |  | |
 | Show commit info | hover | |
@@ -192,7 +143,7 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | Follow changes |  | Across repositories and worktrees; ON by default |
 | Pin changes | `⇧⌘P` / pin button | |
 
-https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
+
 
 </details>
 
@@ -211,14 +162,13 @@ https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
 | Show fewer / more messages in Fit | `⌥⌘[` / `⌥⌘]` | Fit only |
 | Collapse Window | `⌥⌘M` | Restores on a new message. Fit Window to Message only |
 
-https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
 
-*Scaling preserves the proportions of the entire window. Adjust its size and position to keep the application out of your way.*
+
 
 </details>
 
 <details>
-<summary>UI / UX</summary>
+<summary>UI・UX</summary>
 
 | Action | Key | Note |
 |---|---|---|
@@ -229,11 +179,22 @@ https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
 
 </details>
 
-## Mobile
+<details>
+<summary>customize</summary>
 
-Connect to the Hub via Tailscale or similar, and use it as a PWA. Swipe left to open the menu that leads to git and the file tree.
+| Item | Configuration |
+|---|---|
+| Main Font & Code Font | symlink |
+| File Icon | symlink VS Code theme json -> `~/.agent-window/file-icon-theme.json` |
+| Syntax highlight | symlink highlight.js CSS -> `~/.agent-window/syntax-light(dark).css` |
+| Keymacro for Pane Trace | add to `tmux/key_macro.py/PANE_TEXT_MACROS` |
+| A2A(`send-keys` wrapper) | place `tmux/agent_send/agent-send` & `tmux/agent_send/SKILL.md` |
 
-`Pane Trace` shows the CLI itself. A minimal set of key macros is provided as buttons. Register frequently used CLI commands in `PANE_TEXT_MACROS` in `tmux/key_macro.py`.
+</details>
+
+## Control from Everywhere
+
+Connect via Tailscale & use as PWA
 
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">
@@ -256,37 +217,17 @@ Connect to the Hub via Tailscale or similar, and use it as a PWA. Swipe left to 
 
 </details>
 
-## Supported CLIs
-
-Claude, Codex, Antigravity, Cursor, Grok.
-
-An Agent can send to another Agent with `agent-send`. It's typed into the target's pane with a prefix like `[From: Claude]`.
-
-```bash
-printf '%s' '<message>' | agent-send <target>
-```
-
-To use it, add `tmux/agent_send/agent-send` to PATH and place `tmux/agent_send/SKILL.md` yourself.
-
-<p align="center">
-  <img src="media/agent-window-agent-send.png" width="100%" alt="Claude, Grok, and Codex talking to each other">
-</p>
-
-
-## Stack
-
-The stack is HTML/CSS/vanilla JavaScript, the Python standard library, and one Objective-C file for the app. There is no Node runtime, npm build, or DB; the following are used directly:
-
-- **browser primitive** — DOM, `fetch` / `EventSource`
-- **native OS API** — FSEvents / kqueue, AppKit / Objective-C
-- **canonical CLI** — git, tmux, Agent CLI
-
 ## Footprint
 
-The source code is about 1.6 MB and 40,000 lines.
-
-The app is a native launcher that uses the local repo directly, under 200 KB in size. No telemetry. The only network dependencies besides the Agent CLIs are `marked`, `DOMPurify`, `katex`, and (when a syntax theme is configured) `highlight.js` from `cdn.jsdelivr.net`. Vendor them yourself if you want it fully local.
-
-The server listens on the port in the `server/port` file (default `8788`); edit the file to change it.
-
-Agent Window itself writes filesystem data only under `~/.agent-window/` and `<workspace>/.agent-window/`.
+- **Source**:
+  - **Size**: 1.6 MB・40,000 LOC
+  - **Stack**: HTML・CSS・vanilla JavaScript・Python stdlib
+- **App**:
+  - **Spec**: native launcher of local repo
+  - **Requirements**: python3・tmux・Xcode CLI
+  - **Build**: 1s from `./macos/build`
+  - **Size** : < 200 KB
+- **System**:
+  - **Network**: CDN (`marked`・`DOMPurify`・`katex`・`highlight.js`)
+  - **Port**: value of `server/port` (default `8788`)
+  - **Files**: `~/.agent-window/`(log)・`{workspace}/.agent-window/`(symlink・uploaded file)

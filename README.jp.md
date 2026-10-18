@@ -2,7 +2,7 @@
 
 # Agent Window
 
-UNIX哲学で作られた、macOS向けのAgentアプリケーション。
+UNIX哲学のmacOS向けAgent application。
 
 [設計哲学](DESIGN.jp.md) · [English](README.md)
 
@@ -11,83 +11,39 @@ https://okadaharuto.com/agent-window/
 </div>
 
 <p align="center">
-  <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window hero 1">
-  <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window hero 2">
+  <img src="media/agent-window-hero-1.png" width="100%" alt="Agent Window, light theme">
+  <img src="media/agent-window-hero-2.png" width="100%" alt="Agent Window, dark theme">
 </p>
+
+<div align="center">
+
+Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
+
+</div>
 
 ---
 
-## Principle
+## Principle of Agent Window
 
-1. 単位は一つのlog。実体は `~/.agent-window/log/{timeline_name}/.log.jsonl`。
-2. Agentは普通のCLIで、tmux内で動く。数は任意。
-3. workspaceもCLIも、途中で差し替えられる。logは同じものが続く。
-4. 送信は `tmux send-keys`。入力欄の文字が、Agentのpaneに入る。
-5. 受信は各CLIのnative logの監視。tool callは実行中だけ画面に出て、logには残らない。
-
-<p align="center">
-  <img src="media/agent-window-running.gif" width="392" alt="Claudeの実行中のtool call表示">
-</p>
-
-https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
-
-*必要な時には、いつでもCLI本体を呼び出せる。*
-
-## Setup
-
-`python3`、`tmux`、Xcode Command Line Toolsが必要。使うAgent CLIは各自installして認証しておく。
-
-```bash
-./macos/build
-```
-
-Appは 1s でbuildされ、`/Applications/Agent Window.app` に保存・起動される。
-
-## timeline
-
-`New Timeline` でworkspaceを選び、そこでtmux sessionを始める。
-
-`Add / Remove Agent` でAgentを追加・削除する。同じCLIを複数追加すると `Claude-2` のようなinstance名が付く。CLI本体は `tmux pane` から開ける。
-
+1. **Timeline**が単位。実体は `~/.agent-window/log/{timeline_name}/.log.jsonl`。
+2. Agentはtmux内のCLI。送信は `tmux send-keys`。受信はnative logの監視。
+3. Agent・WorkspaceはTimelineの途中で差し替えられる。
 
 <details>
-<summary>状態操作</summary>
+<summary>Timelineの状態操作</summary>
 
 | 操作 | 内容 | 備考 |
 |---|---|---|
+| Rename | timelineの名前を変える |  |
 | Archive | tmux sessionを終了する | logは残る |
-| Revive | 保存したworkspaceとAgent構成でtmux sessionを作り直す | 各CLIのresume機能を利用する |
-| Delete | timelineの保存物を完全に削除する | Archive中のみ |
-| Rename | timelineの名前を変える | timeline行にフォーカスして `⌘Enter` |
-| Change Workspace | workspaceを変える | Archive中のみ |
-| Reset Agents | 保存したAgent構成を消す | Revive用のもの |
+| Revive | 保存したworkspaceとAgent構成でtmux sessionを再起動する | CLIはresumeされる |
+| Delete | timelineの保存物を完全に削除する | Archive中のみ可 |
+| Change Workspace | workspaceを変更する | Archive中のみ可 |
+| Reset Agents | 保存したAgent構成を削除する | Archive中のみ可 |
 
 </details>
 
-## workspace
-
-side barにgitの状態とfile treeが出る。差分は `git difftool`。fileは既定のアプリ、mobileは内蔵viewer。
-
-file iconは、VS Codeなどのfile icon themeの定義JSONへのsymlinkを `~/.agent-window/file-icon-theme.json` に置くと使える。
-
-構文色は、highlight.jsのtheme CSSへのsymlinkを `~/.agent-window/syntax-light.css` と `~/.agent-window/syntax-dark.css` に置くと使える。
-
-**Follow changes**では、最後に変更を検知したworktreeへGit表示が自動で切り替わる。
-
-<p align="center">
-  <img src="media/agent-window-hero-3.png" width="100%" alt="Agent Window workspace, light theme">
-  <img src="media/agent-window-hero-4.png" width="100%" alt="Agent Window workspace, dark theme">
-</p>
-
-*次のFit Window中では、git・workspaceをtimelineとは独立したwindowとして、好きな位置・大きさで保持できる。*
-
-## Fit Window to Message
-
-`⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘[` / `⌥⌘]` で表示するmessage数を減らす／増やす。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。
-
-https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
-
-## Shortcut
+## Catalog
 
 <details>
 <summary>Hub</summary>
@@ -100,10 +56,6 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 | serverの再起動 | `⇧⌘R` | 変更後のsourceを読み直す |
 | workspaceのpathをコピー | | 右クリックmenu |
 | timelineの統計表示 | hover |  |
-
-<p align="center">
-  <img src="media/agent-window-hub-menu.png" width="100%" alt="Hub menu">
-</p>
 
 </details>
 
@@ -130,10 +82,6 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 | `/nativelog` | desktop | Agentのnative logをFinderで表示する | |
 | `/terminal <text>` | mobile | terminal paneに文字列を送る | |
 
-https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
-
-*prompt boxは必要な時だけ現れる。timelineのための面積を占有しない。*
-
 </details>
 
 <details>
@@ -149,10 +97,6 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | ブラウザでtimelineを開く | `⌥⌘O` |  |
 | timelineの全文検索 | `⌘F` / Search | `⇧`併用で10件ずつ飛び |
 | timelineをHTML / JSONLとしてExport | | |
-
-<p align="center">
-  <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
-</p>
 
 </details>
 
@@ -174,7 +118,7 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 <details>
 <summary>git / workspace</summary>
 
-| 操作 | キー | 備考 |
+| **file** | | |
 |---|---|---|
 | fileを開く | `⌘O` |  |
 | Quick Look | `⌘Y` / `⌥` + click | |
@@ -182,15 +126,16 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 | fileをcopy | `⌘C` | |
 | 絶対pathをcopy | `⌥⌘C` | |
 | 相対pathをcopy | `⇧⌥⌘C` | |
+
+| **git** | | |
+|---|---|---|
+| 監視repoの追加 / 解除 | フォルダを右クリック |  |
 | commit hashをcopy |  | |
 | commit messageをcopy |  | |
 | commitのinfo表示 | hover |  |
-| repoの追加 / 解除 | フォルダを右クリック | desktopのWorkspace |
 | repo / worktreeの切り替え |  | timeline menu・mobileのbranchボタンから |
 | Follow changes |  | repo・worktreeを跨いで追従。既定でON |
 | Pin changes | `⇧⌘P` / pinボタン | |
-
-https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
 
 </details>
 
@@ -209,10 +154,6 @@ https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
 | Fitの表示message数を減らす／増やす | `⌥⌘[` / `⌥⌘]` | Fit中のみ |
 | Collapse Window | `⌥⌘M` | 新しいmessageで復帰。Fit Window to Message中のみ |
 
-https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
-
-*拡大・縮小はwindow全体の相似を保つ。sizeと位置を変えて、アプリケーションを作業の邪魔にならない場所へ。*
-
 </details>
 
 <details>
@@ -227,11 +168,22 @@ https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
 
 </details>
 
-## Mobile
+<details>
+<summary>customize</summary>
 
-Tailscale等でHubに接続し、PWAとして使う。gitやfile treeへ繋がるmenuは左スワイプで開く。
+| 項目 | 設定方法 |
+|---|---|
+| Main Font & Code Font | symlink |
+| File Icon | symlink VS Code theme json -> `~/.agent-window/file-icon-theme.json` |
+| Syntax highlight | symlink highlight.js CSS -> `~/.agent-window/syntax-light(dark).css` |
+| Keymacro for Pane Trace | add to `tmux/key_macro.py/PANE_TEXT_MACROS` |
+| A2A(`send-keys` wrapper) | place `tmux/agent_send/agent-send` & `tmux/agent_send/SKILL.md` |
 
-`Pane Trace` でCLI本体を確認できる。最低限のキーマクロはボタンにしてある。`tmux/key_macro.py` の `PANE_TEXT_MACROS` でよく使うCLIコマンドを登録できる。
+</details>
+
+## Control from Everywhere
+
+Connect via Tailscale & use as PWA
 
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">
@@ -239,7 +191,7 @@ Tailscale等でHubに接続し、PWAとして使う。gitやfile treeへ繋が�
 </p>
 
 <details>
-<summary>その他のスクリーンショット</summary>
+<summary>More screenshots</summary>
 
 <p align="center">
   <img src="media/agent-window-mobile-light-2.png" width="48%" alt="Mobile UI, light 2">
@@ -254,37 +206,17 @@ Tailscale等でHubに接続し、PWAとして使う。gitやfile treeへ繋が�
 
 </details>
 
-## Supported CLI
-
-Claude、Codex、Antigravity、Cursor、Grok。
-
-AgentはAgentに `agent-send` で送れる。宛先のpaneに `[From: Claude]` のようなprefix付きで入力される。
-
-```bash
-printf '%s' '<message>' | agent-send <target>
-```
-
-使う場合は、`tmux/agent_send/agent-send` へのPATHと、`tmux/agent_send/SKILL.md` を、自分で置く。
-
-<p align="center">
-  <img src="media/agent-window-agent-send.png" width="100%" alt="Claude・Grok・CodexのAgent間会話">
-</p>
-
-
-## Stack
-
-HTML/CSS/vanilla JavaScript、Python標準libraryと、app用のObjective-Cが1 file。Node、npm build、DBなどは使わず、次を直接叩く。
-
-- **browser primitive** — DOM・`fetch` / `EventSource`
-- **native OS API** — FSEvents / kqueue・AppKit / Objective-C
-- **canonical CLI** — git・tmux・Agent CLI
-
 ## Footprint
 
-ソースコードは約1.6 MB・40,000行。
-
-appはローカルのrepoを直接使うnative launcherで、サイズは200 KB未満。telemetryなし。Agent CLI以外のネットワーク依存は `cdn.jsdelivr.net` の `marked`・`DOMPurify`・`katex`・構文配色設定時のみ `highlight.js` 。local完結させる場合は自分でvendorする。
-
-Serverの port は `server/port` fileの値(既定 `8788`)を使う。fileを書き換えれば変わる。
-
-Agent Window自身がfilesystemへ保存するdataは `~/.agent-window/` と、workspace内の `.agent-window/` だけ。
+- **Source**:
+  - **Size**: 1.6 MB・40,000 LOC
+  - **Stack**: HTML・CSS・vanilla JavaScript・Python stdlib
+- **App**:
+  - **Spec**: native launcher of local repo
+  - **Requirements**: python3・tmux・Xcode CLI
+  - **Build**: 1s from `./macos/build`
+  - **Size** : < 200 KB
+- **System**:
+  - **Network**: CDN（`marked`・`DOMPurify`・`katex`・`highlight.js`）
+  - **Port**: value of `server/port` (default `8788`)
+  - **Files**: `~/.agent-window/`(log)・`{workspace}/.agent-window/`(symlink・uploaded file)
