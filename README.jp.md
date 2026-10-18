@@ -4,8 +4,6 @@
 
 UNIX哲学のmacOS向けAgent application。
 
-[設計哲学](DESIGN.jp.md) · [English](README.md)
-
 https://okadaharuto.com/agent-window/
 
 </div>
