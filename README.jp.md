@@ -29,19 +29,7 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 2. Agentはtmux内のCLI。送信は `tmux send-keys`。受信はnative logの監視。
 3. Agent・WorkspaceはTimelineの途中で差し替えられる。
 
-<details>
-<summary>Timelineの状態操作</summary>
 
-| 操作 | 内容 | 備考 |
-|---|---|---|
-| Rename | timelineの名前を変える |  |
-| Archive | tmux sessionを終了する | logは残る |
-| Revive | 保存したworkspaceとAgent構成でtmux sessionを再起動する | CLIはresumeされる |
-| Delete | timelineの保存物を完全に削除する | Archive中のみ可 |
-| Change Workspace | workspaceを変更する | Archive中のみ可 |
-| Reset Agents | 保存したAgent構成を削除する | Archive中のみ可 |
-
-</details>
 
 ## Catalog
 
@@ -70,6 +58,11 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | 送信先の切り替え | `⌃1`–`⌃9` | 未指定はlogにのみ残る |
 | workspace内のfileを検索 | `@` | `.gitignore`対象外のfile |
 | fileを添付 | `+`ボタン / drag & drop / paste | `<workspace>/.agent-window/uploads/` に保存され、そのpathがtextとしてAgentに渡る |
+
+</details>
+
+<details>
+<summary>Commands</summary>
 
 | Command | 対象 | 内容 | 備考 |
 | --- | --- | --- | --- |
@@ -112,6 +105,22 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Copy Log Entry | 右クリック | AW logのJSON row / mobileではcopy長押しから |
 | Copy Native Log Entry | 右クリック | native logのJSON row |
 | URLをcopy | 外部linkを右click | |
+
+
+
+</details>
+
+<details>
+<summary>Timelineの状態操作</summary>
+
+| 操作 | 内容 | 備考 |
+|---|---|---|
+| Rename | timelineの名前を変える |  |
+| Archive | tmux sessionを終了する | logは残る |
+| Revive | 保存したworkspaceとAgent構成でtmux sessionを再起動する | CLIはresumeされる |
+| Delete | timelineの保存物を完全に削除する | Archive中のみ可 |
+| Change Workspace | workspaceを変更する | Archive中のみ可 |
+| Reset Agents | 保存したAgent構成を削除する | Archive中のみ可 |
 
 </details>
 

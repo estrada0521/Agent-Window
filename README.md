@@ -29,19 +29,7 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 2. An Agent is a CLI inside tmux. Sending uses `tmux send-keys`; receiving watches its native log.
 3. Agents and the workspace can be swapped mid-timeline.
 
-<details>
-<summary>Timeline state actions</summary>
 
-| Action | Effect | Note |
-|---|---|---|
-| Rename | Changes the timeline’s name | |
-| Archive | Ends the tmux session | The log stays |
-| Revive | Restarts the tmux session with the saved workspace and Agents | Resumes the CLIs |
-| Delete | Permanently deletes the timeline’s saved data | Archived only |
-| Change Workspace | Changes the workspace | Archived only |
-| Reset Agents | Clears the saved Agent set | Archived only |
-
-</details>
 
 ## Catalog
 
@@ -73,6 +61,11 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Search files in the workspace | `@` | Files not excluded by `.gitignore` |
 | Attach files | `+` button / drag & drop / paste | Saved to `<workspace>/.agent-window/uploads/`; the path is passed to the Agent as text |
 
+</details>
+
+<details>
+<summary>Commands</summary>
+
 | Command | Target | Effect | Note |
 | --- | --- | --- | --- |
 | `/jump YYYY-MM[-DD [HH[:MM[:SS]]]]` |  | Jumps to the first message in the specified month / day / time | |
@@ -83,9 +76,6 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | `/openpane` | desktop | Opens the Agent's pane | Opens the terminal pane if none is selected |
 | `/nativelog` | desktop | Reveals the Agent's native log in Finder | |
 | `/terminal <text>` | mobile | Sends text to the terminal pane | |
-
-
-
 
 </details>
 
@@ -119,6 +109,22 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Copy Log Entry | right-click | AW log JSON row / on mobile, long-press Copy |
 | Copy Native Log Entry | right-click | Native log JSON row |
 | Copy URL | right-click an external link | |
+
+
+
+</details>
+
+<details>
+<summary>Timeline state actions</summary>
+
+| Action | Effect | Note |
+|---|---|---|
+| Rename | Changes the timeline’s name | |
+| Archive | Ends the tmux session | The log stays |
+| Revive | Restarts the tmux session with the saved workspace and Agents | Resumes the CLIs |
+| Delete | Permanently deletes the timeline’s saved data | Archived only |
+| Change Workspace | Changes the workspace | Archived only |
+| Reset Agents | Clears the saved Agent set | Archived only |
 
 </details>
 
