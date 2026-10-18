@@ -184,7 +184,7 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 | Item | Configuration |
 |---|---|
-| Main Font & Code Font | symlink |
+| Main Font & Code Font | symlink CSS (`--font-main` / `--font-code`・`@font-face`) -> `~/.agent-window/fonts.css`; font files -> `~/.agent-window/fonts/` |
 | File Icon | symlink VS Code theme json -> `~/.agent-window/file-icon-theme.json` |
 | Syntax highlight | symlink highlight.js CSS -> `~/.agent-window/syntax-light(dark).css` |
 | Keymacro for Pane Trace | add to `tmux/key_macro.py/PANE_TEXT_MACROS` |
