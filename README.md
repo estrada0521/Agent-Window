@@ -25,16 +25,20 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 ## Principle of Agent Window
 
+For the design philosophy behind Agent Window, see [DESIGN](DESIGN.md).
+
 1. The unit is a **Timeline**. Its file is `~/.agent-window/log/{timeline_name}/.log.jsonl`.
 2. An Agent is a CLI inside tmux. Sending uses `tmux send-keys`; receiving watches its native log.
 3. Agents and the workspace can be swapped mid-timeline.
 
-
-
-## Catalog
+## More About Agent Window
 
 <details>
 <summary>Hub</summary>
+
+<p align="center">
+  <img src="media/agent-window-hub-menu.png" width="100%" alt="Hub menu">
+</p>
 
 | Action | Key | Note |
 |---|---|---|
@@ -45,12 +49,14 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Copy workspace path | | right-click menu |
 | Show timeline stats | hover | |
 
-
-
 </details>
 
 <details>
 <summary>Composer</summary>
+
+https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
+
+*The prompt box appears only when needed. It takes no space away from the timeline.*
 
 | Action | Key | Note |
 |---|---|---|
@@ -82,6 +88,10 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 <details>
 <summary>timeline menu (<code>⌘.</code>)</summary>
 
+<p align="center">
+  <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
+</p>
+
 | Action | Key | Note |
 |---|---|---|
 | Add / remove Agent | | |
@@ -92,8 +102,6 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Open timeline in browser | `⌥⌘O` | |
 | Search the full timeline | `⌘F` / Search | Hold `⇧` to jump 10 matches at a time |
 | Export timeline as HTML / JSONL | | |
-
-
 
 </details>
 
@@ -110,12 +118,12 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Copy Native Log Entry | right-click | Native log JSON row |
 | Copy URL | right-click an external link | |
 
-
-
 </details>
 
 <details>
 <summary>CLI</summary>
+
+https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
 
 *Open the CLI itself whenever needed.*
 
@@ -138,6 +146,8 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 <details>
 <summary>git / workspace</summary>
 
+https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
+
 | **file** | | |
 |---|---|---|
 | Open file | `⌘O` | |
@@ -157,12 +167,14 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Follow changes |  | Across repositories and worktrees; ON by default |
 | Pin changes | `⇧⌘P` / pin button | |
 
-
-
 </details>
 
 <details>
 <summary>sidebar</summary>
+
+<p align="center">
+  <img src="media/agent-window-hero-3.png" width="100%" alt="Workspace">
+</p>
 
 *In Fit Window mode, git and workspace live in a window independent of the timeline, at any position and size you choose.*
 
@@ -170,6 +182,10 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 <details>
 <summary>Resize window</summary>
+
+https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
+
+*Scaling preserves the proportions of the entire window. Adjust its size and position to keep the application out of your way.*
 
 | Action | Key | Note |
 |---|---|---|
@@ -180,13 +196,12 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Move to screen edge | `⌥⌘↑` `←` `→` `↓` | `↓` centers |
 | Keep above other windows | `⌃⌘T` | |
 
-
-
-
 </details>
 
 <details>
 <summary>Fit Window</summary>
+
+https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 
 *`⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘[` / `⌥⌘]` decrease / increase the number of messages shown. `⌥⌘M` collapses the window to its minimum; a new message restores it.*
 
@@ -226,6 +241,10 @@ printf '%s' '<message>' | agent-send <target>
 ```
 
 To use it, add `tmux/agent_send/agent-send` to PATH and place `tmux/agent_send/SKILL.md` yourself.
+
+<p align="center">
+  <img src="media/agent-window-agent-send.png" width="100%" alt="Conversation between Claude, Codex and Grok">
+</p>
 
 </details>
 

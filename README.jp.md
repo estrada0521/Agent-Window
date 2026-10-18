@@ -25,16 +25,20 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 ## Principle of Agent Window
 
+AWの設計哲学については、[DESIGN](DESIGN.jp.md)をご覧ください。
+
 1. **Timeline**が単位。実体は `~/.agent-window/log/{timeline_name}/.log.jsonl`。
 2. Agentはtmux内のCLI。送信は `tmux send-keys`。受信はnative logの監視。
 3. Agent・WorkspaceはTimelineの途中で差し替えられる。
 
-
-
-## Catalog
+## More About Agent Window
 
 <details>
 <summary>Hub</summary>
+
+<p align="center">
+  <img src="media/agent-window-hub-menu.png" width="100%" alt="Hub menu">
+</p>
 
 | 操作 | キー | 備考 |
 |---|---|---|
@@ -49,6 +53,10 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 <details>
 <summary>Composer</summary>
+
+https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
+
+*入力欄は必要なときだけ現れ、timelineの場所を取りません。*
 
 | 操作 | キー | 備考 |
 |---|---|---|
@@ -80,6 +88,10 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 <details>
 <summary>timeline menu (<code>⌘.</code>)</summary>
 
+<p align="center">
+  <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
+</p>
+
 | 操作 | キー | 備考 |
 |---|---|---|
 | Agentの追加 / 削除 | | |
@@ -106,12 +118,12 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Copy Native Log Entry | 右クリック | native logのJSON row |
 | URLをcopy | 外部linkを右click | |
 
-
-
 </details>
 
 <details>
 <summary>CLI</summary>
+
+https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
 
 *必要なときはCLI自体を開けます。*
 
@@ -133,6 +145,8 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 <details>
 <summary>git / workspace</summary>
+
+https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
 
 | **file** | | |
 |---|---|---|
@@ -158,12 +172,20 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 <details>
 <summary>sidebar</summary>
 
+<p align="center">
+  <img src="media/agent-window-hero-3.png" width="100%" alt="Workspace">
+</p>
+
 *Fit Windowでは、gitとworkspaceをtimelineから独立したwindowに置き、位置と大きさを自由に変えられます。*
 
 </details>
 
 <details>
 <summary>Resize window</summary>
+
+https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
+
+*window全体の比率を保ったまま拡大・縮小します。作業の邪魔にならない位置と大きさに調整できます。*
 
 | 操作 | キー | 備考 |
 |---|---|---|
@@ -178,6 +200,8 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 <details>
 <summary>Fit Window</summary>
+
+https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 
 *`⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘[` / `⌥⌘]` で表示するmessage数を減らす／増やす。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。*
 
@@ -217,6 +241,10 @@ printf '%s' '<message>' | agent-send <target>
 ```
 
 使う場合は、`tmux/agent_send/agent-send` へのPATHと、`tmux/agent_send/SKILL.md` を、自分で置く。
+
+<p align="center">
+  <img src="media/agent-window-agent-send.png" width="100%" alt="Conversation between Claude, Codex and Grok">
+</p>
 
 </details>
 
