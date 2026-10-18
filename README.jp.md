@@ -111,6 +111,13 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 </details>
 
 <details>
+<summary>CLI</summary>
+
+*必要なときはCLI自体を開けます。*
+
+</details>
+
+<details>
 <summary>Timelineの状態操作</summary>
 
 | 操作 | 内容 | 備考 |
@@ -149,7 +156,14 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 </details>
 
 <details>
-<summary>window</summary>
+<summary>sidebar</summary>
+
+*Fit Windowでは、gitとworkspaceをtimelineから独立したwindowに置き、位置と大きさを自由に変えられます。*
+
+</details>
+
+<details>
+<summary>Resize window</summary>
 
 | 操作 | キー | 備考 |
 |---|---|---|
@@ -159,9 +173,13 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Git / Workspaceの上下入れ替え | `⇧⌥⌘E` | |
 | 画面端へ移動 | `⌥⌘↑` `←` `→` `↓` | `↓` は中央 |
 | 最前面に固定 | `⌃⌘T` | |
-| Fit Window to Message | `⌥⌘H` | |
-| Fitの表示message数を減らす／増やす | `⌥⌘[` / `⌥⌘]` | Fit中のみ |
-| Collapse Window | `⌥⌘M` | 新しいmessageで復帰。Fit Window to Message中のみ |
+
+</details>
+
+<details>
+<summary>Fit Window</summary>
+
+*`⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘[` / `⌥⌘]` で表示するmessage数を減らす／増やす。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。*
 
 </details>
 
@@ -186,7 +204,19 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | File Icon | symlink VS Code theme json -> `~/.agent-window/file-icon-theme.json` |
 | Syntax highlight | symlink highlight.js CSS -> `~/.agent-window/syntax-light(dark).css` |
 | Keymacro for Pane Trace | add to `tmux/key_macro.py/PANE_TEXT_MACROS` |
-| A2A(`send-keys` wrapper) | place `tmux/agent_send/agent-send` & `tmux/agent_send/SKILL.md` |
+
+</details>
+
+<details>
+<summary>A2A</summary>
+
+AgentはAgentに `agent-send` で送れる。宛先のpaneに `[From: Claude]` のようなprefix付きで入力される。
+
+```bash
+printf '%s' '<message>' | agent-send <target>
+```
+
+使う場合は、`tmux/agent_send/agent-send` へのPATHと、`tmux/agent_send/SKILL.md` を、自分で置く。
 
 </details>
 

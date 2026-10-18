@@ -115,6 +115,13 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 </details>
 
 <details>
+<summary>CLI</summary>
+
+*Open the CLI itself whenever needed.*
+
+</details>
+
+<details>
 <summary>Timeline state actions</summary>
 
 | Action | Effect | Note |
@@ -139,6 +146,7 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Copy file | `⌘C` | |
 | Copy absolute path | `⌥⌘C` | |
 | Copy relative path | `⇧⌥⌘C` | |
+
 | **git** | | |
 |---|---|---|
 | Copy commit hash |  | |
@@ -154,7 +162,14 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 </details>
 
 <details>
-<summary>window</summary>
+<summary>sidebar</summary>
+
+*In Fit Window mode, git and workspace live in a window independent of the timeline, at any position and size you choose.*
+
+</details>
+
+<details>
+<summary>Resize window</summary>
 
 | Action | Key | Note |
 |---|---|---|
@@ -164,12 +179,16 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | Swap Git and Workspace vertically | `⇧⌥⌘E` | |
 | Move to screen edge | `⌥⌘↑` `←` `→` `↓` | `↓` centers |
 | Keep above other windows | `⌃⌘T` | |
-| Fit Window to Message | `⌥⌘H` | |
-| Show fewer / more messages in Fit | `⌥⌘[` / `⌥⌘]` | Fit only |
-| Collapse Window | `⌥⌘M` | Restores on a new message. Fit Window to Message only |
 
 
 
+
+</details>
+
+<details>
+<summary>Fit Window</summary>
+
+*`⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘[` / `⌥⌘]` decrease / increase the number of messages shown. `⌥⌘M` collapses the window to its minimum; a new message restores it.*
 
 </details>
 
@@ -194,7 +213,19 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 | File Icon | symlink VS Code theme json -> `~/.agent-window/file-icon-theme.json` |
 | Syntax highlight | symlink highlight.js CSS -> `~/.agent-window/syntax-light(dark).css` |
 | Keymacro for Pane Trace | add to `tmux/key_macro.py/PANE_TEXT_MACROS` |
-| A2A(`send-keys` wrapper) | place `tmux/agent_send/agent-send` & `tmux/agent_send/SKILL.md` |
+
+</details>
+
+<details>
+<summary>A2A</summary>
+
+An Agent can send to another Agent with `agent-send`. It's typed into the target's pane with a prefix like `[From: Claude]`.
+
+```bash
+printf '%s' '<message>' | agent-send <target>
+```
+
+To use it, add `tmux/agent_send/agent-send` to PATH and place `tmux/agent_send/SKILL.md` yourself.
 
 </details>
 
