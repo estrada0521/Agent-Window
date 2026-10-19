@@ -21,9 +21,7 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 ---
 
-## Principle
-
-For the design philosophy behind Agent Window, see [DESIGN](DESIGN.md).
+## Principle of Agent Window
 
 1. The unit is a Timeline, stored as a JSONL log.
 2. An Agent Process is a regular CLI.

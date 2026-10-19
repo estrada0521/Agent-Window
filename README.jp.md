@@ -21,9 +21,7 @@ https://okadaharuto.com/agent-window/
 
 ---
 
-## Principle
-
-AWの設計哲学については、[DESIGN](DESIGN.jp.md)をご覧ください。
+## Agent Windowの原則
 
 1. Timelineが単位で、実体はJSONLのログ
 2. Agent Processは普通のCLI
