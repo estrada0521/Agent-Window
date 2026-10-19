@@ -21,7 +21,10 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 ---
 
-## Principle of Agent Window
+## More About Agent Window
+
+<details>
+<summary>Principle</summary>
 
 For the design philosophy behind Agent Window, see [DESIGN](DESIGN.md).
 
@@ -29,7 +32,8 @@ For the design philosophy behind Agent Window, see [DESIGN](DESIGN.md).
 2. An Agent Process is a regular CLI.
 3. Agents and the workspace can be swapped mid-timeline.
 
-## More About Agent Window
+</details>
+
 
 <details>
 <summary>Hub</summary>
