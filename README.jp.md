@@ -21,10 +21,7 @@ https://okadaharuto.com/agent-window/
 
 ---
 
-## Agent Windowについてもっと知る
-
-<details>
-<summary>Principle</summary>
+## Principle
 
 AWの設計哲学については、[DESIGN](DESIGN.jp.md)をご覧ください。
 
@@ -32,8 +29,7 @@ AWの設計哲学については、[DESIGN](DESIGN.jp.md)をご覧ください�
 2. Agent Processは普通のCLI
 3. Agent・WorkspaceはTimelineの途中で差し替えられる
 
-</details>
-
+## Agent Windowについてもっと知る
 
 <details>
 <summary>Hub</summary>
