@@ -38,14 +38,14 @@ AWの設計哲学については、[DESIGN](DESIGN.jp.md)をご覧ください�
   <img src="media/agent-window-hub-menu.png" width="100%" alt="Hub menu">
 </p>
 
-| 操作 | キー | 備考 |
-|---|---|---|
-| New Timeline | `⌘N` | |
-| active timelineの切り替え | `⌘1`–`⌘9` | |
-| ブラウザでHubを開く | `⇧⌥⌘O` |  |
-| serverの再起動 | `⇧⌘R` | 変更後のsourceを読み直す |
-| workspaceのpathをコピー | | 右クリックmenu |
-| timelineの統計表示 | hover |  |
+| 操作 | 内容 |
+|---|---|
+| New Timeline | `⌘N` |
+| active timelineの切り替え | `⌘1`–`⌘9` |
+| ブラウザでHubを開く | `⇧⌥⌘O` |
+| serverの再起動 | `⇧⌘R`<br>変更後のsourceを読み直す |
+| workspaceのpathをコピー | 右クリックmenu |
+| timelineの統計表示 | hover |
 
 </details>
 
@@ -56,30 +56,30 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 
 *入力欄は必要なときだけ現れ、timelineの場所を取りません。*
 
-| 操作 | キー | 備考 |
-|---|---|---|
-| 入力欄を開く | `Enter` / ホイール押し込み | `O` ボタンでも開く |
-| 入力欄を閉じる | `Esc` | |
-| 入力欄を下部／中央へ移動 | `⌃⌘↓` / `⌃⌘↑` | 入力欄を開いている時 |
-| 送信先の切り替え | `⌃1`–`⌃9` | 未指定はlogにのみ残る |
-| workspace内のfileを検索 | `@` | `.gitignore`対象外のfile |
-| fileを添付 | `+`ボタン / drag & drop / paste | `<workspace>/.agent-window/uploads/` に保存され、そのpathがtextとしてAgentに渡る |
+| 操作 | 内容 |
+|---|---|
+| 入力欄を開く | `Enter` / ホイール押し込み<br>`O` ボタンでも開く |
+| 入力欄を閉じる | `Esc` |
+| 入力欄を下部／中央へ移動 | `⌃⌘↓` / `⌃⌘↑`<br>入力欄を開いている時 |
+| 送信先の切り替え | `⌃1`–`⌃9`<br>未指定はlogにのみ残る |
+| workspace内のfileを検索 | `@`<br>`.gitignore`対象外のfile |
+| fileを添付 | `+`ボタン / drag & drop / paste<br>`<workspace>/.agent-window/uploads/` に保存され、そのpathがtextとしてAgentに渡る |
 
 </details>
 
 <details>
 <summary>Commands</summary>
 
-| Command | 対象 | 内容 | 備考 |
-| --- | --- | --- | --- |
-| `/jump YYYY-MM[-DD [HH[:MM[:SS]]]]` |  | 指定した月・日・時刻の最初のmessageへ移動 | |
-| `/restart` |  | Agentのpaneを再起動する | |
-| `/idle` |  | Agentのrunning表示を解除する | |
-| `/log` |  | logのpathをmessageに挿入する | |
-| `/skill` |  | `agent-send` SKILLへの参照をmessageに挿入する | |
-| `/openpane` | desktop | Agentのpaneを開く | 未選択ならterminal paneを開く |
-| `/nativelog` | desktop | Agentのnative logをFinderで表示する | |
-| `/terminal <text>` | mobile | terminal paneに文字列を送る | |
+| Command | 内容 |
+|---|---|
+| `/jump YYYY-MM[-DD [HH[:MM[:SS]]]]` | 指定した月・日・時刻の最初のmessageへ移動 |
+| `/restart` | Agentのpaneを再起動する |
+| `/idle` | Agentのrunning表示を解除する |
+| `/log` | logのpathをmessageに挿入する |
+| `/skill` | `agent-send` SKILLへの参照をmessageに挿入する |
+| `/openpane` | Agentのpaneを開く (desktop)<br>未選択ならterminal paneを開く |
+| `/nativelog` | Agentのnative logをFinderで表示する (desktop) |
+| `/terminal <text>` | terminal paneに文字列を送る (mobile) |
 
 </details>
 
@@ -90,31 +90,31 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
   <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
 </p>
 
-| 操作 | キー | 備考 |
-|---|---|---|
-| Agentの追加 / 削除 | | |
-| Terminalを開く | `⌥⌘T` | |
-| Finderでworkspaceを開く | `⌥⌘R` | |
-| tmux terminal paneを開く | `⌘T` | mobileの`Pane Trace`から操作可能 |
-| FinderでLogを開く | `⌥⌘L` |  |
-| ブラウザでtimelineを開く | `⌥⌘O` |  |
-| timelineの全文検索 | `⌘F` / Search | `⇧`併用で10件ずつ飛び |
-| timelineをHTML / JSONLとしてExport | | |
+| 操作 | 内容 |
+|---|---|
+| Agentの追加 / 削除 |  |
+| Terminalを開く | `⌥⌘T` |
+| Finderでworkspaceを開く | `⌥⌘R` |
+| tmux terminal paneを開く | `⌘T`<br>mobileの`Pane Trace`から操作可能 |
+| FinderでLogを開く | `⌥⌘L` |
+| ブラウザでtimelineを開く | `⌥⌘O` |
+| timelineの全文検索 | `⌘F` / Search<br>`⇧`併用で10件ずつ飛び |
+| timelineをHTML / JSONLとしてExport |  |
 
 </details>
 
 <details>
 <summary>timeline</summary>
 
-| 操作 | キー | 備考 |
-|---|---|---|
-| 先頭 / 末尾へ移動 | `⌘↑` / `⌘↓` | |
-| 前 / 次のmessage | `⌥↑` / `⌥↓` | |
-| 選択中の宛先の前 / 次のmessage | `⌃⌥↑` / `⌃⌥↓` | 無選択ならuser |
-| Copy | 右クリック / hover | |
-| Copy Log Entry | 右クリック | AW logのJSON row / mobileではcopy長押しから |
-| Copy Native Log Entry | 右クリック | native logのJSON row |
-| URLをcopy | 外部linkを右click | |
+| 操作 | 内容 |
+|---|---|
+| 先頭 / 末尾へ移動 | `⌘↑` / `⌘↓` |
+| 前 / 次のmessage | `⌥↑` / `⌥↓` |
+| 選択中の宛先の前 / 次のmessage | `⌃⌥↑` / `⌃⌥↓`<br>無選択ならuser |
+| Copy | 右クリック / hover |
+| Copy Log Entry | 右クリック<br>AW logのJSON row / mobileではcopy長押しから |
+| Copy Native Log Entry | 右クリック<br>native logのJSON row |
+| URLをcopy | 外部linkを右click |
 
 </details>
 
@@ -130,14 +130,14 @@ https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
 <details>
 <summary>Timelineの状態操作</summary>
 
-| 操作 | 内容 | 備考 |
-|---|---|---|
-| Rename | timelineの名前を変える |  |
-| Archive | tmux sessionを終了する | logは残る |
-| Revive | 保存したworkspaceとAgent構成でtmux sessionを再起動する | CLIはresumeされる |
-| Delete | timelineの保存物を完全に削除する | Archive中のみ可 |
-| Change Workspace | workspaceを変更する | Archive中のみ可 |
-| Reset Agents | 保存したAgent構成を削除する | Archive中のみ可 |
+| 操作 | 内容 |
+|---|---|
+| Rename | timelineの名前を変える |
+| Archive | tmux sessionを終了する<br>logは残る |
+| Revive | 保存したworkspaceとAgent構成でtmux sessionを再起動する<br>CLIはresumeされる |
+| Delete | timelineの保存物を完全に削除する<br>Archive中のみ可 |
+| Change Workspace | workspaceを変更する<br>Archive中のみ可 |
+| Reset Agents | 保存したAgent構成を削除する<br>Archive中のみ可 |
 
 </details>
 
@@ -146,24 +146,24 @@ https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
 
 https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
 
-| **file** | | |
-|---|---|---|
-| fileを開く | `⌘O` |  |
-| Quick Look | `⌘Y` / `⌥` + click | |
-| Finderで表示 | `⌥⌘R` | |
-| fileをcopy | `⌘C` | |
-| 絶対pathをcopy | `⌥⌘C` | |
-| 相対pathをcopy | `⇧⌥⌘C` | |
+| **file** |  |
+|---|---|
+| fileを開く | `⌘O` |
+| Quick Look | `⌘Y` / `⌥` + click |
+| Finderで表示 | `⌥⌘R` |
+| fileをcopy | `⌘C` |
+| 絶対pathをcopy | `⌥⌘C` |
+| 相対pathをcopy | `⇧⌥⌘C` |
 
-| **git** | | |
-|---|---|---|
-| 監視repoの追加 / 解除 | フォルダを右クリック |  |
-| commit hashをcopy |  | |
-| commit messageをcopy |  | |
-| commitのinfo表示 | hover |  |
-| repo / worktreeの切り替え |  | timeline menu・mobileのbranchボタンから |
-| Follow changes |  | repo・worktreeを跨いで追従。既定でON |
-| Pin changes | `⇧⌘P` / pinボタン | |
+| **git** |  |
+|---|---|
+| 監視repoの追加 / 解除 | フォルダを右クリック |
+| commit hashをcopy |  |
+| commit messageをcopy |  |
+| commitのinfo表示 | hover |
+| repo / worktreeの切り替え | timeline menu・mobileのbranchボタンから |
+| Follow changes | repo・worktreeを跨いで追従。既定でON |
+| Pin changes | `⇧⌘P` / pinボタン |
 
 </details>
 
@@ -185,14 +185,14 @@ https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
 
 *window全体の比率を保ったまま拡大・縮小します。作業の邪魔にならない位置と大きさに調整できます。*
 
-| 操作 | キー | 備考 |
-|---|---|---|
-| size 既定 / コンパクト / ミニ | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | |
-| Hub / side barの開閉 | `⌘B` / `⌘E` | `⌥` 併用で外側に広がる |
-| side barの左右入れ替え | `⇧⌘E` | |
-| Git / Workspaceの上下入れ替え | `⇧⌥⌘E` | |
-| 画面端へ移動 | `⌥⌘↑` `←` `→` `↓` | `↓` は中央 |
-| 最前面に固定 | `⌃⌘T` | |
+| 操作 | 内容 |
+|---|---|
+| size 既定 / コンパクト / ミニ | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` |
+| Hub / side barの開閉 | `⌘B` / `⌘E`<br>`⌥` 併用で外側に広がる |
+| side barの左右入れ替え | `⇧⌘E` |
+| Git / Workspaceの上下入れ替え | `⇧⌥⌘E` |
+| 画面端へ移動 | `⌥⌘↑` `←` `→` `↓`<br>`↓` は中央 |
+| 最前面に固定 | `⌃⌘T` |
 
 </details>
 
@@ -208,12 +208,12 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 <details>
 <summary>UI・UX</summary>
 
-| 操作 | キー | 備考 |
-|---|---|---|
-| theme | | System/light/dark |
-| text size | `⌘0` / `⌘+` / `⌘-` | desktopのみ。windowも相似にresize |
-| hand | | mobileのみ。右手/左手に最適化 |
-| sound | | mobileのみ。message着信時にページ内で音を鳴らすだけで、native通知ではない。既定OFF |
+| 操作 | 内容 |
+|---|---|
+| theme | System/light/dark |
+| text size | `⌘0` / `⌘+` / `⌘-`<br>desktopのみ。windowも相似にresize |
+| hand | mobileのみ。右手/左手に最適化 |
+| sound | mobileのみ。message着信時にページ内で音を鳴らすだけで、native通知ではない。既定OFF |
 
 </details>
 

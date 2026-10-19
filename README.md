@@ -38,14 +38,14 @@ For the design philosophy behind Agent Window, see [DESIGN](DESIGN.md).
   <img src="media/agent-window-hub-menu.png" width="100%" alt="Hub menu">
 </p>
 
-| Action | Key | Note |
-|---|---|---|
-| New Timeline | `⌘N` | |
-| Switch active timeline | `⌘1`–`⌘9` | |
-| Open Hub in browser | `⇧⌥⌘O` | |
-| Restart server | `⇧⌘R` | Re-reads changed source |
-| Copy workspace path | | right-click menu |
-| Show timeline stats | hover | |
+| Action | Description |
+|---|---|
+| New Timeline | `⌘N` |
+| Switch active timeline | `⌘1`–`⌘9` |
+| Open Hub in browser | `⇧⌥⌘O` |
+| Restart server | `⇧⌘R`<br>Re-reads changed source |
+| Copy workspace path | right-click menu |
+| Show timeline stats | hover |
 
 </details>
 
@@ -56,30 +56,30 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 
 *The prompt box appears only when needed. It takes no space away from the timeline.*
 
-| Action | Key | Note |
-|---|---|---|
-| Open the input field | `Enter` / wheel click | The `O` button also opens it |
-| Close the input field | `Esc` | |
-| Move the input field to bottom / center | `⌃⌘↓` / `⌃⌘↑` | While open |
-| Switch send target | `⌃1`–`⌃9` | With none, it's only kept in the log |
-| Search files in the workspace | `@` | Files not excluded by `.gitignore` |
-| Attach files | `+` button / drag & drop / paste | Saved to `<workspace>/.agent-window/uploads/`; the path is passed to the Agent as text |
+| Action | Description |
+|---|---|
+| Open the input field | `Enter` / wheel click<br>The `O` button also opens it |
+| Close the input field | `Esc` |
+| Move the input field to bottom / center | `⌃⌘↓` / `⌃⌘↑`<br>While open |
+| Switch send target | `⌃1`–`⌃9`<br>With none, it's only kept in the log |
+| Search files in the workspace | `@`<br>Files not excluded by `.gitignore` |
+| Attach files | `+` button / drag & drop / paste<br>Saved to `<workspace>/.agent-window/uploads/`; the path is passed to the Agent as text |
 
 </details>
 
 <details>
 <summary>Commands</summary>
 
-| Command | Target | Effect | Note |
-| --- | --- | --- | --- |
-| `/jump YYYY-MM[-DD [HH[:MM[:SS]]]]` |  | Jumps to the first message in the specified month / day / time | |
-| `/restart` |  | Restarts the Agent's pane | |
-| `/idle` |  | Clears the Agent's running indicator | |
-| `/log` |  | Inserts the log's path into the message | |
-| `/skill` |  | Inserts the `agent-send` SKILL reference into the message | |
-| `/openpane` | desktop | Opens the Agent's pane | Opens the terminal pane if none is selected |
-| `/nativelog` | desktop | Reveals the Agent's native log in Finder | |
-| `/terminal <text>` | mobile | Sends text to the terminal pane | |
+| Command | Description |
+|---|---|
+| `/jump YYYY-MM[-DD [HH[:MM[:SS]]]]` | Jumps to the first message in the specified month / day / time |
+| `/restart` | Restarts the Agent's pane |
+| `/idle` | Clears the Agent's running indicator |
+| `/log` | Inserts the log's path into the message |
+| `/skill` | Inserts the `agent-send` SKILL reference into the message |
+| `/openpane` | Opens the Agent's pane (desktop)<br>Opens the terminal pane if none is selected |
+| `/nativelog` | Reveals the Agent's native log in Finder (desktop) |
+| `/terminal <text>` | Sends text to the terminal pane (mobile) |
 
 </details>
 
@@ -90,31 +90,31 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
   <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
 </p>
 
-| Action | Key | Note |
-|---|---|---|
-| Add / remove Agent | | |
-| Open Terminal | `⌥⌘T` | |
-| Open workspace in Finder | `⌥⌘R` | |
-| Open tmux terminal pane | `⌘T` | On mobile, operable from `Pane Trace` |
-| Open log in Finder | `⌥⌘L` | |
-| Open timeline in browser | `⌥⌘O` | |
-| Search the full timeline | `⌘F` / Search | Hold `⇧` to jump 10 matches at a time |
-| Export timeline as HTML / JSONL | | |
+| Action | Description |
+|---|---|
+| Add / remove Agent |  |
+| Open Terminal | `⌥⌘T` |
+| Open workspace in Finder | `⌥⌘R` |
+| Open tmux terminal pane | `⌘T`<br>On mobile, operable from `Pane Trace` |
+| Open log in Finder | `⌥⌘L` |
+| Open timeline in browser | `⌥⌘O` |
+| Search the full timeline | `⌘F` / Search<br>Hold `⇧` to jump 10 matches at a time |
+| Export timeline as HTML / JSONL |  |
 
 </details>
 
 <details>
 <summary>timeline</summary>
 
-| Action | Key | Note |
-|---|---|---|
-| Jump to top / bottom | `⌘↑` / `⌘↓` | |
-| Previous / next message | `⌥↑` / `⌥↓` | |
-| Previous / next message from the selected targets | `⌃⌥↑` / `⌃⌥↓` | `user` when none is selected |
-| Copy | right-click / hover | |
-| Copy Log Entry | right-click | AW log JSON row / on mobile, long-press Copy |
-| Copy Native Log Entry | right-click | Native log JSON row |
-| Copy URL | right-click an external link | |
+| Action | Description |
+|---|---|
+| Jump to top / bottom | `⌘↑` / `⌘↓` |
+| Previous / next message | `⌥↑` / `⌥↓` |
+| Previous / next message from the selected targets | `⌃⌥↑` / `⌃⌥↓`<br>`user` when none is selected |
+| Copy | right-click / hover |
+| Copy Log Entry | right-click<br>AW log JSON row / on mobile, long-press Copy |
+| Copy Native Log Entry | right-click<br>Native log JSON row |
+| Copy URL | right-click an external link |
 
 </details>
 
@@ -130,14 +130,14 @@ https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
 <details>
 <summary>Timeline state actions</summary>
 
-| Action | Effect | Note |
-|---|---|---|
-| Rename | Changes the timeline’s name | |
-| Archive | Ends the tmux session | The log stays |
-| Revive | Restarts the tmux session with the saved workspace and Agents | Resumes the CLIs |
-| Delete | Permanently deletes the timeline’s saved data | Archived only |
-| Change Workspace | Changes the workspace | Archived only |
-| Reset Agents | Clears the saved Agent set | Archived only |
+| Action | Description |
+|---|---|
+| Rename | Changes the timeline’s name |
+| Archive | Ends the tmux session<br>The log stays |
+| Revive | Restarts the tmux session with the saved workspace and Agents<br>Resumes the CLIs |
+| Delete | Permanently deletes the timeline’s saved data<br>Archived only |
+| Change Workspace | Changes the workspace<br>Archived only |
+| Reset Agents | Clears the saved Agent set<br>Archived only |
 
 </details>
 
@@ -146,24 +146,24 @@ https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
 
 https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
 
-| **file** | | |
-|---|---|---|
-| Open file | `⌘O` | |
-| Quick Look | `⌘Y` / `⌥` + click | |
-| Reveal in Finder | `⌥⌘R` | |
-| Copy file | `⌘C` | |
-| Copy absolute path | `⌥⌘C` | |
-| Copy relative path | `⇧⌥⌘C` | |
+| **file** |  |
+|---|---|
+| Open file | `⌘O` |
+| Quick Look | `⌘Y` / `⌥` + click |
+| Reveal in Finder | `⌥⌘R` |
+| Copy file | `⌘C` |
+| Copy absolute path | `⌥⌘C` |
+| Copy relative path | `⇧⌥⌘C` |
 
-| **git** | | |
-|---|---|---|
-| Copy commit hash |  | |
-| Copy commit message |  | |
-| Show commit info | hover | |
-| Add / remove repository | Right-click folder | Desktop Workspace |
-| Switch repository / worktree |  | Timeline menu; branch button on mobile |
-| Follow changes |  | Across repositories and worktrees; ON by default |
-| Pin changes | `⇧⌘P` / pin button | |
+| **git** |  |
+|---|---|
+| Copy commit hash |  |
+| Copy commit message |  |
+| Show commit info | hover |
+| Add / remove repository | Right-click folder<br>Desktop Workspace |
+| Switch repository / worktree | Timeline menu; branch button on mobile |
+| Follow changes | Across repositories and worktrees; ON by default |
+| Pin changes | `⇧⌘P` / pin button |
 
 </details>
 
@@ -185,14 +185,14 @@ https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
 
 *Scaling preserves the proportions of the entire window. Adjust its size and position to keep the application out of your way.*
 
-| Action | Key | Note |
-|---|---|---|
-| Default / compact / mini size | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` | |
-| Toggle Hub / side bar | `⌘B` / `⌘E` | Add `⌥` to grow the window outward |
-| Swap the side bar to the other side | `⇧⌘E` | |
-| Swap Git and Workspace vertically | `⇧⌥⌘E` | |
-| Move to screen edge | `⌥⌘↑` `←` `→` `↓` | `↓` centers |
-| Keep above other windows | `⌃⌘T` | |
+| Action | Description |
+|---|---|
+| Default / compact / mini size | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` |
+| Toggle Hub / side bar | `⌘B` / `⌘E`<br>Add `⌥` to grow the window outward |
+| Swap the side bar to the other side | `⇧⌘E` |
+| Swap Git and Workspace vertically | `⇧⌥⌘E` |
+| Move to screen edge | `⌥⌘↑` `←` `→` `↓`<br>`↓` centers |
+| Keep above other windows | `⌃⌘T` |
 
 </details>
 
@@ -208,12 +208,12 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 <details>
 <summary>UI・UX</summary>
 
-| Action | Key | Note |
-|---|---|---|
-| theme | | System / light / dark |
-| text size | `⌘0` / `⌘+` / `⌘-` | Desktop only. Resizes the window to match |
-| hand | | Mobile only. Optimizes for the right / left hand |
-| sound | | Mobile only. Just plays a sound in the page when a message arrives; not a native notification. OFF by default |
+| Action | Description |
+|---|---|
+| theme | System / light / dark |
+| text size | `⌘0` / `⌘+` / `⌘-`<br>Desktop only. Resizes the window to match |
+| hand | Mobile only. Optimizes for the right / left hand |
+| sound | Mobile only. Just plays a sound in the page when a message arrives; not a native notification. OFF by default |
 
 </details>
 
