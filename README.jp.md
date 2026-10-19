@@ -32,217 +32,197 @@ AWの設計哲学については、[DESIGN](DESIGN.jp.md)をご覧ください�
 ## Agent Windowについてもっと知る
 
 <details>
-<summary>Hub</summary>
+<summary>Fit Window</summary>
 
-<p align="center">
-  <img src="media/agent-window-hub-menu.png" width="100%" alt="Hub menu">
-</p>
+https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 
-| 操作 | 内容 |
-|---|---|
-| New Timeline | `⌘N` |
-| active timelineの切り替え | `⌘1`–`⌘9` |
-| ブラウザでHubを開く | `⇧⌥⌘O` |
-| serverの再起動 | `⇧⌘R`<br>変更後のsourceを読み直す |
-| workspaceのpathをコピー | 右クリックmenu |
-| timelineの統計表示 | hover |
+アプリケーションは必要な面積だけを使います。
+
+- `⌥⌘H`で`Fit Window`を有効にすると、Windowが最新のメッセージに合わせて自動でResizeされます。
+- `⌥⌘[` `⌥⌘]`で表示するメッセージ数を調整できます。
+- `⌥⌘M`でWindowは最小化され、次の新規メッセージまで待機します。
 
 </details>
 
 <details>
-<summary>Composer</summary>
+<summary>Prompt Box</summary>
 
 https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 
-*入力欄は必要なときだけ現れ、timelineの場所を取りません。*
-
-| 操作 | 内容 |
-|---|---|
-| 入力欄を開く | `Enter` / ホイール押し込み<br>`O` ボタンでも開く |
-| 入力欄を閉じる | `Esc` |
-| 入力欄を下部／中央へ移動 | `⌃⌘↓` / `⌃⌘↑`<br>入力欄を開いている時 |
-| 送信先の切り替え | `⌃1`–`⌃9`<br>未指定はlogにのみ残る |
-| workspace内のfileを検索 | `@`<br>`.gitignore`対象外のfile |
-| fileを添付 | `+`ボタン / drag & drop / paste<br>`<workspace>/.agent-window/uploads/` に保存され、そのpathがtextとしてAgentに渡る |
+入力欄は必要なときだけ現れ、Timelineの場所を取りません。入力されたテキストは、Agent CLIのPaneにそのまま入力されます。`⌃1`–`⌃9`で送信先を切り替えます。
 
 </details>
 
 <details>
 <summary>Commands</summary>
 
-| Command | 内容 |
-|---|---|
-| `/jump YYYY-MM[-DD [HH[:MM[:SS]]]]` | 指定した月・日・時刻の最初のmessageへ移動 |
-| `/restart` | Agentのpaneを再起動する |
-| `/idle` | Agentのrunning表示を解除する |
-| `/log` | logのpathをmessageに挿入する |
-| `/skill` | `agent-send` SKILLへの参照をmessageに挿入する |
-| `/openpane` | Agentのpaneを開く (desktop)<br>未選択ならterminal paneを開く |
-| `/nativelog` | Agentのnative logをFinderで表示する (desktop) |
-| `/terminal <text>` | terminal paneに文字列を送る (mobile) |
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+AWが配線するコマンドは固有のものだけです。CLIのコマンドはPane本体から実行します。
 
 </details>
 
 <details>
-<summary>timeline menu (<code>⌘.</code>)</summary>
-
-<p align="center">
-  <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
-</p>
-
-| 操作 | 内容 |
-|---|---|
-| Agentの追加 / 削除 |  |
-| Terminalを開く | `⌥⌘T` |
-| Finderでworkspaceを開く | `⌥⌘R` |
-| tmux terminal paneを開く | `⌘T`<br>mobileの`Pane Trace`から操作可能 |
-| FinderでLogを開く | `⌥⌘L` |
-| ブラウザでtimelineを開く | `⌥⌘O` |
-| timelineの全文検索 | `⌘F` / Search<br>`⇧`併用で10件ずつ飛び |
-| timelineをHTML / JSONLとしてExport |  |
-
-</details>
-
-<details>
-<summary>timeline</summary>
-
-| 操作 | 内容 |
-|---|---|
-| 先頭 / 末尾へ移動 | `⌘↑` / `⌘↓` |
-| 前 / 次のmessage | `⌥↑` / `⌥↓` |
-| 選択中の宛先の前 / 次のmessage | `⌃⌥↑` / `⌃⌥↓`<br>無選択ならuser |
-| Copy | 右クリック / hover |
-| Copy Log Entry | 右クリック<br>AW logのJSON row / mobileではcopy長押しから |
-| Copy Native Log Entry | 右クリック<br>native logのJSON row |
-| URLをcopy | 外部linkを右click |
-
-</details>
-
-<details>
-<summary>CLI</summary>
+<summary>Substance is CLI</summary>
 
 https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
 
-*必要なときはCLI自体を開けます。*
+`/openpane`・`timeline menu → tmux pane`・Running表示のタップからCLI本体を確認できます。
 
 </details>
 
 <details>
-<summary>Timelineの状態操作</summary>
+<summary>Timeline States Actions</summary>
 
-| 操作 | 内容 |
-|---|---|
-| Rename | timelineの名前を変える |
-| Archive | tmux sessionを終了する<br>logは残る |
-| Revive | 保存したworkspaceとAgent構成でtmux sessionを再起動する<br>CLIはresumeされる |
-| Delete | timelineの保存物を完全に削除する<br>Archive中のみ可 |
-| Change Workspace | workspaceを変更する<br>Archive中のみ可 |
-| Reset Agents | 保存したAgent構成を削除する<br>Archive中のみ可 |
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+TimelineはRename・Archive・Reviveできます。Archiveしてもログは残り、Reviveすると保存したWorkspaceとAgent構成で再開します。Archive中はWorkspaceの変更・Agent構成のリセット・Timelineの削除もできます。
 
 </details>
 
 <details>
-<summary>git / workspace</summary>
+<summary>Independent Sidebar</summary>
 
-https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
+<img src="media/agent-window-hero-3.png" alt="独立したSidebar">
 
-| **file** |  |
-|---|---|
-| fileを開く | `⌘O` |
-| Quick Look | `⌘Y` / `⌥` + click |
-| Finderで表示 | `⌥⌘R` |
-| fileをcopy | `⌘C` |
-| 絶対pathをcopy | `⌥⌘C` |
-| 相対pathをcopy | `⇧⌥⌘C` |
-
-| **git** |  |
-|---|---|
-| 監視repoの追加 / 解除 | フォルダを右クリック |
-| commit hashをcopy |  |
-| commit messageをcopy |  |
-| commitのinfo表示 | hover |
-| repo / worktreeの切り替え | timeline menu・mobileのbranchボタンから |
-| Follow changes | repo・worktreeを跨いで追従。既定でON |
-| Pin changes | `⇧⌘P` / pinボタン |
+`Fit Window`中は、Sidebarは独立Windowになります。好きな位置、大きさで保持できます。
 
 </details>
 
 <details>
-<summary>sidebar</summary>
-
-<p align="center">
-  <img src="media/agent-window-hero-3.png" width="100%" alt="Workspace">
-</p>
-
-*Fit Windowでは、gitとworkspaceをtimelineから独立したwindowに置き、位置と大きさを自由に変えられます。*
-
-</details>
-
-<details>
-<summary>Resize window</summary>
+<summary>Window Resize / Move</summary>
 
 https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
 
-*window全体の比率を保ったまま拡大・縮小します。作業の邪魔にならない位置と大きさに調整できます。*
-
-| 操作 | 内容 |
-|---|---|
-| size 既定 / コンパクト / ミニ | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` |
-| Hub / side barの開閉 | `⌘B` / `⌘E`<br>`⌥` 併用で外側に広がる |
-| side barの左右入れ替え | `⇧⌘E` |
-| Git / Workspaceの上下入れ替え | `⇧⌥⌘E` |
-| 画面端へ移動 | `⌥⌘↑` `←` `→` `↓`<br>`↓` は中央 |
-| 最前面に固定 | `⌃⌘T` |
+ResizeはWindow全体の相似関係を保ちます。作業の邪魔にならない位置と大きさに素早く調整できます。
 
 </details>
 
 <details>
-<summary>Fit Window</summary>
+<summary>Agent to Agent</summary>
 
-https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
+<img src="media/agent-window-agent-send.png" alt="Claude・Codex・Grokの会話">
 
-*`⌥⌘H` でwindowの高さが最新messageに合い続ける。`⌥⌘[` / `⌥⌘]` で表示するmessage数を減らす／増やす。`⌥⌘M` でwindowが最小まで畳まれ、新しいmessageで戻る。*
-
-</details>
-
-<details>
-<summary>UI・UX</summary>
-
-| 操作 | 内容 |
-|---|---|
-| theme | System/light/dark |
-| text size | `⌘0` / `⌘+` / `⌘-`<br>desktopのみ。windowも相似にresize |
-| hand | mobileのみ。右手/左手に最適化 |
-| sound | mobileのみ。message着信時にページ内で音を鳴らすだけで、native通知ではない。既定OFF |
+`tmux/agent_send/SKILL.md`を利用すれば、A2A通信ができます。プロトコルはなく、宛先のPaneに`[From: Claude]`のようなprefix付きで`tmux send-keys`が実行されます。使う場合は、`tmux/agent_send/agent-send`へのPATHを配線します。
 
 </details>
 
 <details>
-<summary>customize</summary>
+<summary>File Attachment</summary>
 
-| 項目 | 設定方法 |
-|---|---|
-| Main Font & Code Font | symlink CSS (`--font-main` / `--font-code`・`@font-face`) -> `~/.agent-window/fonts.css`; font files -> `~/.agent-window/fonts/` |
-| File Icon | symlink VS Code theme json -> `~/.agent-window/file-icon-theme.json` |
-| Syntax highlight | symlink highlight.js CSS -> `~/.agent-window/syntax-light(dark).css` |
-| Keymacro for Pane Trace | add to `tmux/key_macro.py/PANE_TEXT_MACROS` |
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+`+` / drag & drop / pasteでファイルを添付できます。添付したファイルは`<workspace>/.agent-window/uploads/`に保存され、そのpathがplain textとして送信テキストの末尾に追加されます。
 
 </details>
 
 <details>
-<summary>A2A</summary>
+<summary>File Search</summary>
 
-AgentはAgentに `agent-send` で送れる。宛先のpaneに `[From: Claude]` のようなprefix付きで入力される。
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
 
-```bash
-printf '%s' '<message>' | agent-send <target>
-```
+入力欄での`@`から、Workspace内のファイルを検索できます。対象はGit管理下に限定しています。子Repoを監視対象に追加すると、その分のファイルも対象になります。
 
-使う場合は、`tmux/agent_send/agent-send` へのPATHと、`tmux/agent_send/SKILL.md` を、自分で置く。
+</details>
 
-<p align="center">
-  <img src="media/agent-window-agent-send.png" width="100%" alt="Conversation between Claude, Codex and Grok">
-</p>
+<details>
+<summary>Add Repository</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+指定した子ディレクトリをRepo rootとして、監視対象に追加・削除できます。追加したRepoの一覧は`timeline menu → Repository`に表示され、Sidebarの表示を切り替えられます。Worktreeの一覧は、選択中のRepoのものになります。
+
+</details>
+
+<details>
+<summary>Worktrees</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+`timeline menu → Worktree`からSidebarに表示するlinked worktreeを切り替えることができます。
+
+</details>
+
+<details>
+<summary>Sidebar</summary>
+
+https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
+
+Sidebarには`FSEvents`によるイベント駆動でGit・Workspaceの状態が表示されます。横幅調整に加え、上下（`⇧⌥⌘E`）・左右（`⇧⌘E`）を入れ替えることができます。
+
+</details>
+
+<details>
+<summary>File Open</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+Desktopには独自のFile Viewerはありません。原則として既定のアプリで展開されます。DiffはGitに設定されたdiff toolをそのまま利用します。素早い確認には`⌥ + click` / `⌘Y`でmacOSのQuick Lookを利用します。
+
+</details>
+
+<details>
+<summary>Timeline Search</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+`⌘F`でTimelineを全文検索します。`⇧`併用で、10件単位で移動できます。
+
+</details>
+
+<details>
+<summary>Export</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+Timelineのログを範囲指定して、JSONLまたはHTMLとしてExportできます。HTMLは表示されたWebViewをそのまま焼き込むため、見た目は完全に保持されます。
+
+</details>
+
+<details>
+<summary>Follow Changes</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+Follow Changesを有効にすると、Sidebarの表示が最後に更新されたRepo・Worktreeに自動追従します。表示対象を明示指定すると解除されます。
+
+</details>
+
+<details>
+<summary>Open in browser</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+Agent Windowの基本操作はブラウザのみで完結します（`⇧⌥⌘O`）。特定のTimelineだけを直接ブラウザで開くことも可能です（`⌥⌘O`）。
+
+</details>
+
+<details>
+<summary>HUD</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+エラー表示から通常操作のフィードバックに至るまで、一時的な通知はTimeline上部のHUDに集約され、滑らかに切り替わります。一部のHUDは常駐します。
+
+</details>
+
+<details>
+<summary>What AW records</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+Agentのメッセージには、投影元のnative logのpath・offsetが記録されます。ユーザーのメッセージには送信元のクライアント（mobile / desktop）が記録されます。
+
+メッセージ上を右クリックすることで粒度別のCopyが可能です（モバイルではCopyボタンを長押しします）。ログ全体の正本（JSONL）は`⌥⌘L`で開くことができます。
+
+</details>
+
+<details>
+<summary>Pin Changes</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+
+現在の差分をSidebarを開くことなく、Timeline上部に小さく保持できます。hoverで一覧が展開されます。
 
 </details>
 

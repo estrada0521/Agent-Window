@@ -32,217 +32,197 @@ For the design philosophy behind Agent Window, see [DESIGN](DESIGN.md).
 ## More About Agent Window
 
 <details>
-<summary>Hub</summary>
+<summary>Fit Window</summary>
 
-<p align="center">
-  <img src="media/agent-window-hub-menu.png" width="100%" alt="Hub menu">
-</p>
+https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 
-| Action | Description |
-|---|---|
-| New Timeline | `⌘N` |
-| Switch active timeline | `⌘1`–`⌘9` |
-| Open Hub in browser | `⇧⌥⌘O` |
-| Restart server | `⇧⌘R`<br>Re-reads changed source |
-| Copy workspace path | right-click menu |
-| Show timeline stats | hover |
+The application uses only the space it needs.
+
+- Enable `Fit Window` with `⌥⌘H` to resize the window automatically around the latest messages.
+- Adjust the number of visible messages with `⌥⌘[` and `⌥⌘]`.
+- Use `⌥⌘M` to collapse the window to its minimum size until the next new message arrives.
 
 </details>
 
 <details>
-<summary>Composer</summary>
+<summary>Prompt Box</summary>
 
 https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 
-*The prompt box appears only when needed. It takes no space away from the timeline.*
-
-| Action | Description |
-|---|---|
-| Open the input field | `Enter` / wheel click<br>The `O` button also opens it |
-| Close the input field | `Esc` |
-| Move the input field to bottom / center | `⌃⌘↓` / `⌃⌘↑`<br>While open |
-| Switch send target | `⌃1`–`⌃9`<br>With none, it's only kept in the log |
-| Search files in the workspace | `@`<br>Files not excluded by `.gitignore` |
-| Attach files | `+` button / drag & drop / paste<br>Saved to `<workspace>/.agent-window/uploads/`; the path is passed to the Agent as text |
+The prompt box appears only when needed, leaving the timeline unobstructed. Your text is entered directly into the agent CLI's pane. Switch recipients with `⌃1`–`⌃9`.
 
 </details>
 
 <details>
 <summary>Commands</summary>
 
-| Command | Description |
-|---|---|
-| `/jump YYYY-MM[-DD [HH[:MM[:SS]]]]` | Jumps to the first message in the specified month / day / time |
-| `/restart` | Restarts the Agent's pane |
-| `/idle` | Clears the Agent's running indicator |
-| `/log` | Inserts the log's path into the message |
-| `/skill` | Inserts the `agent-send` SKILL reference into the message |
-| `/openpane` | Opens the Agent's pane (desktop)<br>Opens the terminal pane if none is selected |
-| `/nativelog` | Reveals the Agent's native log in Finder (desktop) |
-| `/terminal <text>` | Sends text to the terminal pane (mobile) |
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+AW provides only its own commands. Run the CLI's commands from the pane itself.
 
 </details>
 
 <details>
-<summary>timeline menu (<code>⌘.</code>)</summary>
-
-<p align="center">
-  <img src="media/agent-window-timeline-menu.png" width="100%" alt="Timeline menu">
-</p>
-
-| Action | Description |
-|---|---|
-| Add / remove Agent |  |
-| Open Terminal | `⌥⌘T` |
-| Open workspace in Finder | `⌥⌘R` |
-| Open tmux terminal pane | `⌘T`<br>On mobile, operable from `Pane Trace` |
-| Open log in Finder | `⌥⌘L` |
-| Open timeline in browser | `⌥⌘O` |
-| Search the full timeline | `⌘F` / Search<br>Hold `⇧` to jump 10 matches at a time |
-| Export timeline as HTML / JSONL |  |
-
-</details>
-
-<details>
-<summary>timeline</summary>
-
-| Action | Description |
-|---|---|
-| Jump to top / bottom | `⌘↑` / `⌘↓` |
-| Previous / next message | `⌥↑` / `⌥↓` |
-| Previous / next message from the selected targets | `⌃⌥↑` / `⌃⌥↓`<br>`user` when none is selected |
-| Copy | right-click / hover |
-| Copy Log Entry | right-click<br>AW log JSON row / on mobile, long-press Copy |
-| Copy Native Log Entry | right-click<br>Native log JSON row |
-| Copy URL | right-click an external link |
-
-</details>
-
-<details>
-<summary>CLI</summary>
+<summary>Substance is CLI</summary>
 
 https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
 
-*Open the CLI itself whenever needed.*
+Open the CLI itself with `/openpane`, `timeline menu → tmux pane`, or by tapping the Running indicator.
 
 </details>
 
 <details>
-<summary>Timeline state actions</summary>
+<summary>Timeline States Actions</summary>
 
-| Action | Description |
-|---|---|
-| Rename | Changes the timeline’s name |
-| Archive | Ends the tmux session<br>The log stays |
-| Revive | Restarts the tmux session with the saved workspace and Agents<br>Resumes the CLIs |
-| Delete | Permanently deletes the timeline’s saved data<br>Archived only |
-| Change Workspace | Changes the workspace<br>Archived only |
-| Reset Agents | Clears the saved Agent set<br>Archived only |
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+Rename, archive, or revive a timeline. Archiving preserves its log; reviving resumes it with the saved workspace and agent configuration. While archived, you can also change its workspace, reset its agent configuration, or delete the timeline.
 
 </details>
 
 <details>
-<summary>git / workspace</summary>
+<summary>Independent Sidebar</summary>
 
-https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
+<img src="media/agent-window-hero-3.png" alt="Independent sidebar">
 
-| **file** |  |
-|---|---|
-| Open file | `⌘O` |
-| Quick Look | `⌘Y` / `⌥` + click |
-| Reveal in Finder | `⌥⌘R` |
-| Copy file | `⌘C` |
-| Copy absolute path | `⌥⌘C` |
-| Copy relative path | `⇧⌥⌘C` |
-
-| **git** |  |
-|---|---|
-| Copy commit hash |  |
-| Copy commit message |  |
-| Show commit info | hover |
-| Add / remove repository | Right-click folder<br>Desktop Workspace |
-| Switch repository / worktree | Timeline menu; branch button on mobile |
-| Follow changes | Across repositories and worktrees; ON by default |
-| Pin changes | `⇧⌘P` / pin button |
+In `Fit Window` mode, the sidebar becomes an independent window. Keep it at any position and size you choose.
 
 </details>
 
 <details>
-<summary>sidebar</summary>
-
-<p align="center">
-  <img src="media/agent-window-hero-3.png" width="100%" alt="Workspace">
-</p>
-
-*In Fit Window mode, git and workspace live in a window independent of the timeline, at any position and size you choose.*
-
-</details>
-
-<details>
-<summary>Resize window</summary>
+<summary>Window Resize / Move</summary>
 
 https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
 
-*Scaling preserves the proportions of the entire window. Adjust its size and position to keep the application out of your way.*
-
-| Action | Description |
-|---|---|
-| Default / compact / mini size | `⌥⌘0` / `⌥⌘9` / `⌥⌘8` |
-| Toggle Hub / side bar | `⌘B` / `⌘E`<br>Add `⌥` to grow the window outward |
-| Swap the side bar to the other side | `⇧⌘E` |
-| Swap Git and Workspace vertically | `⇧⌥⌘E` |
-| Move to screen edge | `⌥⌘↑` `←` `→` `↓`<br>`↓` centers |
-| Keep above other windows | `⌃⌘T` |
+Resizing preserves the proportions of the entire window. Quickly adjust its size and position to keep it out of your way.
 
 </details>
 
 <details>
-<summary>Fit Window</summary>
+<summary>Agent to Agent</summary>
 
-https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
+<img src="media/agent-window-agent-send.png" alt="A conversation between Claude, Codex, and Grok">
 
-*`⌥⌘H` keeps the window's height matched to the latest message. `⌥⌘[` / `⌥⌘]` decrease / increase the number of messages shown. `⌥⌘M` collapses the window to its minimum; a new message restores it.*
-
-</details>
-
-<details>
-<summary>UI・UX</summary>
-
-| Action | Description |
-|---|---|
-| theme | System / light / dark |
-| text size | `⌘0` / `⌘+` / `⌘-`<br>Desktop only. Resizes the window to match |
-| hand | Mobile only. Optimizes for the right / left hand |
-| sound | Mobile only. Just plays a sound in the page when a message arrives; not a native notification. OFF by default |
+Use `tmux/agent_send/SKILL.md` for agent-to-agent communication. There is no protocol: `tmux send-keys` sends text to the recipient's pane with a prefix such as `[From: Claude]`. To use it, add `tmux/agent_send/agent-send` to your PATH.
 
 </details>
 
 <details>
-<summary>customize</summary>
+<summary>File Attachment</summary>
 
-| Item | Configuration |
-|---|---|
-| Main Font & Code Font | symlink CSS (`--font-main` / `--font-code`・`@font-face`) -> `~/.agent-window/fonts.css`; font files -> `~/.agent-window/fonts/` |
-| File Icon | symlink VS Code theme json -> `~/.agent-window/file-icon-theme.json` |
-| Syntax highlight | symlink highlight.js CSS -> `~/.agent-window/syntax-light(dark).css` |
-| Keymacro for Pane Trace | add to `tmux/key_macro.py/PANE_TEXT_MACROS` |
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+Attach files with `+`, drag and drop, or paste. Files are saved in `<workspace>/.agent-window/uploads/`, and their paths are appended to your message as plain text.
 
 </details>
 
 <details>
-<summary>A2A</summary>
+<summary>File Search</summary>
 
-An Agent can send to another Agent with `agent-send`. It's typed into the target's pane with a prefix like `[From: Claude]`.
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
 
-```bash
-printf '%s' '<message>' | agent-send <target>
-```
+Type `@` in the prompt box to search files in the workspace. Search is limited to files under Git management. Adding a child repository to the monitored repositories also includes its files.
 
-To use it, add `tmux/agent_send/agent-send` to PATH and place `tmux/agent_send/SKILL.md` yourself.
+</details>
 
-<p align="center">
-  <img src="media/agent-window-agent-send.png" width="100%" alt="Conversation between Claude, Codex and Grok">
-</p>
+<details>
+<summary>Add Repository</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+Add or remove a child directory as a monitored repository root. Added repositories appear under `timeline menu → Repository`, where you can switch the sidebar's view. The worktree list belongs to the selected repository.
+
+</details>
+
+<details>
+<summary>Worktrees</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+Use `timeline menu → Worktree` to choose which linked worktree the sidebar displays.
+
+</details>
+
+<details>
+<summary>Sidebar</summary>
+
+https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
+
+The sidebar shows Git and workspace state through event-driven updates using `FSEvents`. Adjust its width, swap Git and Workspace vertically with `⇧⌥⌘E`, or move the sidebar to the opposite side with `⇧⌘E`.
+
+</details>
+
+<details>
+<summary>File Open</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+The desktop app has no custom file viewer. Files normally open in their default applications, and diffs use the diff tool configured in Git. For a quick preview, use macOS Quick Look with `⌥ + click` or `⌘Y`.
+
+</details>
+
+<details>
+<summary>Timeline Search</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+Search the entire timeline with `⌘F`. Hold `⇧` to move through matches ten at a time.
+
+</details>
+
+<details>
+<summary>Export</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+Export a selected range of the timeline log as JSONL or HTML. HTML captures the rendered WebView, preserving its appearance.
+
+</details>
+
+<details>
+<summary>Follow Changes</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+Enable Follow Changes to make the sidebar follow the most recently updated repository and worktree. Choosing a view explicitly turns it off.
+
+</details>
+
+<details>
+<summary>Open in browser</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+Use Agent Window's basic features entirely in a browser (`⇧⌥⌘O`). You can also open a specific timeline directly in a browser (`⌥⌘O`).
+
+</details>
+
+<details>
+<summary>HUD</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+From errors to feedback on everyday actions, temporary notifications appear in the HUD at the top of the timeline and transition smoothly. Some notifications remain visible.
+
+</details>
+
+<details>
+<summary>What AW records</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+Agent messages record the path and offset of their source native log. User messages record the sending client: mobile or desktop.
+
+Right-click a message to copy it at different levels of detail; on mobile, long-press the Copy button. Open the canonical JSONL log with `⌥⌘L`.
+
+</details>
+
+<details>
+<summary>Pin Changes</summary>
+
+<img src="media/agent-window-demo-placeholder.svg" alt="Demo coming soon">
+
+Keep a compact view of the current changes at the top of the timeline without opening the sidebar. Hover to expand the list.
 
 </details>
 
