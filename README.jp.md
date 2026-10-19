@@ -15,21 +15,21 @@ https://okadaharuto.com/agent-window/
 
 <div align="center">
 
-Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
+対応CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 </div>
 
 ---
 
-## Principle of Agent Window
+## Agent Windowの基本原則
 
 AWの設計哲学については、[DESIGN](DESIGN.jp.md)をご覧ください。
 
-1. **Timeline**が単位。実体は `~/.agent-window/log/{timeline_name}/.log.jsonl`。
-2. Agentはtmux内のCLI。送信は `tmux send-keys`。受信はnative logの監視。
-3. Agent・WorkspaceはTimelineの途中で差し替えられる。
+1. Timelineが単位で、実体はJSONLのログ
+2. Agent Processは普通のCLI
+3. Agent・WorkspaceはTimelineの途中で差し替えられる
 
-## More About Agent Window
+## Agent Windowについてもっと知る
 
 <details>
 <summary>Hub</summary>
@@ -246,9 +246,9 @@ printf '%s' '<message>' | agent-send <target>
 
 </details>
 
-## Control from Everywhere
+## iPhoneから操作する
 
-Connect via Tailscale & use as PWA
+TailscaleでHubに接続し、PWAとして使用します
 
 <p align="center">
   <img src="media/agent-window-mobile-light-1.png" width="48%" alt="Mobile UI, light 1">

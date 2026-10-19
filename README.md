@@ -25,8 +25,8 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 
 For the design philosophy behind Agent Window, see [DESIGN](DESIGN.md).
 
-1. The unit is a **Timeline**. Its file is `~/.agent-window/log/{timeline_name}/.log.jsonl`.
-2. An Agent is a CLI inside tmux. Sending uses `tmux send-keys`; receiving watches its native log.
+1. The unit is a Timeline, stored as a JSONL log.
+2. An Agent Process is a regular CLI.
 3. Agents and the workspace can be swapped mid-timeline.
 
 ## More About Agent Window
