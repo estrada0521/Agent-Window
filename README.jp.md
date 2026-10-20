@@ -32,8 +32,6 @@ https://okadaharuto.com/agent-window/
 <details>
 <summary>Fit Window</summary>
 
-https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
-
 アプリケーションは必要な面積だけを使います。
 
 - `⌥⌘H`で`Fit Window`を有効にすると、Windowが最新のメッセージに合わせて自動でResizeされます。
@@ -43,9 +41,29 @@ https://github.com/user-attachments/assets/d9f3cbc2-39c5-4b28-8be9-0d98c8328e1f
 </details>
 
 <details>
-<summary>Prompt Box</summary>
+<summary>Window Resize / Move</summary>
 
-https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
+ResizeはWindow全体の相似関係を保ちます。作業の邪魔にならない位置と大きさに素早く調整できます。
+
+</details>
+
+<details>
+<summary>Hub Menu</summary>
+
+ほぼ全てのAgent Window固有のショートカットは、Hub Menuからも操作可能です。\
+カラーテーマ（system / light / dark）の切り替えはここから行います。
+
+</details>
+
+<details>
+<summary>Timeline States Actions</summary>
+
+TimelineはRename・Archive・Reviveできます。Archiveしてもログは残り、Reviveすると保存したWorkspaceとAgent構成で再開します。Archive中はWorkspaceの変更・Agent構成のリセット・Timelineの削除もできます。
+
+</details>
+
+<details>
+<summary>Prompt Box</summary>
 
 入力欄は必要なときだけ現れ、Timelineの場所を取りません。入力されたテキストは、Agent CLIのPaneにそのまま入力されます。`⌃1`–`⌃9`で送信先を切り替えます。
 
@@ -54,52 +72,25 @@ https://github.com/user-attachments/assets/5ce44e5a-de19-46cb-9861-11caac880c08
 <details>
 <summary>Commands</summary>
 
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+入力欄で`/`を入力すると、AW固有のコマンド候補が表示されます。CLIのコマンドはPane本体から実行します。
 
-AWが配線するコマンドは固有のものだけです。CLIのコマンドはPane本体から実行します。
+- `/jump YYYY-MM[-DD [HH:MM]]`：指定した日時へ移動します。
+- `/restart`：AgentのPaneを再起動します。`/idle`：Running表示だけを解除します。
+- `/openpane`：CLIのPaneを開きます。`/nativelog`：native logをFinderで表示します（desktop）。
+- `/log`：Timelineのログのpathを挿入します。`/skill`：agent-sendのSKILLへの参照を挿入します。
+- `/terminal`：ターミナルモードに入ります（mobile）。
 
 </details>
 
 <details>
 <summary>Substance is CLI</summary>
 
-https://github.com/user-attachments/assets/006bfe63-5e14-4abe-9039-e7e86b1a5851
-
 `/openpane`・`timeline menu → tmux pane`・Running表示のタップからCLI本体を確認できます。
 
 </details>
 
 <details>
-<summary>Timeline States Actions</summary>
-
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
-
-TimelineはRename・Archive・Reviveできます。Archiveしてもログは残り、Reviveすると保存したWorkspaceとAgent構成で再開します。Archive中はWorkspaceの変更・Agent構成のリセット・Timelineの削除もできます。
-
-</details>
-
-<details>
-<summary>Independent Sidebar</summary>
-
-<img src="media/agent-window-hero-3.png" alt="独立したSidebar">
-
-`Fit Window`中は、Sidebarは独立Windowになります。好きな位置、大きさで保持できます。
-
-</details>
-
-<details>
-<summary>Window Resize / Move</summary>
-
-https://github.com/user-attachments/assets/7d155603-6263-4f5e-971d-df41952b0b29
-
-ResizeはWindow全体の相似関係を保ちます。作業の邪魔にならない位置と大きさに素早く調整できます。
-
-</details>
-
-<details>
 <summary>Agent to Agent</summary>
-
-<img src="media/agent-window-agent-send.png" alt="Claude・Codex・Grokの会話">
 
 `tmux/agent_send/SKILL.md`を利用すれば、A2A通信ができます。プロトコルはなく、宛先のPaneに`[From: Claude]`のようなprefix付きで`tmux send-keys`が実行されます。使う場合は、`tmux/agent_send/agent-send`へのPATHを配線します。
 
@@ -108,8 +99,6 @@ ResizeはWindow全体の相似関係を保ちます。作業の邪魔になら�
 <details>
 <summary>File Attachment</summary>
 
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
-
 `+` / drag & drop / pasteでファイルを添付できます。添付したファイルは`<workspace>/.agent-window/uploads/`に保存され、そのpathがplain textとして送信テキストの末尾に追加されます。
 
 </details>
@@ -117,16 +106,33 @@ ResizeはWindow全体の相似関係を保ちます。作業の邪魔になら�
 <details>
 <summary>File Search</summary>
 
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
-
 入力欄での`@`から、Workspace内のファイルを検索できます。対象はGit管理下に限定しています。子Repoを監視対象に追加すると、その分のファイルも対象になります。
 
 </details>
 
 <details>
-<summary>Add Repository</summary>
+<summary>File Open</summary>
 
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+Desktopには独自のFile Viewerはありません。原則として既定のアプリで展開されます。DiffはGitに設定されたdiff toolをそのまま利用します。素早い確認には`⌥ + click` / `⌘Y`でmacOSのQuick Lookを利用します。
+
+</details>
+
+<details>
+<summary>Sidebar</summary>
+
+Sidebarには`FSEvents`によるイベント駆動でGit・Workspaceの状態が表示されます。横幅調整に加え、上下（`⇧⌥⌘E`）・左右（`⇧⌘E`）を入れ替えることができます。
+
+</details>
+
+<details>
+<summary>Independent Sidebar</summary>
+
+`Fit Window`中は、Sidebarは独立Windowになります。好きな位置、大きさで保持できます。
+
+</details>
+
+<details>
+<summary>Add Repository</summary>
 
 指定した子ディレクトリをRepo rootとして、監視対象に追加・削除できます。追加したRepoの一覧は`timeline menu → Repository`に表示され、Sidebarの表示を切り替えられます。Worktreeの一覧は、選択中のRepoのものになります。
 
@@ -135,79 +141,33 @@ ResizeはWindow全体の相似関係を保ちます。作業の邪魔になら�
 <details>
 <summary>Worktrees</summary>
 
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
-
 `timeline menu → Worktree`からSidebarに表示するlinked worktreeを切り替えることができます。
-
-</details>
-
-<details>
-<summary>Sidebar</summary>
-
-https://github.com/user-attachments/assets/d878b522-99fb-4ba6-9326-29d73bace9ea
-
-Sidebarには`FSEvents`によるイベント駆動でGit・Workspaceの状態が表示されます。横幅調整に加え、上下（`⇧⌥⌘E`）・左右（`⇧⌘E`）を入れ替えることができます。
-
-</details>
-
-<details>
-<summary>File Open</summary>
-
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
-
-Desktopには独自のFile Viewerはありません。原則として既定のアプリで展開されます。DiffはGitに設定されたdiff toolをそのまま利用します。素早い確認には`⌥ + click` / `⌘Y`でmacOSのQuick Lookを利用します。
-
-</details>
-
-<details>
-<summary>Timeline Search</summary>
-
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
-
-`⌘F`でTimelineを全文検索します。`⇧`併用で、10件単位で移動できます。
-
-</details>
-
-<details>
-<summary>Export</summary>
-
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
-
-Timelineのログを範囲指定して、JSONLまたはHTMLとしてExportできます。HTMLは表示されたWebViewをそのまま焼き込むため、見た目は完全に保持されます。
 
 </details>
 
 <details>
 <summary>Follow Changes</summary>
 
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
-
 Follow Changesを有効にすると、Sidebarの表示が最後に更新されたRepo・Worktreeに自動追従します。表示対象を明示指定すると解除されます。
 
 </details>
 
 <details>
-<summary>Open in browser</summary>
+<summary>Pin Changes</summary>
 
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
-
-Agent Windowの基本操作はブラウザのみで完結します（`⇧⌥⌘O`）。特定のTimelineだけを直接ブラウザで開くことも可能です（`⌥⌘O`）。
+現在の差分をSidebarを開くことなく、Timeline上部に小さく保持できます。hoverで一覧が展開されます。
 
 </details>
 
 <details>
-<summary>HUD</summary>
+<summary>Timeline Search</summary>
 
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
-
-エラー表示から通常操作のフィードバックに至るまで、一時的な通知はTimeline上部のHUDに集約され、滑らかに切り替わります。一部のHUDは常駐します。
+`⌘F`でTimelineを全文検索します。`⇧`併用で、10件単位で移動できます。
 
 </details>
 
 <details>
 <summary>What AW records</summary>
-
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
 
 Agentのメッセージには、投影元のnative logのpath・offsetが記録されます。ユーザーのメッセージには送信元のクライアント（mobile / desktop）が記録されます。
 
@@ -216,11 +176,23 @@ Agentのメッセージには、投影元のnative logのpath・offsetが記録�
 </details>
 
 <details>
-<summary>Pin Changes</summary>
+<summary>Export</summary>
 
-<img src="media/agent-window-demo-placeholder.svg" alt="動画準備中">
+Timelineのログを範囲指定して、JSONLまたはHTMLとしてExportできます。HTMLは表示されたWebViewをそのまま焼き込むため、見た目は完全に保持されます。
 
-現在の差分をSidebarを開くことなく、Timeline上部に小さく保持できます。hoverで一覧が展開されます。
+</details>
+
+<details>
+<summary>Open in browser</summary>
+
+Agent Windowの基本操作はブラウザのみで完結します（`⇧⌥⌘O`）。特定のTimelineだけを直接ブラウザで開くことも可能です（`⌥⌘O`）。
+
+</details>
+
+<details>
+<summary>HUD</summary>
+
+エラー表示から通常操作のフィードバックに至るまで、一時的な通知はTimeline上部のHUDに集約され、滑らかに切り替わります。一部のHUDは常駐します。
 
 </details>
 
