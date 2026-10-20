@@ -72,7 +72,7 @@
 
     const exportAssetDataUri = async (url, cache) => {
       if (!cache.has(url)) {
-        cache.set(url, fetch(url).then(async (res) => {
+        cache.set(url, __origFetch(url).then(async (res) => {
           if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
           const blob = await res.blob();
           return new Promise((resolve, reject) => {
