@@ -74,12 +74,6 @@ The prompt box appears only when needed, leaving the timeline unobstructed. Your
 
 Type `/` in the prompt box to see AW's own commands. Run the CLI's commands from the pane itself.
 
-- `/jump YYYY-MM[-DD [HH:MM]]`: jump to a date and time.
-- `/restart`: restart the agent pane. `/idle`: clear only the Running display.
-- `/openpane`: open the CLI pane. `/nativelog`: reveal the native log in Finder (desktop).
-- `/log`: insert the timeline log path. `/skill`: insert a reference to the agent-send SKILL.
-- `/terminal`: enter terminal mode (mobile).
-
 </details>
 
 <details>

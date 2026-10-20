@@ -74,12 +74,6 @@ TimelineはRename・Archive・Reviveできます。Archiveしてもログは残�
 
 入力欄で`/`を入力すると、AW固有のコマンド候補が表示されます。CLIのコマンドはPane本体から実行します。
 
-- `/jump YYYY-MM[-DD [HH:MM]]`：指定した日時へ移動します。
-- `/restart`：AgentのPaneを再起動します。`/idle`：Running表示だけを解除します。
-- `/openpane`：CLIのPaneを開きます。`/nativelog`：native logをFinderで表示します（desktop）。
-- `/log`：Timelineのログのpathを挿入します。`/skill`：agent-sendのSKILLへの参照を挿入します。
-- `/terminal`：ターミナルモードに入ります（mobile）。
-
 </details>
 
 <details>
