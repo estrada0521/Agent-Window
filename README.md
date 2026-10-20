@@ -257,9 +257,9 @@ Connect via Tailscale & use as PWA
 - **App**:
   - **Spec**: native launcher of local repo
   - **Requirements**: python3・tmux・Xcode CLI
-  - **Build**: 1s from `./macos/build`
+  - **Build**: 1s from ./macos/build
   - **Size** : < 200 KB
 - **System**:
-  - **Network**: CDN (`marked`・`DOMPurify`・`katex`・`highlight.js`)
-  - **Port**: value of `server/port` (default `8788`)
-  - **Files**: `~/.agent-window/`(log)・`{workspace}/.agent-window/`(symlink・uploaded file)
+  - **Network**: CDN (marked・DOMPurify・katex・highlight.js)
+  - **Port**: value of server/port (default 8788)
+  - **Files**: ~/.agent-window/(log)・{workspace}/.agent-window/(symlink・uploaded file)
