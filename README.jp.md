@@ -30,6 +30,13 @@ https://okadaharuto.com/agent-window/
 ## Agent Windowについてもっと知る
 
 <details>
+<summary>Start New Timeline</summary>
+
+Hubまたは`⌘N`からWorkspaceを選択して新しいTimelineを始めます。Add Agentから最初のエージェントを追加しましょう。初回送信のタイミングで、native logのpathが解決されます。先にmodelの変更等を行う場合は、`tmux pane`からエージェントのCLIを開けます。
+
+</details>
+
+<details>
 <summary>Fit Window</summary>
 
 アプリケーションは必要な面積だけを使います。
@@ -52,6 +59,15 @@ ResizeはWindow全体の相似関係を保ちます。作業の邪魔になら�
 
 ほぼ全てのAgent Window固有のショートカットは、Hub Menuからも操作可能です。\
 カラーテーマ（system / light / dark）の切り替えはここから行います。
+
+</details>
+
+<details>
+<summary>Hard Reload</summary>
+
+`⇧⌘R`でServerを再起動します。Agent WindowのRepoを編集した場合、その変更が即時反映されます。
+
+ほかのクライアントですでにServerが再起動され、この画面だけが古いServerに接続していた状態なら、Serverは再起動せず、通常のページReloadで最新の状態に切り替えます。
 
 </details>
 
@@ -79,7 +95,11 @@ TimelineはRename・Archive・Reviveできます。Archiveしてもログは残�
 <details>
 <summary>Substance is CLI</summary>
 
-`/openpane`・`timeline menu → tmux pane`・Running表示のタップからCLI本体を確認できます。
+Agent WindowにおけるAgentプロセスは、tmux内で動く通常のCLIです。
+
+`/openpane`・`timeline menu → tmux pane`・Running表示のタップからCLI本体を開けます。
+
+送信は`tmux send-keys`で行い、受信はCLIのログを`kqueue`で監視しています。
 
 </details>
 
@@ -112,9 +132,40 @@ Desktopには独自のFile Viewerはありません。原則として既定の�
 </details>
 
 <details>
+<summary>Fonts</summary>
+
+本文・コードのフォントは、`~/.agent-window/fonts.css`の`--font-main`・`--font-code`で変更できます。自分のCSSをこのパスへsymlinkして使うこともできます。
+
+フォントファイルを配信する場合は、`~/.agent-window/fonts/`へファイルまたはsymlinkを置き、CSSの`@font-face`から`/font/ファイル名`を参照します。iPhoneにも同じフォントが配信されます。
+
+</details>
+
+<details>
+<summary>File Icon theme</summary>
+
+既製のファイルアイコンテーマを使用できます。VS Code形式のテーマJSONへ、次のsymlinkを作成します。
+
+```sh
+ln -sfn /absolute/path/to/theme.json ~/.agent-window/file-icon-theme.json
+```
+
+`/absolute/path/to/theme.json`は使用するテーマの実際のパスに置き換えてください。JSONから参照されるSVGも必要なので、テーマ一式のディレクトリ構成は保ちます。symlinkを削除すると標準アイコンに戻ります。
+
+</details>
+
+<details>
 <summary>Sidebar</summary>
 
 Sidebarには`FSEvents`によるイベント駆動でGit・Workspaceの状態が表示されます。横幅調整に加え、上下（`⇧⌥⌘E`）・左右（`⇧⌘E`）を入れ替えることができます。
+
+</details>
+
+<details>
+<summary>Git</summary>
+
+Sidebarには、選択中のRepo・WorktreeのCommit treeが表示されます。右クリックからHashとMessageがコピーできます。hoverすると、infoがtitleに表示されます。
+
+WorkspaceはGit Repoである必要はありません。その場合はSidebar全体がフォルダツリーに割り当てられます。
 
 </details>
 

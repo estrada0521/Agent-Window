@@ -30,6 +30,13 @@ Supported CLI: Claude・Codex・Antigravity・Cursor・Grok
 ## More About Agent Window
 
 <details>
+<summary>Start New Timeline</summary>
+
+Choose a workspace from the Hub or with `⌘N` to start a new timeline, then add your first agent from Add Agent. The native log path is resolved when you send the first message. To change the model or other settings beforehand, open the agent CLI from `tmux pane`.
+
+</details>
+
+<details>
 <summary>Fit Window</summary>
 
 The application uses only the space it needs.
@@ -52,6 +59,15 @@ Resizing preserves the proportions of the entire window. Quickly adjust its size
 
 Almost every Agent Window-specific shortcut is also available from the Hub Menu.\
 Switch the color theme (system / light / dark) here.
+
+</details>
+
+<details>
+<summary>Hard Reload</summary>
+
+Press `⇧⌘R` to restart the server and immediately apply edits to the Agent Window repository.
+
+If another client has already restarted the server and this page still refers to the old server instance, only the page is reloaded; the server is not restarted again.
 
 </details>
 
@@ -79,7 +95,11 @@ Type `/` in the prompt box to see AW's own commands. Run the CLI's commands from
 <details>
 <summary>Substance is CLI</summary>
 
+Agent processes in Agent Window are regular CLIs running inside tmux.
+
 Open the CLI itself with `/openpane`, `timeline menu → tmux pane`, or by tapping the Running indicator.
+
+Messages are sent with `tmux send-keys`; incoming messages are read from the CLI logs, watched with `kqueue`.
 
 </details>
 
@@ -112,9 +132,40 @@ The desktop app has no custom file viewer. Files normally open in their default 
 </details>
 
 <details>
+<summary>Fonts</summary>
+
+Set `--font-main` and `--font-code` in `~/.agent-window/fonts.css` to customize the body and code fonts. You can also symlink your own CSS file to this path.
+
+To serve font files, place them or symlinks in `~/.agent-window/fonts/` and reference `/font/filename` from `@font-face` in the CSS. The same fonts are served to iPhone clients.
+
+</details>
+
+<details>
+<summary>File Icon theme</summary>
+
+Use an existing file icon theme by linking its VS Code-format theme JSON:
+
+```sh
+ln -sfn /absolute/path/to/theme.json ~/.agent-window/file-icon-theme.json
+```
+
+Replace `/absolute/path/to/theme.json` with the actual theme path. Keep the theme's directory structure intact, including the SVG files referenced by the JSON. Remove the symlink to restore the default icons.
+
+</details>
+
+<details>
 <summary>Sidebar</summary>
 
 The sidebar shows Git and workspace state through event-driven updates using `FSEvents`. Adjust its width, swap Git and Workspace vertically with `⇧⌥⌘E`, or move the sidebar to the opposite side with `⇧⌘E`.
+
+</details>
+
+<details>
+<summary>Git</summary>
+
+The sidebar shows the commit tree of the selected repository and worktree. Right-click to copy a commit hash or message; hover to see its details in a tooltip.
+
+The workspace does not need to be a Git repository. In that case, the entire sidebar is used for the folder tree.
 
 </details>
 
