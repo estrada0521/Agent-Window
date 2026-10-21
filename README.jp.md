@@ -141,6 +141,13 @@ Desktopには独自のFile Viewerはありません。原則として既定の�
 </details>
 
 <details>
+<summary>Syntax Highlighting</summary>
+
+コードブロックにはhighlight.jsによるシンタックスハイライトが適用されます。好みのhighlight.jsテーマのCSSを、`~/.agent-window/syntax-light.css`・`~/.agent-window/syntax-dark.css`へsymlinkして変更できます。
+
+</details>
+
+<details>
 <summary>File Icon theme</summary>
 
 既製のファイルアイコンテーマを使用できます。VS Code形式のテーマJSONへ、次のsymlinkを作成します。

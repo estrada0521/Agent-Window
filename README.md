@@ -141,6 +141,13 @@ To serve font files, place them or symlinks in `~/.agent-window/fonts/` and refe
 </details>
 
 <details>
+<summary>Syntax Highlighting</summary>
+
+Code blocks use highlight.js for syntax highlighting. Customize the light and dark themes by symlinking your preferred highlight.js theme CSS to `~/.agent-window/syntax-light.css` and `~/.agent-window/syntax-dark.css`.
+
+</details>
+
+<details>
 <summary>File Icon theme</summary>
 
 Use an existing file icon theme by linking its VS Code-format theme JSON:
