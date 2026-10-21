@@ -133,6 +133,8 @@ HUB_LAUNCH_SHELL_HTML = f"""<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <script>
     (() => {{
+      const fadeStarted = Number(new URLSearchParams(window.location.search).get("fade_started"));
+      if (fadeStarted) document.documentElement.style.setProperty("--launch-title-delay", `${{Math.min(0, fadeStarted - Date.now())}}ms`);
       const stored = String(localStorage.getItem("agent_window_theme_desktop") || "").trim().toLowerCase();
       if (["system", "light", "dark"].includes(stored)) {{
         document.documentElement.dataset.themeDesktop = stored;

@@ -75,10 +75,6 @@
       opacity: 0;
       pointer-events: none;
     }
-    .desk-launch-shell .launch-shell-title {
-      animation: none;
-      opacity: 1;
-    }
     html[data-native-app="1"] .desk-launch-shell {
       background: transparent;
     }
