@@ -16,8 +16,6 @@ static const CGFloat kMinWindowWidth = 160;
 static const CGFloat kMinWindowHeight = 103;
 static const CGFloat kFitWindowMinHeight = 0;
 static const CGFloat kCompactWindowWidth = 560;
-static const CGFloat kMiniWindowWidth = 384;
-static const CGFloat kMiniWindowHeight = 600;
 static const CGFloat kMenuIconSize = 18;
 
 static const CGFloat kDefaultGlassCornerRadius = 26;
@@ -558,7 +556,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     }
     if ([cmd isEqualToString:@"reset_window_geometry"]) return [self placeCentered:kDefaultWindowSize height:kDefaultWindowSize scale:[a[@"scale"] doubleValue]];
     if ([cmd isEqualToString:@"compact_window_geometry"]) return [self placeCentered:kCompactWindowWidth height:kDefaultWindowSize scale:[a[@"scale"] doubleValue]];
-    if ([cmd isEqualToString:@"mini_window_geometry"]) return [self placeCentered:kMiniWindowWidth height:kMiniWindowHeight scale:[a[@"scale"] doubleValue]];
+    if ([cmd isEqualToString:@"mini_window_geometry"]) return [self placeCentered:kCompactWindowWidth height:kCompactWindowWidth scale:[a[@"scale"] doubleValue]];
     if ([cmd isEqualToString:@"set_window_height"]) {
         NSNumber *compact = a[@"compactWidthScale"] == NSNull.null ? nil : a[@"compactWidthScale"];
         return [self setWindowHeight:[a[@"height"] doubleValue] compactWidthScale:compact];
