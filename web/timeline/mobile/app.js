@@ -335,5 +335,6 @@ __INCLUDE:message-row-press.js__
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
         void refresh();
+        void refreshTimelineState();
       }
     });
