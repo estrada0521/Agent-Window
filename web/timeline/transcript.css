@@ -349,6 +349,17 @@ html[data-theme="light"] .message-row:not(.user) .message::before {
       width: 1.5px;
     }
 
+html:not([data-auto-window-height="1"]) .message-thinking-container {
+      height: 0;
+      flex-shrink: 0;
+      margin-top: 0;
+      top: 1em;
+    }
+
+.message-thinking-row {
+      flex-shrink: 0;
+    }
+
 .message-thinking-container[hidden] {
       display: none;
     }
