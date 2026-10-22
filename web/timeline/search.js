@@ -70,13 +70,31 @@
       searchRequest?.abort();
       setHudOverlay(null);
     };
+    const focusSearchInput = () => {
+      if (isMobileComposer) searchInput.classList.add("search-focus-hack");
+      searchInput.focus({ preventScroll: true });
+      if (!isMobileComposer) return;
+      const restore = () => searchInput.classList.remove("search-focus-hack");
+      requestAnimationFrame(restore);
+      setTimeout(restore, 120);
+    };
+    searchInput.addEventListener("pointerdown", (event) => {
+      if (!isMobileComposer || document.activeElement === searchInput) return;
+      event.preventDefault();
+      focusSearchInput();
+    });
     const beginSearch = () => {
       if (exportRange) endExportRange();
       if (isMobileComposer) closeComposerOverlay();
       searchOpen = true;
       if (searchMobileNavigation) searchMobileNavigation.hidden = false;
       setHudOverlay(searchHud);
-      if (!isMobileComposer) searchInput.focus({ preventScroll: true });
+      if (isMobileComposer) {
+        document.getElementById("timelineHud").getAnimations().forEach((animation) => {
+          if (animation.transitionProperty === "width") animation.finish();
+        });
+      }
+      focusSearchInput();
     };
     const jumpToSearchResult = async (index, request) => {
       const [data, preceding] = await Promise.all([

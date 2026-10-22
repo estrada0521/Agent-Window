@@ -61,6 +61,9 @@
     html[data-mobile="1"] .search-hud [role="status"] {
       padding-inline-end: 0;
     }
+    html[data-mobile="1"] .search-hud input.search-focus-hack {
+      opacity: 0;
+    }
     .search-mobile-navigation {
       position: fixed;
       bottom: var(--mobile-sheet-footer-bottom);
