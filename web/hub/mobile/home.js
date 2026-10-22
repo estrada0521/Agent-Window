@@ -1,3 +1,6 @@
+    window.__agentWindowHubRestarting = false;
+    let hubDisposed = false;
+    let stopMessagesEvents = null;
 __INCLUDE:../../smooth-corners.js__
     const HUB_TIMELINE_SCROLL_ORIGIN = document.querySelector(".mob-list-top-spacer").offsetHeight;
     const resetHubTimelineScroll = () => window.scrollTo(0, HUB_TIMELINE_SCROLL_ORIGIN);
@@ -89,7 +92,17 @@ __INCLUDE:../../mobile-edge-swipe.js__
       if (channels) root.style.setProperty("--mob-top-gradient-rgb", channels);
     };
     applyMobThemeGradientVars();
-    new MutationObserver(applyMobThemeGradientVars).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const themeObserver = new MutationObserver(applyMobThemeGradientVars);
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    function disposeHub() {
+      hubDisposed = true;
+      if (stopMessagesEvents) stopMessagesEvents();
+      themeObserver.disconnect();
+      clearHubReadyTimeout();
+      clearOverlaySettle();
+      clearTimeout(_timelineOverlayCloseTimer);
+      if (agentSoundContext) void agentSoundContext.close();
+    }
     const MOBILE_THEME_KEY = "agent_window_theme_mobile";
     const currentMobileThemeSetting = () => {
       const value = document.documentElement.dataset.themeMobile;
@@ -180,10 +193,12 @@ __INCLUDE:../../mobile-edge-swipe.js__
       _overlaySettleTimer = setTimeout(settle, Math.max(0, TIMELINE_OVERLAY_SLIDE_MS - TIMELINE_OVERLAY_SETTLE_LEAD_MS));
     }
     function showLaunchShell() {
+      document.documentElement.dataset.hubLoading = "1";
       _launchShell.hidden = false;
       _launchShell.classList.add("visible");
     }
     function hideLaunchShell() {
+      delete document.documentElement.dataset.hubLoading;
       _launchShell.classList.remove("visible");
       _launchShell.hidden = true;
       _launchShell.removeAttribute("data-reload-stage");
@@ -486,11 +501,13 @@ __INCLUDE:../../mobile-edge-swipe.js__
         _timelineOverlayCloseTimer = 0;
       }
       rememberLastTimeline(name);
-      if (_hubLaunchShellPending) showLaunchShell();
-      _launchShell.dataset.reloadStage = "rendering";
-      startTimelineRenderWait();
       const normalizedName = String(name || "").trim();
       const normalizedUrl = hubFrameTimelineUrl(url);
+      const reuseLoadedFrame =
+        !!normalizedName && _timelineFrameRenderReady && hubFrameSrcMatches(normalizedUrl);
+      _launchShell.dataset.reloadStage = "rendering";
+      if (_hubLaunchShellPending || !reuseLoadedFrame) showLaunchShell();
+      startTimelineRenderWait();
       clearPersistedTimelineFrameState();
       _currentTimelineUrl = normalizedUrl;
       _hubMinParentChromeGap = Infinity;
@@ -516,8 +533,6 @@ __INCLUDE:../../mobile-edge-swipe.js__
           finishTimelineRenderWait();
         }
       };
-      const reuseLoadedFrame =
-        !!normalizedName && _timelineFrameRenderReady && hubFrameSrcMatches(normalizedUrl);
       _timelineFrame.style.transition = "none";
       _timelineFrame.style.opacity = reuseLoadedFrame ? "1" : "0";
       _timelineFrame.onload = onTimelineReady;
@@ -617,7 +632,10 @@ __INCLUDE:../../mobile-edge-swipe.js__
     async function openTimelineFrame(openHref, name) {
       rememberLastTimeline(name);
       const needsReviveTransition = /^\/revive-timeline(?:[/?]|$)/.test(openHref);
-      if (needsReviveTransition) showLaunchShell();
+      if (needsReviveTransition) {
+        _launchShell.dataset.reloadStage = "rendering";
+        showLaunchShell();
+      }
       try {
         const timelineUrl = needsReviveTransition ? await reviveTimeline(name) : openHref;
         openTimelineInFrame(timelineUrl, name);
@@ -944,14 +962,15 @@ __INCLUDE:../../mobile-edge-swipe.js__
         }
         _mobPreviewRevisions = nextRevisions;
       };
+      let lastMobRenderSig = "";
       const refresh = async (force) => {
-        if (restartingHub) return;
+        if (restartingHub || hubDisposed) return;
         const requestSeq = ++_mobTimelinesRequestSeq;
         try {
           const res = await fetch(`/timelines?ts=${Date.now()}`, { cache: "no-store" });
           if (!res.ok) throw new Error("failed");
           const data = await res.json();
-          if (requestSeq !== _mobTimelinesRequestSeq) return;
+          if (hubDisposed || requestSeq !== _mobTimelinesRequestSeq) return;
           if (data.server_instance !== SERVER_INSTANCE_SEED) {
             setResidentError("server-restarted", "Server restarted; reload");
           }
@@ -964,12 +983,12 @@ __INCLUDE:../../mobile-edge-swipe.js__
             active: activeTimelines,
             archived: archivedTimelines,
           });
-          if (!force && window._lastMobRenderSig === sig) {
+          if (!force && lastMobRenderSig === sig) {
             _mobTimelinesRenderedOnce = true;
             releaseHubLaunchShellAfterRender();
             return;
           }
-          window._lastMobRenderSig = sig;
+          lastMobRenderSig = sig;
 
           const rememberedName = lastRememberedTimeline();
           const launchTimeline = !_mobTimelinesRenderedOnce && _restoreLatestTimelineOnLaunch && !_currentTimelineName
@@ -986,14 +1005,16 @@ __INCLUDE:../../mobile-edge-swipe.js__
             releaseHubLaunchShellAfterRender();
           }
         } catch (err) {
-          if (requestSeq !== _mobTimelinesRequestSeq) return;
+          if (hubDisposed || requestSeq !== _mobTimelinesRequestSeq) return;
           if (_mobTimelinesRenderedOnce || _mobTimelinesCache.active.length || _mobTimelinesCache.archived.length) return;
           stopHubReadyWait();
           setError("Failed to load timelines", err);
         }
       };
       refreshMobTimelines = refresh;
-      if (!restartingHub) startHubTimelineMessagesEvents(() => refresh(true));
+      if (!restartingHub) {
+        stopMessagesEvents = startHubTimelineMessagesEvents(() => refresh(true));
+      }
       refresh();
     })();
 

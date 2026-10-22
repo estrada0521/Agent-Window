@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="__THEME__" data-theme-mobile-default="__THEME_MOBILE_DEFAULT__" data-mobile="1">
+<html lang="en" data-theme="__THEME__" data-theme-mobile-default="__THEME_MOBILE_DEFAULT__" data-mobile="1" data-hub-loading="1">
 
 <head>
   <meta charset="utf-8">
@@ -23,9 +23,6 @@
         ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
         : setting;
     })();
-  </script>
-  <script>
-__INCLUDE:../../mobile-hand.js__
   </script>
   <script>
     (() => {
@@ -54,7 +51,7 @@ __HUB_HEADER_CSS__
     <div class="launch-shell-card" aria-hidden="true">
       <span class="launch-shell-title">Agent Window</span>
     </div>
-    <div class="launch-status" role="status"></div>
+    <div class="launch-status" role="status"><span aria-hidden="true">.</span><span aria-hidden="true">.</span><span aria-hidden="true">.</span></div>
   </div>
   <div id="timelineOverlay" hidden><svg class="timeline-overlay-shape" aria-hidden="true" preserveAspectRatio="none"><path></path></svg><div class="timeline-frame-clip"><iframe id="timelineFrame" src="about:blank"
       allow="clipboard-write; microphone"></iframe></div></div>
@@ -69,11 +66,14 @@ __HUB_HEADER_CSS__
     <p class="hub-footer-credit">© 2026 Haruto Okada</p>
   </div>
   <script>
+  (() => {
+__INCLUDE:../../mobile-hand.js__
 __INCLUDE:../timeline-navigation.js__
 __INCLUDE:../timeline-messages-events.js__
 __INCLUDE:../../list-flip.js__
 __INCLUDE:../../hud.js__
 __INCLUDE:home.js__
+  })();
   </script>
 </body>
 

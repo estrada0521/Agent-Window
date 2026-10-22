@@ -8,7 +8,9 @@
       top: calc(50lvh + 30px);
       transform: translateX(-50%);
       color: var(--icon-muted);
+      font-family: system-ui;
       font-size: 12px;
+      font-weight: 400;
       line-height: 1.4;
       white-space: nowrap;
       pointer-events: none;
@@ -22,18 +24,24 @@
       content: "Rendering";
     }
 
-    .launch-status::after {
-      content: ".";
+    .launch-status > span {
       display: inline-block;
-      width: 1em;
-      text-align: left;
-      animation: launchDots 1.4s steps(1, end) infinite;
+      opacity: 0;
+      will-change: opacity;
+      animation: launchDotOne 1s steps(1, end) infinite;
     }
+    .launch-status > span:nth-child(2) { animation-name: launchDotTwo; }
+    .launch-status > span:nth-child(3) { animation-name: launchDotThree; }
 
-    @keyframes launchDots {
-      0%, 100% { content: "."; }
-      25% { content: ".."; }
-      50% { content: "..."; }
-      75% { content: ""; }
+    @keyframes launchDotOne {
+      0%, 100% { opacity: 0; }
+      25% { opacity: 1; }
     }
-
+    @keyframes launchDotTwo {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+    @keyframes launchDotThree {
+      0%, 100% { opacity: 0; }
+      75% { opacity: 1; }
+    }

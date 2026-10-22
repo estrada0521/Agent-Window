@@ -9,4 +9,5 @@
         if (opened) void refreshTimelines();
         opened = true;
       };
+      return () => events.close();
     };

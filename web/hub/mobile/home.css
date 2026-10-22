@@ -577,6 +577,15 @@
       border-bottom: none;
     }
 
+    html[data-hub-loading],
+    html[data-hub-loading] body {
+      background: rgb(var(--timeline-bg-rgb));
+    }
+
+    html[data-hub-loading] body > :not(#launchShell) {
+      visibility: hidden;
+    }
+
     .launch-shell {
       position: fixed;
       inset: 0;
