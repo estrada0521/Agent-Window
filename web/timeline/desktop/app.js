@@ -1056,9 +1056,7 @@ __INCLUDE:git-panel/events.js__
       if (event.data.type === "hub-auto-window-height") {
         if (!!event.data.on !== (document.documentElement.dataset.autoWindowHeight === "1")) _fitTargetRow = null;
         _fitMessageCount = event.data.messageCount;
-        const enteringFitMode = !!event.data.on && document.documentElement.dataset.autoWindowHeight !== "1";
         document.documentElement.dataset.autoWindowHeight = event.data.on ? "1" : "0";
-        if (enteringFitMode && gitSummaryPinned) toggleGitSummaryPinned();
         syncSideBarWindow();
         if (sideBarOpen) syncSplitGitHeightForMode();
         if (isComposerOverlayOpen()) autoResizeTextarea();

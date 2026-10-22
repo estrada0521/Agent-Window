@@ -60,7 +60,7 @@
       const panelWrap = gitContent?.querySelector(".git-summary-wrap");
       const aside = document.getElementById("gitPinnedSummaryAside");
       const inner = document.getElementById("gitPinnedSummaryInner");
-      const stripShown = gitSummaryPinned && !sideBarOpen;
+      const stripShown = gitSummaryPinned && !sideBarOpen && document.documentElement.dataset.autoWindowHeight !== "1";
       aside.hidden = !stripShown;
       renderGitSummaryRoot(inner, rowHtml, { animateCounts: stripShown });
       if (stripShown) pinnedExpandRefresh?.();
