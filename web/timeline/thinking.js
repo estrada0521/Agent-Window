@@ -167,6 +167,7 @@
         return;
       }
       const sources = Array.from(container.querySelectorAll(".message-thinking-row"))
+        .filter((row) => !row._runningFade)
         .map((row) => {
           const wrap = row.querySelector(".message-thinking-icon-wrap");
           return wrap ? { row, wrap } : null;
@@ -232,6 +233,23 @@
       if (thinkingFloatingIconFrame) return;
       thinkingFloatingIconFrame = requestAnimationFrame(syncThinkingFloatingIcons);
     };
+    const fadeThinkingElement = (node) => {
+      if (node._runningFade) return;
+      const animation = node.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: "ease", fill: "forwards" });
+      node._runningFade = animation;
+      animation.onfinish = () => {
+        node.remove();
+        document.dispatchEvent(new CustomEvent("timeline-thinking-updated"));
+        scheduleThinkingFloatingIcons();
+        maybeRestorePollScrollLock();
+      };
+    };
+    const cancelThinkingFade = (node) => {
+      if (!node?._runningFade) return;
+      node._runningFade.onfinish = null;
+      node._runningFade.cancel();
+      delete node._runningFade;
+    };
     const renderThinkingIndicator = () => {
       const root = document.getElementById("messages");
       if (!root) {
@@ -246,8 +264,7 @@
 
       if (!root.querySelector("article.message-row") || !hasRunningRunning) {
         if (existingContainer) {
-          existingContainer.remove();
-          document.dispatchEvent(new CustomEvent("timeline-thinking-updated"));
+          fadeThinkingElement(existingContainer);
         }
         root.dataset.thinkingSig = "";
         removeThinkingFloatingIcons();
@@ -256,6 +273,7 @@
       }
 
       const container = existingContainer || document.createElement("div");
+      cancelThinkingFade(container);
       container.hidden = !!historyWindow?.has_newer;
       const agentRunningSig = JSON.stringify(
         runningAgents.map((agent) => [
@@ -303,6 +321,7 @@
             row.querySelector(".message-thinking-icons").title = "Open Pane";
           }
         }
+        cancelThinkingFade(row);
         const runningItem = currentThinkingRunningItem(agent);
         const label = row.querySelector(".message-thinking-label-agent");
 
@@ -322,7 +341,7 @@
       const desiredAgents = new Set(runningAgents);
       container.querySelectorAll(".message-thinking-row[data-agent]").forEach((row) => {
         if (!desiredAgents.has(row.dataset.agent || "")) {
-          row.remove();
+          fadeThinkingElement(row);
         }
       });
 
