@@ -88,7 +88,7 @@ __INCLUDE:../../markdown-theme-vars.css__
       --mobile-sheet-floating-bg: var(--panel-row-bg);
       --mobile-sheet-floating-hover-bg: var(--panel-row-hover-bg);
       --error: rgb(__TEXT_ERROR_MOBILE_DARK_CHANNELS__);
-      --file-link-fg: rgb(__TEXT_FILE_LINK_DARK_CHANNELS__);
+      --file-link-fg: rgb(__TEXT_FILE_LINK_MOBILE_DARK_CHANNELS__);
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_DARK_CHANNELS__);
     }
     html[data-theme="dark"],

@@ -44,7 +44,6 @@
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_LIGHT_CHANNELS__);
     }
     html[data-theme="light"] .message.user .message-body-row {
-      --file-link-fg: rgb(__TEXT_FILE_LINK_DARK_CHANNELS__);
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_DARK_CHANNELS__);
     }
     .message.user .message-body-row {

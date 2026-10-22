@@ -83,7 +83,7 @@ __INCLUDE:../../markdown-theme-vars.css__
       --code-copy-hover-bg: rgba(180, 180, 180, 0.09);
       --external-link-fg: rgb(__TEXT_EXTERNAL_LINK_DARK_CHANNELS__);
       --error: rgb(__TEXT_ERROR_DESKTOP_DARK_CHANNELS__);
-      --file-link-fg: rgb(__TEXT_FILE_LINK_DARK_CHANNELS__);
+      --file-link-fg: rgb(__TEXT_FILE_LINK_DESKTOP_DARK_CHANNELS__);
       --git-ins-green-channels: __TEXT_DIFF_INSERT_DARK_CHANNELS__;
       --git-del-red-channels: __TEXT_DIFF_DELETE_DARK_CHANNELS__;
       --scrollbar-thumb: __DESKTOP_SCROLLBAR_THUMB_DARK__;

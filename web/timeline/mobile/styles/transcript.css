@@ -42,6 +42,10 @@ __INCLUDE:../../transcript.css__
       position: relative;
     }
 
+    html[data-theme="light"] .message.user .message-body-row {
+      --file-link-fg: rgb(__TEXT_FILE_LINK_MOBILE_DARK_CHANNELS__);
+    }
+
     .message.user .message-body-row {
       display: block;
       --user-bubble-side-space: 0.3em;

@@ -68,6 +68,7 @@ __INCLUDE:../../transcript.css__
     }
 
     html[data-theme="light"] .message.user .message-body-row {
+      --file-link-fg: rgb(__TEXT_FILE_LINK_DESKTOP_DARK_CHANNELS__);
       --fg-rgb: var(--bg-rgb);
       --fg: rgb(var(--fg-rgb));
       --fg-bold: var(--bg);
