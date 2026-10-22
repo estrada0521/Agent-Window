@@ -83,6 +83,8 @@
     }
     .search-mobile-navigation .search-arrows button {
       height: var(--mobile-sheet-floating-height);
+      touch-action: none;
+      -webkit-touch-callout: none;
     }
     .search-mobile-navigation button:disabled {
       opacity: 0.3;

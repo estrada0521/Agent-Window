@@ -3,6 +3,12 @@
     let searchQuery = "";
     let searchCursors = [];
     let searchIndex = -1;
+    let searchHold = null;
+    let searchHoldFrame = 0;
+    const stopSearchHold = () => {
+      cancelAnimationFrame(searchHoldFrame);
+      searchHold = null;
+    };
     const searchHud = document.createElement("form");
     searchHud.className = "search-hud export-hud";
     searchHud.innerHTML = '<button type="button" class="export-hud-cancel" aria-label="Close search" title="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><input type="search" aria-label="Search messages" placeholder="Search" autocomplete="off"><span role="status"></span><span class="search-arrows"><button type="button" class="search-older" title="Older match (Shift: 10 matches)" aria-label="Older match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 14 5-5 5 5"/></svg></button><button type="button" class="search-newer" title="Newer match (Shift: 10 matches)" aria-label="Newer match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></button></span>';
@@ -21,8 +27,11 @@
       searchMobileNavigation.append(searchHud.querySelector(".search-arrows"));
       document.body.append(searchMobileNavigation);
     }
+    const showSearchPosition = (index) => {
+      searchStatus.textContent = `${index < 0 ? 0 : searchCursors.length - index}/${searchCursors.length}`;
+    };
     const syncSearchNavigation = () => {
-      searchStatus.textContent = `${searchIndex < 0 ? 0 : searchCursors.length - searchIndex}/${searchCursors.length}`;
+      showSearchPosition(searchIndex);
       searchOlder.disabled = searchIndex < 0 || searchIndex >= searchCursors.length - 1;
       searchNewer.disabled = searchIndex <= 0;
     };
@@ -63,6 +72,7 @@
       }
     };
     const endSearch = () => {
+      stopSearchHold();
       searchInput.blur();
       searchOpen = false;
       if (searchMobileNavigation) searchMobileNavigation.hidden = true;
@@ -117,6 +127,7 @@
     const runSearch = async () => {
       const query = searchInput.value.trim();
       if (!query) return;
+      stopSearchHold();
       searchRequest?.abort();
       const request = new AbortController();
       searchRequest = request;
@@ -138,19 +149,71 @@
         if (!request.signal.aborted) setError("Search failed", error);
       }
     };
-    const stepSearch = async (direction) => {
+    const selectSearchResult = async (index) => {
       if (searchIndex < 0) return;
-      const index = Math.max(0, Math.min(searchCursors.length - 1, searchIndex + direction));
-      if (index === searchIndex) return;
+      index = Math.max(0, Math.min(searchCursors.length - 1, index));
+      if (index === searchIndex) {
+        syncSearchNavigation();
+        return;
+      }
       searchRequest?.abort();
       const request = new AbortController();
       searchRequest = request;
+      showSearchPosition(index);
       try {
         await jumpToSearchResult(index, request);
       } catch (error) {
-        if (!request.signal.aborted) setError("Jump failed", error);
+        if (!request.signal.aborted) {
+          syncSearchNavigation();
+          setError("Jump failed", error);
+        }
       }
     };
+    const stepSearch = (direction) => selectSearchResult(searchIndex + direction);
+    for (const [button, direction] of [[searchOlder, 1], [searchNewer, -1]]) {
+      button.addEventListener("click", (event) => {
+        if (searchMobileNavigation && event.detail) return;
+        void stepSearch(direction * (event.shiftKey ? 10 : 1));
+      });
+      if (!searchMobileNavigation) continue;
+      button.addEventListener("pointerdown", (event) => {
+        if (!event.isPrimary || event.button !== 0 || button.disabled || searchHold) return;
+        event.preventDefault();
+        searchRequest?.abort();
+        searchRequest = null;
+        const start = searchIndex;
+        const started = performance.now();
+        searchHold = { button, pointerId: event.pointerId, index: start + direction };
+        button.setPointerCapture(event.pointerId);
+        const advance = (now) => {
+          const seconds = (now - started - 350) / 1000;
+          if (seconds >= 0) {
+            searchHold.index = Math.max(0, Math.min(searchCursors.length - 1, start + direction * (1 + Math.floor(12 * seconds * seconds))));
+            showSearchPosition(searchHold.index);
+            if (searchHold.index === 0 || searchHold.index === searchCursors.length - 1) return;
+          }
+          searchHoldFrame = requestAnimationFrame(advance);
+        };
+        searchHoldFrame = requestAnimationFrame(advance);
+      });
+      const finish = (event) => {
+        if (searchHold?.button !== button || searchHold.pointerId !== event.pointerId) return;
+        const index = searchHold.index;
+        stopSearchHold();
+        if (event.type === "pointerup") void selectSearchResult(index);
+        else syncSearchNavigation();
+      };
+      button.addEventListener("pointerup", finish);
+      button.addEventListener("pointercancel", finish);
+      button.addEventListener("lostpointercapture", finish);
+    }
+    if (searchMobileNavigation) {
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden || !searchHold) return;
+        stopSearchHold();
+        syncSearchNavigation();
+      });
+    }
     syncSearchNavigation();
     searchHud.querySelector(".export-hud-cancel").addEventListener("click", endSearch);
     searchHud.addEventListener("submit", (event) => {
@@ -159,8 +222,6 @@
       if (searchInput.value.trim() !== searchQuery || searchIndex < 0) void runSearch();
       else if (!searchOlder.disabled) void stepSearch(1);
     });
-    searchOlder.addEventListener("click", (event) => void stepSearch(event.shiftKey ? 10 : 1));
-    searchNewer.addEventListener("click", (event) => void stepSearch(event.shiftKey ? -10 : -1));
     searchInput.addEventListener("keydown", (event) => {
       if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey) return;
       if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
