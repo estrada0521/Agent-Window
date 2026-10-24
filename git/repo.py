@@ -56,8 +56,17 @@ def git_worktrees(workspace: str) -> list[dict]:
 
 def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
     paths = [str(rel or "").replace("\\", "/").strip("/") for rel in rel_paths if str(rel or "").strip()]
+    outside = set()
+    for path in paths:
+        parent = Path(workspace)
+        for part in path.split("/")[:-1]:
+            parent /= part
+            if parent.is_symlink():
+                outside.add(path)
+                break
+    paths = [path for path in paths if path not in outside]
     if not paths:
-        return set()
+        return outside
     result = subprocess.run(
         ["git", "-C", workspace, "check-ignore", "-z", "--stdin"],
         input="".join(f"{path}\0" for path in paths),
@@ -69,7 +78,7 @@ def git_ignored_rel_paths(workspace: str, rel_paths: list[str]) -> set[str]:
     )
     if result.returncode not in (0, 1):
         raise RuntimeError((result.stderr or result.stdout or "git check-ignore failed").strip())
-    return {item.replace("\\", "/").strip("/") for item in (result.stdout or "").split("\0") if item.strip()}
+    return outside | {item.replace("\\", "/").strip("/") for item in (result.stdout or "").split("\0") if item.strip()}
 
 
 def _read_commit_list(root: Path, *, offset: int, limit: int) -> dict:

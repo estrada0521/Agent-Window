@@ -374,7 +374,6 @@ class TimelineState:
             "statuses": {agent: "running" if agent in self._agent_running else "idle" for agent in panes},
             "running_display": self.native_log.running_display_for_api(),
             "stopped_threads": stopped_threads,
-            "failure": self._latest_failure,
         }
 
     def payload(self, limit: int) -> bytes:
