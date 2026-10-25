@@ -330,31 +330,11 @@
               if (!doc || doc === linkedDocument) return;
               linkedDocument = doc;
               doc.documentElement.style.setProperty("touch-action", "pan-x pan-y", "important");
-              let scale = 1;
-              let pinch = null;
-              const distance = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-              doc.addEventListener("touchstart", (event) => {
-                if (event.touches.length !== 2) return;
-                event.preventDefault();
-                const view = doc.defaultView;
-                const x = (event.touches[0].clientX + event.touches[1].clientX) / 2;
-                const y = (event.touches[0].clientY + event.touches[1].clientY) / 2;
-                pinch = { distance: distance(event.touches), scale, x: (view.scrollX + x) / scale, y: (view.scrollY + y) / scale };
-              }, { passive: false });
-              doc.addEventListener("touchmove", (event) => {
-                if (!pinch || event.touches.length !== 2) return;
-                event.preventDefault();
-                scale = Math.max(1, Math.min(6, pinch.scale * distance(event.touches) / pinch.distance));
-                doc.documentElement.style.width = scale === 1 ? "" : `${renderedFrame.clientWidth}px`;
-                doc.documentElement.style.zoom = scale;
-                doc.defaultView.scrollTo(
-                  pinch.x * scale - (event.touches[0].clientX + event.touches[1].clientX) / 2,
-                  pinch.y * scale - (event.touches[0].clientY + event.touches[1].clientY) / 2,
-                );
-              }, { passive: false });
-              const endPinch = () => { pinch = null; };
-              doc.addEventListener("touchend", endPinch);
-              doc.addEventListener("touchcancel", endPinch);
+              for (const type of ["touchstart", "touchmove"]) {
+                doc.addEventListener(type, (event) => {
+                  if (event.touches.length > 1) event.preventDefault();
+                }, { passive: false });
+              }
               wireLinkCopyMenu(doc);
               doc.addEventListener("click", (event) => {
                 const anchor = event.target.closest?.("a[href]");
