@@ -35,6 +35,9 @@
       };
       lockComposerMenuPan(document.getElementById("fileDropdown"));
       lockComposerMenuPan(document.getElementById("cmdDropdown"));
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) closeComposerOverlay();
+      });
     }
     const setComposerCaretToEnd = () => {
       const end = messageInput.value.length;

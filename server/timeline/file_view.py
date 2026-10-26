@@ -695,7 +695,7 @@ wireLinkPresentation(out, {{ press: true }});
 applyPreviewTheme({json.dumps(initial_preview_theme)});
 const renderPreview = async () => {{
   const staging = document.createElement("div");
-  staging.innerHTML = renderMarkdown(__mdText);
+  staging.innerHTML = renderMarkdown(__mdText, {{ images: true }});
   const markdownError = staging.querySelector("[data-markdown-error]")?.dataset.markdownError;
   if (markdownError) reportPreviewError(markdownError);
   __rewriteMarkdownPictureSources(staging);

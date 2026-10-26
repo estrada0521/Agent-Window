@@ -43,7 +43,7 @@
         rerenderCurrentMessages({ suppressEntryAnimation: true });
       }, { once: true });
     }
-    const renderMarkdown = (text) => {
+    const renderMarkdown = (text, { images = false } = {}) => {
       const librariesPending = !markdownLibrariesSettled
         && (typeof marked === "undefined" || typeof DOMPurify === "undefined");
       let error = typeof marked === "undefined" ? "Failed to load marked CDN"
@@ -51,7 +51,7 @@
         : !DOMPurify.isSupported ? "DOMPurify is unsupported in this browser" : "";
       if (!error) {
         try {
-          return renderMarkdownContent(text);
+          return renderMarkdownContent(text, images);
         } catch (err) {
           console.error("markdown render failed", err);
           error = `Markdown rendering failed: ${err.message}`;
@@ -59,7 +59,7 @@
       }
       return `<div class="markdown-plain-text" data-markdown-error="${escapeHtml(librariesPending ? "" : error).replaceAll('"', '&quot;')}">${escapeHtml(text)}</div>`;
     };
-    const renderMarkdownContent = (text) => {
+    const renderMarkdownContent = (text, images) => {
       let frontmatterHtml = "";
       let bodyText = text;
       const frontmatter = extractFrontmatter(text);
@@ -117,6 +117,12 @@
         ALLOWED_URI_REGEXP: /^(?!javascript:)/i,
         CUSTOM_ELEMENT_HANDLING: { tagNameCheck: /./, attributeNameCheck: /./, allowCustomizedBuiltInElements: true },
         RETURN_DOM: true,
+      });
+      if (!images) tempDiv.querySelectorAll("img[src]").forEach((image) => {
+        const link = document.createElement("a");
+        link.setAttribute("href", image.getAttribute("src"));
+        link.textContent = image.alt || image.getAttribute("src");
+        image.replaceWith(link);
       });
       applyWrittenOrderedListNumbers(tempDiv, processedText);
       tempDiv.querySelectorAll(".MATH_SAFE_BLOCK").forEach((span) => {
