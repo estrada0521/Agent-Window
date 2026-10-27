@@ -658,7 +658,7 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     CGFloat height = MAX(features.height.doubleValue, minimum.height);
     NSRect parent = self.window.frame;
     NSRect screen = self.window.screen.visibleFrame;
-    CGFloat x = MIN(NSMaxX(parent) + 8, NSMaxX(screen) - width);
+    CGFloat x = MIN(NSMaxX(parent) + 16, NSMaxX(screen) - width);
     CGFloat y = MAX(NSMinY(screen), NSMaxY(parent) - height);
     self.sidebarWindow = [[AWWindow alloc] initWithContentRect:NSMakeRect(x, y, width, height)
         styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskFullSizeContentView
