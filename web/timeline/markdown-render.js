@@ -89,6 +89,10 @@
       });
 
       processedText = normalizeEscapedLineBreaks(processedText);
+      processedText = processedText.replace(/:codex-file-citation\{[^}\n]*\bpath="([^"\n]+)"[^}\n]*\}/g, (_, path) => {
+        const label = path.split("/").pop() || path;
+        return `<a href="${escapeHtml(path).replaceAll('"', '&quot;')}">${escapeHtml(label)}</a>`;
+      });
 
       processedText = processedText.replace(/\x00CODE:(code-placeholder-\d+)\x00/g, (_, id) => {
         const block = codeBlocks.find((b) => b.id === id);

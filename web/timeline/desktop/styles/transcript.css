@@ -68,11 +68,11 @@ __INCLUDE:../../transcript.css__
     }
 
     html[data-theme="light"] .message.user .message-body-row {
-      --fg-rgb: var(--bg-rgb);
+      --fg-rgb: __TEXT_USER_DESKTOP_LIGHT_CHANNELS__;
       --fg: rgb(var(--fg-rgb));
-      --fg-bold: var(--bg);
-      --muted: rgba(var(--bg-rgb), 0.65);
-      --icon-fg: var(--bg);
+      --fg-bold: var(--fg);
+      --muted: rgba(var(--fg-rgb), 0.65);
+      --icon-fg: var(--fg);
     }
 
     html[data-theme="dark"] .message.user .message-body-row {
