@@ -393,7 +393,21 @@
         const anyLink = e.target.closest("a[href]");
         if (!anyLink) {
           const row = e.target.closest("article.message-row, .sysmsg-row");
-          if (!row || hadSelection || e.target.closest("button, input, textarea, select")) return;
+          if (!row || e.target.closest("button, input, textarea, select")) return;
+          if (hadSelection) {
+            const selection = window.getSelection();
+            const token = selection?.containsNode(e.target, true)
+              ? parseInlineCodeFileToken(selection.toString())
+              : "";
+            if (!token) return;
+            e.preventDefault();
+            e.stopPropagation();
+            void resolveInlineCodeFilePaths([token]).then((resolved) => {
+              const path = resolved.get(token) || "";
+              if (path) void openFileContextMenu(path, e);
+            });
+            return;
+          }
           e.preventDefault();
           e.stopPropagation();
           window.getSelection()?.removeAllRanges();
