@@ -244,7 +244,7 @@
     }
     html[data-fit-collapsed="1"] .desk-fit-standby {
       display: flex;
-      position: fixed;
+      position: absolute;
       inset: var(--native-window-edge-inset, 4px);
       align-items: center;
       justify-content: center;
