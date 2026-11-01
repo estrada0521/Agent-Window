@@ -107,7 +107,17 @@
           positionComposerDropdown(attachPreviewRow);
         };
         card.addEventListener("mousedown", (event) => event.preventDefault());
-        if (isMobileComposer) card.addEventListener("contextmenu", (event) => event.preventDefault());
+        if (isMobileComposer) {
+          card.addEventListener("contextmenu", (event) => event.preventDefault());
+          let touchCancelled = false;
+          card.addEventListener("pointerdown", () => { touchCancelled = false; });
+          card.addEventListener("pointercancel", () => { touchCancelled = true; });
+          card.addEventListener("touchend", (event) => {
+            if (touchCancelled || event.touches.length) return;
+            event.preventDefault();
+            card.click();
+          }, { passive: false });
+        }
         card.addEventListener("click", () => {
           cancelled = true;
           abort.abort();
