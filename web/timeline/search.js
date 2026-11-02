@@ -11,8 +11,13 @@
     };
     const searchHud = document.createElement("form");
     searchHud.className = "search-hud export-hud";
-    searchHud.innerHTML = '<button type="button" class="export-hud-cancel" aria-label="Close search" title="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><input type="search" aria-label="Search messages" placeholder="Search" autocomplete="off"><span role="status"></span><span class="search-arrows"><button type="button" class="search-older" title="Older match (Shift: 10 matches)" aria-label="Older match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 14 5-5 5 5"/></svg></button><button type="button" class="search-newer" title="Newer match (Shift: 10 matches)" aria-label="Newer match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></button></span>';
+    searchHud.innerHTML = '<button type="button" class="export-hud-cancel" aria-label="Close search" title="Close search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><span class="search-query"><span class="search-field"><span class="search-fit-text"></span><input type="search" aria-label="Search messages" placeholder="Search" autocomplete="off"></span><span role="status"></span></span><span class="search-arrows"><button type="button" class="search-older" title="Older match (Shift: 10 matches)" aria-label="Older match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 14 5-5 5 5"/></svg></button><button type="button" class="search-newer" title="Newer match (Shift: 10 matches)" aria-label="Newer match"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg></button></span>';
     const searchInput = searchHud.querySelector("input");
+    const searchFitText = searchHud.querySelector(".search-fit-text");
+    const fitSearchField = () => {
+      searchFitText.textContent = searchInput.value;
+    };
+    searchInput.addEventListener("input", fitSearchField);
     const searchStatus = searchHud.querySelector("[role=status]");
     const searchOlder = searchHud.querySelector(".search-older");
     const searchNewer = searchHud.querySelector(".search-newer");
@@ -99,6 +104,7 @@
       searchOpen = true;
       if (searchMobileNavigation) searchMobileNavigation.hidden = false;
       setHudOverlay(searchHud);
+      fitSearchField();
       if (isMobileComposer) {
         document.getElementById("timelineHud").getAnimations().forEach((animation) => {
           if (animation.transitionProperty === "width") animation.finish();
