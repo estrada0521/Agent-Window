@@ -715,6 +715,34 @@ __INCLUDE:git-panel/events.js__
       }
       return workspaceRoot;
     };
+    if (document.documentElement.dataset.nativeApp === "1") {
+      let fileLinkPress = null;
+      const armFileDrag = (path) => {
+        window.webkit.messageHandlers.agentWindow
+          .postMessage({ cmd: "arm_file_drag", args: { path } })
+          .catch((err) => setError("Drag failed", err));
+      };
+      messagesEl.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        const link = e.target.closest("a.inline-file-link, a.local-file-link");
+        if (!link) return;
+        link.draggable = false;
+        fileLinkPress = { x: e.clientX, y: e.clientY };
+        const normalized = normalizeWorkspaceFilePath(filePathFromLinkAnchor(link));
+        if (!normalized) return;
+        if (normalized.startsWith("/")) armFileDrag(normalized);
+        else if (workspaceRoot) armFileDrag(`${workspaceRoot}/${normalized}`);
+        else void loadWorkspaceRoot().then((root) => armFileDrag(`${root}/${normalized}`)).catch((err) => setError("Failed to read workspace path", err));
+      });
+      messagesEl.addEventListener("click", (e) => {
+        const press = fileLinkPress;
+        fileLinkPress = null;
+        if (!press || Math.hypot(e.clientX - press.x, e.clientY - press.y) <= 4) return;
+        if (!e.target.closest("a.inline-file-link, a.local-file-link")) return;
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+    }
     const copyFilePath = async (paths, absolute) => {
       if (absolute || paths.some((path) => String(path).startsWith("/"))) await loadWorkspaceRoot();
       const text = paths.map((p) => {

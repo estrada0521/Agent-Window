@@ -42,7 +42,7 @@ static const CGFloat kDefaultGlassCornerRadius = 26;
 }
 @end
 
-@interface AWApp : NSObject <NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandlerWithReply, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate>
+@interface AWApp : NSObject <NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandlerWithReply, WKUIDelegate, WKNavigationDelegate, WKDownloadDelegate, NSDraggingSource>
 @property (strong) AWWindow *window;
 @property (strong) WKWebView *webView;
 @property (strong) NSGlassEffectView *glass;
@@ -50,6 +50,8 @@ static const CGFloat kDefaultGlassCornerRadius = 26;
 @property (strong) AWWindow *sidebarWindow;
 @property (strong) WKWebView *sidebarWebView;
 @property (strong) NSGlassEffectView *sidebarGlass;
+@property (copy) NSString *fileDragPath;
+@property BOOL fileDragActive;
 @end
 
 static NSString *AgentBaseName(NSString *name) {
@@ -478,6 +480,45 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
     return [NSWorkspace.sharedWorkspace openURL:url] ? nil : @"macOS URL opener failed";
 }
 
+- (NSString *)armFileDrag:(NSDictionary *)args view:(WKWebView *)view {
+    if (view != self.webView) return nil;
+    if (![args isKindOfClass:NSDictionary.class]) return @"Invalid file drag path";
+    NSString *path = args[@"path"];
+    if (![path isKindOfClass:NSString.class] || !path.isAbsolutePath) return @"Invalid file drag path";
+    if (self.fileDragActive || (NSEvent.pressedMouseButtons & 1) == 0) return nil;
+    self.fileDragPath = path;
+    return nil;
+}
+
+- (BOOL)startFileDrag:(NSEvent *)event {
+    NSString *path = self.fileDragPath;
+    if (!path.length || self.fileDragActive || event.window != self.webView.window) return NO;
+    self.fileDragPath = nil;
+    struct stat info;
+    if (lstat(path.fileSystemRepresentation, &info) != 0) return NO;
+    NSImage *icon = [NSWorkspace.sharedWorkspace iconForFile:path];
+    icon.size = NSMakeSize(32, 32);
+    NSDraggingItem *item = [[NSDraggingItem alloc] initWithPasteboardWriter:[NSURL fileURLWithPath:path]];
+    NSPoint loc = [self.webView convertPoint:event.locationInWindow fromView:nil];
+    [item setDraggingFrame:NSMakeRect(loc.x - 16, loc.y - 16, 32, 32) contents:icon];
+    self.fileDragActive = YES;
+    if ([self.webView beginDraggingSessionWithItems:@[item] event:event source:self]) {
+        [self.webView evaluateJavaScript:@"document.getElementById('deskTimelineFrame')?.contentWindow?.getSelection()?.removeAllRanges()" completionHandler:nil];
+        return YES;
+    }
+    self.fileDragActive = NO;
+    return NO;
+}
+
+- (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+    return NSDragOperationCopy;
+}
+
+- (void)draggingSession:(NSDraggingSession *)session endedAtPoint:(NSPoint)screenPoint operation:(NSDragOperation)operation {
+    self.fileDragActive = NO;
+    self.fileDragPath = nil;
+}
+
 - (NSString *)copyFiles:(NSArray<NSString *> *)paths {
     if (paths.count == 0) return @"No files selected";
     NSMutableArray *urls = [NSMutableArray array];
@@ -583,11 +624,17 @@ static NSImage *RgbaImage(NSArray<NSNumber *> *rgba) {
 - (void)userContentController:(WKUserContentController *)controller didReceiveScriptMessage:(WKScriptMessage *)message
                  replyHandler:(void (^)(id, NSString *))replyHandler {
     NSString *host = message.frameInfo.securityOrigin.host;
-    if (!message.frameInfo.isMainFrame || !([host isEqualToString:@"127.0.0.1"] || [host isEqualToString:@"localhost"])) {
+    if (!([host isEqualToString:@"127.0.0.1"] || [host isEqualToString:@"localhost"])) {
         replyHandler(nil, @"native commands are only accepted from the Hub page");
         return;
     }
     NSDictionary *body = message.body;
+    if (!message.frameInfo.isMainFrame) {
+        replyHandler(nil, [body[@"cmd"] isEqualToString:@"arm_file_drag"]
+            ? [self armFileDrag:body[@"args"] view:message.webView]
+            : @"native commands are only accepted from the Hub page");
+        return;
+    }
     if ([body[@"cmd"] isEqualToString:@"get_window_viewport"]) {
         replyHandler(@{ @"rootWindow": @(message.webView == self.webView), @"width": @(self.window.contentView.bounds.size.width), @"left": @(-self.webView.frame.origin.x) }, nil);
         return;
@@ -935,6 +982,13 @@ static BOOL HubReady(NSInteger port) {
             [self dispatchMenuAction:@{ @"action": key == NSDownArrowFunctionKey ? @"dockComposer" : @"centerComposer" }];
         }
         return nil;
+    }];
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDragged | NSEventMaskLeftMouseUp handler:^NSEvent *(NSEvent *event) {
+        if (event.type == NSEventTypeLeftMouseUp) {
+            if (!self.fileDragActive) self.fileDragPath = nil;
+            return event;
+        }
+        return [self startFileDrag:event] ? nil : event;
     }];
 
     NSRect screen = NSScreen.mainScreen.frame;
