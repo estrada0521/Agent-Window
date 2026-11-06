@@ -82,7 +82,7 @@
         return `\x00CODE:${id}\x00`;
       });
 
-      processedText = processedText.replace(/(\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$\$[\s\S]+?\$\$|\$[\s\S]+?\$)/g, (match) => {
+      processedText = processedText.replace(/(\\\[[\s\S]+?\\\]|\\\([\s\S]+?\\\)|\$\$[\s\S]+?\$\$|\$(?!\$|\d)[\s\S]+?\$(?!\$|\d))/g, (match) => {
         const id = `math-placeholder-${placeholderCount++}`;
         mathBlocks.push({ id, content: match });
         return `<span class="MATH_SAFE_BLOCK" data-id="${id}"></span>`;
@@ -132,7 +132,10 @@
       tempDiv.querySelectorAll(".MATH_SAFE_BLOCK").forEach((span) => {
         const block = mathBlocks.find((b) => b.id === span.dataset.id);
         if (block) {
-          span.replaceWith(document.createTextNode(block.content));
+          const content = block.content.startsWith("$") && !block.content.startsWith("$$")
+            ? `\\(${block.content.slice(1, -1)}\\)`
+            : block.content;
+          span.replaceWith(document.createTextNode(content));
         }
       });
       if (mathBlocks.length) {
