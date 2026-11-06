@@ -183,10 +183,9 @@
       flex: 1 1 auto;
       min-height: 0;
     }
-    html:not([data-git-repo-position="repo-top"]) .split-pane-git,
-    html[data-git-repo-position="repo-top"] .split-pane-repo {
-      mask-image: linear-gradient(to bottom, rgb(0, 0, 0) calc(100% - 1.7em), transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, rgb(0, 0, 0) calc(100% - 1.7em), transparent 100%);
+    html:not([data-git-repo-position="repo-top"]) .split-pane-git :is(.git-commit-scroll, .git-commit-detail-body > .git-commit-file-wrap),
+    html[data-git-repo-position="repo-top"] .split-panel:not(.workspace-only) .split-pane-repo .repo-browser-scroll {
+      --side-bar-bottom-fade: min(1.7em, var(--side-bar-scroll-bottom, 0px));
     }
     .split-divider {
       flex-shrink: 0;
@@ -371,14 +370,17 @@
     }
     :is(.repo-browser-scroll, .git-commit-scroll, .git-commit-detail-body > .git-commit-file-wrap) {
       --side-bar-top-fade: min(1.7em, var(--side-bar-scroll-top, 0px));
-      --side-bar-top-mask: linear-gradient(to bottom,
+      --side-bar-bottom-fade: 0px;
+      --side-bar-edge-mask: linear-gradient(to bottom,
         transparent 0,
         rgba(0, 0, 0, 0.156) calc(var(--side-bar-top-fade) * 0.25),
         rgba(0, 0, 0, 0.5) calc(var(--side-bar-top-fade) * 0.5),
         rgba(0, 0, 0, 0.844) calc(var(--side-bar-top-fade) * 0.75),
-        rgb(0, 0, 0) var(--side-bar-top-fade));
-      mask-image: var(--side-bar-top-mask);
-      -webkit-mask-image: var(--side-bar-top-mask);
+        rgb(0, 0, 0) var(--side-bar-top-fade),
+        rgb(0, 0, 0) calc(100% - var(--side-bar-bottom-fade)),
+        transparent 100%);
+      mask-image: var(--side-bar-edge-mask);
+      -webkit-mask-image: var(--side-bar-edge-mask);
     }
     .repo-browser-scroll {
       flex: 1 1 auto;
@@ -1217,8 +1219,4 @@
 
     .split-panel > [hidden] {
       display: none;
-    }
-    .split-panel.workspace-only > .split-pane-repo {
-      mask-image: none;
-      -webkit-mask-image: none;
     }

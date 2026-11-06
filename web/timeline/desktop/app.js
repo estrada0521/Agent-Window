@@ -238,13 +238,28 @@ __INCLUDE:../agent-status.js__
 __INCLUDE:../pointer-capability.js__
     const sideBar = document.getElementById("sideBar");
     const sideBarResizer = document.getElementById("sideBarResizer");
+    const sideBarScrollSelector = ".repo-browser-scroll, .git-commit-scroll, .git-commit-detail-body > .git-commit-file-wrap";
+    const syncSideBarScrollFade = (scroll) => {
+      if (!(scroll instanceof Element) || !scroll.matches(sideBarScrollSelector)) return;
+      const fromBottom = scroll.scrollHeight - scroll.clientHeight - scroll.scrollTop;
+      scroll.style.setProperty("--side-bar-scroll-top", `${Math.max(0, scroll.scrollTop)}px`);
+      scroll.style.setProperty("--side-bar-scroll-bottom", `${fromBottom <= 1 ? 0 : Math.max(0, fromBottom)}px`);
+    };
     sideBar.addEventListener("scroll", (event) => {
-      const scroll = event.target;
-      if (scroll.matches(".repo-browser-scroll, .git-commit-scroll, .git-commit-detail-body > .git-commit-file-wrap")) {
-        scroll.style.setProperty("--side-bar-scroll-top", `${Math.max(0, scroll.scrollTop)}px`);
-      }
+      syncSideBarScrollFade(event.target);
     }, { capture: true, passive: true });
     const splitPanel = document.getElementById("splitPanel");
+    const sideBarFadeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) syncSideBarScrollFade(entry.target);
+    });
+    const syncSideBarScrollFades = () => {
+      sideBar.querySelectorAll(sideBarScrollSelector).forEach((scroll) => {
+        sideBarFadeObserver.observe(scroll);
+        syncSideBarScrollFade(scroll);
+      });
+    };
+    syncSideBarScrollFades();
+    new MutationObserver(syncSideBarScrollFades).observe(splitPanel, { childList: true, subtree: true });
     const splitDivider = document.getElementById("splitDivider");
     const repoContent = document.getElementById("repoContent");
     const gitContent = document.getElementById("gitContent");
