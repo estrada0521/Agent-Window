@@ -149,9 +149,11 @@
           complete(nextAttachment) {
             if (cancelled || !card.isConnected) return;
             attachment = nextAttachment;
+            const savedName = (nextAttachment.path || "").split("/").pop() || file.name;
+            card.title = savedName;
             card.classList.remove("is-uploading");
             card.removeAttribute("aria-busy");
-            card.setAttribute("aria-label", `Remove ${file.name}`);
+            card.setAttribute("aria-label", `Remove ${savedName}`);
             status.remove();
             if (file.type.startsWith("image/")) {
               const img = document.createElement("img");
@@ -159,14 +161,14 @@
               img.draggable = false;
               objectUrl = URL.createObjectURL(file);
               img.src = objectUrl;
-              img.alt = file.name;
+              img.alt = savedName;
               card.appendChild(img);
             } else {
               card.classList.add("attach-card-file");
-              card.appendChild(fileIconElement(file.name, {}, "attach-card-icon"));
+              card.appendChild(fileIconElement(savedName, {}, "attach-card-icon"));
               const filename = document.createElement("span");
               filename.className = "attach-card-name";
-              filename.textContent = file.name;
+              filename.textContent = savedName;
               card.appendChild(filename);
             }
           },
