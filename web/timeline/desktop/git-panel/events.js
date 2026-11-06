@@ -195,6 +195,7 @@
               gitCommitFileListHtml(s.files) +
               `</div>`
             ).join(""));
+            showExpanded();
           } catch (err) {
             if (seq !== fetchSeq) return;
             pinnedExpandSections = null;
@@ -210,6 +211,15 @@
         return promise;
       }
 
+      function showExpanded() {
+        if (!expand.firstElementChild) return;
+        const wasExpanded = aside.classList.contains("is-expanded");
+        aside.classList.add("is-expanded");
+        if (wasExpanded) return;
+        cancelExpandAnimation();
+        animateExpandFrom(0);
+      }
+
       function open() {
         cancelTimers();
         if (aside.hidden) return;
@@ -217,12 +227,7 @@
           close({ clear: true });
           return;
         }
-        const wasExpanded = aside.classList.contains("is-expanded");
-        aside.classList.add("is-expanded");
-        if (!wasExpanded && expand.firstElementChild) {
-          cancelExpandAnimation();
-          animateExpandFrom(0);
-        }
+        showExpanded();
         void refreshContent();
       }
 
