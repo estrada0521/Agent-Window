@@ -431,7 +431,8 @@
     .repo-browser-item:active {
       background: var(--panel-row-hover-bg);
     }
-    .has-hover .repo-browser-item:not(.is-selected):hover {
+    .has-hover .repo-browser-item:not(.is-selected):hover,
+    .has-hover .repo-browser-item.is-shift-hover {
       background: var(--list-row-hover-bg);
     }
     .repo-browser-item.is-selected {
@@ -1062,7 +1063,8 @@
     .git-commit-file-row:active {
       background: var(--panel-row-hover-bg);
     }
-    .has-hover .git-commit-file-row:not(.is-selected):hover {
+    .has-hover .git-commit-file-row:not(.is-selected):hover,
+    .has-hover .git-commit-file-row.is-shift-hover {
       background: var(--list-row-hover-bg);
     }
     .git-commit-file-row.is-selected {

@@ -281,16 +281,37 @@ __INCLUDE:../pointer-capability.js__
     const createRowSelection = ({ container, rowSelector, selectedClass = "is-selected" }) => {
       let selected = new Set();
       let anchor = "";
+      let shiftTarget = "";
       const order = () => Array.from(container.querySelectorAll(rowSelector))
         .map((el) => el.dataset.path || "")
         .filter(Boolean);
       const applyClasses = () => {
+        let preview = null;
+        if (shiftTarget) {
+          const list = order();
+          const a = anchor || shiftTarget;
+          const ai = list.indexOf(a);
+          const ti = list.indexOf(shiftTarget);
+          const paths = ai === -1 || ti === -1 ? [shiftTarget] : list.slice(Math.min(ai, ti), Math.max(ai, ti) + 1);
+          preview = new Set(paths);
+        }
         container.querySelectorAll(rowSelector).forEach((el) => {
-          el.classList.toggle(selectedClass, selected.has(el.dataset.path || ""));
+          const path = el.dataset.path || "";
+          el.classList.toggle(selectedClass, selected.has(path));
+          el.classList.toggle("is-shift-hover", !!preview && preview.has(path) && !selected.has(path));
         });
       };
-      const set = (paths) => { selected = new Set(paths); applyClasses(); };
-      const clear = () => { set([]); anchor = ""; };
+      const setShiftTarget = (path) => {
+        if (path === shiftTarget) return;
+        shiftTarget = path;
+        applyClasses();
+      };
+      const set = (paths) => {
+        selected = new Set(paths);
+        if (paths.length === 1) anchor = paths[0];
+        applyClasses();
+      };
+      const clear = () => { shiftTarget = ""; set([]); anchor = ""; };
       const toggle = (path) => { const next = new Set(selected); next.has(path) ? next.delete(path) : next.add(path); set(next); anchor = path; };
       const selectRangeTo = (path) => {
         const list = order();
@@ -302,6 +323,20 @@ __INCLUDE:../pointer-capability.js__
       };
       const orderedSelected = () => order().filter((p) => selected.has(p));
       const prune = () => { const present = new Set(order()); if (selected.size) set([...selected].filter((p) => present.has(p))); };
+      container.addEventListener("mouseover", (event) => {
+        if (!event.shiftKey) { setShiftTarget(""); return; }
+        const row = event.target.closest(rowSelector);
+        if (!row || !container.contains(row)) return;
+        setShiftTarget(row.dataset.path || "");
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Shift" || event.repeat) return;
+        const row = container.querySelector(`${rowSelector}:hover`);
+        setShiftTarget(row?.dataset.path || "");
+      });
+      document.addEventListener("keyup", (event) => {
+        if (event.key === "Shift") setShiftTarget("");
+      });
       container.addEventListener("mouseleave", clear);
       return { get selected() { return selected; }, set, clear, toggle, selectRangeTo, orderedSelected, prune, applyClasses };
     };
