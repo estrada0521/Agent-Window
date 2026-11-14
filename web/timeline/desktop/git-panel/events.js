@@ -162,7 +162,7 @@
         cancelTimers();
         cancelExpandAnimation();
         pinnedSel.clear();
-        aside.classList.remove("is-expanded");
+        aside.classList.remove("is-expanded", "is-loading");
         expand.dataset.scrollFade = "none";
         fetchSeq++;
         refreshPromise = null;
@@ -190,6 +190,7 @@
             }
 
             pinnedExpandSections = sections;
+            aside.classList.remove("is-loading");
             replaceExpandContent(sections.map(s =>
               `<div class="git-pinned-expand-section">` +
               gitCommitFileListHtml(s.files) +
@@ -199,7 +200,9 @@
           } catch (err) {
             if (seq !== fetchSeq) return;
             pinnedExpandSections = null;
+            aside.classList.remove("is-loading");
             replaceExpandContent("");
+            if (!expand.firstElementChild) aside.classList.remove("is-expanded");
             setError("Failed to load changes", err);
           }
           requestAnimationFrame(updateExpandFade);
@@ -220,6 +223,15 @@
         animateExpandFrom(0);
       }
 
+      function showLoading() {
+        if (expand.querySelector(".git-commit-file-row")) return;
+        if (!expand.querySelector(".git-pinned-expand-loading")) {
+          replaceExpandContent(`<div class="git-pinned-expand-loading"><span></span><span></span><span></span></div>`);
+        }
+        aside.classList.add("is-loading");
+        showExpanded();
+      }
+
       function open() {
         cancelTimers();
         if (aside.hidden) return;
@@ -227,7 +239,8 @@
           close({ clear: true });
           return;
         }
-        showExpanded();
+        if (expand.querySelector(".git-commit-file-row")) showExpanded();
+        else showLoading();
         void refreshContent();
       }
 

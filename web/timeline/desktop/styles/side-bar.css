@@ -1032,7 +1032,7 @@
       transform: rotate(0deg) translateZ(0);
       transition-duration: 150ms;
     }
-    .git-pinned-summary-aside.is-expanded .git-commit-chevron {
+    .git-pinned-summary-aside.is-expanded:not(.is-loading) .git-commit-chevron {
       transform: rotate(90deg) translateZ(0);
     }
     .git-commit-row:hover .git-commit-chevron,
@@ -1212,6 +1212,26 @@
     }
     .git-pinned-expand .git-commit-file-header {
       height: var(--pill-row-height);
+    }
+    .git-pinned-expand-loading {
+      display: flex;
+      gap: 0.31em;
+      padding: 0.77em 1.08em;
+      align-items: center;
+      justify-content: center;
+    }
+    .git-pinned-expand-loading span {
+      width: 0.31em;
+      height: 0.31em;
+      border-radius: 50%;
+      background: var(--icon-muted);
+      animation: gitPinnedExpandDot 0.9s ease-in-out infinite;
+    }
+    .git-pinned-expand-loading span:nth-child(2) { animation-delay: 0.15s; }
+    .git-pinned-expand-loading span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes gitPinnedExpandDot {
+      0%, 80%, 100% { background: var(--icon-muted); transform: scale(0.8); }
+      40% { background: var(--icon-fg); transform: scale(1); }
     }
     .git-pinned-expand-empty {
       padding: 0.73em 1.27em;
