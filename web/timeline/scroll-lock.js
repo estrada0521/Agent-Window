@@ -6,6 +6,21 @@
     let _viewportCenterAnchor = null;
     let _anchorLayoutWidth = messagesEl.clientWidth;
     let _atBottomAtAnchorWidth = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight <= 2;
+    let _timelineWidthHold = 0;
+    const releaseTimelineWidthHold = () => {
+      _timelineWidthHold += 1;
+      _pinStickyThroughWidthChange = false;
+      _anchorLayoutWidth = messagesEl.clientWidth;
+    };
+    const pinConversationScroll = (apply) => {
+      _programmaticScroll = true;
+      apply();
+      releaseTimelineWidthHold();
+      _atBottomAtAnchorWidth = messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight <= 2;
+      _viewportCenterAnchor = captureViewportCenterAnchor();
+      _stickyToBottom = isNearBottom();
+      queueMicrotask(() => { _programmaticScroll = false; });
+    };
     let _pollScrollRestoreRaf = 0;
     const maybeRestorePollScrollLock = () => {
       if (_programmaticScroll) return;

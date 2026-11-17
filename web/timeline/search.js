@@ -73,7 +73,8 @@
       CSS.highlights.set("timeline-search", new Highlight(...ranges));
       if (ranges.length) {
         const rect = ranges[0].getBoundingClientRect();
-        messagesEl.scrollTo({ top: messagesEl.scrollTop + rect.top - messagesEl.getBoundingClientRect().top - (messagesEl.clientHeight - rect.height) / 2, behavior: "auto" });
+        const top = messagesEl.scrollTop + rect.top - messagesEl.getBoundingClientRect().top - (messagesEl.clientHeight - rect.height) / 2;
+        pinConversationScroll(() => messagesEl.scrollTo({ top, behavior: "auto" }));
       }
     };
     const endSearch = () => {

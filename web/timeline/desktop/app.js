@@ -191,18 +191,17 @@ __INCLUDE:../scroll-lock.js__
     };
 __INCLUDE:../scroll-btn.js__
     let _timelineLayoutWidth = messagesEl.clientWidth;
-    let _widthChangeSequence = 0;
     new ResizeObserver(() => {
       const width = messagesEl.clientWidth;
       const prevWidth = _timelineLayoutWidth;
       _timelineLayoutWidth = width;
       if (width === prevWidth) return;
-      const sequence = ++_widthChangeSequence;
+      const sequence = ++_timelineWidthHold;
       const wasAtBottom = _atBottomAtAnchorWidth;
       const centerAnchor = _viewportCenterAnchor || captureViewportCenterAnchor();
       _pinStickyThroughWidthChange = true;
       const apply = (remaining) => {
-        if (sequence !== _widthChangeSequence) return;
+        if (sequence !== _timelineWidthHold) return;
         if (wasAtBottom) messagesEl.scrollTop = messagesEl.scrollHeight;
         else restoreViewportCenterAnchor(centerAnchor);
         if (remaining <= 0) {

@@ -61,7 +61,8 @@ __INCLUDE:transcript-refresh.js__
       clearPollScrollLock();
       requestAnimationFrame(() => {
         const row = messagesEl.querySelector("[data-context-hash]");
-        if (row) positionConversationRowAtStepTop(row, "auto");
+        if (row) pinConversationScroll(() => positionConversationRowAtStepTop(row, "auto"));
+        else releaseTimelineWidthHold();
         historyLoading = false;
         updateScrollBtn();
       });
