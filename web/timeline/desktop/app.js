@@ -354,7 +354,18 @@ __INCLUDE:../pointer-capability.js__
     const repoSel = createRowSelection({ container: repoContent, rowSelector: ".repo-browser-item" });
     const repoFilePathSet = () => new Set(Array.from(repoContent.querySelectorAll(".repo-browser-file")).map((el) => el.dataset.path || ""));
     const gitSel = createRowSelection({ container: gitContent, rowSelector: ".git-commit-file-row" });
+    let messagePointer = null;
+    window.addEventListener("pointermove", (event) => {
+      messagePointer = { x: event.clientX, y: event.clientY };
+    }, { passive: true });
+    const hoveredMessageFilePath = () => {
+      if (!messagePointer) return "";
+      const link = document.elementFromPoint(messagePointer.x, messagePointer.y)?.closest?.("a.inline-file-link, a.local-file-link");
+      return link ? filePathFromLinkAnchor(link) : "";
+    };
     const activeSideBarTargets = ({ filesOnly }) => {
+      const messagePath = hoveredMessageFilePath();
+      if (messagePath) return [messagePath];
       if (!sideBarOpen) return [];
       let repoTargets = repoSel.orderedSelected();
       if (filesOnly) {

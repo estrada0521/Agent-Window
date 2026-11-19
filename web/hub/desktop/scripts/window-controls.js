@@ -240,7 +240,32 @@
       }
     }
 
+    const forwardTimelineFileShortcut = (event) => {
+      if (event.target instanceof Element && event.target.closest("input, textarea, [contenteditable='true']")) return false;
+      const plain = event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey
+        && (event.code === "KeyO" || event.code === "KeyY" || event.code === "KeyC");
+      const copyPath = event.metaKey && event.altKey && !event.ctrlKey && event.code === "KeyC";
+      const reveal = event.metaKey && event.altKey && !event.ctrlKey && !event.shiftKey && event.code === "KeyR";
+      if (!plain && !copyPath && !reveal) return false;
+      const win = _deskTimelineFrame?.contentWindow;
+      if (!win) return false;
+      const forwarded = new win.KeyboardEvent("keydown", {
+        key: event.key,
+        code: event.code,
+        metaKey: event.metaKey,
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
+        shiftKey: event.shiftKey,
+        bubbles: true,
+        cancelable: true,
+      });
+      return win.dispatchEvent(forwarded) === false;
+    };
     window.addEventListener("keydown", (event) => {
+      if (forwardTimelineFileShortcut(event)) {
+        event.preventDefault();
+        return;
+      }
       if (event.metaKey && event.ctrlKey && !event.altKey && !event.shiftKey && event.code === "KeyT") {
         event.preventDefault();
         toggleDeskAlwaysOnTop();
